@@ -1,6 +1,27 @@
 #include "skin.h"
 #include "game.h"
 
+/*
+ * SkinDST
+ * - global accessible variable
+ */
+namespace SkinDST {
+	bool dst[10000];
+	void On(int idx) {
+		dst[idx] = true;
+	}
+	void Off(int idx) {
+		dst[idx] = false;
+	}
+	bool Toggle(int idx) {
+		dst[idx] = !dst[idx];
+		return dst[idx];
+	}
+	bool Get(int idx) {
+		return dst[idx];
+	}
+}
+
 // temporarily common function
 char* Trim(char *p) {
 	char *r = p;
@@ -16,7 +37,7 @@ char* Trim(char *p) {
 	return r;
 }
 
-bool Skin::Parse(const char *filepath, SkinOption &skinoption) {
+bool Skin::Parse(const char *filepath) {
 	//strcpy(skin->filepath, filepath);
 	FILE *f = fopen(filepath, "r");
 	if (!f)
@@ -38,7 +59,7 @@ bool Skin::Parse(const char *filepath, SkinOption &skinoption) {
 			*p = 0;
 			args[i] = (++p);
 		}
-		MakeElementFromLr2Skin(args, skinoption);
+		MakeElementFromLr2Skin(args);
 	}
 
 	fclose(f);
@@ -49,7 +70,7 @@ bool Skin::Parse(const char *filepath, SkinOption &skinoption) {
 	return true;
 }
 
-void Skin::MakeElementFromLr2Skin(char **args, SkinOption &skinoption) {
+void Skin::MakeElementFromLr2Skin(char **args) {
 	if (elements.size() == 0)
 		elements.push_back(SkinElement());
 	SkinElement *e = &elements.back();
@@ -62,29 +83,44 @@ void Skin::MakeElementFromLr2Skin(char **args, SkinOption &skinoption) {
 	 */
 	if (CMD_STARTSWITH("//", 2))
 		return;
+
 	/*
 	 * condition / stack part
 	 */
 	if (CMD_IS("#ENDIF")) {
 		parser_level--;
-		return;
 	}
-	if (!parser_condition[parser_level])
+	if (parser_condition[parser_level] < 0)	// processed if clause -> IGNORE ALL
 		return;
-	if (CMD_IS("#IF")) {
-		parser_condition[++parser_level] = skinoption.GetOption(INT(args[1]));
-		return;
+	else if (CMD_IS("#ELSEIF")) {
+		if (parser_condition[parser_level] == 1) {
+			parser_condition[parser_level] = -1;
+			return;
+		}
+		parser_condition[parser_level] = SkinDST::Get(INT(args[1]));
 	}
+	else if (CMD_IS("#ELSE")) {
+		if (parser_condition[parser_level] == 1) {
+			parser_condition[parser_level] = -1;
+			return;
+		}
+		parser_condition[parser_level] = !parser_condition[parser_level];
+	}
+	else if (CMD_IS("#IF")) {
+		parser_condition[++parser_level] = SkinDST::Get(INT(args[1]))?1:0;
+	}
+	if (parser_condition[parser_level] == 0)
+		return;
 
 	/*
 	 * object parsing start
 	 */
 	if (CMD_IS("#CUSTOMOPTION")) {	// use default value
-		skinoption.SetOption(atoi(args[2]), 1);
+		SkinDST::On(atoi(args[2]));
 	}
 	else if (CMD_IS("#INCLUDE")) {
 		parser_level++;
-		Parse(args[1], skinoption);
+		Parse(args[1]);
 		parser_level--;
 	}
 	else if (CMD_IS("#IMAGE")) {
@@ -143,6 +179,13 @@ void Skin::MakeElementFromLr2Skin(char **args, SkinOption &skinoption) {
 		else if (CMD_IS("#DST_SLIDER")) {
 
 		}
+		// BGA
+		else if (CMD_IS("#DST_BGA")) {
+			bga.x = INT(args[3]);
+			bga.y = INT(args[4]);
+			bga.w = INT(args[5]);
+			bga.h = INT(args[6]);
+		}
 		//
 		else if (CMD_IS("#SRC_IMAGE")) {
 			// should we add new element?
@@ -191,20 +234,6 @@ std::vector<SkinElement>::iterator Skin::end() {
 
 // -------------------------------------------------------
 
-SkinOption::SkinOption() {
-	memset(skinoption, 0, sizeof(skinoption));
-}
-
-void SkinOption::SetOption(int idx, int val) {
-	skinoption[idx] = val;
-}
-
-int SkinOption::GetOption(int idx) {
-	return skinoption[idx];
-}
-
-// -------------------------------------------------------
-
 void SkinElement::AddSrc(char **args, Image *imgs) {
 	ImageSRC src;
 	if (this->src.size() == 0) {
@@ -240,6 +269,10 @@ void SkinElement::AddDst(char **args) {
 		center = INT(args[14]);
 		looptime = INT(args[15]);
 		timer = INT(args[16]);
+
+		option[0] = INT(args[17]);
+		option[1] = INT(args[18]);
+		option[2] = INT(args[19]);
 	}
 	AddDst(dst);
 }
@@ -256,9 +289,42 @@ bool SkinElement::IsValid() {
 	return (src.size() && dst.size());
 }
 
+bool SkinElement::CheckOption() {
+	bool r = true;
+	for (int i = 0; i < 3 && r; i++) {
+		if (option[i] < 0) {
+			r = !SkinDST::Get(option[i]);
+		} 
+		else if (option[i] > 0) {
+			r = SkinDST::Get(option[i]);
+		}
+	}
+	return r;
+}
+
 void SkinElement::GetRenderData(SkinRenderData &renderdata) {
 	// since it's not completed, we'll provide temp data ...
 	renderdata.src = this->src.back();
 	renderdata.dst = this->dst.back();
-	renderdata.img = this->img;
+	renderdata.blend = this->blend;
+	if (timer == 0 && CheckOption())
+		renderdata.img = this->img;
+	else
+		renderdata.img = 0;
+}
+
+// --------------------------------------------------------
+
+void ImageSRC::ToRect(SDL_Rect &r) {
+	r.x = x;
+	r.y = y;
+	r.w = w;
+	r.h = h;
+}
+
+void ImageDST::ToRect(SDL_Rect &r) {
+	r.x = x;
+	r.y = y;
+	r.w = w;
+	r.h = h;
 }

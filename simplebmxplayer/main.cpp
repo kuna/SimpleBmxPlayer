@@ -9,25 +9,31 @@
 #endif
 int _tmain(int argc, _TCHAR **argv) {
 #ifdef _WIN32
+	/*
+	 * Relative Directory could be changed when *.bmx files are given in argv
+	 * So, we need to reset CurrentDirectory in Win32
+	 * (Don't know this behaviour is either occured in Linux/Mac ...)
+	 */
 	SetCurrentDirectory(IO::get_filedir(argv[0]).c_str());
 #endif
 
+	/*
+	 * Parse parameter for specific option
+	 */
 	if (!Game::Parameter::parse(argc, argv)) {
 		Game::Parameter::help();
 		return -1;
 	}
 
-	/* initalization */
+	/* Game basic initalization */
 	Game::Init();
 	
-	// Let's render something ...
+	/* Game Start! */
 	Game::Start();
 	Game::MainLoop();
 
-	// release everything
+	/* Okay, game end, release everything */
 	Game::Release();
 	SDL_Quit();
-
-	// end
 	return 0;
 }

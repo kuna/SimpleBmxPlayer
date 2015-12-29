@@ -9,20 +9,35 @@
 #include <map>
 
 /*
+ * Skin's inner switch (DstOption)
+ * It's global accessible
+ */
+namespace SkinDST {
+	extern bool dst[10000];
+	void On(int idx);
+	void Off(int idx);
+	bool Toggle(int idx);
+	bool Get(int idx);
+}
+
+/*
  * used when you draw skin
  */
 struct ImageSRC {
 	int x, y, w, h, div_x, div_y, cycle, timer;
+	void ToRect(SDL_Rect &r);
 };
 struct ImageDST {
 	int time;
 	int x, y, w, h, acc, a, r, g, b, angle;
+	void ToRect(SDL_Rect &r);
 };
 class SkinRenderData {
 public:
 	Image *img;
 	ImageSRC src;
 	ImageDST dst;
+	int blend;
 public:
 	void Render();
 };
@@ -38,6 +53,7 @@ private:
 	int timer;
 	int looptime;
 	int usefilter;
+	int option[5];
 public:
 	void AddSrc(char **args, Image *imgs);
 	void AddDst(char **args);
@@ -50,17 +66,8 @@ public:
 	 */
 	bool IsValid();
 
+	bool CheckOption();
 	void GetRenderData(SkinRenderData &renderdata);
-};
-
-class SkinOption {
-public:
-	int skinoption[1000];
-public:
-	SkinOption();
-	void LoadSkinOption(const char* filepath);
-	void SetOption(int idx, int val);
-	int GetOption(int idx);
 };
 
 class Skin {
@@ -83,17 +90,18 @@ public:
 	SkinElement lnstart[20];
 	SkinElement lnbody[20];
 	SkinElement lnend[20];
+	ImageDST bga;
 
 private:
 	// for parsing
-	bool parser_condition[100];	// support 100 nested (current parsing context)
+	int parser_condition[100];	// support 100 nested (current parsing context)
 	int parser_level;			// current level
-	void MakeElementFromLr2Skin(char **args, SkinOption &skinoption);
+	void MakeElementFromLr2Skin(char **args);
 	void LoadResource();
 public:
 	Skin();
 	~Skin();
-	bool Parse(const char *filepath, SkinOption &skinoption);
+	bool Parse(const char *filepath);
 	void Release();
 
 	// convenience function

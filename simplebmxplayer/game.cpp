@@ -121,11 +121,22 @@ bool Game::Init() {
 }
 
 void Game::Start() {
-	// FPS timer start
+	/*
+	 * Must init Timer first
+	 * - because various elements are uses timer using globalTick
+	 */
+	GameTimer::Tick();
+
+	/*
+	 * FPS timer start & initalize
+	 */
 	fpstimer.Start();
 	fps = 0;
 	
-	// GamePlay Start
+	/*
+	 * GamePlay Start
+	 * - We don't need select screen, only play screen.
+	 */
 	GamePlay::Start();
 }
 
@@ -150,15 +161,30 @@ void Render() {
 
 void Game::MainLoop() {
 	while (1) {
+		/*
+		 * Ticking
+		 */
+		GameTimer::Tick();
+
+		/*
+		 * Keybd, mouse event
+		 */
 		SDL_Event e;
 		if (SDL_PollEvent(&e)) {
 			if (e.type == SDL_QUIT) {
 				break;
 			}
 			if (e.type == SDL_KEYUP) {
+				// GamePlay::KeyPress(e.value);
 			}
 		}
 
+		/*
+		 * Graphic rendering
+		 * - skin and movie(Image::Refresh) part are departed from main thread
+		 *   so keypress will be out of lag
+		 *   (TODO)
+		 */
 		SDL_RenderClear(renderer);
 		Render();
 		Render_FPS();
@@ -171,6 +197,7 @@ void Game::Release() {
 	GamePlay::Release();
 
 	// game basic resource release
+	// - FPS font
 	FC_FreeFont(font);
 
 	// finally, audio/renderer close

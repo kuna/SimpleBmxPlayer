@@ -1,5 +1,15 @@
 #include "timer.h"
 
+namespace GameTimer {
+	Uint32 globalTick;
+	Uint32 mTick[10000];
+	bool mStarted[10000];
+
+	void Tick() {
+		globalTick = SDL_GetTicks();
+	}
+}
+
 //
 // original source from http://lazyfoo.net
 //
@@ -22,7 +32,7 @@ void Timer::Start()
 	mPaused = false;
 
 	//Get the current clock time
-	mStartTick = SDL_GetTicks();
+	mStartTick = GameTimer::globalTick;
 	mPausedTick = 0;
 }
 
@@ -48,7 +58,7 @@ void Timer::Pause()
 		mPaused = true;
 
 		//Calculate the paused ticks
-		mPausedTick = SDL_GetTicks() - mStartTick;
+		mPausedTick = GameTimer::globalTick - mStartTick;
 		mStartTick = 0;
 	}
 }
@@ -86,7 +96,7 @@ Uint32 Timer::GetTick()
 		else
 		{
 			//Return the current time minus the start time
-			time = SDL_GetTicks() - mStartTick;
+			time = GameTimer::globalTick - mStartTick;
 		}
 	}
 

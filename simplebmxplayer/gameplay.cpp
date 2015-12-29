@@ -22,6 +22,8 @@ namespace GamePlay {
 	BmsResource<Audio, Image> bmsresource;
 	std::wstring bmspath;
 	Player player[2];	// player available up to 2
+	int lanestart;
+	int laneheight;
 
 	double speed_multiply;
 	Timer gametimer;
@@ -63,11 +65,8 @@ void GamePlay::Init() {
 }
 
 bool GamePlay::LoadSkin(const char* path) {
-	// temp: skinoption
-	SkinOption option;
-
 	// load play skin
-	if (!playskin.Parse(path, option))
+	if (!playskin.Parse(path))
 	{
 		printf("Failed to load skin %s\n", path);
 		return false;
@@ -110,6 +109,10 @@ bool GamePlay::LoadSkin(const char* path) {
 	playskin.lnend[6].GetRenderData(skin_lnend[9]);
 	playskin.lnend[7].GetRenderData(skin_lnend[6]);
 
+	lanestart = -skin_note[1].dst.h;
+	laneheight = skin_note[1].dst.y;
+	laneheight += skin_note[1].dst.h;
+
 	return true;
 }
 
@@ -141,7 +144,16 @@ void GamePlay::Start() {
 }
 
 bool GamePlay::LoadBmsResource() {
+	/*
+	 * before load BMS file
+	 * Set basic switch
+	 * and Get Bms base directory
+	 */
 	std::wstring bms_dir = IO::get_filedir(bmspath) + PATH_SEPARATOR;
+	SkinDST::On(33);		// autoplay on
+	SkinDST::On(41);		// BGA on
+
+
 	// load WAV/BMP
 	for (unsigned int i = 0; i < BmsConst::WORD_MAX_COUNT; ++i) {
 		BmsWord word(i);
@@ -190,6 +202,8 @@ void GamePlay::Render() {
 	 */
 	for (auto it = playskin.begin(); it != playskin.end(); ++it) {
 		(*it).GetRenderData(renderdata);
+		if (!renderdata.img)
+			continue;
 		src.x = renderdata.src.x;
 		src.y = renderdata.src.y;
 		src.w = renderdata.src.w;
@@ -198,8 +212,32 @@ void GamePlay::Render() {
 		dest.y = renderdata.dst.y;
 		dest.w = renderdata.dst.w;
 		dest.h = renderdata.dst.h;
-		//SDL_RenderCopy(Game::GetRenderer(), renderdata.img->GetPtr(), &src, &dest);
+		switch (renderdata.blend) {
+		case 0:
+			SDL_BlendMode(SDL_BLENDMODE_NONE);
+			break;
+		case 1:
+			SDL_BlendMode(SDL_BLENDMODE_BLEND);
+			break;
+		case 2:
+			SDL_BlendMode(SDL_BLENDMODE_ADD);
+			break;
+		case 3:
+			break;
+		case 4:
+			SDL_BlendMode(SDL_BLENDMODE_MOD);
+			break;
+		}
+		SDL_RenderCopy(Game::GetRenderer(), renderdata.img->GetPtr(), &src, &dest);
 	}
+
+	/*
+	 * BGA rendering
+	 */
+	SDL_Rect bga_dst;
+	playskin.bga.ToRect(bga_dst);
+	if (bmsresource.IsBMPLoaded(bgavalue.ToInteger()))
+		SDL_RenderCopy(Game::GetRenderer(), bmsresource.GetBMP(bgavalue.ToInteger())->GetPtr(), 0, &bga_dst);
 
 	/*
 	 * note rendering
@@ -213,9 +251,6 @@ void GamePlay::Render() {
 		player[pidx].SetTime(gametimer.GetTick());
 		// get note pos
 		double notepos = player[pidx].GetCurrentPos();
-		// render BGA
-		if (bmsresource.IsBMPLoaded(bgavalue.ToInteger()))
-			SDL_RenderCopy(Game::GetRenderer(), bmsresource.GetBMP(bgavalue.ToInteger())->GetPtr(), 0, 0);
 		// render notes
 		int lnstartpos[20];
 		bool lnstart[20];
@@ -228,17 +263,17 @@ void GamePlay::Render() {
 			src.x = skin_note[i].src.x;		src.y = skin_note[i].src.y;
 			src.w = skin_note[i].src.w;		src.h = skin_note[i].src.h;
 			src_lnbody.x = skin_lnbody[i].src.x;		src_lnbody.y = skin_lnbody[i].src.y;
-			src_lnbody.w = skin_lnbody[i].src.w;		src_lnbody.h = skin_lnbody[i].src.h;
+			src_lnbody.w = skin_lnbody[i].src.w;		src_lnbody.h = 1;
 			src_lnstart.x = skin_lnstart[i].src.x;		src_lnstart.y = skin_lnstart[i].src.y;
 			src_lnstart.w = skin_lnstart[i].src.w;		src_lnstart.h = skin_lnstart[i].src.h;
 			src_lnend.x = skin_lnend[i].src.x;		src_lnend.y = skin_lnend[i].src.y;
 			src_lnend.w = skin_lnend[i].src.w;		src_lnend.h = skin_lnend[i].src.h;
-			lnstartpos[i] = 900;
+			lnstartpos[i] = laneheight + lanestart;
 			lnstart[i] = false;
 			for (int nidx = player[pidx].GetCurrentNoteBar(i);
 				nidx >= 0 && nidx < bmstime.GetSize();
 				nidx = player[pidx].GetAvailableNoteIndex(i, nidx + 1)) {
-				double ypos = 900 - (bmstime[nidx].absbeat - notepos) * speed_multiply;
+				double ypos = laneheight - (bmstime[nidx].absbeat - notepos) * speed_multiply + lanestart;
 				switch (bmsnote[i][nidx].type){
 				case BmsNote::NOTE_NORMAL:
 					dest.y = ypos;		dest.h = skin_note[i].dst.h;
@@ -249,27 +284,27 @@ void GamePlay::Render() {
 					lnstart[i] = true;
 					break;
 				case BmsNote::NOTE_LNEND:
-					dest.y = ypos;			dest.h = lnstartpos[i] - ypos;
+					dest.y = ypos + skin_lnstart[i].dst.h;		dest.h = lnstartpos[i] - ypos - skin_lnstart[i].dst.h;
 					SDL_RenderCopy(Game::GetRenderer(), skin_lnbody[i].img->GetPtr(), &src_lnbody, &dest);
-					dest.y = ypos;			dest.h = skin_lnstart[i].dst.h;
+					dest.y = lnstartpos[i];						dest.h = skin_lnstart[i].dst.h;
 					SDL_RenderCopy(Game::GetRenderer(), skin_lnstart[i].img->GetPtr(), &src_lnstart, &dest);
-					dest.y = lnstartpos[i];	dest.h = skin_lnend[i].dst.h;
+					dest.y = ypos;								dest.h = skin_lnend[i].dst.h;
 					SDL_RenderCopy(Game::GetRenderer(), skin_lnend[i].img->GetPtr(), &src_lnend, &dest);
 					lnstart[i] = false;
 					break;
 				}
 				// off the screen -> exit loop
-				if (ypos < 0)
+				if (ypos < -lanestart)
 					break;
 			}
 			// if LN_end hasn't found
 			// then draw it to end of the screen
 			if (lnstart[i]) {
-				dest.y = 0;			dest.h = lnstartpos[i] - 0;
+				dest.y = lanestart + skin_lnstart[i].dst.h;		dest.h = lnstartpos[i] - 0 - skin_lnstart[i].dst.h;
 				SDL_RenderCopy(Game::GetRenderer(), skin_lnbody[i].img->GetPtr(), &src_lnbody, &dest);
-				dest.y = 0;			dest.h = skin_lnstart[i].dst.h;
+				dest.y = lnstartpos[i] + lanestart;				dest.h = skin_lnstart[i].dst.h;
 				SDL_RenderCopy(Game::GetRenderer(), skin_lnstart[i].img->GetPtr(), &src_lnstart, &dest);
-				dest.y = lnstartpos[i];	dest.h = skin_lnend[i].dst.h;
+				dest.y = lanestart;								dest.h = skin_lnend[i].dst.h;
 				SDL_RenderCopy(Game::GetRenderer(), skin_lnend[i].img->GetPtr(), &src_lnend, &dest);
 			}
 		}
@@ -290,5 +325,5 @@ void GamePlay::Release() {
 
 void GamePlay::SetSpeed(double speed) {
 	//speed_multiply = 900.0 / speed * 1.0;								// normal multiply (1x: show 4 beat in a screen)
-	speed_multiply = 900.0 / speed * 1000 * (120 / bms.GetBaseBPM());	// if you use constant `green` speed ... (= 1 measure per 310ms)
+	speed_multiply = (double)laneheight / speed * 1000 * (120 / bms.GetBaseBPM());	// if you use constant `green` speed ... (= 1 measure per 310ms)
 }
