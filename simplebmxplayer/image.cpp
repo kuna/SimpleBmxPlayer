@@ -85,12 +85,13 @@ bool Image::LoadMovie(const char *path) {
 	if (moviestream < 0) {
 		return false;
 	}
+	stream = moviectx->streams[moviestream];
 
 	/*
 	* codec start
 	*/
 	// get codec context pointer
-	codecctxorig = moviectx->streams[moviestream]->codec;
+	codecctxorig = stream->codec;
 	// Find the decoder for the video stream
 	codec = avcodec_find_decoder(codecctxorig->codec_id);
 	if (codec == NULL) {
@@ -139,20 +140,40 @@ bool Image::LoadMovie(const char *path) {
 
 	// set video pos to first & render first scene
 	Reset();
-	Refresh(0);
+	Sync(0);
 
 	return true;
 }
 
-void Image::Refresh(double t) {
+void Image::Sync(Uint32 t) {
+	if (!ISLOADED(moviectx))
+		return;
+
+	if (t < moviepts)
+		return;
+
+
 	int uvPitch = codecctx->width / 2;
 	AVPacket packet;
 	int frameFinished;
 	while (av_read_frame(moviectx, &packet) >= 0) {
-		// Is this a packet from the video stream?
+		// Is this a packet from the video stream? (not audio stream!)
 		if (packet.stream_index == moviestream) {
 			// Decode video frame
 			avcodec_decode_video2(codecctx, frame, &frameFinished, &packet);
+
+			/*
+			* we need to get pts; video clock from presentation clock.
+			*/
+			int64_t pts;
+			if (packet.dts != AV_NOPTS_VALUE) {
+				pts = av_frame_get_best_effort_timestamp(frame);
+			}
+			else {
+				pts = 0;
+			}
+			if (pts < 0) pts = 0;
+			moviepts = pts * 1000.0 * av_q2d(stream->time_base);
 
 			// Did we get a video frame?
 			if (frameFinished) {
@@ -181,11 +202,15 @@ void Image::Refresh(double t) {
 					);
 			}
 		}
+		break;
 	}
 }
 
 void Image::Reset() {
-
+	// set pts to zero
+	// and reset movie ctx
+	moviepts = 0;
+	// TODO: reset movie ctx
 }
 
 void Image::ReleaseMovie() {

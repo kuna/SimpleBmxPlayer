@@ -146,6 +146,7 @@ void GamePlay::Start() {
 	 * before scene start
 	 */
 	GameTimer::Tick();
+	GameTimer::Start(41);	// Game Start
 	gametimer.Start();
 }
 
@@ -202,6 +203,14 @@ void GamePlay::Render() {
 	SkinRenderData renderdata;
 	SDL_Rect src, dest;
 	SDL_Rect src_lnbody, src_lnstart, src_lnend;
+
+	/*
+	 * sync bms texture (movie)
+	 */
+	for (int i = 0; i < BmsConst::WORD_MAX_VALUE; i++) {
+		if (bmsresource.GetBMP(i))
+			bmsresource.GetBMP(i)->Sync(gametimer.GetTick());
+	}
 
 	/*
 	 * draw basic skin elements

@@ -23,14 +23,17 @@ private:
 	// also includes movie!
 	SDL_Texture *sdltex;
 	AVFormatContext *moviectx;			// movie context (handle)
+	AVStream *stream;					// current movie stream
+	int moviestream;
 	AVCodecContext *codecctxorig;		// codec context (orig)
 	AVCodecContext *codecctx;			// codec context
 	AVCodec *codec;						// codec
 	AVFrame *frame;						// rendering buffer
 	SwsContext *sws_ctx;				// converter (image data -> YUV420)
 	Uint8 *yPlane, *uPlane, *vPlane;	// stores YUV data
-	int moviestream;
 	double movielength;
+
+	Uint32 moviepts;
 	bool loop;
 
 	// processing movie is a little difficult
@@ -46,6 +49,6 @@ public:
 
 	bool IsLoaded();
 	void Reset();				// reset pos to first one
-	void Refresh(double t);		// refreshes texture in case of movie (loop forever if it's longer then movie)
+	void Sync(Uint32 t);		// refreshes texture in case of movie (loop forever if it's longer then movie)
 	SDL_Texture* GetPtr();
 };
