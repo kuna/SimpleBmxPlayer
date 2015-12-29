@@ -53,6 +53,7 @@ void OnBmsSound(void *p) {
 void GamePlay::Init() {
 	// register events
 	Handler::AddHandler(HANDLER::OnGamePlaySound, OnBmsSound);
+	Handler::AddHandler(HANDLER::OnGamePlayBga, OnBmsBga);
 
 	// temp resource
 	int pitch;
@@ -140,6 +141,11 @@ void GamePlay::SetPlayer(const PlayerSetting& playersetting, int playernum) {
 }
 
 void GamePlay::Start() {
+	/*
+	 * tick once again
+	 * before scene start
+	 */
+	GameTimer::Tick();
 	gametimer.Start();
 }
 
@@ -214,20 +220,21 @@ void GamePlay::Render() {
 		dest.h = renderdata.dst.h;
 		switch (renderdata.blend) {
 		case 0:
-			SDL_BlendMode(SDL_BLENDMODE_NONE);
+			SDL_SetTextureBlendMode(renderdata.img->GetPtr(), SDL_BLENDMODE_NONE);
 			break;
 		case 1:
-			SDL_BlendMode(SDL_BLENDMODE_BLEND);
+			SDL_SetTextureBlendMode(renderdata.img->GetPtr(), SDL_BLENDMODE_BLEND);
 			break;
 		case 2:
-			SDL_BlendMode(SDL_BLENDMODE_ADD);
+			SDL_SetTextureBlendMode(renderdata.img->GetPtr(), SDL_BLENDMODE_ADD);
 			break;
 		case 3:
 			break;
 		case 4:
-			SDL_BlendMode(SDL_BLENDMODE_MOD);
+			SDL_SetTextureBlendMode(renderdata.img->GetPtr(), SDL_BLENDMODE_MOD);
 			break;
 		}
+		//SDL_SetTextureAlphaMod(renderdata.img->GetPtr(), 120);
 		SDL_RenderCopy(Game::GetRenderer(), renderdata.img->GetPtr(), &src, &dest);
 	}
 
@@ -246,7 +253,6 @@ void GamePlay::Render() {
 		// only for prepared player
 		if (player[pidx].IsFinished())
 			continue;
-
 		// set player time(play sound) and ...
 		player[pidx].SetTime(gametimer.GetTick());
 		// get note pos

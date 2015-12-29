@@ -48,6 +48,13 @@ bool Game::Parameter::parse(int argc, _TCHAR **argv) {
 #include <windows.h>
 bool Game::Init() {
 	/*
+	* Must init Timer first
+	* - because various elements are uses timer using globalTick
+	*/
+	GameTimer::Tick();
+	GameTimer::Start(0);
+
+	/*
 	 * Load basic setting file ...
 	 */
 	if (!setting.LoadSetting("../setting.xml")) {
@@ -121,11 +128,6 @@ bool Game::Init() {
 }
 
 void Game::Start() {
-	/*
-	 * Must init Timer first
-	 * - because various elements are uses timer using globalTick
-	 */
-	GameTimer::Tick();
 
 	/*
 	 * FPS timer start & initalize

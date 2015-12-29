@@ -7,6 +7,23 @@ namespace GameTimer {
 
 	void Tick() {
 		globalTick = SDL_GetTicks();
+
+		/*
+		 * TODO: some important timer-triggers must have to be coded here
+		 * TODO: plugin can insist here - for custom timer or triggers.
+		 */
+	}
+	bool IsStarted(int n) {
+		return mStarted[n];
+	}
+	void Start(int n, bool forced) {
+		if (!forced && mStarted[n])
+			return;
+		mStarted[n] = true;
+		mTick[n] = globalTick;
+	}
+	void Stop(int n) {
+		mStarted[n] = false;
 	}
 }
 

@@ -307,7 +307,7 @@ void SkinElement::GetRenderData(SkinRenderData &renderdata) {
 	renderdata.src = this->src.back();
 	renderdata.dst = this->dst.back();
 	renderdata.blend = this->blend;
-	if (timer == 0 && CheckOption())
+	if (GameTimer::IsStarted(timer) && CheckOption())
 		renderdata.img = this->img;
 	else
 		renderdata.img = 0;

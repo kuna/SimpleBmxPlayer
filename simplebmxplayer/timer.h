@@ -34,6 +34,7 @@ namespace GameTimer {
 	void Tick();
 
 	bool IsStarted(int n);
-	void Start(int n);
+	// if you set forced = true, that timer will be reseted.
+	void Start(int n, bool forced = false);
 	void Stop(int n);
 }
