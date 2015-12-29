@@ -184,7 +184,7 @@ void GamePlay::Render() {
 		if (player[pidx].IsFinished())
 			continue;
 
-		// set player time and ...
+		// set player time(play sound) and ...
 		player[pidx].SetTime(gametimer.GetTick());
 		// get note pos
 		double notepos = player[pidx].GetCurrentPos();

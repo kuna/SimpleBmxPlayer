@@ -45,13 +45,8 @@ bool Game::Parameter::parse(int argc, _TCHAR **argv) {
 	return true;
 }
 
-
+#include <windows.h>
 bool Game::Init() {
-	FILE *f = fopen("testabc", "w+");
-	if (!f)
-		printf("e");
-	fputc('c', f);
-	fclose(f);
 	/*
 	 * Load basic setting file ...
 	 */
@@ -70,11 +65,11 @@ bool Game::Init() {
 		wprintf(L"Failed to SDL_Init() ...\n");
 		return -1;
 	}
-	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 512) == -1) {	// no lag, no sound latency
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024) == -1) {	// no lag, no sound latency
 		wprintf(L"Failed to Open Audio ...\n");
 		return -1;
 	}
-	Mix_AllocateChannels(512);
+	Mix_AllocateChannels(1296);
 	gWindow = SDL_CreateWindow("SimpleBmxPlayer", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		setting.mEngine.mWidth, setting.mEngine.mHeight, SDL_WINDOW_SHOWN);
 	if (!gWindow) {

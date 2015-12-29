@@ -4,7 +4,14 @@
 
 #include "game.h"
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif
 int _tmain(int argc, _TCHAR **argv) {
+#ifdef _WIN32
+	SetCurrentDirectory(IO::get_filedir(argv[0]).c_str());
+#endif
+
 	if (!Game::Parameter::parse(argc, argv)) {
 		Game::Parameter::help();
 		return -1;

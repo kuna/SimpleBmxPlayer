@@ -15,7 +15,7 @@ bool Audio::IsLoaded() {
 	return sdlaudio != 0;
 }
 void Audio::Play() {
-	channel = Mix_PlayChannel(-1, sdlaudio, 1);
+	Mix_PlayChannel(channel, sdlaudio, 0);
 }
 
 void Audio::Stop() {

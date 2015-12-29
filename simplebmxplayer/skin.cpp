@@ -161,7 +161,8 @@ void Skin::LoadResource() {
 	std::vector<std::string> &imgs_header = headers["IMAGE"];
 	int i = 0;
 	for (auto it = imgs_header.begin(); it != imgs_header.end(); ++it) {
-		if (!imgs[i].Load((*it)))
+		std::string realpath = SDL_GetBasePath() + (*it);
+		if (!imgs[i].Load(realpath))
 			printf("Failed to load skin resource - %s\n", (*it).c_str());
 		i++;
 	}
