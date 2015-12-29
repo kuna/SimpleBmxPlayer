@@ -1,0 +1,34 @@
+/*
+ * GamePlay
+ *
+ * resources about playing game
+ */
+
+#pragma once
+#include "player.h"
+#include "SDL/SDL.h"
+
+namespace {
+	enum PLAYTYPE {
+		PLAY_5KEY = 5,
+		PLAY_7KEY = 7,
+		PLAY_9KEY = 9,
+		PLAY_10KEY = 10,
+		PLAY_14KEY = 14,
+		PLAY_18KEY = 18,
+	};
+}
+
+namespace GamePlay {
+	void Init();
+	bool LoadSkin(const char* path);
+	bool LoadBms(std::wstring& path);
+	bool LoadBmsResource();
+	void SetPlayer(const PlayerSetting& playersetting, int playernum);
+	void Start();
+	void Render();
+	void Release();
+
+	// change
+	void SetSpeed(double speed);
+};

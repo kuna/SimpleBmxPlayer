@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings>
+	<engine>
+		<width>1440</width>
+		<height>900</height>
+		<fullscreen>0</fullscreen>
+	</engine>
+	<theme>
+		<main></main>
+		<playerselect></playerselect>
+		<select></select>
+		<play5k></play5k>
+		<play7k>play\HDPLAY_W.lr2skin</play7k>
+		<play9k></play9k>
+		<play10k></play10k>
+		<play14k></play14k>
+		<result></result>
+	</theme>
+	<player>
+		<recent>0</recent>
+	</player>
+</settings>
