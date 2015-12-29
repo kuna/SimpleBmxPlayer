@@ -76,7 +76,7 @@ bool GamePlay::LoadSkin(const char* path) {
 		printf("Loaded Bms Skin Successfully\n");
 	}
 
-	// get note render information
+	// prefetch note render information
 	playskin.note[0].GetRenderData(skin_note[1]);
 	playskin.note[1].GetRenderData(skin_note[2]);
 	playskin.note[2].GetRenderData(skin_note[3]);
@@ -85,6 +85,30 @@ bool GamePlay::LoadSkin(const char* path) {
 	playskin.note[5].GetRenderData(skin_note[8]);
 	playskin.note[6].GetRenderData(skin_note[9]);
 	playskin.note[7].GetRenderData(skin_note[6]);
+	playskin.lnbody[0].GetRenderData(skin_lnbody[1]);
+	playskin.lnbody[1].GetRenderData(skin_lnbody[2]);
+	playskin.lnbody[2].GetRenderData(skin_lnbody[3]);
+	playskin.lnbody[3].GetRenderData(skin_lnbody[4]);
+	playskin.lnbody[4].GetRenderData(skin_lnbody[5]);
+	playskin.lnbody[5].GetRenderData(skin_lnbody[8]);
+	playskin.lnbody[6].GetRenderData(skin_lnbody[9]);
+	playskin.lnbody[7].GetRenderData(skin_lnbody[6]);
+	playskin.lnstart[0].GetRenderData(skin_lnstart[1]);
+	playskin.lnstart[1].GetRenderData(skin_lnstart[2]);
+	playskin.lnstart[2].GetRenderData(skin_lnstart[3]);
+	playskin.lnstart[3].GetRenderData(skin_lnstart[4]);
+	playskin.lnstart[4].GetRenderData(skin_lnstart[5]);
+	playskin.lnstart[5].GetRenderData(skin_lnstart[8]);
+	playskin.lnstart[6].GetRenderData(skin_lnstart[9]);
+	playskin.lnstart[7].GetRenderData(skin_lnstart[6]);
+	playskin.lnend[0].GetRenderData(skin_lnend[1]);
+	playskin.lnend[1].GetRenderData(skin_lnend[2]);
+	playskin.lnend[2].GetRenderData(skin_lnend[3]);
+	playskin.lnend[3].GetRenderData(skin_lnend[4]);
+	playskin.lnend[4].GetRenderData(skin_lnend[5]);
+	playskin.lnend[5].GetRenderData(skin_lnend[8]);
+	playskin.lnend[6].GetRenderData(skin_lnend[9]);
+	playskin.lnend[7].GetRenderData(skin_lnend[6]);
 
 	return true;
 }
@@ -159,6 +183,7 @@ void GamePlay::Render() {
 	 */
 	SkinRenderData renderdata;
 	SDL_Rect src, dest;
+	SDL_Rect src_lnbody, src_lnstart, src_lnend;
 
 	/*
 	 * draw basic skin elements
@@ -173,7 +198,7 @@ void GamePlay::Render() {
 		dest.y = renderdata.dst.y;
 		dest.w = renderdata.dst.w;
 		dest.h = renderdata.dst.h;
-		SDL_RenderCopy(Game::GetRenderer(), renderdata.img->GetPtr(), &src, &dest);
+		//SDL_RenderCopy(Game::GetRenderer(), renderdata.img->GetPtr(), &src, &dest);
 	}
 
 	/*
@@ -202,6 +227,12 @@ void GamePlay::Render() {
 			dest.w = skin_note[i].dst.w;
 			src.x = skin_note[i].src.x;		src.y = skin_note[i].src.y;
 			src.w = skin_note[i].src.w;		src.h = skin_note[i].src.h;
+			src_lnbody.x = skin_lnbody[i].src.x;		src_lnbody.y = skin_lnbody[i].src.y;
+			src_lnbody.w = skin_lnbody[i].src.w;		src_lnbody.h = skin_lnbody[i].src.h;
+			src_lnstart.x = skin_lnstart[i].src.x;		src_lnstart.y = skin_lnstart[i].src.y;
+			src_lnstart.w = skin_lnstart[i].src.w;		src_lnstart.h = skin_lnstart[i].src.h;
+			src_lnend.x = skin_lnend[i].src.x;		src_lnend.y = skin_lnend[i].src.y;
+			src_lnend.w = skin_lnend[i].src.w;		src_lnend.h = skin_lnend[i].src.h;
 			lnstartpos[i] = 900;
 			lnstart[i] = false;
 			for (int nidx = player[pidx].GetCurrentNoteBar(i);
@@ -218,8 +249,12 @@ void GamePlay::Render() {
 					lnstart[i] = true;
 					break;
 				case BmsNote::NOTE_LNEND:
-					dest.y = ypos;		dest.h = lnstartpos[i] - ypos;
-					SDL_RenderCopy(Game::GetRenderer(), skin_note[i].img->GetPtr(), &src, &dest);
+					dest.y = ypos;			dest.h = lnstartpos[i] - ypos;
+					SDL_RenderCopy(Game::GetRenderer(), skin_lnbody[i].img->GetPtr(), &src_lnbody, &dest);
+					dest.y = ypos;			dest.h = skin_lnstart[i].dst.h;
+					SDL_RenderCopy(Game::GetRenderer(), skin_lnstart[i].img->GetPtr(), &src_lnstart, &dest);
+					dest.y = lnstartpos[i];	dest.h = skin_lnend[i].dst.h;
+					SDL_RenderCopy(Game::GetRenderer(), skin_lnend[i].img->GetPtr(), &src_lnend, &dest);
 					lnstart[i] = false;
 					break;
 				}
@@ -230,13 +265,14 @@ void GamePlay::Render() {
 			// if LN_end hasn't found
 			// then draw it to end of the screen
 			if (lnstart[i]) {
-				dest.y = 0;			dest.h = lnstartpos[i];
-				SDL_RenderCopy(Game::GetRenderer(), temptexture, 0, &dest);
+				dest.y = 0;			dest.h = lnstartpos[i] - 0;
+				SDL_RenderCopy(Game::GetRenderer(), skin_lnbody[i].img->GetPtr(), &src_lnbody, &dest);
+				dest.y = 0;			dest.h = skin_lnstart[i].dst.h;
+				SDL_RenderCopy(Game::GetRenderer(), skin_lnstart[i].img->GetPtr(), &src_lnstart, &dest);
+				dest.y = lnstartpos[i];	dest.h = skin_lnend[i].dst.h;
+				SDL_RenderCopy(Game::GetRenderer(), skin_lnend[i].img->GetPtr(), &src_lnend, &dest);
 			}
 		}
-		dest.x = 50;	dest.y = 40;
-		dest.w = 50;	dest.h = 10;
-		SDL_RenderCopy(Game::GetRenderer(), temptexture, 0, &dest);
 	}
 }
 

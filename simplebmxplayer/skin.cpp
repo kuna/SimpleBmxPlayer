@@ -107,6 +107,9 @@ void Skin::MakeElementFromLr2Skin(char **args, SkinOption &skinoption) {
 		}
 		else if (CMD_IS("#DST_NOTE")) {
 			note[INT(args[1])].AddDst(args + 1);
+			lnstart[INT(args[1])].AddDst(args + 1);
+			lnbody[INT(args[1])].AddDst(args + 1);
+			lnend[INT(args[1])].AddDst(args + 1);
 		}
 		else if (CMD_IS("#SRC_LN_START")) {
 			lnstart[INT(args[1])].AddSrc(args + 1, imgs);
@@ -161,8 +164,7 @@ void Skin::LoadResource() {
 	std::vector<std::string> &imgs_header = headers["IMAGE"];
 	int i = 0;
 	for (auto it = imgs_header.begin(); it != imgs_header.end(); ++it) {
-		std::string realpath = SDL_GetBasePath() + (*it);
-		if (!imgs[i].Load(realpath))
+		if (!imgs[i].Load((*it)))
 			printf("Failed to load skin resource - %s\n", (*it).c_str());
 		i++;
 	}
