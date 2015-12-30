@@ -1,4 +1,5 @@
 #include "skin.h"
+#include "skinelement.h"
 #include "game.h"
 
 /*
@@ -19,6 +20,23 @@ namespace SkinDST {
 	}
 	bool Get(int idx) {
 		return dst[idx];
+	}
+}
+
+/*
+ * SkinNumber (value)
+ * - global accessible variable
+ */
+namespace SkinValue {
+	float value[10000];
+	void Set(int idx, int v) {
+		value[idx] = v;
+	}
+	float Get(int idx) {
+		return value[idx];
+	}
+	void SetZero(int idx) {
+		value[idx] = 0;
 	}
 }
 

@@ -251,7 +251,6 @@ void Player::SetTime(Uint32 tick) {
 					OnGamePlayJudgeArg judgearg(Grade::JUDGE_PGREAT, note.channel<10 ? 0 : 1);
 					Handler::CallHandler(OnGamePlayJudge, &judgearg);
 				}
-				note.type = BmsNote::NOTE_NONE;
 			}
 			// if not autoplay, check timing for poor
 			else if (CheckJudgeByTiming(bmstime.GetRow(noteindex[i]).time - t) == Grade::JUDGE_LATE) {
