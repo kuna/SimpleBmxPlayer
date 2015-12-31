@@ -155,6 +155,8 @@ public:
 	// resource_id
 	// we can get resource name from this.
 	int resource_id;
+	int value_id;
+	int muki;			// only for bargraph; 1=vertical, 0=horizon
 
 	/*
 	 * General attributes (SRC)
@@ -210,6 +212,8 @@ private:
 	int current_line;									// contains current line information
 	std::map<int, std::string> option_id_name;			// option ID -> option name (option)
 	std::map<std::string, std::string> option_fn_name;	// option fn -> option name (file)
+
+	SkinElement *prv_obj;								// used to detect the object is same as previous one (ConvertToElement)
 private:
 	void Parse(const char *filepath);
 	bool CheckOption(int option);

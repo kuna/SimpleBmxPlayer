@@ -273,15 +273,117 @@ void _LR2SkinParser::ParseLR2SkinArgs(char **args) {
 
 SkinElement* _LR2SkinParser::ConvertToElement(_LR2SkinElement *e) {
 	COMMON::upper(e->objname);
-	// first check is it hiding or showing command
-	e->
+	// first check whether is it hiding or showing command
+	bool ishiding = false;
+	if (e->GetLastDst()->a == 0)
+		ishiding = true;
 
-	// find some specific image
-	if (e->objname == "IMAGE") {
-		// first search is there any image that has same SRC area
-		// if it does
+	SkinDebugInfo debugInfo;
+	debugInfo.line = current_line;
+	SkinElement* newobj = new SkinElement(true, debugInfo);
+	bool buildnewobj = true;
+
+	// fill information
+	// TODO ... add metadata
+	newobj->GetSrcArray() = e->src;
+	newobj->GetDstArray() = e->dst;
+	newobj->SetTag(e->objname);
+
+	// make classname from ops/timer
+	if (e->CheckOption(32)) {
+		newobj->AddClassName("AutoPlay");
+	}
+	if (e->CheckOption(33)) {
+		newobj->AddClassName("AutoPlayOff");
+	}
+	if (e->CheckOption(38)) {
+		newobj->AddClassName("ScoreGraphOff");
+	}
+	if (e->CheckOption(39)) {
+		newobj->AddClassName("ScoreGraph");
+	}
+	if (e->CheckOption(40)) {
+		newobj->AddClassName("BGAOff");
+	}
+	if (e->CheckOption(41)) {
+		newobj->AddClassName("BGAOn");
+	}
+	if (e->CheckOption(42)) {
+		newobj->AddClassName("1PGrooveGuage");
+	}
+	if (e->CheckOption(43)) {
+		newobj->AddClassName("1PHardGuage");
+	}
+	if (e->CheckOption(44)) {
+		newobj->AddClassName("2PGrooveGuage");
+	}
+	if (e->CheckOption(45)) {
+		newobj->AddClassName("2PHardGuage");
+	}
+	if (e->CheckOption(50)) {
+		newobj->AddClassName("Offline");
+	}
+	if (e->CheckOption(51)) {
+		newobj->AddClassName("Online");
 	}
 
+	if (e->timer == 40) {
+		newobj->AddClassName("OnReady");
+	}
+	else if (e->timer == 41) {
+		newobj->AddClassName("OnGameStart");
+	}
+	else if (e->timer == 46) {
+		newobj->AddClassName("On1PJudge");
+	}
+	else if (e->timer == 47) {
+		newobj->AddClassName("On2PJudge");
+	}
+
+	// find some specific tags
+	if (e->objname == "IMAGE") {
+		if (e->resource_id == 110) {
+			// I don't know what it is, it's called bga mask ...
+			// but is it necessary ..?
+			buildnewobj = false;
+		}
+	}
+	else if (e->objname == "BGA") {
+		// we shouldn't set ID here because many BGA can be existed.
+		newobj->AddClassName("BGA");
+	}
+	else if (e->objname == "BARGRAPH") {
+		if (e->muki == 1)
+			newobj->SetTag("BARGRAPH_VERTICAL");
+		else
+			newobj->SetTag("BARGRAPH_HORIZON");
+
+		if (e->value_id == 12)
+			newobj->SetID("1PCurrentHighScoreGraph");
+		if (e->value_id == 13)
+			newobj->SetID("1PHighScoreGraph");
+		if (e->value_id == 13)
+			newobj->SetID("1PCurrentExScoreGraph");
+		if (e->value_id == 15)
+			newobj->SetID("1PExScoreGraph");
+	}
+	else if (e->objname == "NUMBER")
+	{
+		if (e->value_id == 101)
+			newobj->SetID("1PExScore");
+		if (e->value_id == 151)
+			newobj->SetID("1PCurrentHighScore");
+		if (e->value_id == 151)
+			newobj->SetID("1PCurrentTargetScore");
+	}
+
+	if (buildnewobj) {
+		return newobj;
+	}
+	else {
+		delete newobj;
+		return 0;
+	}
 }
 
 void _LR2SkinParser::SetSkinOption(int idx) {
@@ -301,6 +403,7 @@ void _LR2SkinParser::Clear() {
 	option_id_name.clear();
 	option_fn_name.clear();
 	parser_condition.clear();
+	prv_obj = 0;
 }
 
 // ------------------------ LR2Skin Element part ---------------------------

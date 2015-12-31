@@ -26,7 +26,7 @@ struct SkinDebugInfo {
 };
 
 class SkinElement {
-protected:
+public:
 	/*
 	 * linked image path
 	 * DO NOT RELEASE THIS OBJECT YOURSELF!!
@@ -45,6 +45,7 @@ protected:
 	 */
 	std::vector<ImageDST> dst_show;
 	std::vector<ImageDST> dst_hide;
+	bool hideaftershow;		// default: false
 
 	/*
 	 * common dst option
@@ -64,10 +65,13 @@ protected:
 	bool isShowing;
 
 	/*
-	 * child/parent
+	 * child/parent/metadata
 	 */
 	SkinElement *parent;
 	std::vector<SkinElement*> child;
+	std::string id;
+	std::vector<std::string> classnames;
+	std::string tagname;
 
 	SkinDebugInfo _debuginfo;	// contains debugging info
 public:
@@ -95,11 +99,14 @@ public:
 	 * You may need to get value of SRC/DST directly in some cases.
 	 */
 	std::vector<ImageDST>& GetDstArray();
-	std::vector<ImageDST>& GetSrcArray();
+	std::vector<ImageSRC>& GetSrcArray();
 
 	/*
 	 * General commands - call Show/Hide/Draw.
 	 */
+	void SetTag(const std::string& tagname);
+	void AddClassName(const std::string& classname);
+	void SetID(const std::string& id);
 	void Show();
 	void Hide();
 };
@@ -128,6 +135,23 @@ private:
 	SkinNumberElement combonumber;
 public:
 	SkinComboElement(SkinElement &combosprite, SkinNumberElement &combonumber);
+	void Show();
+	void Hide();
+};
+
+/*
+ * You can easily control groups
+ * by class SkinElementGroup()
+ */
+class SkinElementGroup {
+private:
+	std::vector<SkinElement*> elements;
+public:
+	std::vector<SkinElement*>& GetElements();
+	SkinElementGroup& GetElements(const std::string& id);
+	SkinElementGroup& GetElements(const std::string& classname);
+	void AddElement(SkinElement* e);
+
 	void Show();
 	void Hide();
 };
