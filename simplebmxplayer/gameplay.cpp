@@ -12,10 +12,9 @@
 namespace GamePlay {
 	// bms skin related
 	Skin playskin;
-	SkinRenderData skin_note[20];
-	SkinRenderData skin_lnstart[20];
-	SkinRenderData skin_lnbody[20];
-	SkinRenderData skin_lnend[20];
+	SkinResource playskin_resource;
+	SkinElementGroup general_draw;
+	SkinElement skin_note[20];
 
 	// bms play related
 	BmsBms bms;
@@ -66,6 +65,9 @@ void GamePlay::Init() {
 }
 
 bool GamePlay::LoadSkin(const char* path) {
+	SkinDST::On(33);		// autoplay on
+	SkinDST::On(41);		// BGA on
+
 	// load play skin
 	if (!playskin.Parse(path))
 	{
@@ -76,43 +78,23 @@ bool GamePlay::LoadSkin(const char* path) {
 		printf("Loaded Bms Skin Successfully\n");
 	}
 
-	// prefetch note render information
-	playskin.note[0].GetRenderData(skin_note[1]);
-	playskin.note[1].GetRenderData(skin_note[2]);
-	playskin.note[2].GetRenderData(skin_note[3]);
-	playskin.note[3].GetRenderData(skin_note[4]);
-	playskin.note[4].GetRenderData(skin_note[5]);
-	playskin.note[5].GetRenderData(skin_note[8]);
-	playskin.note[6].GetRenderData(skin_note[9]);
-	playskin.note[7].GetRenderData(skin_note[6]);
-	playskin.lnbody[0].GetRenderData(skin_lnbody[1]);
-	playskin.lnbody[1].GetRenderData(skin_lnbody[2]);
-	playskin.lnbody[2].GetRenderData(skin_lnbody[3]);
-	playskin.lnbody[3].GetRenderData(skin_lnbody[4]);
-	playskin.lnbody[4].GetRenderData(skin_lnbody[5]);
-	playskin.lnbody[5].GetRenderData(skin_lnbody[8]);
-	playskin.lnbody[6].GetRenderData(skin_lnbody[9]);
-	playskin.lnbody[7].GetRenderData(skin_lnbody[6]);
-	playskin.lnstart[0].GetRenderData(skin_lnstart[1]);
-	playskin.lnstart[1].GetRenderData(skin_lnstart[2]);
-	playskin.lnstart[2].GetRenderData(skin_lnstart[3]);
-	playskin.lnstart[3].GetRenderData(skin_lnstart[4]);
-	playskin.lnstart[4].GetRenderData(skin_lnstart[5]);
-	playskin.lnstart[5].GetRenderData(skin_lnstart[8]);
-	playskin.lnstart[6].GetRenderData(skin_lnstart[9]);
-	playskin.lnstart[7].GetRenderData(skin_lnstart[6]);
-	playskin.lnend[0].GetRenderData(skin_lnend[1]);
-	playskin.lnend[1].GetRenderData(skin_lnend[2]);
-	playskin.lnend[2].GetRenderData(skin_lnend[3]);
-	playskin.lnend[3].GetRenderData(skin_lnend[4]);
-	playskin.lnend[4].GetRenderData(skin_lnend[5]);
-	playskin.lnend[5].GetRenderData(skin_lnend[8]);
-	playskin.lnend[6].GetRenderData(skin_lnend[9]);
-	playskin.lnend[7].GetRenderData(skin_lnend[6]);
+	/// load skin resource
+	playskin_resource.LoadResource(playskin);
 
-	lanestart = -skin_note[1].dst.h;
-	laneheight = skin_note[1].dst.y;
-	laneheight += skin_note[1].dst.h;
+	// prefetch note render information
+	playskin.GetPlainElements(&general_draw);
+	skin_note[1] = *playskin.GetElementById("1PNote1");
+	skin_note[2] = *playskin.GetElementById("1PNote2");
+	skin_note[3] = *playskin.GetElementById("1PNote3");
+	skin_note[4] = *playskin.GetElementById("1PNote4");
+	skin_note[5] = *playskin.GetElementById("1PNote5");
+	skin_note[8] = *playskin.GetElementById("1PNote6");
+	skin_note[9] = *playskin.GetElementById("1PNote7");
+	skin_note[6] = *playskin.GetElementById("1PNoteSC");
+
+	lanestart = -skin_note[1].GetDstArray().back().h;
+	laneheight = skin_note[1].GetDstArray().back().y;
+	laneheight += skin_note[1].GetDstArray().back().h;
 
 	return true;
 }
@@ -157,9 +139,6 @@ bool GamePlay::LoadBmsResource() {
 	 * and Get Bms base directory
 	 */
 	std::wstring bms_dir = IO::get_filedir(bmspath) + PATH_SEPARATOR;
-	SkinDST::On(33);		// autoplay on
-	SkinDST::On(41);		// BGA on
-
 
 	// load WAV/BMP
 	for (unsigned int i = 0; i < BmsConst::WORD_MAX_COUNT; ++i) {
@@ -200,7 +179,6 @@ void GamePlay::Render() {
 	/*
 	 * preparation for skin/note rendering
 	 */
-	SkinRenderData renderdata;
 	SDL_Rect src, dest;
 	SDL_Rect src_lnbody, src_lnstart, src_lnend;
 

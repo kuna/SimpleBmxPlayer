@@ -6,6 +6,7 @@
 #include "image.h"
 #include "timer.h"
 #include "skinelement.h"
+#include "SDL\SDL_FontCache.h"
 #include <vector>
 #include <map>
 
@@ -30,7 +31,7 @@ public:
 	int type;
 
 	// skin headers
-	// (store data about resources, etc ...)
+	// (store some metadatas ...)
 	std::map<std::string, std::vector<std::string>> headers;
 
 	// skin resource list
@@ -44,9 +45,9 @@ public:
 	std::map<std::string, std::string> option_file;
 public:
 	// contains skin ID related information
-	std::vector<SkinElement*> skinelement_all;				// contains all skin elements (used for release)
-	std::map<std::string, SkinElement*> skinelement_id;		// 
-	std::map<std::string, std::vector<SkinElement*>> skinelement_class;	// 
+	SkinElementGroup skinelement_all;							// contains all skin elements (used for release)
+	std::map<std::string, SkinElementGroup> skinelement_id;		// 
+	std::map<std::string, SkinElementGroup> skinelement_class;	// 
 
 public:
 	Skin();
@@ -59,23 +60,20 @@ public:
 	void AddElement(SkinElement *e);
 
 	/*
-	 * Get SkinElement* by Element Id
-	 * if (e == 0), only check for existence
+	 * Get SkinElement by Element Id
+	 * nothing found, then return 0.
 	 */
-	bool GetElementById(char *id, SkinElement **e = 0);
+	SkinElement* GetElementById(char *id);
 	/*
 	* Get SkinElements by Element ClassName
 	* if (e == 0), only check for existence
 	*/
-	bool GetElementsByClassName(char *classname, std::vector<SkinElement*> *v);
+	bool GetElementsByClassName(char *classname, SkinElementGroup *v);
 	/*
 	 * Returns all elements that has no classname/id or else specific attribute
 	 * These objects should all be all drawn during all skin rendering.
 	 */
-	void GetPlainElements(std::vector<SkinElement*> *v);
-
-	std::vector<SkinElement*>::iterator begin();
-	std::vector<SkinElement*>::iterator end();
+	void GetPlainElements(SkinElementGroup *v);
 };
 
 /*
@@ -107,6 +105,7 @@ public:
 	bool IsOptionKeyExists(const std::string& key);
 	bool IsFileOptionKeyExists(const std::string& key);
 
+	void DefaultSkinOption(Skin &s);	// TODO
 	void LoadSkinOption(Skin &s);
 	void SaveSkinOption();
 
@@ -118,13 +117,17 @@ public:
 * stores current skin's resource
 */
 class SkinResource {
+private:
 	// skin resources
 	// (currently only supports Image type)
 	Image imgs[50];
+	FC_Font* fonts[50];
 public:
+	~SkinResource();
+	void Release();
 	void LoadResource(Skin &s);
 	Image* GetImageResource(int idx);
-	Image* GetImageResource(const std::string key);
+	FC_Font* GetFontResource(int idx);
 };
 
 
@@ -162,13 +165,14 @@ public:
 	 * General attributes (SRC)
 	 */
 	int divx, divy;
-	int looptime_src;
+	int cycle;
+	int rotatecenter;
 	
 	/*
 	 * General attributes (DST)
 	 * these options has data about drawing
 	 */
-	std::vector<ImageSRC> src;
+	ImageSRC src;
 	std::vector<ImageDST> dst;
 	int blend;
 	int usefilter;

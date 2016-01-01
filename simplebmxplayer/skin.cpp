@@ -280,84 +280,33 @@ SkinElement* _LR2SkinParser::ConvertToElement(_LR2SkinElement *e) {
 
 	SkinDebugInfo debugInfo;
 	debugInfo.line = current_line;
-	SkinElement* newobj = new SkinElement(true, debugInfo);
-	bool buildnewobj = true;
 
-	// fill information
-	// TODO ... add metadata
-	newobj->GetSrcArray() = e->src;
-	newobj->GetDstArray() = e->dst;
-	newobj->SetTag(e->objname);
-
-	// make classname from ops/timer
-	if (e->CheckOption(32)) {
-		newobj->AddClassName("AutoPlay");
-	}
-	if (e->CheckOption(33)) {
-		newobj->AddClassName("AutoPlayOff");
-	}
-	if (e->CheckOption(38)) {
-		newobj->AddClassName("ScoreGraphOff");
-	}
-	if (e->CheckOption(39)) {
-		newobj->AddClassName("ScoreGraph");
-	}
-	if (e->CheckOption(40)) {
-		newobj->AddClassName("BGAOff");
-	}
-	if (e->CheckOption(41)) {
-		newobj->AddClassName("BGAOn");
-	}
-	if (e->CheckOption(42)) {
-		newobj->AddClassName("1PGrooveGuage");
-	}
-	if (e->CheckOption(43)) {
-		newobj->AddClassName("1PHardGuage");
-	}
-	if (e->CheckOption(44)) {
-		newobj->AddClassName("2PGrooveGuage");
-	}
-	if (e->CheckOption(45)) {
-		newobj->AddClassName("2PHardGuage");
-	}
-	if (e->CheckOption(50)) {
-		newobj->AddClassName("Offline");
-	}
-	if (e->CheckOption(51)) {
-		newobj->AddClassName("Online");
-	}
-
-	if (e->timer == 40) {
-		newobj->AddClassName("OnReady");
-	}
-	else if (e->timer == 41) {
-		newobj->AddClassName("OnGameStart");
-	}
-	else if (e->timer == 46) {
-		newobj->AddClassName("On1PJudge");
-	}
-	else if (e->timer == 47) {
-		newobj->AddClassName("On2PJudge");
-	}
+	SkinElement* newobj = 0;
 
 	// find some specific tags
 	if (e->objname == "IMAGE") {
 		if (e->resource_id == 110) {
 			// I don't know what it is, it's called bga mask ...
 			// but is it necessary ..?
-			buildnewobj = false;
+			printf("[INFO] ignore BGA MASK option (%dL)", current_line);
+			return 0;
 		}
+
+		// create new object
+		newobj = new SkinElement(debugInfo);
 	}
 	else if (e->objname == "BGA") {
 		// we shouldn't set ID here because many BGA can be existed.
+		newobj = new SkinElement(debugInfo);
 		newobj->AddClassName("BGA");
 	}
 	else if (e->objname == "BARGRAPH") {
-		if (e->muki == 1)
-			newobj->SetTag("BARGRAPH_VERTICAL");
-		else
-			newobj->SetTag("BARGRAPH_HORIZON");
+		// create as graph element
+		newobj = new SkinGraphElement(debugInfo);
 
+		// set graph type
+		((SkinGraphElement*)newobj)->SetDirection(e->muki);
+		// set id
 		if (e->value_id == 12)
 			newobj->SetID("1PCurrentHighScoreGraph");
 		if (e->value_id == 13)
@@ -367,21 +316,365 @@ SkinElement* _LR2SkinParser::ConvertToElement(_LR2SkinElement *e) {
 		if (e->value_id == 15)
 			newobj->SetID("1PExScoreGraph");
 	}
+	else if (e->objname == "TEXT") {
+		// create as text element
+		newobj = new SkinTextElement(debugInfo);
+
+		// set text type
+		// TODO
+		((SkinTextElement*)newobj)->SetEditable(0);
+		((SkinTextElement*)newobj)->SetAlign(0);
+
+		// set id
+		if (e->value_id == 10) {
+			newobj->SetID("SongTitle");
+		}
+		else if (e->value_id == 11) {
+			newobj->SetID("SongSubTitle");
+		}
+		else if (e->value_id == 12) {
+			newobj->SetID("SongDisplayTitle");
+		}
+		else if (e->value_id == 13) {
+			newobj->SetID("SongGenre");
+		}
+		else if (e->value_id == 14) {
+			newobj->SetID("SongArtist");
+		}
+		else if (e->value_id == 15) {
+			newobj->SetID("SongSubArtist");
+		}
+		else if (e->value_id == 16) {
+			newobj->SetID("SongSearchTag");
+		}
+	}
 	else if (e->objname == "NUMBER")
 	{
+		// sprite number follows format, and only supports int. (likely depreciated)
+		// if you want more varisity then use Text.
+		if (e->divx <= 1 && e->divy <= 1) {
+			printf("[ERROR] Errorneous #XXX_NUMBER object (%dL). ignore.\n", current_line);
+			return 0;
+		}
+
+		// src will be automatically processed after this
+		// so we don't care here.
+
+		// now set ID.
 		if (e->value_id == 101)
 			newobj->SetID("1PExScore");
+		if (e->value_id == 105)
+			newobj->SetID("1PMaxCombo");
 		if (e->value_id == 151)
 			newobj->SetID("1PCurrentHighScore");
 		if (e->value_id == 151)
 			newobj->SetID("1PCurrentTargetScore");
+		if (e->value_id == 161)
+			newobj->SetID("RemainingMinute");
+		if (e->value_id == 162)
+			newobj->SetID("RemainingSecond");
 	}
+	else if (e->objname == "JUDGELINE") {
+		// It has not much meaning ...
+		newobj = new SkinElement(debugInfo);
+		newobj->SetID("1PJudgeLine");
+	}
+	else if (e->objname == "LINE") {
+		// TODO
+		newobj = new SkinElement(debugInfo);
+		newobj->SetID("1PBeatLine");
+	}
+	else if (e->objname == "NOTE") {
+		// TODO
+		newobj = new SkinElement(debugInfo);
+	}
+	else if (e->objname == "LN_END") {
+		// TODO
+		newobj = new SkinElement(debugInfo);
+	}
+	else if (e->objname == "LN_BODY") {
+		// TODO
+		newobj = new SkinElement(debugInfo);
+	}
+	else if (e->objname == "BUTTON") {
+		// TODO
+		newobj = new SkinButtonElement(debugInfo);
+	}
+	else if (e->objname == "SLIDER") {
+		// TODO
+		newobj = new SkinSliderElement(debugInfo);
 
-	if (buildnewobj) {
+		if (e->value_id == 1) {
+			// this is global slider, used in all select menu
+			newobj->SetID("SelectSlider");
+		}
+		else if (e->value_id == 2) {
+			newobj->SetID("1PHighSpeed");	// what does it means?
+		}
+		else if (e->value_id == 3) {
+			newobj->SetID("2PHighSpeed");	// what does it means?
+		}
+		else if (e->value_id == 4) {
+			/*
+			 * Sudden/Lift, all of them are setted by judgeline's xywh,
+			 * So we ignore all of the dst option of this slider.
+			 */
+			newobj->SetID("1PSudden");
+		}
+		else if (e->value_id == 5) {
+			newobj->SetID("2PSudden");
+		}
+		else if (e->value_id == 6) {
+			newobj->SetID("SongProgress");
+		}
+	}
+	// we won't support ONMOUSE object.
+
+	/*
+	 * we're figured out it's a valid object
+	 * and decided to make object solid
+	 */
+	if (newobj) {
+		// make classname from conditions
+		if (e->CheckOption(1)) {
+			// OnClose is called automatically before scene translation
+			// so, we don't add new SkinElement. instead, we add new OnClose Object.
+			// TODO
+		}
+		if (e->CheckOption(32)) {
+			newobj->AddClassName("AutoPlay");
+		}
+		if (e->CheckOption(33)) {
+			newobj->AddClassName("AutoPlayOff");
+		}
+		if (e->CheckOption(38)) {
+			newobj->AddClassName("ScoreGraphOff");
+		}
+		if (e->CheckOption(39)) {
+			newobj->AddClassName("ScoreGraph");
+		}
+		if (e->CheckOption(40)) {
+			newobj->AddClassName("BGAOff");
+		}
+		if (e->CheckOption(41)) {
+			newobj->AddClassName("BGAOn");
+		}
+		if (e->CheckOption(42)) {
+			newobj->AddClassName("1PGrooveGuage");
+		}
+		if (e->CheckOption(43)) {
+			newobj->AddClassName("1PHardGuage");
+		}
+		if (e->CheckOption(44)) {
+			newobj->AddClassName("2PGrooveGuage");
+		}
+		if (e->CheckOption(45)) {
+			newobj->AddClassName("2PHardGuage");
+		}
+		if (e->CheckOption(50)) {
+			newobj->AddClassName("Offline");
+		}
+		if (e->CheckOption(51)) {
+			newobj->AddClassName("Online");
+		}
+		if (e->CheckOption(80)) {
+			newobj->AddClassName("OnSongLoadingStart");
+		}
+		if (e->CheckOption(81)) {
+			// hide and show ...?
+			// TODO: add to previous object?
+			// Line 1500
+			newobj->AddClassName("OnSongLoadingEnd");
+		}
+		if (e->CheckOption(151)) {
+			newobj->AddClassName("Beginner");
+		}
+		if (e->CheckOption(152)) {
+			newobj->AddClassName("Normal");
+		}
+		if (e->CheckOption(153)) {
+			newobj->AddClassName("Hyper");
+		}
+		if (e->CheckOption(154)) {
+			newobj->AddClassName("Another");
+		}
+		if (e->CheckOption(155)) {
+			newobj->AddClassName("Insane");
+		}
+
+		// make classname from timer
+		if (e->timer == 40) {
+			newobj->AddClassName("OnReady");
+		}
+		else if (e->timer == 41) {
+			newobj->AddClassName("OnGameStart");
+		}
+		else if (e->timer == 46) {
+			newobj->AddClassName("On1PJudge");
+		}
+		else if (e->timer == 47) {
+			newobj->AddClassName("On2PJudge");
+		}
+		else if (e->timer == 100) {
+			newobj->AddClassName("On1PKeySCPress");
+		}
+		else if (e->timer == 101) {
+			newobj->AddClassName("On1PKey1Press");
+		}
+		else if (e->timer == 102) {
+			newobj->AddClassName("On1PKey2Press");
+		}
+		else if (e->timer == 103) {
+			newobj->AddClassName("On1PKey3Press");
+		}
+		else if (e->timer == 104) {
+			newobj->AddClassName("On1PKey4Press");
+		}
+		else if (e->timer == 105) {
+			newobj->AddClassName("On1PKey5Press");
+		}
+		else if (e->timer == 106) {
+			newobj->AddClassName("On1PKey6Press");
+		}
+		else if (e->timer == 107) {
+			newobj->AddClassName("On1PKey7Press");
+		}
+		else if (e->timer == 108) {
+			newobj->AddClassName("On1PKey8Press");
+		}
+		else if (e->timer == 109) {
+			newobj->AddClassName("On1PKey9Press");
+		}
+		else if (e->timer == 110) {
+			newobj->AddClassName("On2PKeySCPress");
+		}
+		else if (e->timer == 111) {
+			newobj->AddClassName("On2PKey1Press");
+		}
+		else if (e->timer == 112) {
+			newobj->AddClassName("On2PKey2Press");
+		}
+		else if (e->timer == 113) {
+			newobj->AddClassName("On2PKey3Press");
+		}
+		else if (e->timer == 114) {
+			newobj->AddClassName("On2PKey4Press");
+		}
+		else if (e->timer == 115) {
+			newobj->AddClassName("On2PKey5Press");
+		}
+		else if (e->timer == 116) {
+			newobj->AddClassName("On2PKey6Press");
+		}
+		else if (e->timer == 117) {
+			newobj->AddClassName("On2PKey7Press");
+		}
+		else if (e->timer == 118) {
+			newobj->AddClassName("On2PKey8Press");
+		}
+		else if (e->timer == 119) {
+			newobj->AddClassName("On2PKey9Press");
+		}
+		else if (e->timer == 120) {
+			newobj->AddClassName("On1PKeySCUp");
+		}
+		else if (e->timer == 121) {
+			newobj->AddClassName("On1PKey1Up");
+		}
+		else if (e->timer == 122) {
+			newobj->AddClassName("On1PKey2Up");
+		}
+		else if (e->timer == 123) {
+			newobj->AddClassName("On1PKey3Up");
+		}
+		else if (e->timer == 124) {
+			newobj->AddClassName("On1PKey4Up");
+		}
+		else if (e->timer == 125) {
+			newobj->AddClassName("On1PKey5Up");
+		}
+		else if (e->timer == 126) {
+			newobj->AddClassName("On1PKey6Up");
+		}
+		else if (e->timer == 127) {
+			newobj->AddClassName("On1PKey7Up");
+		}
+		else if (e->timer == 128) {
+			newobj->AddClassName("On1PKey8Up");
+		}
+		else if (e->timer == 129) {
+			newobj->AddClassName("On1PKey9Up");
+		}
+		else if (e->timer == 130) {
+			newobj->AddClassName("On2PKeySCUp");
+		}
+		else if (e->timer == 131) {
+			newobj->AddClassName("On2PKey1Up");
+		}
+		else if (e->timer == 132) {
+			newobj->AddClassName("On2PKey2Up");
+		}
+		else if (e->timer == 133) {
+			newobj->AddClassName("On2PKey3Up");
+		}
+		else if (e->timer == 134) {
+			newobj->AddClassName("On2PKey4Up");
+		}
+		else if (e->timer == 135) {
+			newobj->AddClassName("On2PKey5Up");
+		}
+		else if (e->timer == 136) {
+			newobj->AddClassName("On2PKey6Up");
+		}
+		else if (e->timer == 137) {
+			newobj->AddClassName("On2PKey7Up");
+		}
+		else if (e->timer == 138) {
+			newobj->AddClassName("On2PKey8Up");
+		}
+		else if (e->timer == 139) {
+			newobj->AddClassName("On2PKey9Up");
+		}
+		else if (e->timer == 140) {
+			newobj->AddClassName("OnBeat");
+		}
+
+		// fill information to object
+		newobj->GetDstArray() = e->dst;
+		newobj->SetTag(e->objname);
+		newobj->timerid_src = e->timer_src;
+		newobj->timerid_dst = e->timer;
+		newobj->looptime_dst = e->looptime;
+		newobj->blend = e->blend;
+		newobj->rotatecenter = e->rotatecenter;
+
+		// process src 
+		ImageSRC src;
+		if (e->divx <= 0) e->divx = 0;
+		if (e->divy <= 0) e->divy = 0;
+		if (e->divx > 1 || e->divx > 1) {
+			int i = 0;
+			int mulx = e->src.w / e->divx;
+			int muly = e->src.h / e->divy;
+			for (int _divy = 0; _divy < e->divx; _divy++) {
+				for (int _divx = 0; _divx < e->divx; _divx++) {
+					src = { i*e->cycle, mulx*_divx, muly*_divy, mulx, muly, ACC_LINEAR };
+					newobj->src.push_back(src);
+					i++;
+				}
+			}
+		}
+		else {
+			newobj->src.push_back(e->src);
+		}
+
 		return newobj;
 	}
 	else {
-		delete newobj;
+		/*
+		 * ohh... it's not a valid object...
+		 */
+		printf("[WARNING] Unknown Object(%s). ignored. (%dL)\n", e->objname, current_line);
 		return 0;
 	}
 }
@@ -415,14 +708,12 @@ void _LR2SkinElement::AddSrc(char **args) {
 		timer_src = INT(args[9]);
 		divx = INT(args[6]);
 		divy = INT(args[7]);
-		looptime_src = INT(args[8]);
+		cycle = INT(args[8]);	// cycle
 	}
 	src.x = INT(args[2]);
 	src.y = INT(args[3]);
 	src.w = INT(args[4]);
 	src.h = INT(args[5]);
-	src.div_x = INT(args[6]);
-	src.div_y = INT(args[7]);
 	this->src.push_back(src);
 }
 
@@ -478,72 +769,97 @@ void _LR2SkinElement::Clear() {
 
 // ----------------------- LR2Skin part end ------------------------
 
-void Skin::LoadResource() {
-	// search image part
-	std::vector<std::string> &imgs_header = headers["IMAGE"];
-	int i = 0;
-	for (auto it = imgs_header.begin(); it != imgs_header.end(); ++it) {
-		if (!imgs[i].Load((*it)))
-			printf("Failed to load skin resource - %s\n", (*it).c_str());
-		i++;
+bool Skin::Parse(const char *filepath) {
+	// TODO
+	printf("[WARNING] you called not implemented function!\n");
+	return false;
+}
+
+void Skin::AddElement(SkinElement *e) {
+	// copy object and add
+	SkinElement *ne = new SkinElement(*e);
+	skinelement_all.AddElement(ne);
+	// register id
+	if (skinelement_id.find(ne->id) == skinelement_id.end()) {
+		skinelement_id.insert(std::pair<std::string, SkinElementGroup>(ne->id, SkinElementGroup(ne)));
 	}
+	else {
+		skinelement_id[ne->id].AddElement(ne);
+	}
+	// register classname
+	for (auto it = ne->classnames.begin(); it != ne->classnames.end(); ++it) {
+		if (skinelement_class.find(*it) == skinelement_class.end()) {
+			skinelement_class.insert(std::pair<std::string, SkinElementGroup>(*it, SkinElementGroup(ne)));
+		}
+		else {
+			skinelement_class[*it].AddElement(ne);
+		}
+	}
+	// TODO: register child/parent.
 }
 
 void Skin::Release() {
-	for (int i = 0; i < 20; i++) {
-		imgs[i].Release();
+	skinelement_id.clear();
+	skinelement_class.clear();
+	for (auto it = skinelement_all.GetAllElements().begin(); it != skinelement_all.GetAllElements().end(); ++it) {
+		delete *it;
 	}
-	elements.clear();
-	headers.clear();
 }
 
 Skin::Skin() {}
 Skin::~Skin() { Release(); }
 
-std::vector<SkinElement>::iterator Skin::begin() {
-	return elements.begin();
-}
+// --------------------- Skin End --------------------------
 
-std::vector<SkinElement>::iterator Skin::end() {
-	return elements.end();
-}
-
-// -------------------------------------------------------
-
-
-void SkinElement::AddSrc(ImageSRC &src) {
-	this->src.push_back(src);
-}
-
-void SkinElement::AddDst(ImageDST &dst) {
-	this->dst.push_back(dst);
-}
-
-bool SkinElement::CheckOption() {
-	bool r = true;
-	for (int i = 0; i < 3 && r; i++) {
-		if (option[i] < 0) {
-			r = !SkinDST::Get(option[i]);
-		} 
-		else if (option[i] > 0) {
-			r = SkinDST::Get(option[i]);
-		}
+void SkinResource::LoadResource(Skin &s) {
+	// search image part
+	std::vector<std::string> &imgs_header = s.resource_imgs;
+	std::vector<SkinFont> &fonts_header = s.resource_fonts;
+	int i;
+	
+	// image load
+	i= 0;
+	for (auto it = imgs_header.begin(); it != imgs_header.end(); ++it) {
+		if (!imgs[i].Load((*it)))
+			printf("Failed to load skin resource - %s\n", (*it).c_str());
+		i++;
 	}
-	return r;
+	
+	// font load
+	// if cannot load font/texture, then load fallback font/texture
+	// TODO: texture
+
+	i = 0;
+	for (auto it = fonts_header.begin(); it != fonts_header.end(); ++it) {
+		if (!(fonts[i] = FC_CreateFont())) {
+			printf("Failed to initalize font.\n");
+			continue;
+		}
+		if (!FC_LoadFont(fonts[i], Game::GetRenderer(), (*it).filepath.c_str(),
+			(*it).fontsize, SDL_Color(), (*it).style)) {
+			printf("Failed to load font resource - %s\n", (*it).filepath.c_str());
+			FC_LoadFont(fonts[i], Game::GetRenderer(), "../skin/_default/NanumGothic.ttf",
+				(*it).fontsize, SDL_Color(), (*it).style);
+		}
+		i++;
+	}
 }
 
-// --------------------------------------------------------
-
-void ImageSRC::ToRect(SDL_Rect &r) {
-	r.x = x;
-	r.y = y;
-	r.w = w;
-	r.h = h;
+Image* SkinResource::GetImageResource(int idx) {
+	return &imgs[idx];
 }
 
-void ImageDST::ToRect(SDL_Rect &r) {
-	r.x = x;
-	r.y = y;
-	r.w = w;
-	r.h = h;
+void SkinResource::Release() {
+	for (int i = 0; i < 50; i++) if (imgs[i].IsLoaded()) {
+		imgs[i].Release();
+		if (fonts[i])
+			FC_FreeFont(fonts[i]);
+	}
 }
+
+SkinResource::~SkinResource() {
+	Release();
+}
+
+// ------------------ SkinResource End ---------------------
+
