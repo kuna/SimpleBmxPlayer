@@ -1,7 +1,7 @@
 #include "skinelement.h"
 
 void SkinElement::AddSrc(ImageSRC &src) {
-	this->src.push_back(src);
+	this->src = src;
 }
 
 void SkinElement::AddDst(ImageDST &dst) {

@@ -255,10 +255,9 @@ void _LR2SkinParser::ParseLR2SkinArgs(char **args) {
 					delete conv_element;
 				}
 			}
-			if (e->src.size() == 0) {
-				e->CopyOptions(parser_condition);
-				e->objname = args[0] + 4;
-			}
+
+			e->CopyOptions(parser_condition);
+			e->objname = args[0] + 4;
 			e->AddSrc(args + 1);
 		}
 		else if (CMD_STARTSWITH("#DST", 3)) {
@@ -437,15 +436,25 @@ SkinElement* _LR2SkinParser::ConvertToElement(_LR2SkinElement *e) {
 	if (newobj) {
 		// make classname from conditions
 		if (e->CheckOption(1)) {
-			// OnClose is called automatically before scene translation
-			// so, we don't add new SkinElement. instead, we add new OnClose Object.
-			// TODO
+			newobj->AddClassName("OnClose");
 		}
 		if (e->CheckOption(32)) {
 			newobj->AddClassName("AutoPlay");
 		}
 		if (e->CheckOption(33)) {
 			newobj->AddClassName("AutoPlayOff");
+		}
+		if (e->CheckOption(34)) {
+			newobj->AddClassName("GhostOff");
+		}
+		if (e->CheckOption(35)) {
+			newobj->AddClassName("GhostA");
+		}
+		if (e->CheckOption(36)) {
+			newobj->AddClassName("GhostB");
+		}
+		if (e->CheckOption(37)) {
+			newobj->AddClassName("GhostC");
 		}
 		if (e->CheckOption(38)) {
 			newobj->AddClassName("ScoreGraphOff");
@@ -471,6 +480,12 @@ SkinElement* _LR2SkinParser::ConvertToElement(_LR2SkinElement *e) {
 		if (e->CheckOption(45)) {
 			newobj->AddClassName("2PHardGuage");
 		}
+		if (e->CheckOption(46)) {
+			newobj->AddClassName("2PHardGuage");
+		}
+		if (e->CheckOption(47)) {
+			newobj->AddClassName("2PHardGuage");
+		}
 		if (e->CheckOption(50)) {
 			newobj->AddClassName("Offline");
 		}
@@ -481,9 +496,6 @@ SkinElement* _LR2SkinParser::ConvertToElement(_LR2SkinElement *e) {
 			newobj->AddClassName("OnSongLoadingStart");
 		}
 		if (e->CheckOption(81)) {
-			// hide and show ...?
-			// TODO: add to previous object?
-			// Line 1500
 			newobj->AddClassName("OnSongLoadingEnd");
 		}
 		if (e->CheckOption(151)) {
@@ -501,19 +513,170 @@ SkinElement* _LR2SkinParser::ConvertToElement(_LR2SkinElement *e) {
 		if (e->CheckOption(155)) {
 			newobj->AddClassName("Insane");
 		}
+		if (e->CheckOption(270)) {
+			newobj->AddClassName("On1PSuddenChange");
+		}
+		if (e->CheckOption(271)) {
+			newobj->AddClassName("On2PSuddenChange");
+		}
+		// TODO: Skin option effect - how can we process it?
 
 		// make classname from timer
-		if (e->timer == 40) {
+		if (e->timer == 2) {
+			newobj->AddClassName("OnClose");	// FADEOUT
+		}
+		else if (e->timer == 3) {
+			newobj->AddClassName("OnFail");	// Stage failed
+		}
+		else if (e->timer == 40) {
 			newobj->AddClassName("OnReady");
 		}
 		else if (e->timer == 41) {
 			newobj->AddClassName("OnGameStart");
+		}
+		else if (e->timer == 42) {
+			newobj->AddClassName("On1PGuageUp");
+		}
+		else if (e->timer == 43) {
+			newobj->AddClassName("On2PGuageUp");
+		}
+		else if (e->timer == 44) {
+			newobj->AddClassName("On1PGuageMax");
+		}
+		else if (e->timer == 45) {
+			newobj->AddClassName("On2PGuageMax");
 		}
 		else if (e->timer == 46) {
 			newobj->AddClassName("On1PJudge");
 		}
 		else if (e->timer == 47) {
 			newobj->AddClassName("On2PJudge");
+		}
+		else if (e->timer == 48) {
+			newobj->AddClassName("On1PFullCombo");
+		}
+		else if (e->timer == 49) {
+			newobj->AddClassName("On2PFullCombo");
+		}
+		else if (e->timer == 50) {
+			newobj->AddClassName("On1PKeySCGreat");
+		}
+		else if (e->timer == 51) {
+			newobj->AddClassName("On1PKey1Great");
+		}
+		else if (e->timer == 52) {
+			newobj->AddClassName("On1PKey2Great");
+		}
+		else if (e->timer == 53) {
+			newobj->AddClassName("On1PKey3Great");
+		}
+		else if (e->timer == 54) {
+			newobj->AddClassName("On1PKey4Great");
+		}
+		else if (e->timer == 55) {
+			newobj->AddClassName("On1PKey5Great");
+		}
+		else if (e->timer == 56) {
+			newobj->AddClassName("On1PKey6Great");
+		}
+		else if (e->timer == 57) {
+			newobj->AddClassName("On1PKey7Great");
+		}
+		else if (e->timer == 58) {
+			newobj->AddClassName("On1PKey8Great");
+		}
+		else if (e->timer == 59) {
+			newobj->AddClassName("On1PKey9Great");
+		}
+		else if (e->timer == 60) {
+			newobj->AddClassName("On2PKeySCGreat");
+		}
+		else if (e->timer == 61) {
+			newobj->AddClassName("On2PKey1Great");
+		}
+		else if (e->timer == 62) {
+			newobj->AddClassName("On2PKey2Great");
+		}
+		else if (e->timer == 63) {
+			newobj->AddClassName("On2PKey3Great");
+		}
+		else if (e->timer == 64) {
+			newobj->AddClassName("On2PKey4Great");
+		}
+		else if (e->timer == 65) {
+			newobj->AddClassName("On2PKey5Great");
+		}
+		else if (e->timer == 66) {
+			newobj->AddClassName("On2PKey6Great");
+		}
+		else if (e->timer == 67) {
+			newobj->AddClassName("On2PKey7Great");
+		}
+		else if (e->timer == 68) {
+			newobj->AddClassName("On2PKey8Great");
+		}
+		else if (e->timer == 69) {
+			newobj->AddClassName("On2PKey9Great");
+		}
+		else if (e->timer == 70) {
+			newobj->AddClassName("On1PKeySCHold");
+		}
+		else if (e->timer == 71) {
+			newobj->AddClassName("On1PKey1Hold");
+		}
+		else if (e->timer == 72) {
+			newobj->AddClassName("On1PKey2Hold");
+		}
+		else if (e->timer == 73) {
+			newobj->AddClassName("On1PKey3Hold");
+		}
+		else if (e->timer == 74) {
+			newobj->AddClassName("On1PKey4Hold");
+		}
+		else if (e->timer == 75) {
+			newobj->AddClassName("On1PKey5Hold");
+		}
+		else if (e->timer == 76) {
+			newobj->AddClassName("On1PKey6Hold");
+		}
+		else if (e->timer == 77) {
+			newobj->AddClassName("On1PKey7Hold");
+		}
+		else if (e->timer == 78) {
+			newobj->AddClassName("On1PKey8Hold");
+		}
+		else if (e->timer == 79) {
+			newobj->AddClassName("On1PKey9Hold");
+		}
+		else if (e->timer == 80) {
+			newobj->AddClassName("On2PKeySCHold");
+		}
+		else if (e->timer == 81) {
+			newobj->AddClassName("On2PKey1Hold");
+		}
+		else if (e->timer == 82) {
+			newobj->AddClassName("On2PKey2Hold");
+		}
+		else if (e->timer == 83) {
+			newobj->AddClassName("On2PKey3Hold");
+		}
+		else if (e->timer == 84) {
+			newobj->AddClassName("On2PKey4Hold");
+		}
+		else if (e->timer == 85) {
+			newobj->AddClassName("On2PKey5Hold");
+		}
+		else if (e->timer == 86) {
+			newobj->AddClassName("On2PKey6Hold");
+		}
+		else if (e->timer == 87) {
+			newobj->AddClassName("On2PKey7Hold");
+		}
+		else if (e->timer == 88) {
+			newobj->AddClassName("On2PKey8Hold");
+		}
+		else if (e->timer == 89) {
+			newobj->AddClassName("On2PKey9Hold");
 		}
 		else if (e->timer == 100) {
 			newobj->AddClassName("On1PKeySCPress");
@@ -642,31 +805,18 @@ SkinElement* _LR2SkinParser::ConvertToElement(_LR2SkinElement *e) {
 		// fill information to object
 		newobj->GetDstArray() = e->dst;
 		newobj->SetTag(e->objname);
-		newobj->timerid_src = e->timer_src;
-		newobj->timerid_dst = e->timer;
 		newobj->looptime_dst = e->looptime;
 		newobj->blend = e->blend;
 		newobj->rotatecenter = e->rotatecenter;
 
 		// process src 
 		ImageSRC src;
-		if (e->divx <= 0) e->divx = 0;
-		if (e->divy <= 0) e->divy = 0;
-		if (e->divx > 1 || e->divx > 1) {
-			int i = 0;
-			int mulx = e->src.w / e->divx;
-			int muly = e->src.h / e->divy;
-			for (int _divy = 0; _divy < e->divx; _divy++) {
-				for (int _divx = 0; _divx < e->divx; _divx++) {
-					src = { i*e->cycle, mulx*_divx, muly*_divy, mulx, muly, ACC_LINEAR };
-					newobj->src.push_back(src);
-					i++;
-				}
-			}
-		}
-		else {
-			newobj->src.push_back(e->src);
-		}
+		if (e->divx <= 0) e->divx = 1;
+		if (e->divy <= 0) e->divy = 1;
+		newobj->divx = e->divx;
+		newobj->divy = e->divy;
+		newobj->src = e->src;
+		newobj->cycle = e->cycle;
 
 		return newobj;
 	}
@@ -702,19 +852,16 @@ void _LR2SkinParser::Clear() {
 // ------------------------ LR2Skin Element part ---------------------------
 
 void _LR2SkinElement::AddSrc(char **args) {
-	ImageSRC src;
-	if (this->src.size() == 0) {
-		resource_id = INT(args[1]);
-		timer_src = INT(args[9]);
-		divx = INT(args[6]);
-		divy = INT(args[7]);
-		cycle = INT(args[8]);	// cycle
-	}
+	resource_id = INT(args[1]);
+	timer_src = INT(args[9]);
+	divx = INT(args[6]);
+	divy = INT(args[7]);
+	cycle = INT(args[8]);	// cycle
+
 	src.x = INT(args[2]);
 	src.y = INT(args[3]);
 	src.w = INT(args[4]);
 	src.h = INT(args[5]);
-	this->src.push_back(src);
 }
 
 void _LR2SkinElement::AddDst(char **args) {
@@ -745,7 +892,7 @@ void _LR2SkinElement::AddDst(char **args) {
 }
 
 bool _LR2SkinElement::IsValid() {
-	return (src.size() && dst.size());
+	return (dst.size() > 0);
 }
 
 bool _LR2SkinElement::CheckOption(int option) {
@@ -762,7 +909,7 @@ void _LR2SkinElement::CopyOptions(std::vector<int>& opts) {
 }
 
 void _LR2SkinElement::Clear() {
-	src.clear();
+	//src.clear();
 	dst.clear();
 	options.clear();
 }

@@ -21,8 +21,7 @@ namespace {
 	};
 }
 struct ImageSRC {
-	int time;
-	int x, y, w, h, acc;
+	int x, y, w, h;
 	void ToRect(SDL_Rect &r);
 };
 struct ImageDST {
@@ -57,28 +56,26 @@ public:
 	 * src keyframe
 	 * (also can be animated; which is not going to be used in most case)
 	 */
-	std::vector<ImageSRC> src;
-	int timerid_src;
+	ImageSRC src;
+	int divx, divy, cycle;
 
 	/*
 	 * animation keyframes used when show/hide
 	 * (if dst alpha==0, then it's automatically hide)
 	 */
-	std::vector<ImageDST> dst_show;
-	std::vector<ImageDST> dst_hide;
+	std::vector<ImageDST> dst;
 
 	/*
 	 * common dst option
 	 */
 	int blend;
-	int timerid_dst;
 	int looptime_dst;
 	int rotatecenter;
 
 	/*
 	 * timers
 	 */
-	Timer timer_src;
+	Timer timer_src;	// SRC uses basic timer, so we don't need this.
 	Timer timer_dst;
 	bool isShowing;
 
@@ -138,7 +135,7 @@ public:
 	void AddClassName(const std::string& classname);
 	void SetID(const std::string& id);
 	void Show();
-	void Hide();
+	void Hide();						// reverse time (current time -> 0)
 	void Set(int value);				// string have no effect in this case
 	void Set(const std::string& value);	// int will have no effect in this case
 	virtual void Draw(SDL_Renderer *renderer);
