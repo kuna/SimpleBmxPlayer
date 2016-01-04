@@ -3,12 +3,15 @@
 
 #pragma once
 
+#include "tinyxml2.h"
 #include "image.h"
 #include "timer.h"
 #include "skinelement.h"
 #include "SDL\SDL_FontCache.h"
 #include <vector>
 #include <map>
+
+using namespace tinyxml2;
 
 /*
  * Skin infos that we're using
@@ -37,6 +40,16 @@ public:
 	// skin resource list
 	std::vector<std::string> resource_imgs;
 	std::vector<SkinFont> resource_fonts;
+
+	// skin layout data is here
+	XMLDocument skinlayout;
+
+	// this is render tree
+	// 1. first draw parent itself
+	// 2. and parse from parent->child, 
+	// 3. if next node exists then draw them also
+	// 4. (how to process note/etc ? not image ?)
+	SkinRenderObject skinbody;
 
 	// skin options
 	// supports 2 kind of option - string, file

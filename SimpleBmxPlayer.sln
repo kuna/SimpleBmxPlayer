@@ -10,6 +10,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simplebmxplayer", "simplebm
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bmsbel", "..\bmsbel+\bmsbel\bmsbel.vcxproj", "{29707C0A-73E2-43DE-8F6D-F2DB06808D14}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skinparser", "skinparser\skinparser.vcxproj", "{6F9F2C5D-76B4-47EF-B03C-2BC7489F36EF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -24,6 +26,10 @@ Global
 		{29707C0A-73E2-43DE-8F6D-F2DB06808D14}.Debug|Win32.Build.0 = Debug|Win32
 		{29707C0A-73E2-43DE-8F6D-F2DB06808D14}.Release|Win32.ActiveCfg = Release|Win32
 		{29707C0A-73E2-43DE-8F6D-F2DB06808D14}.Release|Win32.Build.0 = Release|Win32
+		{6F9F2C5D-76B4-47EF-B03C-2BC7489F36EF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6F9F2C5D-76B4-47EF-B03C-2BC7489F36EF}.Debug|Win32.Build.0 = Debug|Win32
+		{6F9F2C5D-76B4-47EF-B03C-2BC7489F36EF}.Release|Win32.ActiveCfg = Release|Win32
+		{6F9F2C5D-76B4-47EF-B03C-2BC7489F36EF}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
