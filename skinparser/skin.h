@@ -117,6 +117,8 @@ private:
 	/*
 	 * under are a little macros
 	 */
+	int ProcessLane(XMLElement *src, int line);		// process commands about lane
+	int ProcessCombo(XMLElement *obj, int line);	// process commands about combo
 public:
 	// after parsing, this will automatically call Clear();
 	bool ParseLR2Skin(const char *filepath, Skin *s);

@@ -29,4 +29,9 @@ namespace SkinUtil {
 		bool IsAllClassSelected();
 		bool IsAnyClassSelected();
 	};
+
+	// general util
+	XMLElement* FindElement(XMLElement *parent, const char *elementname, XMLDocument* createIfNotExists = 0);
+	XMLElement* FindElementWithAttribute(XMLElement *parent, const char *elementname, const char *attribute, const char *value, XMLDocument* createIfNotExists = 0);
+	XMLElement* FindElementWithAttribute(XMLElement *parent, const char *elementname, const char *attribute, int value, XMLDocument* createIfNotExists = 0);
 }

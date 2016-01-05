@@ -66,4 +66,50 @@ namespace SkinUtil {
 			buffer[strlen(buffer) - 1] = 0;
 		return buffer;
 	}
+
+	XMLElement* FindElement(XMLElement *parent, const char* elementname, XMLDocument* createIfNotExists) {
+		_ASSERT(parent);
+		XMLElement *r = parent->FirstChildElement(elementname);
+		if (!r && createIfNotExists) {
+			r = createIfNotExists->NewElement(elementname);
+			parent->LinkEndChild(r);
+		}
+		return r;
+	}
+
+	XMLElement* FindElementWithAttribute(XMLElement *parent, const char* elementname, const char *attribute, const char *value, XMLDocument* createIfNotExists) {
+		_ASSERT(parent);
+		XMLElement *r = parent->FirstChildElement(elementname);
+		if (!r) {
+			if (createIfNotExists) {
+				r = createIfNotExists->NewElement(elementname);
+				r->SetAttribute(attribute, value);
+				parent->LinkEndChild(r);
+				return r;
+			}
+			else {
+				return 0;
+			}
+		}
+		XMLElement *s = r;
+		do {
+			if (r->Attribute(attribute, value))
+				return r;
+			r = r->NextSiblingElement(elementname);
+		} while (r != 0 && r != s);
+		// cannot found previous element
+		if (createIfNotExists) {
+			r = createIfNotExists->NewElement(elementname);
+			r->SetAttribute(attribute, value);
+			parent->LinkEndChild(r);
+			return r;
+		}
+		return 0;
+	}
+
+	XMLElement* FindElementWithAttribute(XMLElement *parent, const char* elementname, const char *attribute, int value, XMLDocument* createIfNotExists) {
+		char v[12];
+		itoa(value, v, 10);
+		return FindElementWithAttribute(parent, elementname, attribute, v, createIfNotExists);
+	}
 }

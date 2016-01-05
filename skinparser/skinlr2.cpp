@@ -279,10 +279,9 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	else if (CMD_IS("#FLIPRESULT")) {}
 	else if (CMD_IS("#TRANSCLOLR")) {}		// should we have to implement colorkey?
 	else if (CMD_STARTSWITH("#SRC_", 4)){
-		// we ignore #DST_XXX command because it's processed in #SRC_XXX command
-		// first, parse as basic argument (consider as default image)
-		XMLElement *obj = s->skinlayout.NewElement("Image");
-		// set SRC
+		// we parse #DST with #SRC.
+		// process SRC
+		XMLElement *obj;
 		XMLElement *src = s->skinlayout.NewElement("SRC");
 		src->SetAttribute("id", INT(args[2]));
 		src->SetAttribute("x", INT(args[3]));
@@ -301,211 +300,28 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		if (args[11]) sop1 = INT(args[11]);
 		if (args[12]) sop2 = INT(args[12]);
 		if (args[13]) sop3 = INT(args[13]);
+
+		/*
+		 * process NOT-general-objects first
+		 * these objects doesn't have #DST object directly
+		 * (bad-syntax >:( )
+		 */
+		// check for play area
+		int isPlayElement = ProcessLane(src, line);
+		if (isPlayElement) {
+			return isPlayElement;
+		}
+
+		/*
+		 * under these are objects which requires #DST object directly
+		 * (good syntax)
+		 * we have to make object now to parse #DST
+		 * and, if unable to figure out what this element is, it'll be considered as Image object.
+		 */
+		obj = s->skinlayout.NewElement("Image");
 		obj->LinkEndChild(src);
+		cur_e->LinkEndChild(obj);
 
-
-		// there's some objects need to be cautioned ...
-		// TODO
-		int objectid = INT(args[1]);
-		if (OBJTYPE_IS("NOTE")) {
-			XMLElement *playarea = cur_e->FirstChildElement("Play");
-			XMLElement *lane = playarea->FirstChildElement("Lane");
-			while (lane != 0) {
-				if (lane->IntAttribute("index") == objectid)
-					break;
-				lane = lane->NextSiblingElement("Lane");
-			}
-			if (!lane) {
-				lane = s->skinlayout.NewElement("Lane");
-				lane->SetAttribute("index", objectid);
-				playarea->FirstChildElement("Lane");
-				playarea->LinkEndChild(lane);
-			}
-			// add obj to here and release useless one
-			src->SetName("SRC_NOTE");
-			lane->LinkEndChild(src);
-			obj->DeleteChildren();
-			s->skinlayout.DeleteNode(obj);
-			return line + 1;
-		}
-		else if (OBJTYPE_IS("LN_END")) {
-			XMLElement *playarea = cur_e->FirstChildElement("Play");
-			XMLElement *lane = playarea->FirstChildElement("Lane");
-			while (lane != 0) {
-				if (lane->IntAttribute("index") == objectid)
-					break;
-				lane = lane->NextSiblingElement("Lane");
-			}
-			// add obj to here and release useless one
-			src->SetName("SRC_LN_END");
-			lane->LinkEndChild(src);
-			obj->DeleteChildren();
-			s->skinlayout.DeleteNode(obj);
-			return line + 1;
-		}
-		else if (OBJTYPE_IS("LN_BODY")) {
-			XMLElement *playarea = cur_e->FirstChildElement("Play");
-			XMLElement *lane = playarea->FirstChildElement("Lane");
-			while (lane != 0) {
-				if (lane->IntAttribute("index") == objectid)
-					break;
-				lane = lane->NextSiblingElement("Lane");
-			}
-			// add obj to here and release useless one
-			src->SetName("SRC_LN_BODY");
-			lane->LinkEndChild(src);
-			obj->DeleteChildren();
-			s->skinlayout.DeleteNode(obj);
-			return line + 1;
-		}
-		else if (OBJTYPE_IS("LN_START")) {
-			XMLElement *playarea = cur_e->FirstChildElement("Play");
-			XMLElement *lane = playarea->FirstChildElement("Lane");
-			while (lane != 0) {
-				if (lane->IntAttribute("index") == objectid)
-					break;
-				lane = lane->NextSiblingElement("Lane");
-			}
-			// add obj to here and release useless one
-			src->SetName("SRC_LN_END");
-			lane->LinkEndChild(src);
-			obj->DeleteChildren();
-			s->skinlayout.DeleteNode(obj);
-			return line + 1;
-		}
-		else if (OBJTYPE_IS("MINE")) {
-			XMLElement *playarea = cur_e->FirstChildElement("Play");
-			XMLElement *lane = playarea->FirstChildElement("Lane");
-			while (lane != 0) {
-				if (lane->IntAttribute("index") == objectid)
-					break;
-				lane = lane->NextSiblingElement("Lane");
-			}
-			// add obj to here and release useless one
-			src->SetName("SRC_MINE");
-			lane->LinkEndChild(src);
-			obj->DeleteChildren();
-			s->skinlayout.DeleteNode(obj);
-			return line + 1;
-		}
-		if (OBJTYPE_IS("AUTO_NOTE")) {
-			XMLElement *playarea = cur_e->FirstChildElement("Play");
-			XMLElement *lane = playarea->FirstChildElement("Lane");
-			while (lane != 0) {
-				if (lane->IntAttribute("index") == objectid)
-					break;
-				lane = lane->NextSiblingElement("Lane");
-			}
-			// add obj to here and release useless one
-			src->SetName("SRC_AUTO_NOTE");
-			lane->LinkEndChild(src);
-			obj->DeleteChildren();
-			s->skinlayout.DeleteNode(obj);
-			return line + 1;
-		}
-		else if (OBJTYPE_IS("AUTO_LN_END")) {
-			XMLElement *playarea = cur_e->FirstChildElement("Play");
-			XMLElement *lane = playarea->FirstChildElement("Lane");
-			while (lane != 0) {
-				if (lane->IntAttribute("index") == objectid)
-					break;
-				lane = lane->NextSiblingElement("Lane");
-			}
-			// add obj to here and release useless one
-			src->SetName("SRC_AUTO_LN_END");
-			lane->LinkEndChild(src);
-			obj->DeleteChildren();
-			s->skinlayout.DeleteNode(obj);
-			return line + 1;
-		}
-		else if (OBJTYPE_IS("AUTO_LN_BODY")) {
-			XMLElement *playarea = cur_e->FirstChildElement("Play");
-			XMLElement *lane = playarea->FirstChildElement("Lane");
-			while (lane != 0) {
-				if (lane->IntAttribute("index") == objectid)
-					break;
-				lane = lane->NextSiblingElement("Lane");
-			}
-			// add obj to here and release useless one
-			src->SetName("SRC_AUTO_LN_BODY");
-			lane->LinkEndChild(src);
-			obj->DeleteChildren();
-			s->skinlayout.DeleteNode(obj);
-			return line + 1;
-		}
-		else if (OBJTYPE_IS("AUTO_LN_START")) {
-			XMLElement *playarea = cur_e->FirstChildElement("Play");
-			XMLElement *lane = playarea->FirstChildElement("Lane");
-			while (lane != 0) {
-				if (lane->IntAttribute("index") == objectid)
-					break;
-				lane = lane->NextSiblingElement("Lane");
-			}
-			// add obj to here and release useless one
-			src->SetName("SRC_AUTO_LN_START");
-			lane->LinkEndChild(src);
-			obj->DeleteChildren();
-			s->skinlayout.DeleteNode(obj);
-			return line + 1;
-		}
-		else if (OBJTYPE_IS("AUTO_MINE")) {
-			XMLElement *playarea = cur_e->FirstChildElement("Play");
-			XMLElement *lane = playarea->FirstChildElement("Lane");
-			while (lane != 0) {
-				if (lane->IntAttribute("index") == objectid)
-					break;
-				lane = lane->NextSiblingElement("Lane");
-			}
-			// add obj to here and release useless one
-			src->SetName("SRC_AUTO_MINE");
-			lane->LinkEndChild(src);
-			obj->DeleteChildren();
-			s->skinlayout.DeleteNode(obj);
-			return line + 1;
-		}
-		else if (OBJTYPE_IS("LINE")) {
-			XMLElement *playarea = cur_e->FirstChildElement("Play");
-			if (!playarea) {
-				playarea = s->skinlayout.NewElement("Play");
-				cur_e->LinkEndChild(playarea);
-			}
-			// add obj to here and release useless one
-			src->SetName("SRC_LINE");
-			playarea->LinkEndChild(src);
-			obj->DeleteChildren();
-			s->skinlayout.DeleteNode(obj);
-			return line + 1;
-		}
-		else if (OBJTYPE_IS("GROOVEGAUGE")) {
-			s->skinlayout.DeleteNode(obj);
-			return line + 1;
-		}
-		else if (OBJTYPE_IS("JUDGELINE")) {
-			XMLElement *playarea = cur_e->FirstChildElement("Play");
-			if (!playarea) {
-				playarea = s->skinlayout.NewElement("Play");
-				playarea->SetAttribute("side", objectid);
-				cur_e->LinkEndChild(playarea);
-			}
-			// find DST object to set Lane attribute
-			for (int _l = line + 1; _l < line_total; _l++) {
-				if (line_args[_l][0] && strcmp(line_args[_l][0], "#DST_JUDGELINE") == 0 && INT(line_args[_l][1]) == objectid) {
-					playarea->SetAttribute("x", INT(line_args[_l][3]));
-					playarea->SetAttribute("y", 0);
-					playarea->SetAttribute("w", INT(line_args[_l][5]));
-					playarea->SetAttribute("h", INT(line_args[_l][4]));
-					break;
-				}
-			}
-			// add obj to here and release useless one
-			src->SetName("SRC_JUDGELINE");
-			playarea->LinkEndChild(src);
-			obj->DeleteChildren();
-			s->skinlayout.DeleteNode(obj);
-			return line + 1;
-		}
-
-		// parse DST object
 		int looptime = 0, blend = 0, timer = 0, rotatecenter = -1;
 		int op1 = 0, op2 = 0, op3 = 0;
 		int nl;
@@ -543,12 +359,12 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 				dst->SetAttribute("loop", true);
 			obj->LinkEndChild(dst);
 		}
-
 		// set common draw attribute
 		if (blend > 1)
 			obj->SetAttribute("blend", blend);
 		if (rotatecenter > 0)
-			obj->SetAttribute("rotatecenter", rotatecenter);
+			obj->SetAttribute(
+			"rotatecenter", rotatecenter);
 		if (TranslateTimer(timer))
 			obj->SetAttribute("timer", TranslateTimer(timer));
 		// before register, check loop statement (is loop is in last object, it isn't necessary)
@@ -556,80 +372,22 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			obj->LastChild()->ToElement()->DeleteAttribute("loop");
 		}
 		
-		// reset args
-		args = line_args[line];
 
 		/*
-		 * These objects are same as img object
+		 * Check out for some special object (which requires #DST object)
+		 * COMMENT: most of them behaves like #IMAGE object.
 		 */
-		if (OBJTYPE_IS("NOWJUDGE_1P")) {
-			XMLElement *playcombo = cur_e->FirstChildElement("PlayCombo");
-			while (playcombo != 0) {
-				if (playcombo->IntAttribute("side") == 0)
-					break;
-				playcombo = cur_e->NextSiblingElement("PlayCombo");
-			}
-			if (!playcombo) {
-				playcombo = s->skinlayout.NewElement("PlayCombo");
-				cur_e->LinkEndChild(playcombo);
-			}
-			playcombo->SetAttribute("side", 0);
-			obj->SetName("NowJudge");
-			obj->SetAttribute("level", objectid);
-			playcombo->LinkEndChild(obj);
+		// reset arguments to figure out about object
+		args = line_args[line];
+		int objectid = INT(args[1]);
+
+		if (OBJTYPE_IS("GROOVEGAUGE")) {
 			return line + 1;
 		}
-		else if (OBJTYPE_IS("NOWCOMBO_1P")) {
-			XMLElement *playcombo = cur_e->FirstChildElement("PlayCombo");
-			while (playcombo != 0) {
-				if (playcombo->IntAttribute("side") == 0)
-					break;
-				playcombo = cur_e->NextSiblingElement("PlayCombo");
-			}
-			if (!playcombo) {
-				playcombo = s->skinlayout.NewElement("PlayCombo");
-				cur_e->LinkEndChild(playcombo);
-			}
-			playcombo->SetAttribute("side", 0);
-			obj->SetName("NowCombo");
-			obj->SetAttribute("level", objectid);
-			playcombo->LinkEndChild(obj);
-			return line + 1;
-		}
-		else if (OBJTYPE_IS("NOWJUDGE_2P")) {
-			XMLElement *playcombo = cur_e->FirstChildElement("PlayCombo");
-			while (playcombo != 0) {
-				if (playcombo->IntAttribute("side") == 1)
-					break;
-				playcombo = cur_e->NextSiblingElement("PlayCombo");
-			}
-			if (!playcombo) {
-				playcombo = s->skinlayout.NewElement("PlayCombo");
-				cur_e->LinkEndChild(playcombo);
-			}
-			playcombo->SetAttribute("side", 1);
-			obj->SetName("NowJudge");
-			obj->SetAttribute("level", objectid);
-			playcombo->LinkEndChild(obj);
-			return line + 1;
-		}
-		else if (OBJTYPE_IS("NOWCOMBO_2P")) {
-			XMLElement *playcombo = cur_e->FirstChildElement("PlayCombo");
-			while (playcombo != 0) {
-				if (playcombo->IntAttribute("side") == 1)
-					break;
-				playcombo = cur_e->NextSiblingElement("PlayCombo");
-			}
-			if (!playcombo) {
-				playcombo = s->skinlayout.NewElement("PlayCombo");
-				cur_e->LinkEndChild(playcombo);
-			}
-			playcombo->SetAttribute("side", 1);
-			obj->SetName("NowCombo");
-			obj->SetAttribute("level", objectid);
-			playcombo->LinkEndChild(obj);
-			return line + 1;
-		}
+
+		int isComboElement = ProcessCombo(obj, line);
+		if (isComboElement)
+			return isComboElement;
 
 		// select menu part
 		if (OBJTYPE_IS("BAR_BODY")) {
@@ -651,8 +409,9 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		else if (OBJTYPE_IS("BAR_RANK")) {
 		}
 
-		// under these are general individual object, so register object
-		cur_e->LinkEndChild(obj);
+		/* 
+		 * under these are general individual object
+		 */
 
 		if (OBJTYPE_IS("IMAGE")) {
 			// set class & common option
@@ -732,6 +491,161 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 
 	// parse next line
 	return line + 1;
+}
+
+/*
+ * process commands about lane
+ * if not lane, return 0
+ * if lane, return next parsed line
+ */
+int _LR2SkinParser::ProcessLane(XMLElement *src, int line) {
+	char **args = line_args[line];
+	int objectid = INT(args[1]);
+
+	if (OBJTYPE_IS("NOTE")) {
+		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		// add src to here
+		src->SetName("SRC_NOTE");
+		lane->LinkEndChild(src);
+		return line + 1;
+	}
+	else if (OBJTYPE_IS("LN_END")) {
+		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		// add src to here
+		src->SetName("SRC_LN_END");
+		lane->LinkEndChild(src);
+		return line + 1;
+	}
+	else if (OBJTYPE_IS("LN_BODY")) {
+		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		// add src to here
+		src->SetName("SRC_LN_BODY");
+		lane->LinkEndChild(src);
+		return line + 1;
+	}
+	else if (OBJTYPE_IS("LN_START")) {
+		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		// add src to here
+		src->SetName("SRC_LN_END");
+		lane->LinkEndChild(src);
+		return line + 1;
+	}
+	else if (OBJTYPE_IS("MINE")) {
+		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		// add src to here
+		src->SetName("SRC_MINE");
+		lane->LinkEndChild(src);
+		return line + 1;
+	}
+	if (OBJTYPE_IS("AUTO_NOTE")) {
+		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		// add src to here
+		src->SetName("SRC_AUTO_NOTE");
+		lane->LinkEndChild(src);
+		return line + 1;
+	}
+	else if (OBJTYPE_IS("AUTO_LN_END")) {
+		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		// add src to here
+		src->SetName("SRC_AUTO_LN_END");
+		lane->LinkEndChild(src);
+		return line + 1;
+	}
+	else if (OBJTYPE_IS("AUTO_LN_BODY")) {
+		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		// add src to here
+		src->SetName("SRC_AUTO_LN_BODY");
+		lane->LinkEndChild(src);
+		return line + 1;
+	}
+	else if (OBJTYPE_IS("AUTO_LN_START")) {
+		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		// add src to here
+		src->SetName("SRC_AUTO_LN_START");
+		lane->LinkEndChild(src);
+		return line + 1;
+	}
+	else if (OBJTYPE_IS("AUTO_MINE")) {
+		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		// add src to here
+		src->SetName("SRC_AUTO_MINE");
+		lane->LinkEndChild(src);
+		return line + 1;
+	}
+	else if (OBJTYPE_IS("LINE")) {
+		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid, &s->skinlayout);
+		// add src to here
+		src->SetName("SRC_LINE");
+		playarea->LinkEndChild(src);
+		return line + 1;
+	}
+	else if (OBJTYPE_IS("JUDGELINE")) {
+		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid, &s->skinlayout);
+		// find DST object to set Lane attribute
+		for (int _l = line + 1; _l < line_total; _l++) {
+			if (line_args[_l][0] && strcmp(line_args[_l][0], "#DST_JUDGELINE") == 0 && INT(line_args[_l][1]) == objectid) {
+				playarea->SetAttribute("x", INT(line_args[_l][3]));
+				playarea->SetAttribute("y", 0);
+				playarea->SetAttribute("w", INT(line_args[_l][5]));
+				playarea->SetAttribute("h", INT(line_args[_l][4]));
+				break;
+			}
+		}
+		// add src to here
+		src->SetName("SRC_JUDGELINE");
+		playarea->LinkEndChild(src);
+		return line + 1;
+	}
+
+	// not an play object
+	return 0;
+}
+
+int _LR2SkinParser::ProcessCombo(XMLElement *obj, int line) {
+	char **args = line_args[line];
+	int objectid = INT(args[1]);
+
+	if (OBJTYPE_IS("NOWJUDGE_1P")) {
+		XMLElement *playcombo = FindElementWithAttribute(cur_e, "PlayCombo", "side", 0, &s->skinlayout);
+		obj->SetName("NowJudge");
+		obj->SetAttribute("level", objectid);
+		playcombo->LinkEndChild(obj);
+		return line + 1;
+	}
+	else if (OBJTYPE_IS("NOWCOMBO_1P")) {
+		XMLElement *playcombo = FindElementWithAttribute(cur_e, "PlayCombo", "side", 0, &s->skinlayout);
+		obj->SetName("NowCombo");
+		obj->SetAttribute("level", objectid);
+		playcombo->LinkEndChild(obj);
+		return line + 1;
+	}
+	else if (OBJTYPE_IS("NOWJUDGE_2P")) {
+		XMLElement *playcombo = FindElementWithAttribute(cur_e, "PlayCombo", "side", 1, &s->skinlayout);
+		obj->SetName("NowJudge");
+		obj->SetAttribute("level", objectid);
+		playcombo->LinkEndChild(obj);
+		return line + 1;
+	}
+	else if (OBJTYPE_IS("NOWCOMBO_2P")) {
+		XMLElement *playcombo = FindElementWithAttribute(cur_e, "PlayCombo", "side", 1, &s->skinlayout);
+		obj->SetName("NowCombo");
+		obj->SetAttribute("level", objectid);
+		playcombo->LinkEndChild(obj);
+		return line + 1;
+	}
+
+	// not a combo object
+	return 0;
 }
 
 /*
