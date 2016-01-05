@@ -117,8 +117,10 @@ private:
 	/*
 	 * under are a little macros
 	 */
-	int ProcessLane(XMLElement *src, int line);		// process commands about lane
-	int ProcessCombo(XMLElement *obj, int line);	// process commands about combo
+	int ProcessLane(XMLElement *src, int line);			// process commands about lane
+	int ProcessCombo(XMLElement *obj, int line);		// process commands about combo
+	int ProcessSelectBar(XMLElement *obj, int line);	// process commands about select bar
+	// pacemaker: use default XML
 public:
 	// after parsing, this will automatically call Clear();
 	bool ParseLR2Skin(const char *filepath, Skin *s);

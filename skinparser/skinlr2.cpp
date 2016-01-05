@@ -381,10 +381,15 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		args = line_args[line];
 		int objectid = INT(args[1]);
 
+		// groovegauge
 		if (OBJTYPE_IS("GROOVEGAUGE")) {
+			obj->SetName("LifeGraph");
+			obj->SetAttribute("player", objectid);
+			obj->SetAttribute("valueid", "Life");
 			return line + 1;
 		}
 
+		// combo menu
 		int isComboElement = ProcessCombo(obj, line);
 		if (isComboElement)
 			return isComboElement;
@@ -412,7 +417,6 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		/* 
 		 * under these are general individual object
 		 */
-
 		if (OBJTYPE_IS("IMAGE")) {
 			// set class & common option
 			// set DST & common draw attribute
