@@ -120,6 +120,7 @@ private:
 	int ProcessLane(XMLElement *src, int line);			// process commands about lane
 	int ProcessCombo(XMLElement *obj, int line);		// process commands about combo
 	int ProcessSelectBar(XMLElement *obj, int line);	// process commands about select bar
+	int ProcessSelectBar_DST(int line);					// process commands about select bar
 	// pacemaker: use default XML
 public:
 	// after parsing, this will automatically call Clear();

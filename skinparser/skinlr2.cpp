@@ -320,9 +320,8 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		 */
 		obj = s->skinlayout.NewElement("Image");
 		obj->LinkEndChild(src);
-		cur_e->LinkEndChild(obj);
 
-		int looptime = 0, blend = 0, timer = 0, rotatecenter = -1;
+		int looptime = 0, blend = 0, timer = 0, rotatecenter = -1, acc = 0;
 		int op1 = 0, op2 = 0, op3 = 0;
 		int nl;
 		for (nl = line + 1; nl < line_total; nl++) {
@@ -336,6 +335,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 				blend = INT(args[12]);
 				rotatecenter = INT(args[15]);
 				timer = INT(args[17]);
+				acc = INT(args[7]);
 				if (args[18]) op1 = INT(args[18]);
 				if (args[19]) op2 = INT(args[19]);
 				if (args[20]) op3 = INT(args[20]);
@@ -360,6 +360,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			obj->LinkEndChild(dst);
 		}
 		// set common draw attribute
+		obj->SetAttribute("acc", acc);
 		if (blend > 1)
 			obj->SetAttribute("blend", blend);
 		if (rotatecenter > 0)
@@ -371,6 +372,34 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		if (obj->LastChild()->ToElement()->Attribute("loop")) {
 			obj->LastChild()->ToElement()->DeleteAttribute("loop");
 		}
+
+
+		/*
+		* If object is select screen panel dependent(timer/op code 2x),
+		* then add object to there (ease of control)
+		* TODO: take care of 3x objects (OnPanelClose)
+		*/
+#define CHECK_PANEL(v) (op1 == (v) || op2 == (v) || op3 == (v) || timer == (v))
+		if (CHECK_PANEL(21))
+			FindElementWithAttribute(cur_e, "Group", "id", "panel1", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(22))
+			FindElementWithAttribute(cur_e, "Group", "id", "panel2", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(23))
+			FindElementWithAttribute(cur_e, "Group", "id", "panel3", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(24))
+			FindElementWithAttribute(cur_e, "Group", "id", "panel4", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(25))
+			FindElementWithAttribute(cur_e, "Group", "id", "panel5", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(26))
+			FindElementWithAttribute(cur_e, "Group", "id", "panel6", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(27))
+			FindElementWithAttribute(cur_e, "Group", "id", "panel7", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(28))
+			FindElementWithAttribute(cur_e, "Group", "id", "panel8", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(29))
+			FindElementWithAttribute(cur_e, "Group", "id", "panel9", &s->skinlayout)->LinkEndChild(obj);
+		else
+			cur_e->LinkEndChild(obj);
 		
 
 		/*
@@ -389,30 +418,15 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			return line + 1;
 		}
 
-		// combo menu
+		// combo (play)
 		int isComboElement = ProcessCombo(obj, line);
 		if (isComboElement)
 			return isComboElement;
 
-		// select menu part
-		if (OBJTYPE_IS("BAR_BODY")) {
-		}
-		else if (OBJTYPE_IS("BAR_FLASH")) {
-		}
-		else if (OBJTYPE_IS("BAR_TITLE")) {
-		}
-		else if (OBJTYPE_IS("BAR_LEVEL")) {
-		}
-		else if (OBJTYPE_IS("BAR_LAMP")) {
-		}
-		else if (OBJTYPE_IS("BAR_MY_LAMP")) {
-		}
-		else if (OBJTYPE_IS("BAR_RIVAL_LAMP")) {
-		}
-		else if (OBJTYPE_IS("BAR_RIVAL")) {
-		}
-		else if (OBJTYPE_IS("BAR_RANK")) {
-		}
+		// select menu (select)
+		int isSelectBar = ProcessSelectBar(obj, line);
+		if (isSelectBar)
+			return isSelectBar;
 
 		/* 
 		 * under these are general individual object
@@ -469,6 +483,10 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			// TODO: onhover ...?
 			obj->SetName("Button");
 		}
+		else if (OBJTYPE_IS("ONMOUSE")) {
+			// depreciated/ignore
+			printf("#XXX_ONMOUSE command is depreciated, ignore. (%dL) \n", line);
+		}
 		else {
 			printf("Unknown General Object (%s), consider as IMAGE. (%dL)\n", args[0] + 5, line_position[line]);
 		}
@@ -478,20 +496,25 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	}
 	else if (CMD_STARTSWITH("#DST_BAR_BODY", 13)) {
 		// select menu part
-		if (CMD_IS("#DST_BAR_BODY_ON")) {
-
-		}
-		else if (CMD_IS("#DST_BAR_BODY_OFF")) {
-
-		}
+		int isProcessSelectBarDST = ProcessSelectBar_DST(line);
+		if (isProcessSelectBarDST)
+			return isProcessSelectBarDST;
 	}
 	else if (CMD_STARTSWITH("#DST_", 5)) {
 		// just ignore
 	}
+	else if (CMD_IS("#BAR_CENTER")) {
+		// set center and property ...
+		XMLElement *selectmenu = FindElement(cur_e, "SelectMenu");
+		selectmenu->SetAttribute("center", line_args[line][1]);
+	}
+	else if (CMD_IS("#BAR_AVAILABLE")) {
+		// depreciated, not parse
+		printf("#BAR_AVAILABLE - depreciated, Ignore.\n");
+	}
 	else {
 		printf("Unknown Type: %s (%dL) - Ignore.\n", args[0], line_position[line]);
 	}
-#undef CMD_IS
 
 	// parse next line
 	return line + 1;
@@ -650,6 +673,100 @@ int _LR2SkinParser::ProcessCombo(XMLElement *obj, int line) {
 
 	// not a combo object
 	return 0;
+}
+
+int _LR2SkinParser::ProcessSelectBar(XMLElement *obj, int line) {
+	char **args = line_args[line];
+	int objectid = INT(args[1]);
+
+	// select menu part
+	if (CMD_STARTSWITH("#SRC_BAR", 8)) {
+		XMLElement *selectmenu = FindElement(cur_e, "SelectMenu", &s->skinlayout);
+		if (OBJTYPE_IS("BAR_BODY")) {
+			// only register SRC object
+			XMLElement *src = obj->FirstChildElement("SRC");
+			src->SetName("SRC_BODY");
+			src->SetAttribute("type", objectid);	// foldertype
+			selectmenu->LinkEndChild(src);
+			// should remove parent object
+			obj->DeleteChildren();
+			s->skinlayout.DeleteNode(obj);
+		}
+		else if (OBJTYPE_IS("BAR_FLASH")) {
+			obj->SetName("Flash");
+			selectmenu->LinkEndChild(obj);
+		}
+		else if (OBJTYPE_IS("BAR_TITLE")) {
+			obj->SetName("Title");
+			obj->SetAttribute("type", objectid);	// new: 1
+			selectmenu->LinkEndChild(obj);
+		}
+		else if (OBJTYPE_IS("BAR_LEVEL")) {
+			obj->SetName("Level");
+			obj->SetAttribute("type", objectid);	// difficulty
+			selectmenu->LinkEndChild(obj);
+		}
+		else if (OBJTYPE_IS("BAR_LAMP")) {
+			obj->SetName("Lamp");
+			obj->SetAttribute("type", objectid);	// clear
+			selectmenu->LinkEndChild(obj);
+		}
+		else if (OBJTYPE_IS("BAR_MY_LAMP")) {
+			obj->SetName("MyLamp");
+			obj->SetAttribute("type", objectid);	// clear
+			selectmenu->LinkEndChild(obj);
+		}
+		else if (OBJTYPE_IS("BAR_RIVAL_LAMP")) {
+			obj->SetName("RivalLamp");
+			obj->SetAttribute("type", objectid);	// clear
+			selectmenu->LinkEndChild(obj);
+		}
+		else if (OBJTYPE_IS("BAR_RIVAL")) {
+			// ignore
+			s->skinlayout.DeleteNode(obj);
+		}
+		else if (OBJTYPE_IS("BAR_RANK")) {
+			// ignore
+			s->skinlayout.DeleteNode(obj);
+		}
+		return line + 1;
+	}
+
+	// not a select bar object
+	return 0;
+}
+
+int _LR2SkinParser::ProcessSelectBar_DST(int line) {
+	char **args = line_args[line];
+	int objectid = INT(args[1]);
+#define CMD_IS(v) (strcmp(args[0], (v)) == 0)
+	// TODO: convert position animation to easy one
+
+	if (CMD_IS("#DST_BAR_BODY_ON")) {
+		XMLElement *selectmenu = FindElement(cur_e, "SelectMenu", &s->skinlayout);
+		XMLElement *position = FindElement(selectmenu, "Position", &s->skinlayout);
+		XMLElement *bodyoff = FindElement(position, "DST");
+		if (bodyoff) {
+			/*
+			* DST_SELECTED: only have delta_x, delta_y value
+			*/
+			XMLElement *bodyon = FindElement(position, "DST_SELECTED", &s->skinlayout);
+			bodyon->SetAttribute("delta_x", INT(args[2]) - bodyoff->IntAttribute("x"));
+		}
+		return line + 1;
+	}
+	else if (CMD_IS("#DST_BAR_BODY_OFF")) {
+		XMLElement *selectmenu = FindElement(cur_e, "SelectMenu", &s->skinlayout);
+		XMLElement *position = FindElement(selectmenu, "Position", &s->skinlayout);
+		XMLElement *bodyoff = FindElementWithAttribute(position, "DST", "index", INT(args[1]), &s->skinlayout);
+		bodyoff->SetAttribute("x", INT(args[2]));
+		bodyoff->SetAttribute("y", INT(args[3]));
+		return line + 1;
+	}
+	else {
+		// not a select bar object
+		return 0;
+	}
 }
 
 /*
@@ -967,6 +1084,61 @@ const char* _LR2SkinParser::TranslateTimer(int timer) {
 	}
 	else if (timer == 3) {
 		strcpy(translated, "OnFail");	// Stage failed
+	}
+	else if (timer == 21) {
+		strcpy(translated, "OnPanel1");
+	}
+	else if (timer == 22) {
+		strcpy(translated, "OnPanel2");
+	}
+	else if (timer == 23) {
+		strcpy(translated, "OnPanel3");
+	}
+	else if (timer == 24) {
+		strcpy(translated, "OnPanel4");
+	}
+	else if (timer == 25) {
+		strcpy(translated, "OnPanel5");
+	}
+	else if (timer == 26) {
+		strcpy(translated, "OnPanel6");
+	}
+	else if (timer == 27) {
+		strcpy(translated, "OnPanel7");
+	}
+	else if (timer == 28) {
+		strcpy(translated, "OnPanel8");
+	}
+	else if (timer == 29) {
+		strcpy(translated, "OnPanel9");
+	}
+	/* Panel closing: DEPRECIATED */
+	else if (timer == 31) {
+		strcpy(translated, "OnPanel1Close");
+	}
+	else if (timer == 32) {
+		strcpy(translated, "OnPanel2Close");
+	}
+	else if (timer == 33) {
+		strcpy(translated, "OnPanel3Close");
+	}
+	else if (timer == 34) {
+		strcpy(translated, "OnPanel4Close");
+	}
+	else if (timer == 35) {
+		strcpy(translated, "OnPanel5Close");
+	}
+	else if (timer == 36) {
+		strcpy(translated, "OnPanel6Close");
+	}
+	else if (timer == 37) {
+		strcpy(translated, "OnPanel7Close");
+	}
+	else if (timer == 38) {
+		strcpy(translated, "OnPanel8Close");
+	}
+	else if (timer == 39) {
+		strcpy(translated, "OnPanel9Close");
 	}
 	else if (timer == 40) {
 		strcpy(translated, "OnReady");
