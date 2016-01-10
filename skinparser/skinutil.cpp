@@ -112,4 +112,43 @@ namespace SkinUtil {
 		itoa(value, v, 10);
 		return FindElementWithAttribute(parent, elementname, attribute, v, createIfNotExists);
 	}
+
+	void ConvertLR2PathToRelativePath(std::string& lr2path) {
+		int islr2path;
+		islr2path = lr2path.find("LR2files");
+		if (islr2path != std::string::npos) {
+			ReplaceString(lr2path, "\\", "/");
+			ReplaceString(lr2path, "./", "");
+			ReplaceString(lr2path, "LR2files/Theme/", "");
+			int p = lr2path.find('/');
+			if (p != std::string::npos) {
+				lr2path = "./" + lr2path.substr(p + 1);
+			}
+		}
+	}
+
+	void GetParentDirectory(std::string& filepath) {
+		ReplaceString(filepath, "\\", "/");
+		int p = filepath.rfind('/');
+		if (p) {
+			filepath = filepath.substr(0, p);
+		}
+	}
+
+	void ConvertRelativePathToAbsPath(std::string& relativepath, std::string& basepath) {
+		ReplaceString(relativepath, "./", "");
+		relativepath = basepath + "/" + relativepath;
+	}
+
+	void ReplaceString(std::string& source, std::string const& find, std::string const& replace) {
+		for (std::string::size_type i = 0; (i = source.find(find, i)) != std::string::npos;)
+		{
+			source.replace(i, find.length(), replace);
+			i += replace.length();
+		}
+	}
+
+	const char* FindString(const char *start, const char *target) {
+		return strstr(start, target);
+	}
 }

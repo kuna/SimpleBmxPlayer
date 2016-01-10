@@ -3,24 +3,12 @@
 
 #pragma once
 
+#include "skinoption.h"
 #include "tinyxml2.h"
-#include "skinrendertree.h"
 #include <vector>
 #include <map>
 
 using namespace tinyxml2;
-
-/*
- * Skin infos that we're using
- */
-struct SkinFont {
-	std::string filepath;		// ttf filepath
-	std::string texture;		// foreground texture path
-	int fontsize;
-	int thickness;
-	int style;
-	int border;
-};
 
 class Skin {
 public:
@@ -31,51 +19,16 @@ public:
 	XMLDocument skinlayout;
 
 	// render tree used for rendering
-	SkinRenderTree skinbody;
-private:
-	void CreateRenderTree();
+	//SkinRenderTree skinbody;
 public:
 	Skin();
 	~Skin();
 	void Release();
 	bool Parse(const char *filepath);
 	bool Save(const char *filepath);
-};
 
-/*
-* SkinOption
-* stores previously setted option value / provides value from option
-*/
-class SkinOption {
-public:
-	struct FileOption {
-		std::string path;
-		int type;			// 0: image, 1: font
-	};
-
-private:
-	// the real stored value in option file
-	std::map<std::string, int> option_string_idx;
-	std::map<std::string, FileOption> option_file_idx;
-
-public:
-	// used when modify/add option
-	void ModifyOption(const std::string& key, int val);
-	void ModifyFileOption(const std::string& key, const std::string& path);
-	void SetOptionType(const std::string& key, int type);
-
-	//
-	int GetOption(const std::string& key);
-	std::string& GetFileOption(const std::string& key);
-	// this method surely provides existing file so don't worry.
-	bool IsOptionKeyExists(const std::string& key);
-	bool IsFileOptionKeyExists(const std::string& key);
-
-	void DefaultSkinOption(Skin &s);	// TODO
-	void LoadSkinOption(Skin &s);
-	void SaveSkinOption();
-
-	void Clear();
+	// must call after skin data is loaded
+	void GetDefaultOption(SkinOption *o);
 };
 
 
@@ -89,9 +42,13 @@ private:
 	char *line_args[10240][100];		// contain arguments for each lines
 	int line_position[10240];			// line position per each included files
 	int line_total;						// the line we totally read
+
 	/*
-	 * ONLY for LR2 SKIN parsing (*depreciated*)
+	 * 
 	 */
+	int image_cnt;												// only for setting image name
+	int font_cnt;												// only for setting font name
+	std::map<std::string, std::string> filter_to_optionname;	// convert filter to optionfile name
 private:
 	/*
 	 * Should support nested condition, at least

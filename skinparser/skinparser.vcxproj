@@ -81,7 +81,8 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="skin.cpp" />
     <ClCompile Include="skinlr2.cpp" />
-    <ClCompile Include="skinrendertree.cpp" />
+    <ClCompile Include="skinoption.cpp" />
+    <ClCompile Include="skintexturefont.cpp" />
     <ClCompile Include="skinutil.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -89,7 +90,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="skin.h" />
-    <ClInclude Include="skinrendertree.h" />
+    <ClInclude Include="skinoption.h" />
+    <ClInclude Include="skintexturefont.h" />
     <ClInclude Include="skinutil.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

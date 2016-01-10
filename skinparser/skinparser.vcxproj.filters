@@ -27,7 +27,10 @@
     <ClCompile Include="skinlr2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="skinrendertree.cpp">
+    <ClCompile Include="skintexturefont.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="skinoption.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -38,7 +41,10 @@
     <ClInclude Include="skinutil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="skinrendertree.h">
+    <ClInclude Include="skintexturefont.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="skinoption.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

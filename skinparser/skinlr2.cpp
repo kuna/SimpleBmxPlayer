@@ -24,6 +24,10 @@ bool _LR2SkinParser::ParseLR2Skin(const char *filepath, Skin *s) {
 
 	// fill basic information to skin
 	strcpy(s->filepath, filepath);
+	XMLComment *cmt = s->skinlayout.NewComment("Auto-generated code.\n"
+		"Converted from LR2Skin.\n"
+		"LR2 project origins from lavalse, All rights reserved.");
+	s->skinlayout.LinkEndChild(cmt);
 	/* 4 elements are necessary */
 	XMLElement *info = s->skinlayout.NewElement("Info");
 	XMLElement *resource = s->skinlayout.NewElement("Resource");
@@ -79,7 +83,12 @@ int _LR2SkinParser::LoadSkin(const char *filepath, int linebufferpos) {
 
 		// if #include then read the file first
 		if (strncmp("#INCLUDE", p, 8) == 0) {
-			linebufferpos += LoadSkin(p + 9, linebufferpos + 1);
+			std::string relpath = p + 9;
+			std::string basepath = filepath;
+			ConvertLR2PathToRelativePath(relpath);
+			GetParentDirectory(basepath);
+			ConvertRelativePathToAbsPath(relpath, basepath);
+			linebufferpos += LoadSkin(relpath.c_str(), linebufferpos + 1);
 		}
 		else {
 			strcpy(lines[linebufferpos], line);
@@ -168,13 +177,13 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	* header/metadata parsing
 	*/
 	if (CMD_IS("#CUSTOMOPTION")) {
-		XMLElement *customoption = s->skinlayout.NewElement("CustomOption");
+		XMLElement *customoption = s->skinlayout.NewElement("CustomSwitch");
 		customoption->SetAttribute("name", args[1]);
 		int option_intvalue = atoi(args[2]);
 		for (char **p = args + 3; *p != 0 && strlen(*p) > 0; p++) {
 			XMLElement *options = s->skinlayout.NewElement("Option");
 			options->SetAttribute("name", *p);
-			options->SetAttribute("class", option_intvalue);
+			options->SetAttribute("value", option_intvalue);
 			option_intvalue++;
 			customoption->LinkEndChild(options);
 		}
@@ -183,11 +192,25 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	}
 	else if (CMD_IS("#CUSTOMFILE")) {
 		XMLElement *customfile = s->skinlayout.NewElement("CustomFile");
-		customfile->SetAttribute("name", args[1]);
-		customfile->SetAttribute("filter", args[2]);
-		customfile->SetAttribute("default", args[3]);
+		std::string name_safe = args[1];
+		ReplaceString(name_safe, " ", "_");
+		customfile->SetAttribute("name", name_safe.c_str());
+		// decide file type
+		if (FindString(args[2], "*.jpg") || FindString(args[2], "*.png"))
+			customfile->SetAttribute("type", "file/image");
+		else if (FindString(args[2], "*.ttf"))
+			customfile->SetAttribute("type", "file/ttf");
+		else
+			customfile->SetAttribute("type", "file");
+		std::string path = args[2];
+		ReplaceString(path, "*", args[3]);
+		ConvertLR2PathToRelativePath(path);
+		customfile->SetAttribute("path", path.c_str());		// means default path
 		XMLElement *option = s->skinlayout.FirstChildElement("Option");
 		option->LinkEndChild(customfile);
+
+		// register to filter_to_optionname for image change
+		filter_to_optionname.insert(std::pair<std::string, std::string>(args[2], name_safe));
 	}
 	else if (CMD_IS("#INFORMATION")) {
 		// set skin's metadata
@@ -206,6 +229,10 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		case 2:
 			// 14key
 			type->SetText("14Key");
+			break;
+		case 5:
+			// select screen
+			type->SetText("SelectMusic");
 			break;
 		case 12:
 			// battle
@@ -232,7 +259,12 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	else if (CMD_IS("#IMAGE")) {
 		XMLElement *resource = s->skinlayout.FirstChildElement("Resource");
 		XMLElement *image = s->skinlayout.NewElement("Image");
-		image->SetAttribute("path", args[1]);
+		image->SetAttribute("name", image_cnt++);
+		// check for optionname path
+		if (filter_to_optionname.find(args[1]) == filter_to_optionname.end())
+			image->SetAttribute("path", args[1]);
+		else
+			image->SetAttribute("option", filter_to_optionname[args[1]].c_str());
 		resource->LinkEndChild(image);
 	}
 	else if (CMD_IS("#FONT")) {
@@ -241,6 +273,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		// current font won't support TTF, so basically we're going to use default font.
 		XMLElement *resource = s->skinlayout.FirstChildElement("Resource");
 		XMLElement *font = s->skinlayout.NewElement("Font");
+		font->SetAttribute("name", font_cnt++);
 		font->SetAttribute("ttfpath", args[4]);
 		font->SetAttribute("texturepath", "");
 		font->SetAttribute("size", INT(args[1]));
@@ -281,9 +314,10 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	else if (CMD_STARTSWITH("#SRC_", 4)){
 		// we parse #DST with #SRC.
 		// process SRC
+		// SRC may have condition (attribute condition; normally not used)
 		XMLElement *obj;
 		XMLElement *src = s->skinlayout.NewElement("SRC");
-		src->SetAttribute("id", INT(args[2]));
+		src->SetAttribute("name", INT(args[2]));
 		src->SetAttribute("x", INT(args[3]));
 		src->SetAttribute("y", INT(args[4]));
 		if (INT(args[5]) > 0) {
@@ -324,6 +358,8 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		int looptime = 0, blend = 0, timer = 0, rotatecenter = -1, acc = 0;
 		int op1 = 0, op2 = 0, op3 = 0;
 		int nl;
+		XMLElement *dst = s->skinlayout.NewElement("DST");
+		obj->LinkEndChild(dst);
 		for (nl = line + 1; nl < line_total; nl++) {
 			args = line_args[nl];
 			if (!args[0]) continue;
@@ -340,37 +376,47 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 				if (args[19]) op2 = INT(args[19]);
 				if (args[20]) op3 = INT(args[20]);
 			}
-			XMLElement *dst = s->skinlayout.NewElement("DST");
-			dst->SetAttribute("x", args[3]);
-			dst->SetAttribute("y", args[4]);
-			dst->SetAttribute("w", args[5]);
-			dst->SetAttribute("h", args[6]);
-			dst->SetAttribute("time", args[2]);
+			XMLElement *frame = s->skinlayout.NewElement("Frame");
+			frame->SetAttribute("x", args[3]);
+			frame->SetAttribute("y", args[4]);
+			frame->SetAttribute("w", args[5]);
+			frame->SetAttribute("h", args[6]);
+			frame->SetAttribute("time", args[2]);
 			if (!(INT(args[8]) == 255))
-				dst->SetAttribute("a", args[8]);
+				frame->SetAttribute("a", args[8]);
 			if (!(INT(args[9]) == 255 && INT(args[10]) == 255 && INT(args[11]) == 255)) {
-				dst->SetAttribute("r", args[9]);
-				dst->SetAttribute("g", args[10]);
-				dst->SetAttribute("b", args[11]);
+				frame->SetAttribute("r", args[9]);
+				frame->SetAttribute("g", args[10]);
+				frame->SetAttribute("b", args[11]);
 			}
 			if (INT(args[14]))
-				dst->SetAttribute("angle", args[14]);
+				frame->SetAttribute("angle", args[14]);
 			if (INT(args[2]) == looptime)
-				dst->SetAttribute("loop", true);
-			obj->LinkEndChild(dst);
+				frame->SetAttribute("loop", true);
+			dst->LinkEndChild(frame);
 		}
 		// set common draw attribute
-		obj->SetAttribute("acc", acc);
+		dst->SetAttribute("acc", acc);
 		if (blend > 1)
-			obj->SetAttribute("blend", blend);
+			dst->SetAttribute("blend", blend);
 		if (rotatecenter > 0)
-			obj->SetAttribute(
+			dst->SetAttribute(
 			"rotatecenter", rotatecenter);
 		if (TranslateTimer(timer))
-			obj->SetAttribute("timer", TranslateTimer(timer));
+			dst->SetAttribute("timer", TranslateTimer(timer));
+		ClassAttribute cls;
+		const char *c;
+		c = TranslateOPs(op1);
+		if (c) cls.AddClass(c);
+		c = TranslateOPs(op2);
+		if (c) cls.AddClass(c);
+		c = TranslateOPs(op3);
+		if (c) cls.AddClass(c);
+		if (cls.GetClassNumber())
+			dst->SetAttribute("class", cls.ToString());
 		// before register, check loop statement (is loop is in last object, it isn't necessary)
-		if (obj->LastChild()->ToElement()->Attribute("loop")) {
-			obj->LastChild()->ToElement()->DeleteAttribute("loop");
+		if (dst->LastChild() && dst->LastChild()->ToElement()->Attribute("loop")) {
+			dst->LastChild()->ToElement()->DeleteAttribute("loop");
 		}
 
 
@@ -432,18 +478,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		 * under these are general individual object
 		 */
 		if (OBJTYPE_IS("IMAGE")) {
-			// set class & common option
-			// set DST & common draw attribute
-			ClassAttribute cls;
-			const char *c;
-			c = TranslateOPs(op1);
-			if (c) cls.AddClass(c);
-			c = TranslateOPs(op2);
-			if (c) cls.AddClass(c);
-			c = TranslateOPs(op3);
-			if (c) cls.AddClass(c);
-			if (cls.GetClassNumber())
-				obj->SetAttribute("class", cls.ToString());
+			// nothing to do (general object)
 		}
 		else if (OBJTYPE_IS("BGA")) {
 			// change tag to BGA and remove SRC tag
@@ -451,10 +486,65 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			obj->SetName("Bga");
 		}
 		else if (OBJTYPE_IS("NUMBER")) {
-			// change tag to Number and add attr
-			obj->SetName("Number");
+			/*
+			 * Number uses Texturefont
+			 * (Number object itself is quite depreciated, so we'll going to convert it)
+			 * - Each number creates one texturefont
+			 * - texturefont syntax: *.ini file, basically.
+			 *   so, we have to convert Shift_JIS code into UTF-8 code.
+			 *   (this would be a difficult job, hmm.)
+			 */
+			XMLElement *res = s->skinlayout.FirstChildElement("Resource");
+			XMLElement *tfont = s->skinlayout.NewElement("TextureFont");
+			tfont->SetAttribute("name", ++font_cnt);
+			tfont->SetAttribute("type", "1");	// for LR2 font type. (but not decided for other format, yet.)
+			res->LinkEndChild(tfont);
+
+			/*
+			 * now create font_texture_data from SRC data.
+			 *
+			 * if type == 10, then it's a just normal texture font
+			 * if type == 11,
+			 * if type == 22, convert like 11 (+ add new SRC for negative value)
+			 * if SRC is timer-dependent, then make multiple fonts and add condition
+			 * (maybe somewhat sophisticated condition)
+			 */
+#if 0
+			int glyphcnt = src->IntAttribute("divx") * src->IntAttribute("divy");
+			int fontcnt = glyphcnt / 10;	// it's not erroneous, in most of case
+			int fonttype = 0;
+			if (glyphcnt % 11 == 0)
+				fonttype = 1;	// '*' glyph
+			else if (glyphcnt % 22 == 0)
+				fonttype = 2;	// minus font included
+			// get image file path from resource
+			XMLElement *resource = s->skinlayout.FirstChildElement("Resource");
+			XMLElement *img = FindElementWithAttribute(resource, "Image", "name", src->IntAttribute("name"));
+			// create font data
+			std::string str_texturefont;
+			str_texturefont = "\n# Auto-generated texture font data by SkinParser\n";
+			str_texturefont += "[resource]\n";
+			str_texturefont += "import1=";
+			str_texturefont += +img->Attribute("path");
+			str_texturefont += "\n";
+			str_texturefont += "[main]\n";
+			for (int i = 0; i < 10; i++) {
+
+			}
+			str_texturefont += "[main]";
+			tfont->SetText(str_texturefont.c_str());
+#endif
+			/*
+			 * end of generating TextureFont.
+			 */
+
+			obj->SetName("TextureText");
 			obj->SetAttribute("value", sop1);
 			obj->SetAttribute("align", sop2);
+			/*
+			 * if type == 11 or 22,
+			 * then set length for 
+			 */
 			obj->SetAttribute("length", sop3);
 		}
 		else if (OBJTYPE_IS("SLIDER")) {
@@ -742,6 +832,7 @@ int _LR2SkinParser::ProcessSelectBar_DST(int line) {
 #define CMD_IS(v) (strcmp(args[0], (v)) == 0)
 	// TODO: convert position animation to easy one
 
+	// TODO: process it with Lua script?
 	if (CMD_IS("#DST_BAR_BODY_ON")) {
 		XMLElement *selectmenu = FindElement(cur_e, "SelectMenu", &s->skinlayout);
 		XMLElement *position = FindElement(selectmenu, "Position", &s->skinlayout);
@@ -975,6 +1066,36 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 	}
 	else if (op == 13) {
 		strcpy(translated, "BattlePlay");	// this includes ghost battle
+	}
+	else if (op == 20) {
+		strcpy(translated, "OnPanel");
+	}
+	else if (op == 21) {
+		strcpy(translated, "OnPanel1");
+	}
+	else if (op == 22) {
+		strcpy(translated, "OnPanel2");
+	}
+	else if (op == 23) {
+		strcpy(translated, "OnPanel3");
+	}
+	else if (op == 24) {
+		strcpy(translated, "OnPanel4");
+	}
+	else if (op == 25) {
+		strcpy(translated, "OnPanel5");
+	}
+	else if (op == 26) {
+		strcpy(translated, "OnPanel6");
+	}
+	else if (op == 27) {
+		strcpy(translated, "OnPanel7");
+	}
+	else if (op == 28) {
+		strcpy(translated, "OnPanel8");
+	}
+	else if (op == 29) {
+		strcpy(translated, "OnPanel9");
 	}
 	else if (op == 32) {
 		strcpy(translated, "AutoPlay");
@@ -1421,8 +1542,12 @@ const char* _LR2SkinParser::TranslateTimer(int timer) {
 }
 
 void _LR2SkinParser::Clear() {
+	s = 0;
 	line_total = 0;
 	cur_e = 0;
+	image_cnt = 0;
+	font_cnt = 0;
+	filter_to_optionname.clear();
 }
 
 // ----------------------- LR2Skin part end ------------------------

@@ -62,45 +62,45 @@
 
 //[‰æ‘œ’è‹`],,
 //‰æ‘œ’è‹`,filename,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\bomb\*.png,"			//0"
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\system\mainparts.png,,,,,,,,,"	//1"
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\system\frame.png,"		                 //2"
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\fc\*.png,,,,,,,,,,,,,,,,"		//3"
+#IMAGE,..\skin\play\parts\bomb\burning flare.png,"			//0"
+#IMAGE,..\skin\play\parts\system\mainparts.png,,,,,,,,,"	//1"
+#IMAGE,..\skin\play\parts\system\frame.png,"		                 //2"
+#IMAGE,..\skin\play\parts\fc\blue sky.png,,,,,,,,,,,,,,,,"		//3"
 #IMAGE,.dummy,,,,,,,,,,,,,,,		//4"
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\lanecover\*.png,"		                //5"
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\BG\frame bg\*.png,"		//6"
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\sara\*.png,"		//7"
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\note\*.png,,,,,,,,,,                                                   //8",,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\keyflash\*.png,"			//9",,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\progressbar\*.png,"		//10",,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\close\*.png,"		//11",,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\system\mainparts.png,"		//12",,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\judge\*.png,",,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\BG\full bg\*.png,"			//14",,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\laser\*.png,",,		                   //15",,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\number\score\*.png,"			//16",,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\number\gauge\*.png," //17
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\number\bpm\*.png," //18
+#IMAGE,..\skin\play\parts\lanecover\default.png,"		                //5"
+#IMAGE,..\skin\play\parts\BG\frame bg\flow_gray.png,"		//6"
+#IMAGE,..\skin\play\parts\sara\black.png,"		//7"
+#IMAGE,..\skin\play\parts\note\simple.png,,,,,,,,,,                   //8",,
+#IMAGE,..\skin\play\parts\keyflash\blue.png,"			//9",,
+#IMAGE,..\skin\play\parts\progressbar\blue.png,"		//10",,
+#IMAGE,..\skin\play\parts\close\gorilla.png,"		//11",,
+#IMAGE,..\skin\play\parts\system\mainparts.png,"		//12",,
+#IMAGE,..\skin\play\parts\judge\default.png,",,
+#IMAGE,..\skin\play\parts\BG\full bg\black leather.png,"			//14",,
+#IMAGE,..\skin\play\parts\laser\short.png,",,		                   //15",,
+#IMAGE,..\skin\play\parts\number\score\silver.png,"			//16",,
+#IMAGE,..\skin\play\parts\number\gauge\silver.png," //17
+#IMAGE,..\skin\play\parts\number\bpm\silver.png," //18
 #IMAGE,.dummy,,,,,,,,,,,,,,,,,,, //19
 #IMAGE,.dummy,,,,,,,,,,,,,,,,,,,//20
 #IMAGE,.dummy,,,,,,,,,,,,,,,,,,, //21
 #IMAGE,.dummy,,,,,,,,,,,,,,,,,,,		                                        //22",,
 #IF,100,,,,,,,,,,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\ClearData\NOPLAY.png,,,,,,,,,,//23
+#IMAGE,..\skin\play\parts\ClearData\NOPLAY.png,,,,,,,,,,//23
 #ELSEIF,101,,,,,,,,,,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\ClearData\FAILED.png,,,,,,,,,,//23
+#IMAGE,..\skin\play\parts\ClearData\FAILED.png,,,,,,,,,,//23
 #ELSEIF,102,,,,,,,,,,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\ClearData\EASYCLEAR.png,,,,,,,,,,//23
+#IMAGE,..\skin\play\parts\ClearData\EASYCLEAR.png,,,,,,,,,,//23
 #ELSEIF,103,,,,,,,,,,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\ClearData\CLEAR.png,,,,,,,,,,//23
+#IMAGE,..\skin\play\parts\ClearData\CLEAR.png,,,,,,,,,,//23
 #ELSEIF,104,,,,,,,,,,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\ClearData\HARDCLEAR.png,,,,,,,,,,//23
+#IMAGE,..\skin\play\parts\ClearData\HARDCLEAR.png,,,,,,,,,,//23
 #ELSEIF,105,,,,,,,,,,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\ClearData\FULLCOMBO.png,,,,,,,,,,//23
+#IMAGE,..\skin\play\parts\ClearData\FULLCOMBO.png,,,,,,,,,,//23
 #ELSE,,,,,,,,,,,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\ClearData\dummy.png,,,,,,,,,,//23
+#IMAGE,..\skin\play\parts\ClearData\dummy.png,,,,,,,,,,//23
 #ENDIF,,,,,,,,,,,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\gauge\*.png,"	//24",,
+#IMAGE,..\skin\play\parts\gauge\*.png,"	//24",,
 #IMAGE,.dummy,,,,,,,,,,,,,,,,,,,	//25",,
 #IMAGE,.dummy,,,,,,,,,,,,,,,,,,,,,		//26",,
 #IMAGE,CONTINUE,,,,,,,,,,//27

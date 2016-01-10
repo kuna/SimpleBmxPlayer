@@ -34,4 +34,14 @@ namespace SkinUtil {
 	XMLElement* FindElement(XMLElement *parent, const char *elementname, XMLDocument* createIfNotExists = 0);
 	XMLElement* FindElementWithAttribute(XMLElement *parent, const char *elementname, const char *attribute, const char *value, XMLDocument* createIfNotExists = 0);
 	XMLElement* FindElementWithAttribute(XMLElement *parent, const char *elementname, const char *attribute, int value, XMLDocument* createIfNotExists = 0);
+
+	// util about modifying string/path
+	void ConvertLR2PathToRelativePath(std::string& lr2path);
+	void GetParentDirectory(std::string& filepath);
+	void ConvertRelativePathToAbsPath(std::string& relativepath, std::string& basepath);
+	void ReplaceString(std::string& source, std::string const& find, std::string const& replace);
+	const char* FindString(const char *start, const char *target);
+
+	// util about I/O
+	bool IsFileExists(const char* path);
 }
