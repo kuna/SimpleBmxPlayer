@@ -20,7 +20,8 @@ namespace SkinUtil {
 		const char *ToString();
 		bool IsConditionExists(const char *cond);
 
-		void AddCondition(const char *conds);
+		void AddCondition(const char *cond);
+		void AddConditions(const char *conds);
 		void RemoveCondition(const char *conds);
 		int GetConditionNumber();
 

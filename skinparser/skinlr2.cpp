@@ -2,6 +2,10 @@
 #include "skinutil.h"
 #include "skintexturefont.h"
 using namespace SkinUtil;
+#include <sstream>
+
+// temp
+char translated[1024];
 
 // temporarily used common function
 char* Trim(char *p) {
@@ -166,7 +170,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		condition_element[condition_level] = group;
 		ConditionAttribute cls;
 		for (int i = 1; i < 50 && args[i]; i++) {
-			const char *c = TranslateOPs(INT(args[i]));
+			const char *c = INT(args[i])?TranslateOPs(INT(args[i])):0;
 			if (c) cls.AddCondition(c);
 		}
 		group->SetAttribute("condition", cls.ToString());
@@ -316,16 +320,16 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		resource->LinkEndChild(font);
 	}
 	else if (CMD_IS("#SETOPTION")) {
-		// TODO: convert it to <Lua>~</Lua> tag
 		// this clause is translated during render tree construction
-		XMLElement *setoption = s->skinlayout.NewElement("SetOption");
+		XMLElement *setoption = s->skinlayout.NewElement("Lua");
+		std::ostringstream luacode;
 		ConditionAttribute cls;
 		for (int i = 1; i < 50 && args[i]; i++) {
-			const char *c = TranslateOPs(INT(args[i]));
+			const char *c = INT(args[i]) ? TranslateOPs(INT(args[i])) : 0;
 			if (c)
-				cls.AddCondition(c);
+				luacode << "SetTimer(" << c << ")\n";
 		}
-		setoption->SetAttribute("condition", cls.ToString());
+		setoption->SetText(("\n" + luacode.str()).c_str());
 		cur_e->LinkEndChild(setoption);
 	}
 	/* Just ignore these option */
@@ -427,14 +431,14 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			dst->SetAttribute("timer", TranslateTimer(timer));
 		ConditionAttribute cls;
 		const char *c;
-		c = TranslateOPs(op1);
+		c = op1?TranslateOPs(op1):0;
 		if (c) cls.AddCondition(c);
-		c = TranslateOPs(op2);
+		c = op2?TranslateOPs(op2):0;
 		if (c) cls.AddCondition(c);
-		c = TranslateOPs(op3);
+		c = op3?TranslateOPs(op3):0;
 		if (c) cls.AddCondition(c);
 		if (cls.GetConditionNumber())
-			dst->SetAttribute("condition", cls.ToString());
+			obj->SetAttribute("condition", cls.ToString());
 		// before register, check loop statement (is loop is in last object, it isn't necessary)
 		if (dst->LastChild() && dst->LastChild()->ToElement()->Attribute("loop")) {
 			dst->LastChild()->ToElement()->DeleteAttribute("loop");
@@ -500,6 +504,8 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		 */
 		if (OBJTYPE_IS("IMAGE")) {
 			// nothing to do (general object)
+			// but in some case it may have 'value' ...
+			// if then, it'll be src-condition dependent.
 		}
 		else if (OBJTYPE_IS("BGA")) {
 			// change tag to BGA and remove SRC tag
@@ -512,8 +518,10 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			ConvertToTextureFont(obj);
 			/*
 			* Number object will act just like a extended-string object.
+			* If no value, then it'll just show '0' value.
 			*/
-			dst->SetAttribute("value", sop1);
+			if (TranslateNumber(sop1))
+				dst->SetAttribute("value", TranslateNumber(sop1));
 			dst->SetAttribute("align", sop2);
 			/*
 			* if type == 11 or 24, then set length
@@ -523,15 +531,14 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			*/
 			if (sop3)
 				dst->SetAttribute("length", sop3);
-			//if (fonttype == 24)
-			//	obj->SetAttribute("24mode", true);
 		}
 		else if (OBJTYPE_IS("SLIDER")) {
 			// change tag to slider and add attr
 			obj->SetName("Slider");
 			obj->SetAttribute("direction", sop1);
 			obj->SetAttribute("range", sop2);
-			obj->SetAttribute("value", sop3);
+			if (TranslateSlider(sop3))
+				obj->SetAttribute("value", TranslateSlider(sop3));
 			//obj->SetAttribute("range", sop2); - disable option is ignored
 		}
 		else if (OBJTYPE_IS("TEXT")) {
@@ -539,13 +546,15 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			s->skinlayout.DeleteNode(src);
 			obj->SetName("Text");
 			obj->SetAttribute("font", args[2]);
-			obj->SetAttribute("value", args[3]);
+			if (TranslateText(INT(args[3])))
+				obj->SetAttribute("value", TranslateText(INT(args[3])));
 			obj->SetAttribute("align", args[4]);
 			obj->SetAttribute("edit", args[5]);
 		}
 		else if (OBJTYPE_IS("BARGRAPH")) {
 			obj->SetName("BarGraph");
-			obj->SetAttribute("value", sop1);
+			if (TranslateGraph(sop1))
+				obj->SetAttribute("value", TranslateGraph(sop1));
 			obj->SetAttribute("direction", sop2);
 		}
 		else if (OBJTYPE_IS("BUTTON")) {
@@ -912,8 +921,10 @@ void _LR2SkinParser::ConvertToTextureFont(XMLElement *numele) {
 			numele->LinkEndChild(newsrc);
 		}
 	}
+	/* should show sign when it's 24 mode */
+	if (fonttype == 24)
+		numele->SetAttribute("sign", true);
 	/* remove original SRC */
-	//obj->DeleteChild(src);
 	s->skinlayout.DeleteNode(src);
 }
 
@@ -964,332 +975,256 @@ int _LR2SkinParser::GenerateTexturefontString(XMLElement *src, int startgidx, in
 	return font_cnt-1;
 }
 
-/*
-SkinElement* _LR2SkinParser::ConvertToElement(_LR2SkinElement *e) {
-COMMON::upper(e->objname);
-// first check whether is it hiding or showing command
-bool ishiding = false;
-if (e->GetLastDst()->a == 0)
-ishiding = true;
-
-SkinDebugInfo debugInfo;
-debugInfo.line = current_line;
-
-SkinElement* newobj = 0;
-
-// find some specific tags
-if (e->objname == "IMAGE") {
-if (e->resource_id == 110) {
-// I don't know what it is, it's called bga mask ...
-// but is it necessary ..?
-printf("[INFO] ignore BGA MASK option (%dL)", current_line);
-return 0;
-}
-
-// create new object
-newobj = new SkinElement(debugInfo);
-}
-else if (e->objname == "BGA") {
-// we shouldn't set ID here because many BGA can be existed.
-newobj = new SkinElement(debugInfo);
-newobj->AddClassName("BGA");
-}
-else if (e->objname == "BARGRAPH") {
-// create as graph element
-newobj = new SkinGraphElement(debugInfo);
-
-// set graph type
-((SkinGraphElement*)newobj)->SetDirection(e->muki);
-// set id
-if (e->value_id == 12)
-newobj->SetID("1PCurrentHighScoreGraph");
-if (e->value_id == 13)
-newobj->SetID("1PHighScoreGraph");
-if (e->value_id == 13)
-newobj->SetID("1PCurrentExScoreGraph");
-if (e->value_id == 15)
-newobj->SetID("1PExScoreGraph");
-}
-else if (e->objname == "TEXT") {
-// create as text element
-newobj = new SkinTextElement(debugInfo);
-
-// set text type
-// TODO
-((SkinTextElement*)newobj)->SetEditable(0);
-((SkinTextElement*)newobj)->SetAlign(0);
-
-// set id
-if (e->value_id == 10) {
-newobj->SetID("SongTitle");
-}
-else if (e->value_id == 11) {
-newobj->SetID("SongSubTitle");
-}
-else if (e->value_id == 12) {
-newobj->SetID("SongDisplayTitle");
-}
-else if (e->value_id == 13) {
-newobj->SetID("SongGenre");
-}
-else if (e->value_id == 14) {
-newobj->SetID("SongArtist");
-}
-else if (e->value_id == 15) {
-newobj->SetID("SongSubArtist");
-}
-else if (e->value_id == 16) {
-newobj->SetID("SongSearchTag");
-}
-}
-else if (e->objname == "NUMBER")
-{
-// sprite number follows format, and only supports int. (likely depreciated)
-// if you want more varisity then use Text.
-if (e->divx <= 1 && e->divy <= 1) {
-printf("[ERROR] Errorneous #XXX_NUMBER object (%dL). ignore.\n", current_line);
-return 0;
-}
-
-// src will be automatically processed after this
-// so we don't care here.
-
-// now set ID.
-if (e->value_id == 101)
-newobj->SetID("1PExScore");
-if (e->value_id == 105)
-newobj->SetID("1PMaxCombo");
-if (e->value_id == 151)
-newobj->SetID("1PCurrentHighScore");
-if (e->value_id == 151)
-newobj->SetID("1PCurrentTargetScore");
-if (e->value_id == 161)
-newobj->SetID("RemainingMinute");
-if (e->value_id == 162)
-newobj->SetID("RemainingSecond");
-}
-else if (e->objname == "JUDGELINE") {
-// It has not much meaning ...
-newobj = new SkinElement(debugInfo);
-newobj->SetID("1PJudgeLine");
-}
-else if (e->objname == "LINE") {
-// TODO
-newobj = new SkinElement(debugInfo);
-newobj->SetID("1PBeatLine");
-}
-else if (e->objname == "NOTE") {
-// TODO
-newobj = new SkinElement(debugInfo);
-}
-else if (e->objname == "LN_END") {
-// TODO
-newobj = new SkinElement(debugInfo);
-}
-else if (e->objname == "LN_BODY") {
-// TODO
-newobj = new SkinElement(debugInfo);
-}
-else if (e->objname == "BUTTON") {
-// TODO
-newobj = new SkinButtonElement(debugInfo);
-}
-else if (e->objname == "SLIDER") {
-// TODO
-newobj = new SkinSliderElement(debugInfo);
-
-if (e->value_id == 1) {
-// this is global slider, used in all select menu
-newobj->SetID("SelectSlider");
-}
-else if (e->value_id == 2) {
-newobj->SetID("1PHighSpeed");	// what does it means?
-}
-else if (e->value_id == 3) {
-newobj->SetID("2PHighSpeed");	// what does it means?
-}
-else if (e->value_id == 4) {
-// Sudden/Lift, all of them are setted by judgeline's xywh,
-// So we ignore all of the dst option of this slider.
-newobj->SetID("1PSudden");
-}
-else if (e->value_id == 5) {
-newobj->SetID("2PSudden");
-}
-else if (e->value_id == 6) {
-newobj->SetID("SongProgress");
-}
-}
-// we won't support ONMOUSE object.
-
-// we're figured out it's a valid object
-// and decided to make object solid
-if (newobj) {
-// make classname from conditions
-// TODO: Skin option effect - how can we process it?
-
-// make classname from timer
-
-// fill information to object
-newobj->GetDstArray() = e->dst;
-newobj->SetTag(e->objname);
-newobj->looptime_dst = e->looptime;
-newobj->blend = e->blend;
-newobj->rotatecenter = e->rotatecenter;
-
-// process src
-ImageSRC src;
-if (e->divx <= 0) e->divx = 1;
-if (e->divy <= 0) e->divy = 1;
-newobj->divx = e->divx;
-newobj->divy = e->divy;
-newobj->src = e->src;
-newobj->cycle = e->cycle;
-
-return newobj;
-}
-else {
-// ohh... it's not a valid object...
-printf("[WARNING] Unknown Object(%s). ignored. (%dL)\n", e->objname, current_line);
-return 0;
-}
-}
-*/
 const char* _LR2SkinParser::TranslateOPs(int op) {
-	if (op == 1) {
-		strcpy(translated, "OnClose");
+	/*
+	 * In Rhythmus, there's no object called OP(condition) code. but, all conditions have timer code, and that does OP code's work.
+	 * So this function will translate OP code into a valid condition code.
+	 */
+	if (op < 0) {
+		strcpy(translated, "not ");
+		op *= -1;
+	}
+	else {
+		translated[0] = 0;
+	}
+
+	if (op == 0) {
+		/* this is an constant code - but should NOT given as argument, I suggest. */
+		strcat(translated, "true");
+	}
+	else if (op == 1) {
+		strcat(translated, "IsSelectBarFolder");
+	}
+	else if (op == 2) {
+		strcat(translated, "IsSelectBarSong");
+	}
+	else if (op == 3) {
+		strcat(translated, "IsSelectBarCourse");
+	}
+	else if (op == 4) {
+		strcat(translated, "IsSelectBarNewCourse");
+	}
+	else if (op == 5) {
+		strcat(translated, "IsSelectBarPlayable");
 	}
 	else if (op == 10) {
-		strcpy(translated, "DoublePlay");
+		strcat(translated, "IsDoublePlay");
 	}
 	else if (op == 11) {
-		strcpy(translated, "BattlePlay");
+		strcat(translated, "IsBattlePlay");
 	}
 	else if (op == 12) {
-		strcpy(translated, "DoublePlay");	// this includes battle
+		strcat(translated, "IsDoublePlay");	// this includes battle
 	}
 	else if (op == 13) {
-		strcpy(translated, "BattlePlay");	// this includes ghost battle
+		strcat(translated, "IsBattlePlay");	// this includes ghost battle
 	}
 	else if (op == 20) {
-		strcpy(translated, "OnPanel");
+		strcat(translated, "OnPanel");
 	}
 	else if (op == 21) {
-		strcpy(translated, "OnPanel1");
+		strcat(translated, "OnPanel1");
 	}
 	else if (op == 22) {
-		strcpy(translated, "OnPanel2");
+		strcat(translated, "OnPanel2");
 	}
 	else if (op == 23) {
-		strcpy(translated, "OnPanel3");
+		strcat(translated, "OnPanel3");
 	}
 	else if (op == 24) {
-		strcpy(translated, "OnPanel4");
+		strcat(translated, "OnPanel4");
 	}
 	else if (op == 25) {
-		strcpy(translated, "OnPanel5");
+		strcat(translated, "OnPanel5");
 	}
 	else if (op == 26) {
-		strcpy(translated, "OnPanel6");
+		strcat(translated, "OnPanel6");
 	}
 	else if (op == 27) {
-		strcpy(translated, "OnPanel7");
+		strcat(translated, "OnPanel7");
 	}
 	else if (op == 28) {
-		strcpy(translated, "OnPanel8");
+		strcat(translated, "OnPanel8");
 	}
 	else if (op == 29) {
-		strcpy(translated, "OnPanel9");
+		strcat(translated, "OnPanel9");
+	}
+	else if (op == 30) {
+		strcat(translated, "IsBGANormal");		// Depreciated; won't be used
+	}
+	else if (op == 31) {
+		strcat(translated, "IsBGA");
 	}
 	else if (op == 32) {
-		strcpy(translated, "AutoPlay");
+		strcat(translated, "IsAutoPlay");
 	}
 	else if (op == 33) {
-		strcpy(translated, "AutoPlayOff");
+		strcat(translated, "not IsAutoPlay");	// IsAutoPlayOff: depreciated
 	}
 	else if (op == 34) {
-		strcpy(translated, "GhostOff");
+		strcat(translated, "IsGhostOff");			// hmm ...
 	}
 	else if (op == 35) {
-		strcpy(translated, "GhostA");
+		strcat(translated, "IsGhostA");
 	}
 	else if (op == 36) {
-		strcpy(translated, "GhostB");
+		strcat(translated, "IsGhostB");
 	}
 	else if (op == 37) {
-		strcpy(translated, "GhostC");
+		strcat(translated, "IsGhostC");
 	}
 	else if (op == 38) {
-		strcpy(translated, "ScoreGraphOff");
+		strcat(translated, "IsScoreGraphOff");
 	}
 	else if (op == 39) {
-		strcpy(translated, "ScoreGraph");
+		strcat(translated, "IsScoreGraph");
 	}
 	else if (op == 40) {
-		strcpy(translated, "BGAOff");
+		strcat(translated, "not IsBGA");
 	}
 	else if (op == 41) {
-		strcpy(translated, "BGAOn");
+		strcat(translated, "IsBGA");
 	}
 	else if (op == 42) {
-		strcpy(translated, "1PGrooveGuage");
+		strcat(translated, "Is1PGrooveGuage");
 	}
 	else if (op == 43) {
-		strcpy(translated, "1PHardGuage");
+		strcat(translated, "Is1PHardGuage");
 	}
 	else if (op == 44) {
-		strcpy(translated, "2PGrooveGuage");
+		strcat(translated, "Is2PGrooveGuage");
 	}
 	else if (op == 45) {
-		strcpy(translated, "2PHardGuage");
+		strcat(translated, "Is2PHardGuage");
 	}
 	else if (op == 46) {
-		strcpy(translated, "2PHardGuage");
+		strcat(translated, "IsDiffFiltered");		// on select menu; but depreciated?
 	}
 	else if (op == 47) {
-		strcpy(translated, "2PHardGuage");
+		strcat(translated, "not IsDifficultyFilter");
 	}
 	else if (op == 50) {
-		strcpy(translated, "Offline");
+		strcat(translated, "not IsOnline");
 	}
 	else if (op == 51) {
-		strcpy(translated, "Online");
+		strcat(translated, "IsOnline");
+	}
+	else if (op == 52) {
+		strcat(translated, "not IsExtraMode");		// meaningless ...?
+	}
+	else if (op == 53) {
+		strcat(translated, "IsExtraMode");
+	}
+	else if (op == 54) {
+		strcat(translated, "not Is1PAutoSC");
+	}
+	else if (op == 55) {
+		strcat(translated, "Is1PAutoSC");
+	}
+	else if (op == 56) {
+		strcat(translated, "not Is2PAutoSC");
+	}
+	else if (op == 57) {
+		strcat(translated, "Is2PAutoSC");
+	}
+	else if (op == 60) {
+		strcat(translated, "not IsRecordable");
+	}
+	else if (op == 61) {
+		strcat(translated, "IsRecordable");
+	}
+	else if (op == 62) {
+		strcat(translated, "not IsRecordable");
+	}
+	else if (op == 63) {
+		strcat(translated, "IsEasyClear");
+	}
+	else if (op == 64) {
+		strcat(translated, "IsGrooveClear");
+	}
+	else if (op == 65) {
+		strcat(translated, "IsHardClear");
+	}/* NO EXH in LR2
+	else if (op == 66) {
+		strcat(translated, "IsEXHClear");
+	}*/
+	else if (op == 66) {
+		strcat(translated, "IsFCClear");
+	}
+	else if (op == 70) {
+		strcat(translated, "not IsBeginnerSparkle");
+	}
+	else if (op == 71) {
+		strcat(translated, "not IsNormalSparkle");
+	}
+	else if (op == 72) {
+		strcat(translated, "not IsHyperSparkle");
+	}
+	else if (op == 73) {
+		strcat(translated, "not IsAnotherSparkle");
+	}
+	else if (op == 74) {
+		strcat(translated, "not IsInsaneSparkle");
+	}
+	else if (op == 75) {
+		strcat(translated, "IsBeginnerSparkle");
+	}
+	else if (op == 76) {
+		strcat(translated, "IsNormalSparkle");
+	}
+	else if (op == 77) {
+		strcat(translated, "IsHyperSparkle");
+	}
+	else if (op == 78) {
+		strcat(translated, "IsAnotherSparkle");
+	}
+	else if (op == 79) {
+		strcat(translated, "IsInsaneSparkle");
 	}
 	else if (op == 80) {
-		strcpy(translated, "OnSongLoadingStart");
+		strcat(translated, "OnSongLoading");
 	}
 	else if (op == 81) {
-		strcpy(translated, "OnSongLoadingEnd");
+		strcat(translated, "OnSongLoadingEnd");
+	}
+	else if (op == 84) {
+		strcat(translated, "OnSongReplay");
+	}
+	else if (op == 90) {
+		strcat(translated, "OnResultClear");
+	}
+	else if (op == 91) {
+		strcat(translated, "OnResultFail");
 	}
 	else if (op == 150) {
-		strcpy(translated, "DiffNone");
+		strcat(translated, "OnDiffNone");			// I suggest to use DiffValue == 0 then this.
 	}
 	else if (op == 151) {
-		strcpy(translated, "DiffBeginner");
+		strcat(translated, "OnDiffBeginner");
 	}
 	else if (op == 152) {
-		strcpy(translated, "DiffNormal");
+		strcat(translated, "OnDiffNormal");
 	}
 	else if (op == 153) {
-		strcpy(translated, "DiffHyper");
+		strcat(translated, "OnDiffHyper");
 	}
 	else if (op == 154) {
-		strcpy(translated, "DiffAnother");
+		strcat(translated, "OnDiffAnother");
 	}
 	else if (op == 155) {
-		strcpy(translated, "DiffInsane");
+		strcat(translated, "OnDiffInsane");
 	}
 	else if (op == 270) {
-		strcpy(translated, "On1PSuddenChange");
+		strcat(translated, "On1PSuddenChange");
 	}
 	else if (op == 271) {
-		strcpy(translated, "On2PSuddenChange");
+		strcat(translated, "On2PSuddenChange");
 	}
 	else if (op == 292) {
-		strcpy(translated, "ExpertCourse");
+		strcat(translated, "ExpertCourse");
 	}
 	else if (op == 293) {
-		strcpy(translated, "ClassCourse");
+		strcat(translated, "ClassCourse");
 	}
 	else if (op >= 900)
 	{
@@ -1643,6 +1578,204 @@ const char* _LR2SkinParser::TranslateTimer(int timer) {
 		return 0;
 	}
 	return translated;
+}
+
+const char* _LR2SkinParser::TranslateSlider(int code) {
+
+}
+
+const char* _LR2SkinParser::TranslateGraph(int code) {
+	if (code == 1) {
+		strcpy(translated, "SongProgress");
+	}
+	else if (code == 2) {
+		strcpy(translated, "SongLoadProgress");
+	}
+	else if (code == 3) {
+		strcpy(translated, "SongLoadProgress");
+	}
+	else if (code == 5) {
+		strcpy(translated, "BeginnerLevel");
+	}
+	else if (code == 6) {
+		strcpy(translated, "NormalLevel");
+	}
+	else if (code == 7) {
+		strcpy(translated, "HyperLevel");
+	}
+	else if (code == 8) {
+		strcpy(translated, "AnotherLevel");
+	}
+	else if (code == 9) {
+		strcpy(translated, "InsaneLevel");
+	}
+	else if (code == 10) {
+		strcpy(translated, "ExScore");
+	}
+	else if (code == 11) {
+		strcpy(translated, "ExScoreEstimated");
+	}
+	else if (code == 12) {
+		strcpy(translated, "HighScoreGhost");
+	}
+	else if (code == 13) {
+		strcpy(translated, "HighScore");
+	}
+	else if (code == 14) {
+		strcpy(translated, "TargetExScoreGhost");
+	}
+	else if (code == 15) {
+		strcpy(translated, "TargetExScore");
+	}
+	else {
+		return 0;
+	}
+
+	return translated;
+}
+
+const char* _LR2SkinParser::TranslateNumber(int code) {
+	if (code == 10) {
+		strcpy(translated, "1PSpeed");
+	}
+	else if (code == 11) {
+		strcpy(translated, "2PSpeed");
+	}
+	else if (code == 12) {
+		strcpy(translated, "JudgeTiming");
+	}
+	else if (code == 13) {
+		strcpy(translated, "TargetRate");
+	}
+	else if (code == 14) {
+		strcpy(translated, "1PSudden");
+	}
+	else if (code == 15) {
+		strcpy(translated, "2PSudden");
+	}/* LR2 doesn't support lift option
+	else if (code == 14) {
+		strcpy(translated, "1PLift");
+	}
+	else if (code == 15) {
+		strcpy(translated, "2PLift");
+	}*/
+	else if (code == 20) {
+		strcpy(translated, "FPS");
+	}
+	else if (code == 21) {
+		strcpy(translated, "Year");
+	}
+	else if (code == 22) {
+		strcpy(translated, "Month");
+	}
+	else if (code == 23) {
+		strcpy(translated, "Day");
+	}
+	else if (code == 24) {
+		strcpy(translated, "Hour");
+	}
+	else if (code == 25) {
+		strcpy(translated, "Minute");
+	}
+	else if (code == 26) {
+		strcpy(translated, "Second");
+	}
+	else if (code == 30) {
+		strcpy(translated, "TotalPlayCount");
+	}
+	else if (code == 31) {
+		strcpy(translated, "TotalClearCount");
+	}
+	else if (code == 32) {
+		strcpy(translated, "TotalFailCount");
+	}
+	else if (code == 45) {
+		strcpy(translated, "BeginnerLevel");
+	}
+	else if (code == 46) {
+		strcpy(translated, "NormalLevel");
+	}
+	else if (code == 47) {
+		strcpy(translated, "HyperLevel");
+	}
+	else if (code == 48) {
+		strcpy(translated, "AnotherLevel");
+	}
+	else if (code == 49) {
+		strcpy(translated, "InsaneLevel");
+	}
+	else if (code == 70) {
+		strcpy(translated, "Score");
+	}
+	else if (code == 71) {
+		strcpy(translated, "ExScore");
+	}
+	else if (code == 72) {
+		strcpy(translated, "ExScore");
+	}
+	else if (code == 73) {
+		strcpy(translated, "Rate");
+	}
+	else if (code == 74) {
+		strcpy(translated, "TotalNotes");
+	}
+	else if (code == 75) {
+		strcpy(translated, "MaxCombo");
+	}
+	else if (code == 76) {
+		strcpy(translated, "MinBP");
+	}
+	else if (code == 77) {
+		strcpy(translated, "PlayCount");
+	}
+	else if (code == 78) {
+		strcpy(translated, "ClearCount");
+	}
+	else if (code == 79) {
+		strcpy(translated, "FailCount");
+	}
+	else if (code == 80) {
+		strcpy(translated, "PerfectCount");
+	}
+	else if (code == 81) {
+		strcpy(translated, "GreatCount");
+	}
+	else if (code == 82) {
+		strcpy(translated, "GoodCount");
+	}
+	else if (code == 83) {
+		strcpy(translated, "BadCount");
+	}
+	else if (code == 84) {
+		strcpy(translated, "PoorCount");
+	}
+	else if (code == 90) {
+		strcpy(translated, "BPMMax");
+	}
+	else if (code == 91) {
+		strcpy(translated, "BPMMin");
+	}
+	else if (code == 92) {
+		strcpy(translated, "IRRank");
+	}
+	else if (code == 93) {
+		strcpy(translated, "IRTotal");
+	}
+	else if (code == 94) {
+		strcpy(translated, "IRRate");
+	}
+	else if (code == 95) {
+		strcpy(translated, "RivalDiff");
+	}
+	else {
+		return 0;
+	}
+
+	return translated;
+}
+
+const char* _LR2SkinParser::TranslateText(int code) {
+
 }
 
 void _LR2SkinParser::Clear() {

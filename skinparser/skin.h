@@ -62,9 +62,6 @@ private:
 	/*
 	 * OP/Timer/etc code translator
 	 */
-	char translated[1024];
-	const char* TranslateOPs(int op);						// LR2 op code to useful visible tag
-	const char* TranslateTimer(int timer);					// 
 	int GenerateTexturefontString(XMLElement *srcelement, int startgidx, int endgidx, bool minus = false);	// for #XXX_NUMBER object
 	void ConvertToTextureFont(XMLElement *numele);
 
@@ -85,6 +82,13 @@ private:
 	int ProcessSelectBar_DST(int line);					// process commands about select bar
 	// pacemaker: use default XML
 public:
+	static const char* TranslateOPs(int op);						// LR2 op code to useful visible tag (timer)
+	static const char* TranslateTimer(int timer);					// translate code (timer/handler)
+	static const char* TranslateSlider(int code);					// slider to value code (float/int/string)
+	static const char* TranslateGraph(int code);					// BARGRAPH to value code (float/int/string)
+	static const char* TranslateNumber(int code);					// number to value code (float/int/string)
+	static const char* TranslateText(int code);						// text to value code (float/int/string)
+
 	// after parsing, this will automatically call Clear();
 	bool ParseLR2Skin(const char *filepath, Skin *s);
 	void Clear();

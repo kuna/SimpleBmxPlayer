@@ -6,7 +6,7 @@ Skin skin;
 SkinOption soption;
 _LR2SkinParser lr2skin;
 
-#define LOADSELECT
+#define LOADPLAY
 
 int main(int argc, char **argv) {
 #ifdef LOADPLAY

@@ -9,15 +9,19 @@ namespace SkinUtil {
 		AddCondition(classnames);
 	}
 
-	void ConditionAttribute::AddCondition(const char *classnames) {
+	void ConditionAttribute::AddCondition(const char *cond) {
+		if (!IsConditionExists(cond))
+			classes.insert(std::pair<std::string, int>(cond, 0));
+	}
+
+	void ConditionAttribute::AddConditions(const char *classnames) {
 		strcpy(buffer, classnames);
 		char *p = buffer;
 		char *cur = p;
 		while (p != 0) {
 			p = strchr(p, ' ');
 			if (p != 0) *p = 0;
-			if (!IsConditionExists(cur))
-				classes.insert(std::pair<std::string, int>(cur, 0));
+			AddCondition(cur);
 			if (!p) break;
 			cur = ++p;
 		}
