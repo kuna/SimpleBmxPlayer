@@ -49,6 +49,7 @@ private:
 	int image_cnt;												// only for setting image name
 	int font_cnt;												// only for setting font name
 	std::map<std::string, std::string> filter_to_optionname;	// convert filter to optionfile name
+	std::map<int, int> texturefont_id;							// check texturefont existence
 private:
 	/*
 	 * Should support nested condition, at least
@@ -57,11 +58,13 @@ private:
 	int condition_level;
 
 	/*
-	 * OP/Timer code translator
+	 * OP/Timer/etc code translator
 	 */
 	char translated[1024];
-	const char* TranslateOPs(int op);		// LR2 op code to useful visible tag
-	const char* TranslateTimer(int timer);	// 
+	const char* TranslateOPs(int op);						// LR2 op code to useful visible tag
+	const char* TranslateTimer(int timer);					// 
+	int GenerateTexturefontString(XMLElement *srcelement, int startgidx, int endgidx, bool minus = false);	// for #XXX_NUMBER object
+	void ConvertToTextureFont(XMLElement *numele);
 
 	/*
 	 * Inner skin loaders

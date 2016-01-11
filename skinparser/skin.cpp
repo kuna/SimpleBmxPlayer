@@ -64,7 +64,7 @@ void Skin::GetDefaultOption(SkinOption *o) {
 	}
 }
 
-Skin::Skin() {}
+Skin::Skin(): skinlayout(false) {}
 Skin::~Skin() { Release(); }
 
 // --------------------- Skin End --------------------------

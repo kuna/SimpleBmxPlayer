@@ -1,5 +1,6 @@
 #include "skin.h"
 #include "skinutil.h"
+#include "skintexturefont.h"
 using namespace SkinUtil;
 
 // temporarily used common function
@@ -486,66 +487,24 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			obj->SetName("Bga");
 		}
 		else if (OBJTYPE_IS("NUMBER")) {
+			obj->SetName("Number");
+			// just convert SRC to texturefont ...
+			ConvertToTextureFont(obj);
 			/*
-			 * Number uses Texturefont
-			 * (Number object itself is quite depreciated, so we'll going to convert it)
-			 * - Each number creates one texturefont
-			 * - texturefont syntax: *.ini file, basically.
-			 *   so, we have to convert Shift_JIS code into UTF-8 code.
-			 *   (this would be a difficult job, hmm.)
-			 */
-			XMLElement *res = s->skinlayout.FirstChildElement("Resource");
-			XMLElement *tfont = s->skinlayout.NewElement("TextureFont");
-			tfont->SetAttribute("name", ++font_cnt);
-			tfont->SetAttribute("type", "1");	// for LR2 font type. (but not decided for other format, yet.)
-			res->LinkEndChild(tfont);
-
+			* Number object will act just like a extended-string object.
+			*/
+			dst->SetAttribute("value", sop1);
+			dst->SetAttribute("align", sop2);
 			/*
-			 * now create font_texture_data from SRC data.
-			 *
-			 * if type == 10, then it's a just normal texture font
-			 * if type == 11,
-			 * if type == 22, convert like 11 (+ add new SRC for negative value)
-			 * if SRC is timer-dependent, then make multiple fonts and add condition
-			 * (maybe somewhat sophisticated condition)
-			 */
-#if 0
-			int glyphcnt = src->IntAttribute("divx") * src->IntAttribute("divy");
-			int fontcnt = glyphcnt / 10;	// it's not erroneous, in most of case
-			int fonttype = 0;
-			if (glyphcnt % 11 == 0)
-				fonttype = 1;	// '*' glyph
-			else if (glyphcnt % 22 == 0)
-				fonttype = 2;	// minus font included
-			// get image file path from resource
-			XMLElement *resource = s->skinlayout.FirstChildElement("Resource");
-			XMLElement *img = FindElementWithAttribute(resource, "Image", "name", src->IntAttribute("name"));
-			// create font data
-			std::string str_texturefont;
-			str_texturefont = "\n# Auto-generated texture font data by SkinParser\n";
-			str_texturefont += "[resource]\n";
-			str_texturefont += "import1=";
-			str_texturefont += +img->Attribute("path");
-			str_texturefont += "\n";
-			str_texturefont += "[main]\n";
-			for (int i = 0; i < 10; i++) {
-
-			}
-			str_texturefont += "[main]";
-			tfont->SetText(str_texturefont.c_str());
-#endif
-			/*
-			 * end of generating TextureFont.
-			 */
-
-			obj->SetName("TextureText");
-			obj->SetAttribute("value", sop1);
-			obj->SetAttribute("align", sop2);
-			/*
-			 * if type == 11 or 22,
-			 * then set length for 
-			 */
-			obj->SetAttribute("length", sop3);
+			* if type == 11 or 24, then set length
+			* if type == 24, then set '24mode' (only for LR2 - depreciated supportance)
+			* (If you want to implement LR2-like font, then you may have to make 2 type of texturefont SRC -
+			* plus and minus - with proper condition.)
+			*/
+			if (sop3)
+				dst->SetAttribute("length", sop3);
+			//if (fonttype == 24)
+			//	obj->SetAttribute("24mode", true);
 		}
 		else if (OBJTYPE_IS("SLIDER")) {
 			// change tag to slider and add attr
@@ -858,6 +817,126 @@ int _LR2SkinParser::ProcessSelectBar_DST(int line) {
 		// not a select bar object
 		return 0;
 	}
+}
+
+void _LR2SkinParser::ConvertToTextureFont(XMLElement *numele) {
+	XMLElement *src = numele->FirstChildElement("SRC");
+	XMLElement *dst = numele->FirstChildElement("DST");
+
+	/*
+	* Number uses Texturefont
+	* (Number object itself is quite depreciated, so we'll going to convert it)
+	* - Each number creates one texturefont
+	* - texturefont syntax: *.ini file, basically.
+	*   so, we have to convert Shift_JIS code into UTF-8 code.
+	*   (this would be a difficult job, hmm.)
+	*
+	* if type == 10, then it's a just normal texture font
+	* if type == 11,
+	* if type == 22, convert like 11 (+ add new SRC for negative value)
+	* if SRC is timer-dependent, then make multiple fonts and add condition
+	* (maybe somewhat sophisticated condition)
+	*/
+	int glyphcnt = src->IntAttribute("divx") * src->IntAttribute("divy");
+	int fonttype = 10;
+	if (glyphcnt % 11 == 0)
+		fonttype = 11;	// '*' glyph
+	else if (glyphcnt % 24 == 0)
+		fonttype = 24;	// +/- font included (so, 2 fonts will be created)
+	/*
+	* if cycle exists, we have to make fonts as much as that
+	*/
+	int fontrep = 1;
+	int cycle = 0;
+	if (src->Attribute("cycle")) {
+		fontrep = glyphcnt / fonttype;
+		cycle = src->IntAttribute("cycle");
+	}
+
+	/*
+	* we may have multiple SRC objects (if cycle exists)
+	* so we remove previous SRC and make new SRC (also fonts)
+	* (24-type number won't work well...)
+	*/
+	int tfont_idx;
+	for (int fontidx = 0; fontidx < fontrep; fontidx++) {
+		if (fonttype == 24) {
+			char _temp[100];
+			XMLElement *newsrc;
+			tfont_idx = GenerateTexturefontString(src, fontidx * 24, fontidx * 24 + 12);
+			newsrc = s->skinlayout.NewElement("SRC");
+			newsrc->SetAttribute("name", tfont_idx);
+			sprintf_s(_temp, "Value >= 0");
+			newsrc->SetAttribute("condition", _temp);
+			numele->LinkEndChild(newsrc);
+
+			tfont_idx = GenerateTexturefontString(src, fontidx * 24, fontidx * 24 + 12);
+			newsrc = s->skinlayout.NewElement("SRC");
+			newsrc->SetAttribute("name", tfont_idx);
+			sprintf_s(_temp, "Value < 0");
+			newsrc->SetAttribute("condition", _temp);
+			numele->LinkEndChild(newsrc);
+		}
+		else {
+			tfont_idx = GenerateTexturefontString(src, fontidx*fonttype, (fontidx + 1)*fonttype);
+			XMLElement *newsrc = s->skinlayout.NewElement("SRC");
+			newsrc->SetAttribute("name", tfont_idx);
+			if (cycle) {
+				char _temp[100];
+				sprintf_s(_temp, "Time %% %d < %d", cycle, cycle * (fontidx + 1));
+				newsrc->SetAttribute("condition", _temp);
+			}
+			numele->LinkEndChild(newsrc);
+		}
+	}
+	/* remove original SRC */
+	//obj->DeleteChild(src);
+	s->skinlayout.DeleteNode(src);
+}
+
+// returns new(or previous) number
+int _LR2SkinParser::GenerateTexturefontString(XMLElement *src, int startgidx, int endgidx, bool minus) {
+	char _temp[1024];
+	std::string out;
+	int w = src->IntAttribute("w");
+	int h = src->IntAttribute("h");
+	int divx = src->IntAttribute("divx");
+	int divy = src->IntAttribute("divy");
+	int dw = w / divx;
+	int dh = h / divy;
+	// oh we're too tired to make every new number
+	// so, we're going to reuse previous number if it exists
+	int id = w | h << 12 | src->IntAttribute("name") << 24;
+	if (texturefont_id.find(id) != texturefont_id.end()) {
+		return texturefont_id[id];
+	}
+	texturefont_id.insert(std::pair<int, int>(id, font_cnt));
+
+	// get image file path from resource
+	XMLElement *resource = s->skinlayout.FirstChildElement("Resource");
+	XMLElement *img = FindElementWithAttribute(resource, "Image", "name", src->IntAttribute("name"));
+	// create font data
+	SkinTextureFont tfont;
+	char glyphs[] = "0123456789*+";
+	if (minus)
+		glyphs[11] = '-';
+	for (int i = startgidx; i < endgidx; i++) {
+		int cx = i % divx;
+		int cy = i / divx;
+		tfont.AddGlyph(glyphs[i - startgidx], 0, dw * cx, cy, dw, dh);
+	}
+	tfont.SaveToText(out);
+	out = "\n# Auto-generated texture font data by SkinParser\n" + out;
+
+	// register
+	XMLElement *res = s->skinlayout.FirstChildElement("Resource");
+	XMLElement *restfont = s->skinlayout.NewElement("TextureFont");
+	restfont->SetAttribute("name", font_cnt++);		// create new texture font
+	restfont->SetAttribute("type", "1");			// for LR2 font type. (but not decided for other format, yet.)
+	restfont->SetText(out.c_str());
+	res->LinkEndChild(restfont);
+
+	return font_cnt-1;
 }
 
 /*
@@ -1548,6 +1627,7 @@ void _LR2SkinParser::Clear() {
 	image_cnt = 0;
 	font_cnt = 0;
 	filter_to_optionname.clear();
+	texturefont_id.clear();
 }
 
 // ----------------------- LR2Skin part end ------------------------
