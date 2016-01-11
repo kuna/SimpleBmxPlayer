@@ -33,7 +33,7 @@ public:
 
 
 // -------------------------------------------------------------
-#define MAX_LINE 16000
+#define MAX_LINE 20000
 #define MAX_LINE_CHARACTER 1024
 
 class _LR2SkinParser {

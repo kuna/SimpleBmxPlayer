@@ -11,23 +11,24 @@ namespace SkinUtil {
 	 * This class is for ease of editing class string
 	 * This class is used in SkinParser/Rendering engine.
 	 */
-	class ClassAttribute {
+	class ConditionAttribute {
 	private:
 		std::map<std::string, int> classes;
 	public:
-		ClassAttribute();
-		ClassAttribute(const char *classnames);
+		ConditionAttribute();
+		ConditionAttribute(const char *cond);
 		const char *ToString();
-		bool IsClassExists(const char *classname);
+		bool IsConditionExists(const char *cond);
 
-		void AddClass(const char *classnames);
-		void RemoveClass(const char *classnames);
-		int GetClassNumber();
+		void AddCondition(const char *conds);
+		void RemoveCondition(const char *conds);
+		int GetConditionNumber();
 
-		void CheckClass(const char *classname);
-		void UnCheckClass(const char *classname);
-		bool IsAllClassSelected();
-		bool IsAnyClassSelected();
+		/* under these classes are depreciated - we're going to use Lua language */
+		void CheckCondition(const char *conds);
+		void UnCheckCondition(const char *conds);
+		bool IsAllConditionSelected();
+		bool IsAnyConditionSelected();
 	};
 
 	// general util

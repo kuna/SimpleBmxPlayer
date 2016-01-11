@@ -70,12 +70,13 @@ int _LR2SkinParser::LoadSkin(const char *filepath, int linebufferpos) {
 		return linebufferpos;
 	}
 
-	char line[10240];
+	char line[MAX_LINE_CHARACTER];
 	char *p;
 	int current_line = 0;		// current file's reading line
 	while (!feof(f)) {
 		current_line++;
-		fgets(line, 1024, f);
+		if (!fgets(line, 1024, f))
+			break;
 		p = Trim(line);
 
 		// ignore comment
@@ -98,7 +99,6 @@ int _LR2SkinParser::LoadSkin(const char *filepath, int linebufferpos) {
 			ParseSkinLineArgument(lines[linebufferpos], line_args[linebufferpos]);
 			line_position[linebufferpos] = current_line;
 		}
-
 		linebufferpos++;
 	}
 
@@ -164,12 +164,12 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		XMLElement *group = s->skinlayout.NewElement("If");
 		if (CMD_IS("#IF")) condition_level++;
 		condition_element[condition_level] = group;
-		ClassAttribute cls;
+		ConditionAttribute cls;
 		for (int i = 1; i < 50 && args[i]; i++) {
 			const char *c = TranslateOPs(INT(args[i]));
-			if (c) cls.AddClass(c);
+			if (c) cls.AddCondition(c);
 		}
-		group->SetAttribute("class", cls.ToString());
+		group->SetAttribute("condition", cls.ToString());
 		cur_e = condition_element[condition_level - 1];		// get parent object
 		cur_e->LinkEndChild(group);
 		cur_e = group;
@@ -316,15 +316,16 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		resource->LinkEndChild(font);
 	}
 	else if (CMD_IS("#SETOPTION")) {
+		// TODO: convert it to <Lua>~</Lua> tag
 		// this clause is translated during render tree construction
 		XMLElement *setoption = s->skinlayout.NewElement("SetOption");
-		ClassAttribute cls;
+		ConditionAttribute cls;
 		for (int i = 1; i < 50 && args[i]; i++) {
 			const char *c = TranslateOPs(INT(args[i]));
 			if (c)
-				cls.AddClass(c);
+				cls.AddCondition(c);
 		}
-		setoption->SetAttribute("class", cls.ToString());
+		setoption->SetAttribute("condition", cls.ToString());
 		cur_e->LinkEndChild(setoption);
 	}
 	/* Just ignore these option */
@@ -424,16 +425,16 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			"rotatecenter", rotatecenter);
 		if (TranslateTimer(timer))
 			dst->SetAttribute("timer", TranslateTimer(timer));
-		ClassAttribute cls;
+		ConditionAttribute cls;
 		const char *c;
 		c = TranslateOPs(op1);
-		if (c) cls.AddClass(c);
+		if (c) cls.AddCondition(c);
 		c = TranslateOPs(op2);
-		if (c) cls.AddClass(c);
+		if (c) cls.AddCondition(c);
 		c = TranslateOPs(op3);
-		if (c) cls.AddClass(c);
-		if (cls.GetClassNumber())
-			dst->SetAttribute("class", cls.ToString());
+		if (c) cls.AddCondition(c);
+		if (cls.GetConditionNumber())
+			dst->SetAttribute("condition", cls.ToString());
 		// before register, check loop statement (is loop is in last object, it isn't necessary)
 		if (dst->LastChild() && dst->LastChild()->ToElement()->Attribute("loop")) {
 			dst->LastChild()->ToElement()->DeleteAttribute("loop");
@@ -548,11 +549,12 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			obj->SetAttribute("direction", sop2);
 		}
 		else if (OBJTYPE_IS("BUTTON")) {
-			// TODO: onhover ...?
+			// TODO: onclick event
 			obj->SetName("Button");
 		}
 		else if (OBJTYPE_IS("ONMOUSE")) {
 			// depreciated/ignore
+			// TODO: support this by SRC_HOVER tag.
 			printf("#XXX_ONMOUSE command is depreciated, ignore. (%dL) \n", line);
 		}
 		else {
@@ -808,28 +810,30 @@ int _LR2SkinParser::ProcessSelectBar_DST(int line) {
 	char **args = line_args[line];
 	int objectid = INT(args[1]);
 #define CMD_IS(v) (strcmp(args[0], (v)) == 0)
-	// TODO: convert position animation to easy one
-
-	// TODO: process it with Lua script?
 	if (CMD_IS("#DST_BAR_BODY_ON")) {
 		XMLElement *selectmenu = FindElement(cur_e, "SelectMenu", &s->skinlayout);
 		XMLElement *position = FindElement(selectmenu, "Position", &s->skinlayout);
-		XMLElement *bodyoff = FindElement(position, "DST");
+		XMLElement *bodyoff = FindElement(position, "Bar");
 		if (bodyoff) {
 			/*
 			* DST_SELECTED: only have delta_x, delta_y value
 			*/
-			XMLElement *bodyon = FindElement(position, "DST_SELECTED", &s->skinlayout);
-			bodyon->SetAttribute("delta_x", INT(args[2]) - bodyoff->IntAttribute("x"));
+			XMLElement *frame = FindElement(bodyoff, "Frame");
+			position->SetAttribute("delta_x", INT(args[3]) - frame->IntAttribute("x"));
 		}
 		return line + 1;
 	}
 	else if (CMD_IS("#DST_BAR_BODY_OFF")) {
 		XMLElement *selectmenu = FindElement(cur_e, "SelectMenu", &s->skinlayout);
 		XMLElement *position = FindElement(selectmenu, "Position", &s->skinlayout);
-		XMLElement *bodyoff = FindElementWithAttribute(position, "DST", "index", INT(args[1]), &s->skinlayout);
-		bodyoff->SetAttribute("x", INT(args[2]));
-		bodyoff->SetAttribute("y", INT(args[3]));
+		XMLElement *bodyoff = FindElementWithAttribute(position, "Bar", "index", INT(args[1]), &s->skinlayout);
+		XMLElement *frame = s->skinlayout.NewElement("Frame");
+		frame->SetAttribute("time", INT(args[2]));
+		frame->SetAttribute("x", INT(args[3]));
+		frame->SetAttribute("y", INT(args[4]));
+		frame->SetAttribute("w", INT(args[5]));
+		frame->SetAttribute("h", INT(args[6]));
+		bodyoff->LinkEndChild(frame);
 		return line + 1;
 	}
 	else {
