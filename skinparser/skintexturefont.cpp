@@ -35,7 +35,46 @@ bool SkinTextureFont::LoadFromLR2File(const char *filepath) {
 	return false;
 }
 void SkinTextureFont::LoadFromText(const char *text) {
+	char buf[10240];
+	char arg_str[1024];
+	strcpy(buf, text);
 
+	Clear();
+
+	/*
+	 * 0: [resource]
+	 * 1: [glyph]
+	 */
+	int mode = 0;	// basically resource
+	int args[10];
+	char *p = buf;
+	char *np;
+	while ((np = strchr(p, '\n')) != 0) {
+		*np = 0;
+		if (strcmp(p, "[resource]") == 0)
+			mode = 0;
+		else if (strcmp(p, "[glyphs]") == 0)
+			mode = 1;
+		else if (mode == 0) {
+			if (sscanf(p, "imagecnt=%d", &args[0]))
+				imgcnt = args[0];
+			else if (sscanf(p, "image%d=%s,%d,%d,%d,%d", &args[0], arg_str,
+				&args[1], &args[2], &args[3], &args[4]) == 6) {
+				imagepath[args[0]] = arg_str;
+				imagesrc[args[0]] = { 0, args[1], args[2], args[3], args[4] };
+			}
+			else if (sscanf(p, "image%d=%s", &args[0], arg_str) == 2) {
+				imagepath[args[0]] = arg_str;
+				imagesrc[args[0]] = { 0, 0, 0, 0, 0 };
+			}
+		}
+		else if (mode == 1) {
+			if (sscanf(p, "%d=%d,%d,%d,%d,%d", &args[0], &args[1], &args[2], &args[3], &args[4], &args[5]) == 6) {
+				glyphs.insert(std::pair<uint32_t, Glyph>(args[0], { args[1], args[2], args[3], args[4], args[5] }));
+			}
+		}
+		p = np + 1;
+	}
 }
 bool SkinTextureFont::SaveToFile(const char* filepath) {
 	FILE *f = fopen(filepath, "w");
