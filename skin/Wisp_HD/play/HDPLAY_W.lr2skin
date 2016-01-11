@@ -50,12 +50,12 @@
 
 //,左サイド,左スクラッチオリジナル
 #IF,900,
-#INCLUDE,LR2files\Theme\WMIX_play_HD\csv\wide_1p.csv
+#INCLUDE,LR2files\Theme\WMIX_play_HD\play\csv\wide_1p.csv
 #ENDIF,,,,,
 
 //,右サイド,右スクラッチオリジナル
 #IF,901,
-#INCLUDE,LR2files\Theme\WMIX_play_HD\csv\wide_2p.csv
+#INCLUDE,LR2files\Theme\WMIX_play_HD\play\csv\wide_2p.csv
 #ENDIF,,,,,
 
 

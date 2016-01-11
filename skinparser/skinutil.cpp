@@ -123,6 +123,9 @@ namespace SkinUtil {
 			int p = lr2path.find('/');
 			if (p != std::string::npos) {
 				lr2path = "./" + lr2path.substr(p + 1);
+				p = lr2path.find('/', 3);
+				if (p != std::string::npos)
+					lr2path = "./" + lr2path.substr(p + 1);
 			}
 		}
 	}

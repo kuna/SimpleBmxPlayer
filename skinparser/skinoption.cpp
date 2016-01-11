@@ -53,7 +53,7 @@ bool SkinOption::SaveSkinOption(const char *filepath) {
 	for (auto it = files.begin(); it != files.end(); ++it) {
 		XMLElement *ele_switch = doc->NewElement("File");
 		ele_switch->SetAttribute("name", it->optionname.c_str());
-		ele_switch->SetAttribute("value", it->path.c_str());
+		ele_switch->SetAttribute("path", it->path.c_str());
 		options->LinkEndChild(ele_switch);
 	}
 
@@ -72,14 +72,14 @@ void SkinOption::Clear() {
 	files.clear();
 }
 
-std::vector<SkinOption::CustomTimer> SkinOption::GetSwitches() {
+std::vector<SkinOption::CustomTimer>& SkinOption::GetSwitches() {
 	return switches;
 }
 
-std::vector<SkinOption::CustomValue> SkinOption::GetValues() {
+std::vector<SkinOption::CustomValue>& SkinOption::GetValues() {
 	return values;
 }
 
-std::vector<SkinOption::CustomFile> SkinOption::GetFiles() {
+std::vector<SkinOption::CustomFile>& SkinOption::GetFiles() {
 	return files;
 }

@@ -84,6 +84,8 @@ int _LR2SkinParser::LoadSkin(const char *filepath, int linebufferpos) {
 
 		// if #include then read the file first
 		if (strncmp("#INCLUDE", p, 8) == 0) {
+			char *np = strchr(p + 9, ',');
+			if (np) *np = 0;
 			std::string relpath = p + 9;
 			std::string basepath = filepath;
 			ConvertLR2PathToRelativePath(relpath);
@@ -159,7 +161,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	}
 	else if (CMD_IS("#IF") || CMD_IS("#ELSEIF")) {
 		// #ELSEIF: think as new #IF clause
-		XMLElement *group = s->skinlayout.NewElement("Group");
+		XMLElement *group = s->skinlayout.NewElement("If");
 		if (CMD_IS("#IF")) condition_level++;
 		condition_element[condition_level] = group;
 		ClassAttribute cls;
@@ -179,7 +181,9 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	*/
 	if (CMD_IS("#CUSTOMOPTION")) {
 		XMLElement *customoption = s->skinlayout.NewElement("CustomSwitch");
-		customoption->SetAttribute("name", args[1]);
+		std::string name_safe = args[1];
+		ReplaceString(name_safe, " ", "_");
+		customoption->SetAttribute("name", name_safe.c_str());
 		int option_intvalue = atoi(args[2]);
 		for (char **p = args + 3; *p != 0 && strlen(*p) > 0; p++) {
 			XMLElement *options = s->skinlayout.NewElement("Option");
@@ -197,10 +201,16 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		ReplaceString(name_safe, " ", "_");
 		customfile->SetAttribute("name", name_safe.c_str());
 		// decide file type
-		if (FindString(args[2], "*.jpg") || FindString(args[2], "*.png"))
+		std::string path_safe = args[2];
+		ReplaceString(path_safe, "\\", "/");
+		if (FindString(path_safe.c_str(), "*.jpg") || FindString(path_safe.c_str(), "*.png"))
 			customfile->SetAttribute("type", "file/image");
-		else if (FindString(args[2], "*.ttf"))
+		else if (FindString(path_safe.c_str(), "*.mpg") || FindString(path_safe.c_str(), "*.mpeg") || FindString(path_safe.c_str(), "*.avi"))
+			customfile->SetAttribute("type", "file/video");
+		else if (FindString(path_safe.c_str(), "*.ttf"))
 			customfile->SetAttribute("type", "file/ttf");
+		else if (FindString(path_safe.c_str(), "/*"))
+			customfile->SetAttribute("type", "folder");		// it's somewhat ambiguous...
 		else
 			customfile->SetAttribute("type", "file");
 		std::string path = args[2];
@@ -262,10 +272,19 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		XMLElement *image = s->skinlayout.NewElement("Image");
 		image->SetAttribute("name", image_cnt++);
 		// check for optionname path
-		if (filter_to_optionname.find(args[1]) == filter_to_optionname.end())
-			image->SetAttribute("path", args[1]);
-		else
-			image->SetAttribute("option", filter_to_optionname[args[1]].c_str());
+		std::string path_converted = args[1];
+		for (auto it = filter_to_optionname.begin(); it != filter_to_optionname.end(); ++it) {
+			if (FindString(args[1], it->first.c_str())) {
+				// replace filtered path to reserved name
+				ReplaceString(path_converted, it->first, "$" + it->second);
+				break;
+			}
+		}
+		// convert path to relative
+		ReplaceString(path_converted, "\\", "/");
+		ConvertLR2PathToRelativePath(path_converted);
+		image->SetAttribute("path", path_converted.c_str());
+
 		resource->LinkEndChild(image);
 	}
 	else if (CMD_IS("#FONT")) {
@@ -914,9 +933,11 @@ int _LR2SkinParser::GenerateTexturefontString(XMLElement *src, int startgidx, in
 
 	// get image file path from resource
 	XMLElement *resource = s->skinlayout.FirstChildElement("Resource");
-	XMLElement *img = FindElementWithAttribute(resource, "Image", "name", src->IntAttribute("name"));
+	XMLElement *img = FindElementWithAttribute(resource, "Image", "name", src->Attribute("name"));
 	// create font data
 	SkinTextureFont tfont;
+	tfont.AddImageSrc(img->Attribute("path"),
+		src->IntAttribute("x"), src->IntAttribute("y"), src->IntAttribute("w"), src->IntAttribute("h"));
 	char glyphs[] = "0123456789*+";
 	if (minus)
 		glyphs[11] = '-';

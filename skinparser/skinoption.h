@@ -7,7 +7,7 @@
  * - These state is loaded from Global state.
  */
 class SkinOption {
-private:
+public:
 	/*
 	 * value to Global Timers
 	 */
@@ -37,6 +37,7 @@ private:
 		std::string path;
 	} CustomFile;
 
+private:
 	std::vector<CustomTimer> switches;
 	std::vector<CustomValue> values;
 	std::vector<CustomFile> files;
@@ -44,7 +45,7 @@ public:
 	bool LoadSkinOption(const char *filepath);
 	bool SaveSkinOption(const char *filepath);
 	void Clear();
-	std::vector<CustomTimer> GetSwitches();
-	std::vector<CustomValue> GetValues();
-	std::vector<CustomFile> GetFiles();
+	std::vector<CustomTimer>& GetSwitches();
+	std::vector<CustomValue>& GetValues();
+	std::vector<CustomFile>& GetFiles();
 };

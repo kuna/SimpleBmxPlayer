@@ -33,15 +33,17 @@ public:
 
 
 // -------------------------------------------------------------
+#define MAX_LINE 16000
+#define MAX_LINE_CHARACTER 1024
 
 class _LR2SkinParser {
 private:
 	Skin *s;
-	XMLElement *cur_e;					// current base element
-	char lines[10240][10240];			// contain included lines
-	char *line_args[10240][100];		// contain arguments for each lines
-	int line_position[10240];			// line position per each included files
-	int line_total;						// the line we totally read
+	XMLElement *cur_e;							// current base element
+	char lines[MAX_LINE][MAX_LINE_CHARACTER];	// contain included lines
+	char *line_args[MAX_LINE][100];				// contain arguments for each lines
+	int line_position[MAX_LINE];				// line position per each included files
+	int line_total;								// the line we totally read
 
 	/*
 	 * 

@@ -91,7 +91,7 @@ void SkinTextureFont::SaveToText(std::string& out) {
 	std::ostringstream ss;
 	ss << "[resource]\n";
 	for (int i = 0; i < imgcnt; i++) {
-		ss << "image" << i << "=" << imagepath;
+		ss << "image" << i << "=" << imagepath[i];
 		if (imagesrc[i].w > 0)
 			ss << "," << imagesrc[i].x << "," << imagesrc[i].y << "," 
 			   << imagesrc[i].w << "," << imagesrc[i].h;

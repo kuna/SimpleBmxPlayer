@@ -35,7 +35,6 @@ void Skin::GetDefaultOption(SkinOption *o) {
 		if (ele_switch->FirstChild()) {
 			XMLElement *defaultoption = ele_switch->FirstChildElement();
 			o->GetSwitches().push_back({ ele_switch->Attribute("name"), defaultoption->Attribute("value") });
-			break;
 		}
 		ele_switch = ele_switch->NextSiblingElement("CustomSwitch");
 	}
@@ -48,18 +47,13 @@ void Skin::GetDefaultOption(SkinOption *o) {
 		if (ele_value->FirstChild()) {
 			XMLElement *defaultoption = ele_value->FirstChildElement();
 			o->GetValues().push_back({ ele_value->Attribute("name"), defaultoption->IntAttribute("value") });
-			break;
 		}
 		ele_value = ele_value->NextSiblingElement("CustomValue");
 	}
 
 	XMLElement *ele_file = option->FirstChildElement("CustomFile");
 	while (ele_file) {
-		if (ele_file->FirstChild()) {
-			XMLElement *defaultoption = ele_file->FirstChildElement();
-			o->GetSwitches().push_back({ ele_file->Attribute("name"), defaultoption->Attribute("value") });
-			break;
-		}
+		o->GetFiles().push_back({ ele_file->Attribute("name"), ele_file->Attribute("path") });
 		ele_file = ele_file->NextSiblingElement("CustomFile");
 	}
 }
