@@ -1580,13 +1580,85 @@ const char* _LR2SkinParser::TranslateTimer(int timer) {
 	return translated;
 }
 
-const char* _LR2SkinParser::TranslateSlider(int code) {
+const char* _LR2SkinParser::TranslateButton(int code) {
+	if (code == 1)
+		strcpy(translated, "TogglePanel1()");
+	else if (code == 2)
+		strcpy(translated, "TogglePanel2()");
+	else if (code == 3)
+		strcpy(translated, "TogglePanel3()");
+	else if (code == 4)
+		strcpy(translated, "TogglePanel4()");
+	else if (code == 5)
+		strcpy(translated, "TogglePanel5()");
+	else if (code == 6)
+		strcpy(translated, "TogglePanel6()");
+	else if (code == 7)
+		strcpy(translated, "TogglePanel7()");
+	else if (code == 8)
+		strcpy(translated, "TogglePanel8()");
+	else if (code == 9)
+		strcpy(translated, "TogglePanel9()");
+	else if (code == 10)
+		strcpy(translated, "ChangeDiff()");
+	else if (code == 11)
+		strcpy(translated, "ChangeMode()");
+	else if (code == 12)
+		strcpy(translated, "ChangeSort()");
+	/* change scene */
+	else if (code == 13)
+		strcpy(translated, "StartKeyConfig()");
+	else if (code == 14)
+		strcpy(translated, "StartSkinSetting()");
+	else if (code == 15)
+		strcpy(translated, "StartPlay()");
+	else if (code == 16)
+		strcpy(translated, "StartAutoPlay()");
+	else if (code == 17)
+		strcpy(translated, "StartTextView()");	// depreciated?
+	/* 18: reset tag - is depreciated */
+	else if (code == 19)
+		strcpy(translated, "StartReplay()");
+	// ignore FX button
+	/* options */
+	else if (code == 12)
+		strcpy(translated, "ChangeSort()");
+	/* options end */
+	/* keyconfig */
+	/* skinselect (used on skinsetting mode) */
+	else
+		return 0;
+	return translated;
+}
 
+const char* _LR2SkinParser::TranslateSlider(int code) {
+	if (code == 1) {
+		strcpy(translated, "SelectBar");
+	}
+	else if (code == 2) {
+		strcpy(translated, "HighSpeed1P");
+	}
+	else if (code == 3) {
+		strcpy(translated, "HighSpeed2P");
+	}
+	else if (code == 4) {
+		strcpy(translated, "Sudden1P");
+	}
+	else if (code == 5) {
+		strcpy(translated, "Sudden2P");
+	}
+	// Lift isn't supported in LR2
+	/* else (skin scroll, FX, etc ...) are all depreciated, so ignore. */
+	else {
+		return 0;
+	}
+
+	return translated;
 }
 
 const char* _LR2SkinParser::TranslateGraph(int code) {
 	if (code == 1) {
-		strcpy(translated, "SongProgress");
+		strcpy(translated, "PlayProgress");			// shares with number
 	}
 	else if (code == 2) {
 		strcpy(translated, "SongLoadProgress");
@@ -1595,19 +1667,19 @@ const char* _LR2SkinParser::TranslateGraph(int code) {
 		strcpy(translated, "SongLoadProgress");
 	}
 	else if (code == 5) {
-		strcpy(translated, "BeginnerLevel");
+		strcpy(translated, "BeginnerLevel_graph");	// graph only value
 	}
 	else if (code == 6) {
-		strcpy(translated, "NormalLevel");
+		strcpy(translated, "NormalLevel_graph");
 	}
 	else if (code == 7) {
-		strcpy(translated, "HyperLevel");
+		strcpy(translated, "HyperLevel_graph");
 	}
 	else if (code == 8) {
-		strcpy(translated, "AnotherLevel");
+		strcpy(translated, "AnotherLevel_graph");
 	}
 	else if (code == 9) {
-		strcpy(translated, "InsaneLevel");
+		strcpy(translated, "InsaneLevel_graph");
 	}
 	else if (code == 10) {
 		strcpy(translated, "ExScore");
@@ -1627,6 +1699,55 @@ const char* _LR2SkinParser::TranslateGraph(int code) {
 	else if (code == 15) {
 		strcpy(translated, "TargetExScore");
 	}
+	else if (code == 20) {
+		strcpy(translated, "ResultPerfectPercent");
+	}
+	else if (code == 21) {
+		strcpy(translated, "ResultGreatPercent");
+	}
+	else if (code == 22) {
+		strcpy(translated, "ResultGoodPercent");
+	}
+	else if (code == 23) {
+		strcpy(translated, "ResultBadPercent");
+	}
+	else if (code == 24) {
+		strcpy(translated, "ResultPoorPercent");
+	}
+	else if (code == 25) {
+		strcpy(translated, "ResultMaxComboPercent");
+	}
+	else if (code == 26) {
+		strcpy(translated, "ResultScorePercent");
+	}
+	else if (code == 27) {
+		strcpy(translated, "ResultExScorePercent");
+	}
+	else if (code == 30) {
+		strcpy(translated, "GhostPerfectPercent");
+	}
+	else if (code == 31) {
+		strcpy(translated, "GhostGreatPercent");
+	}
+	else if (code == 32) {
+		strcpy(translated, "GhostGoodPercent");
+	}
+	else if (code == 33) {
+		strcpy(translated, "GhostBadPercent");
+	}
+	else if (code == 34) {
+		strcpy(translated, "GhostPoorPercent");
+	}
+	else if (code == 35) {
+		strcpy(translated, "GhostMaxComboPercent");
+	}
+	else if (code == 36) {
+		strcpy(translated, "GhostScorePercent");
+	}
+	else if (code == 37) {
+		strcpy(translated, "GhostExScorePercent");
+	}
+	// 40 ~ 47 highscore is depreciated; ignore
 	else {
 		return 0;
 	}
@@ -1765,8 +1886,217 @@ const char* _LR2SkinParser::TranslateNumber(int code) {
 		strcpy(translated, "IRRate");
 	}
 	else if (code == 95) {
-		strcpy(translated, "RivalDiff");
+		strcpy(translated, "RivalDiff");		// abs(HighExScore - HighExScoreRival)
 	}
+	/* during play */
+	else if (code == 100) {
+		strcpy(translated, "PlayScore");
+	}
+	else if (code == 101) {
+		strcpy(translated, "PlayExScore");
+	}
+	else if (code == 102) {
+		strcpy(translated, "PlayRate");
+	}
+	else if (code == 103) {
+		strcpy(translated, "(PlayRate * 100) % 100");
+	}
+	else if (code == 104) {
+		strcpy(translated, "PlayCombo");
+	}
+	else if (code == 105) {
+		strcpy(translated, "PlayMaxCombo");
+	}
+	else if (code == 106) {
+		strcpy(translated, "PlayTotalNotes");
+	}
+	else if (code == 107) {
+		strcpy(translated, "PlayGrooveGuage");
+	}
+	else if (code == 108) {
+		strcpy(translated, "PlayRivalDiff");
+	}
+	else if (code == 110) {
+		strcpy(translated, "PlayPerfectCount");
+	}
+	else if (code == 111) {
+		strcpy(translated, "PlayGreatCount");
+	}
+	else if (code == 112) {
+		strcpy(translated, "PlayGoodCount");
+	}
+	else if (code == 113) {
+		strcpy(translated, "PlayBadCount");
+	}
+	else if (code == 114) {
+		strcpy(translated, "PlayPoorCount");
+	}
+	else if (code == 115) {
+		strcpy(translated, "PlayTotalRate");	// estimated value
+	}
+	else if (code == 116) {
+		strcpy(translated, "(PlayTotalRate * 100) / 100");
+	}
+	/* ghost */
+	else if (code == 120) {
+		strcpy(translated, "GhostScore");
+	}
+	else if (code == 121) {
+		strcpy(translated, "GhostExScore");
+	}
+	else if (code == 122) {
+		strcpy(translated, "GhostRate");
+	}
+	else if (code == 123) {
+		strcpy(translated, "(GhostRate * 100) % 100");
+	}
+	else if (code == 124) {
+		strcpy(translated, "GhostCombo");
+	}
+	else if (code == 125) {
+		strcpy(translated, "GhostMaxCombo");
+	}
+	else if (code == 126) {
+		strcpy(translated, "GhostTotalNotes");
+	}
+	else if (code == 127) {
+		strcpy(translated, "GhostGrooveGuage");
+	}
+	else if (code == 128) {
+		strcpy(translated, "GhostRivalDiff");
+	}
+	else if (code == 130) {
+		strcpy(translated, "GhostPerfectCount");
+	}
+	else if (code == 131) {
+		strcpy(translated, "GhostGreatCount");
+	}
+	else if (code == 132) {
+		strcpy(translated, "GhostGoodCount");
+	}
+	else if (code == 133) {
+		strcpy(translated, "GhostBadCount");
+	}
+	else if (code == 134) {
+		strcpy(translated, "GhostPoorCount");
+	}
+	else if (code == 135) {
+		strcpy(translated, "GhostTotalRate");	// estimated value
+	}
+	else if (code == 136) {
+		strcpy(translated, "(GhostTotalRate * 100) / 100");
+	}
+	/*
+	 * 150 ~ 158: TODO (useless?)
+	 */
+	else if (code == 160) {
+		strcpy(translated, "PlayBPM");
+	}
+	else if (code == 161) {
+		strcpy(translated, "PlayMinute");
+	}
+	else if (code == 162) {
+		strcpy(translated, "PlaySecond");
+	}
+	else if (code == 163) {
+		strcpy(translated, "PlayRemainMinute");
+	}
+	else if (code == 164) {
+		strcpy(translated, "PlayRemainSecond");
+	}
+	else if (code == 165) {
+		strcpy(translated, "PlayProgress");	// (%)
+	}
+	else if (code == 170) {
+		strcpy(translated, "ResultExScoreBefore");
+	}
+	else if (code == 171) {
+		strcpy(translated, "ResultExScoreNow");
+	}
+	else if (code == 172) {
+		strcpy(translated, "ResultExScoreDiff");
+	}
+	else if (code == 173) {
+		strcpy(translated, "ResultMaxComboBefore");
+	}
+	else if (code == 174) {
+		strcpy(translated, "ResultMaxComboNow");
+	}
+	else if (code == 175) {
+		strcpy(translated, "ResultMaxComboDiff");
+	}
+	else if (code == 176) {
+		strcpy(translated, "ResultMinBPBefore");
+	}
+	else if (code == 177) {
+		strcpy(translated, "ResultMinBPNow");
+	}
+	else if (code == 178) {
+		strcpy(translated, "ResultMinBPDiff");
+	}
+	else if (code == 179) {
+		strcpy(translated, "ResultIRRankNow");
+	}
+	else if (code == 180) {
+		strcpy(translated, "ResultIRRankTotal");
+	}
+	else if (code == 181) {
+		strcpy(translated, "ResultIRRankRate");
+	}
+	else if (code == 182) {
+		strcpy(translated, "ResultIRRankBefore");
+	}
+	else if (code == 183) {
+		strcpy(translated, "ResultRate");
+	}
+	else if (code == 184) {
+		strcpy(translated, "(ResultRate * 100) / 100");
+	}
+	/* ignore IR Beta3: 200 ~ 250 */
+	/* rival (in select menu) */
+	else if (code == 270) {
+		strcpy(translated, "RivalScore");
+	}
+	else if (code == 271) {
+		strcpy(translated, "RivalExScore");
+	}
+	else if (code == 272) {
+		strcpy(translated, "RivalRate");
+	}
+	else if (code == 273) {
+		strcpy(translated, "(RivalRate * 100) % 100");
+	}
+	else if (code == 274) {
+		strcpy(translated, "RivalCombo");
+	}
+	else if (code == 275) {
+		strcpy(translated, "RivalMaxCombo");
+	}
+	else if (code == 276) {
+		strcpy(translated, "RivalTotalNotes");
+	}
+	else if (code == 277) {
+		strcpy(translated, "RivalGrooveGuage");
+	}
+	else if (code == 278) {
+		strcpy(translated, "RivalRivalDiff");
+	}
+	else if (code == 280) {
+		strcpy(translated, "RivalPerfectCount");
+	}
+	else if (code == 281) {
+		strcpy(translated, "RivalGreatCount");
+	}
+	else if (code == 282) {
+		strcpy(translated, "RivalGoodCount");
+	}
+	else if (code == 283) {
+		strcpy(translated, "RivalBadCount");
+	}
+	else if (code == 284) {
+		strcpy(translated, "RivalPoorCount");
+	}
+	/* 285 ~ is depreciated. ignore. */
 	else {
 		return 0;
 	}
@@ -1775,7 +2105,152 @@ const char* _LR2SkinParser::TranslateNumber(int code) {
 }
 
 const char* _LR2SkinParser::TranslateText(int code) {
+	if (code == 1) {
+		strcpy(translated, "RivalName"); 
+	}
+	else if (code == 2) {
+		strcpy(translated, "PlayerName");
+	}
+	else if (code == 10) {
+		strcpy(translated, "Title");
+	}
+	else if (code == 11) {
+		strcpy(translated, "Subtitle");
+	}
+	else if (code == 12) {
+		strcpy(translated, "SumTitle");
+	}
+	else if (code == 13) {
+		strcpy(translated, "Genre");
+	}
+	else if (code == 14) {
+		strcpy(translated, "Artist");
+	}
+	else if (code == 15) {
+		strcpy(translated, "SubArtist");
+	}
+	else if (code == 16) {
+		strcpy(translated, "SearchTag");
+	}
+	else if (code == 17) {
+		strcpy(translated, "PlayLevel");		// depreciated?
+	}
+	else if (code == 18) {
+		strcpy(translated, "PlayDiff");			// depreciated?
+	}
+	else if (code == 19) {
+		strcpy(translated, "PlayInsaneLevel");	// depreciated?
+	}
+	/*
+	 * 20 ~ 30: for editing (depreciated/ignore?)
+	 */
+	else if (code == 40) {
+		strcpy(translated, "KeySlot0");
+	}
+	else if (code == 41) {
+		strcpy(translated, "KeySlot1");
+	}
+	else if (code == 42) {
+		strcpy(translated, "KeySlot2");
+	}
+	else if (code == 43) {
+		strcpy(translated, "KeySlot3");
+	}
+	else if (code == 44) {
+		strcpy(translated, "KeySlot4");
+	}
+	else if (code == 45) {
+		strcpy(translated, "KeySlot5");
+	}
+	else if (code == 46) {
+		strcpy(translated, "KeySlot6");
+	}
+	else if (code == 47) {
+		strcpy(translated, "KeySlot7");
+	}
+	/* Skin select window */
+	else if (code == 50) {
+		strcpy(translated, "SkinName");
+	}
+	else if (code == 51) {
+		strcpy(translated, "SkinAuthor");
+	}
+	/* option */
+	else if (code == 60) {
+		strcpy(translated, "PlayMode");
+	}
+	else if (code == 61) {
+		strcpy(translated, "PlaySort");
+	}
+	else if (code == 62) {
+		strcpy(translated, "PlayDiff");
+	}
+	else if (code == 63) {
+		strcpy(translated, "Random1P");
+	}
+	else if (code == 64) {
+		strcpy(translated, "Random2P");
+	}
+	else if (code == 65) {
+		strcpy(translated, "Guage1P");
+	}
+	else if (code == 66) {
+		strcpy(translated, "Guage2P");
+	}
+	else if (code == 67) {
+		strcpy(translated, "Assist1P");
+	}
+	else if (code == 68) {
+		strcpy(translated, "Assist2P");
+	}
+	else if (code == 69) {
+		strcpy(translated, "Battle");		// depreciated?
+	}
+	else if (code == 70) {
+		strcpy(translated, "Flip");			// depreciated?
+	}
+	else if (code == 71) {
+		strcpy(translated, "ScoreGraph");	// depreciated?
+	}
+	else if (code == 72) {
+		strcpy(translated, "Ghost");
+	}
+	else if (code == 74) {
+		strcpy(translated, "ScrollType");
+	}
+	else if (code == 75) {
+		strcpy(translated, "BGASize");		// depreciated
+	}
+	else if (code == 76) {
+		strcpy(translated, "IsBGA");		// depreciated?
+	}/*
+	screen color: depreciated
+	else if (code == 60) {
+		strcpy(translated, "ScreenColor");
+	}*/
+	else if (code == 78) {
+		strcpy(translated, "VSync");
+	}
+	else if (code == 79) {
+		strcpy(translated, "ScreenMode");	// full/window
+	}
+	else if (code == 80) {
+		strcpy(translated, "AutoJudge");
+	}
+	else if (code == 81) {
+		strcpy(translated, "ReplaySave");
+	}
+	// ignore trial lines / ignore effects
+	/*
+	 * 100 ~ is skin related; ignore. 
+	 * skin option select will be done in scrollbar / overflow option
+	 * (TODO)
+	 */
+	else {
+		return 0;
+	}
 
+	return translated;
 }
 
 void _LR2SkinParser::Clear() {
