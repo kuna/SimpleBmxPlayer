@@ -30,8 +30,11 @@ int _tmain(int argc, _TCHAR **argv) {
 	Game::Init();
 	
 	/* Game Start! */
+#if 1
+	// this routine is inactivated until Lua Test is finished.
 	Game::Start();
 	Game::MainLoop();
+#endif
 
 	/* Okay, game end, release everything */
 	Game::Release();

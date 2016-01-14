@@ -7,6 +7,7 @@
 
 #include "image.h"
 #include "timer.h"
+#include "skin.h"
 #include <vector>
 
 namespace {
@@ -47,6 +48,24 @@ struct ImageDST {
 
 #define _MAX_RENDER_CONDITION 10
 
+/** @brief a simple condition evaluator for fast performance 
+ * supporting format: divided by comma (only AND operator, maximum 10)
+ * ex) condition="OnGameStart,On1PKey7Up"
+ */
+class RenderCondition {
+private:
+	RString luacondition;
+	RString key[10];
+	Timer *cond[10];
+	bool not[10];
+	int condcnt;
+public:
+	RenderCondition();
+	void Set(const RString &conditionstring);
+	void SetLuacondition(const RString &luacond);
+	bool Evaluate();
+};
+
 /** @brief very basic rendering object which does nothing. */
 class SkinRenderObject {
 private:
@@ -55,11 +74,11 @@ private:
 	/** @brief condition for itself */
 	RString condition;
 	ImageSRC src[_MAX_RENDER_CONDITION];
-	RString src_condition[_MAX_RENDER_CONDITION];
+	RenderCondition src_condition[_MAX_RENDER_CONDITION];
 	Timer *timer_src[_MAX_RENDER_CONDITION];
 	size_t srccnt;
 	ImageDST dst[_MAX_RENDER_CONDITION];
-	RString dst_condition[_MAX_RENDER_CONDITION];
+	RenderCondition dst_condition[_MAX_RENDER_CONDITION];
 	Timer *timer_dst[_MAX_RENDER_CONDITION];
 	size_t dstcnt;
 	void *tag;		// for various use
@@ -70,8 +89,8 @@ private:
 public:
 	SkinRenderObject();
 	virtual void Clear();
-	virtual void AddSRC(ImageSRC &src, const RString& condition = "");
-	virtual void AddDST(ImageDST &dst, const RString& condition = "");
+	virtual void AddSRC(ImageSRC &src, const RString& condition = "", bool lua = false);
+	virtual void AddDST(ImageDST &dst, const RString& condition = "", bool lua = false);
 	virtual void Render();
 
 	/** @brief tests collsion and if true then do own work & return true. otherwise false. */
@@ -152,4 +171,9 @@ public:
 	void ReleaseAll();
 
 	SkinRenderObject* NewNoneObject();
+	SkinRenderObjectGroup* NewGroupObject();
 };
+
+namespace SkinRenderTreeHelper {
+	bool ConstructTreeFromSkin(SkinRenderTree &rtree, Skin &s);
+}

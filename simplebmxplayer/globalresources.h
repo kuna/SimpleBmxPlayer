@@ -18,9 +18,9 @@ class StringPool {
 private:
 	std::map<RString, RString> _stringpool;
 public:
-	bool IsExists();
-	void Set(RString &key, const RString &value = "");
-	RString& Get(RString &key);
+	bool IsExists(const RString &key);
+	void Set(const RString &key, const RString &value = "");
+	RString& Get(const RString &key);
 	void Clear();
 };
 
@@ -28,9 +28,9 @@ class DoublePool {
 private:
 	std::map<RString, double> _doublepool;
 public:
-	bool IsExists();
-	void Set(RString &key, double value = 0);
-	double* Get(RString &key);
+	bool IsExists(const RString &key);
+	void Set(const RString &key, double value = 0);
+	double* Get(const RString &key);
 	void Clear();
 };
 
@@ -38,9 +38,9 @@ class IntPool {
 private:
 	std::map<RString, int> _intpool;
 public:
-	bool IsExists();
-	void Set(RString &key, int value = 0);
-	int* Get(RString &key);
+	bool IsExists(const RString &key);
+	void Set(const RString &key, int value = 0);
+	int* Get(const RString &key);
 	void Clear();
 };
 
@@ -48,13 +48,15 @@ class TimerPool {
 private:
 	std::map<RString, Timer> _timerpool;
 public:
-	bool IsExists();
-	void Set(RString &key, bool activate = true);
-	void Reset(RString &key);
-	void Stop(RString &key);
-	Timer* Get(RString &key);
-	/** @brief if (condition && !timer), then return true and start timer, otherwise false. */
-	bool Trigger(RString &key, bool condition);
+	bool IsExists(const RString &key);
+	/** @brief just set timer if not exists. different from Get (this always creates and tick if not exists) */
+	Timer* Set(const RString &key, bool activate = true);
+	void Reset(const RString &key);
+	void Stop(const RString &key);
+	/** @brief return 0 if timer not exists. */
+	Timer* Get(const RString &key);
+	/** @brief refer to Timer::Trigger(bool) */
+	bool Trigger(const RString &key, bool condition);
 	void Clear();
 };
 
@@ -63,11 +65,11 @@ class HandlerPool {
 private:
 	std::map<RString, _Handler> _handlerpool;
 public:
-	bool IsExists();
-	void Add(RString &key, _Handler h);
-	_Handler Get(RString &key);
-	bool Call(RString &key, void* arg);
-	void Remove(RString &key);
+	bool IsExists(const RString &key);
+	void Add(const RString &key, _Handler h);
+	_Handler Get(const RString &key);
+	bool Call(const RString &key, void* arg);
+	void Remove(const RString &key);
 	void Clear();
 };
 
@@ -79,9 +81,10 @@ public:
 	~ImagePool();
 	void ReleaseAll();
 
-	Image* Load(RString &path);
+	bool IsExists(const RString &key);
+	Image* Load(const RString &path);
 	void Release(Image *img);
-	Image* Get(RString &path);
+	Image* Get(const RString &path);
 };
 
 /* NOT IMPLEMENTED */
@@ -98,14 +101,16 @@ public:
 	~SoundPool();
 	void ReleaseAll();
 
-	Audio* Load(RString &path);
+	bool IsExists(const RString &key);
+	Audio* Load(const RString &path);
 	void Release(Audio* audio);
-	Audio* Get(RString &path);
+	Audio* Get(const RString &path);
 };
 
 extern StringPool* STRPOOL;
 extern DoublePool* DOUBLEPOOL;
 extern IntPool* INTPOOL;
+extern TimerPool* TIMERPOOL;
 extern HandlerPool* HANDLERPOOL;
 
 extern ImagePool* IMAGEPOOL;

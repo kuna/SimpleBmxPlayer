@@ -24,6 +24,9 @@ public:
 	void Pause();
 	void UnPause();
 	void Stop();
+
+	/** @brief return true when (!IsStarted() && condition) */
+	bool Trigger(bool condition);
 };
 
 /*

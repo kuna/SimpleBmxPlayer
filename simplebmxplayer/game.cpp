@@ -1,5 +1,7 @@
 #include "game.h"
 #include "gameplay.h"
+#include "luamanager.h"
+#include "util.h"
 
 // game status
 GameSetting setting;
@@ -45,7 +47,21 @@ bool Game::Parameter::parse(int argc, _TCHAR **argv) {
 	return true;
 }
 
-#include <windows.h>
+int test(Lua* l) {
+	int a = (int)lua_tointeger(l, -1);
+	lua_pop(l, 1);
+	lua_pushinteger(l, a + 1);
+	return 1;	// one return value
+}
+
+int test2(Lua* l) {
+	RString str = (const char*)lua_tostring(l, -1);
+	lua_pushinteger(l, str.size());
+	return 1;	// one return value
+}
+
+std::map<RString, int> test_map;
+
 bool Game::Init() {
 	/*
 	* Must init Timer first
@@ -53,6 +69,21 @@ bool Game::Init() {
 	*/
 	GameTimer::Tick();
 	GameTimer::Start(0);
+
+	/*
+	 * Init instances
+	 */
+	LUA = new LuaManager();
+
+	// register func (test)
+	//lua_pushcfunction(l, test);
+	Lua *l;
+	l = LUA->Get();
+	lua_register(l, "test", test);
+	lua_register(l, "test2", test2);
+	LUA->Release(l);
+	for (int i = 0; i < 1024; i++)
+		test_map.insert(std::pair<RString, int>(ssprintf("Test%d", i), i));
 
 	/*
 	 * Load basic setting file ...
@@ -118,7 +149,7 @@ bool Game::Init() {
 		wprintf(L"cannot load BMS resource file\n");
 		return false;
 	}
-	GamePlay::LoadSkin("../skin/play/HDPLAY_W.lr2skin");
+	GamePlay::LoadSkin("../skin/Wisp_HD/play/HDPLAY_W.lr2skin");
 	// prepare player
 	PlayerSetting psetting;
 	psetting.speed = 310;
@@ -157,6 +188,27 @@ void Render_FPS() {
 }
 
 void Render() {
+	// Lua test(benchmark)
+	// execut func
+	Lua *l = LUA->Get();
+	for (int i = 0; i < 500; i++) {
+#if 0
+		RString e;
+		//LuaHelpers::RunScript(l, "return 3", "test", e, 0, 1);
+		//LuaHelpers::RunScript(l, "return test(3)", "test", e, 0, 1);
+		LuaHelpers::RunScript(l, "return test2('abcde')", "test2", e, 0, 1);
+
+		// get res
+		int res = (int)lua_tointeger(l, -1);
+		lua_pop(l, 1);
+		//printf("%d\n", res);
+#endif
+
+		int k = test_map["Test0"];
+		fps = fps + k;
+	}
+	LUA->Release(l);
+
 	// nothing to do just render GamePlay ...
 	GamePlay::Render();
 }

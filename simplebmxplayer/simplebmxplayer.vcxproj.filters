@@ -174,7 +174,6 @@
     <Library Include="..\lib\x86\SDL2_ttf.lib" />
     <Library Include="..\lib\x86\SDL_FontCache.lib" />
     <Library Include="..\lib\x86\SDL2main.lib" />
-    <Library Include="..\Debug\Lua.lib" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="simplebmxplayer.rc">

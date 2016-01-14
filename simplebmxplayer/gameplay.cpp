@@ -69,15 +69,26 @@ bool GamePlay::LoadSkin(const char* path) {
 	//SkinDST::On(33);		// autoplay on
 	//SkinDST::On(41);		// BGA on
 
-	// load play skin
-	if (!playskin.Parse(path))
+	// load play skin (lr2)
+	// and create render tree
+	bool r = false;
+	if (strstr(path, ".lr2skin") == 0) {
+		r = playskin.Parse(path);
+	}
+	else {
+		_LR2SkinParser *lr2skin = new _LR2SkinParser();
+		r = lr2skin->ParseLR2Skin(path, &playskin);
+		delete lr2skin;
+	}
+	if (!r)
 	{
 		printf("Failed to load skin %s\n", path);
 		return false;
 	}
-	else {
-		printf("Loaded Bms Skin Successfully\n");
-	}
+
+	SkinRenderTreeHelper::ConstructTreeFromSkin(rtree, playskin);
+
+	printf("Loaded Bms Skin Successfully\n");
 
 	/// load skin resource
 	// TODO

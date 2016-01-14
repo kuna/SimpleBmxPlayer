@@ -37,7 +37,7 @@ public:
 	void YieldLua();
 	void UnyieldLua();
 	
-	/*  */
+	// Register all types which is registered in (void)Register
 	void RegisterTypes();
 
 	void SetGlobal(const RString &sName, int val);
