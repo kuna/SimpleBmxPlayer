@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common.h"
+#include "global.h"
 #include "SDL/SDL_mixer.h"
 
 class Audio {

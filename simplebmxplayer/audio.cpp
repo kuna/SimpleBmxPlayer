@@ -1,4 +1,5 @@
 #include "audio.h"
+#include "util.h"
 
 Audio::Audio(std::wstring& filepath, int channel) : channel(channel) {
 	char path_utf8[1024];

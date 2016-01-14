@@ -12,6 +12,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bmsbel", "..\bmsbel+\bmsbel
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skinparser", "skinparser\skinparser.vcxproj", "{6F9F2C5D-76B4-47EF-B03C-2BC7489F36EF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Lua", "Lua\Lua.vcxproj", "{63720C68-10F3-44B7-BF1A-840F060929DF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -30,6 +32,10 @@ Global
 		{6F9F2C5D-76B4-47EF-B03C-2BC7489F36EF}.Debug|Win32.Build.0 = Debug|Win32
 		{6F9F2C5D-76B4-47EF-B03C-2BC7489F36EF}.Release|Win32.ActiveCfg = Release|Win32
 		{6F9F2C5D-76B4-47EF-B03C-2BC7489F36EF}.Release|Win32.Build.0 = Release|Win32
+		{63720C68-10F3-44B7-BF1A-840F060929DF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{63720C68-10F3-44B7-BF1A-840F060929DF}.Debug|Win32.Build.0 = Debug|Win32
+		{63720C68-10F3-44B7-BF1A-840F060929DF}.Release|Win32.ActiveCfg = Release|Win32
+		{63720C68-10F3-44B7-BF1A-840F060929DF}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

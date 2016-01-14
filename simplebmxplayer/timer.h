@@ -4,7 +4,7 @@
 
 /*
  * General timer
- * - but you have to update GameTimer::Tick() to use this class
+ * - you have to update GameTimer::Tick() to use this class
  *   for each render event.
  */
 class Timer {

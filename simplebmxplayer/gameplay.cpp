@@ -1,5 +1,6 @@
 #include "gameplay.h"
 #include "skin.h"
+#include "skinrendertree.h"
 #include "handler.h"
 #include "bmsbel/bms_bms.h"
 #include "bmsbel/bms_parser.h"
@@ -7,14 +8,14 @@
 #include "audio.h"
 #include "image.h"
 #include "game.h"
-#include "handler.h"
+#include "util.h"
+
+SkinRenderTree rtree;
 
 namespace GamePlay {
 	// bms skin related
+	// skin resource will be loaded in GlobalResource
 	Skin playskin;
-	SkinResource playskin_resource;
-	SkinElementGroup general_draw;
-	SkinElement skin_note[20];
 
 	// bms play related
 	BmsBms bms;
@@ -65,8 +66,8 @@ void GamePlay::Init() {
 }
 
 bool GamePlay::LoadSkin(const char* path) {
-	SkinDST::On(33);		// autoplay on
-	SkinDST::On(41);		// BGA on
+	//SkinDST::On(33);		// autoplay on
+	//SkinDST::On(41);		// BGA on
 
 	// load play skin
 	if (!playskin.Parse(path))
@@ -79,22 +80,10 @@ bool GamePlay::LoadSkin(const char* path) {
 	}
 
 	/// load skin resource
-	playskin_resource.LoadResource(playskin);
+	// TODO
 
 	// prefetch note render information
-	playskin.GetPlainElements(&general_draw);
-	skin_note[1] = *playskin.GetElementById("1PNote1");
-	skin_note[2] = *playskin.GetElementById("1PNote2");
-	skin_note[3] = *playskin.GetElementById("1PNote3");
-	skin_note[4] = *playskin.GetElementById("1PNote4");
-	skin_note[5] = *playskin.GetElementById("1PNote5");
-	skin_note[8] = *playskin.GetElementById("1PNote6");
-	skin_note[9] = *playskin.GetElementById("1PNote7");
-	skin_note[6] = *playskin.GetElementById("1PNoteSC");
-
-	lanestart = -skin_note[1].GetDstArray().back().h;
-	laneheight = skin_note[1].GetDstArray().back().y;
-	laneheight += skin_note[1].GetDstArray().back().h;
+	// TODO
 
 	return true;
 }
@@ -192,7 +181,9 @@ void GamePlay::Render() {
 
 	/*
 	 * draw basic skin elements
+	 * - we'll going to comment it until Lua part is finished.
 	 */
+#if 0
 	for (auto it = playskin.begin(); it != playskin.end(); ++it) {
 		(*it).GetRenderData(renderdata);
 		if (!renderdata.img)
@@ -224,6 +215,13 @@ void GamePlay::Render() {
 		//SDL_SetTextureAlphaMod(renderdata.img->GetPtr(), 120);
 		SDL_RenderCopy(Game::GetRenderer(), renderdata.img->GetPtr(), &src, &dest);
 	}
+#endif
+
+	/*
+	 * we're currently working with skin parsing,
+	 * so we'll going to block under these codes currently (related with playing)
+	 */
+#if 0
 
 	/*
 	 * BGA rendering
@@ -302,6 +300,7 @@ void GamePlay::Render() {
 			}
 		}
 	}
+#endif
 }
 
 void GamePlay::Release() {

@@ -1,5 +1,5 @@
 #include "player.h"
-#include "define.h"
+#include "global.h"
 #include "handler.h"
 #include <time.h>
 

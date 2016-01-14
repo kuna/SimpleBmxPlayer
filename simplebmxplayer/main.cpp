@@ -3,9 +3,10 @@
 #include <string>
 
 #include "game.h"
+#include "util.h"
 
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 #endif
 int _tmain(int argc, _TCHAR **argv) {
 #ifdef _WIN32

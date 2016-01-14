@@ -1,5 +1,6 @@
 #include "image.h"
 #include "game.h"
+#include "util.h"
 
 extern "C" {
 #include "ffmpeg/libavutil/avutil.h"
