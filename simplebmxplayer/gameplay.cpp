@@ -11,6 +11,7 @@
 #include "util.h"
 
 SkinRenderTree rtree;
+SkinOption skinoption;
 
 namespace GamePlay {
 	// bms skin related
@@ -86,12 +87,15 @@ bool GamePlay::LoadSkin(const char* path) {
 		return false;
 	}
 
-	SkinRenderTreeHelper::ConstructTreeFromSkin(rtree, playskin);
-
-	printf("Loaded Bms Skin Successfully\n");
+	// load skin option, and set Environment.
+	playskin.GetDefaultOption(&skinoption);
+	skinoption.SetEnvironmentFromOption();
 
 	/// load skin resource
-	// TODO
+	SkinRenderHelper::LoadResourceFromSkin(rtree, playskin);
+	SkinRenderHelper::ConstructTreeFromSkin(rtree, playskin);
+
+	printf("Loaded Bms Skin Successfully\n");
 
 	// prefetch note render information
 	// TODO
@@ -315,10 +319,13 @@ void GamePlay::Render() {
 }
 
 void GamePlay::Release() {
-	// skin, bmsresource clear
+	// skin clear (COMMENT: we don't need to release skin in real. just in beta version.)
+	// we don't need to clear BMS data until next BMS is loaded
+	rtree.ReleaseAll();
+	rtree.ReleaseAllResources();
 	playskin.Release();
-	bmsresource.Clear();
-	bms.Clear();
+	//bmsresource.Clear();
+	//bms.Clear();
 
 	// temp resource
 	if (temptexture) SDL_DestroyTexture(temptexture);

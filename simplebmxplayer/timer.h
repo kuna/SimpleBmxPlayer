@@ -27,6 +27,8 @@ public:
 
 	/** @brief return true when (!IsStarted() && condition) */
 	bool Trigger(bool condition);
+	/** @brief toggle timer. */
+	void Toggle();
 };
 
 /*

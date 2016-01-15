@@ -22,6 +22,7 @@ namespace IO {
 	std::wstring get_fileext(const std::wstring& filepath);
 	std::string get_fileext(const std::string& filepath);
 	std::wstring get_filedir(const std::wstring& filepath);
+	std::wstring get_filedir(const std::string& filepath);
 	std::wstring get_filename(const std::wstring& filepath);
 	bool is_file_exists(const std::wstring& filename);
 	bool is_directory_exists(const std::wstring& dirpath);

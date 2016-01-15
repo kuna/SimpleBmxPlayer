@@ -1,4 +1,5 @@
 #include "file.h"
+#include "globalresources.h"
 #include <sys/stat.h>
 #include "util.h"
 
@@ -81,4 +82,58 @@ size_t File::GetFileSize() {
 	struct stat buf;
 	fstat(fd, &buf);
 	return buf.st_size;
+}
+
+namespace FileHelper {
+	char basepath[1024];
+
+	/* private */
+	bool CheckIsAbsolutePath(const char *path) {
+		return (path[0] != 0 && (path[0] == '/' || path[1] == ':'));
+	}
+
+	void SetBasePath(const char *path) {
+		ASSERT(CheckIsAbsolutePath(path));
+		strcpy(basepath, path);
+		if (path[strlen(path) - 1] != '/' || path[strlen(path) - 1] != '\\') {
+			if (strchr(path, '/'))
+				strcat(basepath, "/");
+			else
+				strcat(basepath, "\\");
+		}
+	}
+
+	void ConvertPathToAbsolute(RString &path) {
+		// replace some env into valid string (refers STRINGPOOL)
+		int p = 0, p2 = 0;
+		while (p != RString::npos) {
+			p = path.find("$(", p);
+			if (p == RString::npos)
+				break;
+			p2 = path.find(")", p);
+			if (p2 != RString::npos) {
+				RString key = path.substr(p + 1, p2 - p);
+				RString val = "";
+				if (STRPOOL->IsExists(key))
+					val = *STRPOOL->Get(key);
+				path = path.substr(0, p) + val + path.substr(p2 + 1);
+				p = p2 + 1;
+				if (p >= path.size())
+					break;
+			}
+			else {
+				break;
+			}
+		}
+		// no empty path
+		if (path == "")
+			return;
+		if (path[0] == '/' || path.substr(1, 2) == ":\\" || path.substr(1, 2) == ":/")
+			return;		// it's already absolute path, dont touch it.
+		// if relative, then translate it into absolute
+		if (path.substr(0, 2) == "./" || path.substr(0, 2) == ".\\")
+			path = path.substr(2);
+		ASSERT(CheckIsAbsolutePath(basepath));
+		path = basepath + path;
+	}
 }

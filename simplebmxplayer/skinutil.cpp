@@ -64,10 +64,10 @@ namespace SkinUtil {
 		strcpy(buffer, "");
 		for (auto it = classes.begin(); it != classes.end(); ++it) {
 			strcat(buffer, it->first.c_str());
-			strcat(buffer, " and ");
+			strcat(buffer, ",");
 		}
 		if (classes.size() > 0)
-			buffer[strlen(buffer) - 5] = 0;
+			buffer[strlen(buffer) - 1] = 0;
 		return buffer;
 	}
 

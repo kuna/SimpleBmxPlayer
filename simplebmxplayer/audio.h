@@ -8,6 +8,7 @@ private:
 	Mix_Chunk *sdlaudio;
 	int channel;
 public:
+	Audio(const char* filepath, int channel = -1);
 	Audio(std::wstring& filepath, int channel=-1);
 	~Audio();
 	bool IsLoaded();

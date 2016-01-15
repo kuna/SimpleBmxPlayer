@@ -2,6 +2,7 @@
 #include "gameplay.h"
 #include "luamanager.h"
 #include "util.h"
+#include "globalresources.h"
 
 // game status
 GameSetting setting;
@@ -73,6 +74,7 @@ bool Game::Init() {
 	/*
 	 * Init instances
 	 */
+	PoolHelper::InitalizeAll();
 	LUA = new LuaManager();
 
 	// register func (test)
@@ -253,6 +255,10 @@ void Game::Release() {
 	// game basic resource release
 	// - FPS font
 	FC_FreeFont(font);
+	
+	// release instances
+	PoolHelper::ReleaseAll();
+	delete LUA;
 
 	// finally, audio/renderer close
 	Mix_CloseAudio();

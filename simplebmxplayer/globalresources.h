@@ -19,8 +19,8 @@ private:
 	std::map<RString, RString> _stringpool;
 public:
 	bool IsExists(const RString &key);
-	void Set(const RString &key, const RString &value = "");
-	RString& Get(const RString &key);
+	RString* Set(const RString &key, const RString &value = "");
+	RString* Get(const RString &key);
 	void Clear();
 };
 
@@ -29,7 +29,7 @@ private:
 	std::map<RString, double> _doublepool;
 public:
 	bool IsExists(const RString &key);
-	void Set(const RString &key, double value = 0);
+	double* Set(const RString &key, double value = 0);
 	double* Get(const RString &key);
 	void Clear();
 };
@@ -39,7 +39,7 @@ private:
 	std::map<RString, int> _intpool;
 public:
 	bool IsExists(const RString &key);
-	void Set(const RString &key, int value = 0);
+	int* Set(const RString &key, int value = 0);
 	int* Get(const RString &key);
 	void Clear();
 };
@@ -81,9 +81,9 @@ public:
 	~ImagePool();
 	void ReleaseAll();
 
-	bool IsExists(const RString &key);
+	bool IsExists(const RString &path);
 	Image* Load(const RString &path);
-	void Release(Image *img);
+	bool Release(Image *img);
 	Image* Get(const RString &path);
 };
 
@@ -91,6 +91,8 @@ public:
 class FontPool {
 private:
 public:
+	~FontPool();
+	void ReleaseAll();
 };
 
 class SoundPool {
@@ -103,7 +105,7 @@ public:
 
 	bool IsExists(const RString &key);
 	Audio* Load(const RString &path);
-	void Release(Audio* audio);
+	bool Release(Audio* audio);
 	Audio* Get(const RString &path);
 };
 
@@ -116,3 +118,8 @@ extern HandlerPool* HANDLERPOOL;
 extern ImagePool* IMAGEPOOL;
 extern FontPool* FONTPOOL;
 extern SoundPool* SOUNDPOOL;
+
+namespace PoolHelper {
+	void InitalizeAll();
+	void ReleaseAll();
+}

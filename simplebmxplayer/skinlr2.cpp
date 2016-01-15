@@ -26,9 +26,12 @@ char* Trim(char *p) {
 // ---------------------------------------------------------------
 
 bool _LR2SkinParser::ParseLR2Skin(const char *filepath, Skin *s) {
-	this->s = s;
+	// release all used data before starting
+	Clear();
 
 	// fill basic information to skin
+	this->s = s;
+
 	strcpy(s->filepath, filepath);
 	XMLComment *cmt = s->skinlayout.NewComment("Auto-generated code.\n"
 		"Converted from LR2Skin.\n"
@@ -54,10 +57,7 @@ bool _LR2SkinParser::ParseLR2Skin(const char *filepath, Skin *s) {
 	condition_level = 0;
 	ParseSkin();
 
-	// release all used data
-	Clear();
-
-	if (cur_e == s->skinlayout.ToElement()) {
+	if (condition_level == 0) {
 		printf("lr2skin(%s) parsing successfully done\n", filepath);
 		return true;
 	}
@@ -281,7 +281,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		for (auto it = filter_to_optionname.begin(); it != filter_to_optionname.end(); ++it) {
 			if (FindString(args[1], it->first.c_str())) {
 				// replace filtered path to reserved name
-				ReplaceString(path_converted, it->first, "$" + it->second);
+				ReplaceString(path_converted, it->first, "$(" + it->second + ")");
 				break;
 			}
 		}
@@ -982,7 +982,7 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 	 * So this function will translate OP code into a valid condition code.
 	 */
 	if (op < 0) {
-		strcpy(translated, "not ");
+		strcpy(translated, "!");
 		op *= -1;
 	}
 	else {
@@ -1060,7 +1060,9 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 		strcat(translated, "IsAutoPlay");
 	}
 	else if (op == 33) {
-		strcat(translated, "not IsAutoPlay");	// IsAutoPlayOff: depreciated
+		if (translated[0] == '!') translated[0] = 0;
+		else strcpy(translated, "!");
+		strcat(translated, "IsAutoPlay");	// IsAutoPlayOff: depreciated
 	}
 	else if (op == 34) {
 		strcat(translated, "IsGhostOff");			// hmm ...
@@ -1081,7 +1083,9 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 		strcat(translated, "IsScoreGraph");
 	}
 	else if (op == 40) {
-		strcat(translated, "not IsBGA");
+		if (translated[0] == '!') translated[0] = 0;
+		else strcpy(translated, "!");
+		strcat(translated, "IsBGA");
 	}
 	else if (op == 41) {
 		strcat(translated, "IsBGA");
@@ -1102,10 +1106,14 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 		strcat(translated, "IsDiffFiltered");		// on select menu; but depreciated?
 	}
 	else if (op == 47) {
-		strcat(translated, "not IsDifficultyFilter");
+		if (translated[0] == '!') translated[0] = 0;
+		else strcpy(translated, "!");
+		strcat(translated, "IsDifficultyFilter");
 	}
 	else if (op == 50) {
-		strcat(translated, "not IsOnline");
+		if (translated[0] == '!') translated[0] = 0;
+		else strcpy(translated, "!");
+		strcat(translated, "IsOnline");
 	}
 	else if (op == 51) {
 		strcat(translated, "IsOnline");
@@ -1117,25 +1125,33 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 		strcat(translated, "IsExtraMode");
 	}
 	else if (op == 54) {
-		strcat(translated, "not Is1PAutoSC");
+		if (translated[0] == '!') translated[0] = 0;
+		else strcpy(translated, "!");
+		strcat(translated, "Is1PAutoSC");
 	}
 	else if (op == 55) {
 		strcat(translated, "Is1PAutoSC");
 	}
 	else if (op == 56) {
-		strcat(translated, "not Is2PAutoSC");
+		if (translated[0] == '!') translated[0] = 0;
+		else strcpy(translated, "!");
+		strcat(translated, "Is2PAutoSC");
 	}
 	else if (op == 57) {
 		strcat(translated, "Is2PAutoSC");
 	}
 	else if (op == 60) {
-		strcat(translated, "not IsRecordable");
+		if (translated[0] == '!') translated[0] = 0;
+		else strcpy(translated, "!");
+		strcat(translated, "IsRecordable");
 	}
 	else if (op == 61) {
 		strcat(translated, "IsRecordable");
 	}
 	else if (op == 62) {
-		strcat(translated, "not IsRecordable");
+		if (translated[0] == '!') translated[0] = 0;
+		else strcpy(translated, "!");
+		strcat(translated, "IsRecordable");
 	}
 	else if (op == 63) {
 		strcat(translated, "IsEasyClear");
@@ -1153,19 +1169,29 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 		strcat(translated, "IsFCClear");
 	}
 	else if (op == 70) {
-		strcat(translated, "not IsBeginnerSparkle");
+		if (translated[0] == '!') translated[0] = 0;
+		else strcpy(translated, "!");
+		strcat(translated, "IsBeginnerSparkle");
 	}
 	else if (op == 71) {
-		strcat(translated, "not IsNormalSparkle");
+		if (translated[0] == '!') translated[0] = 0;
+		else strcpy(translated, "!");
+		strcat(translated, "IsNormalSparkle");
 	}
 	else if (op == 72) {
-		strcat(translated, "not IsHyperSparkle");
+		if (translated[0] == '!') translated[0] = 0;
+		else strcpy(translated, "!");
+		strcat(translated, "IsHyperSparkle");
 	}
 	else if (op == 73) {
-		strcat(translated, "not IsAnotherSparkle");
+		if (translated[0] == '!') translated[0] = 0;
+		else strcpy(translated, "!");
+		strcat(translated, "IsAnotherSparkle");
 	}
 	else if (op == 74) {
-		strcat(translated, "not IsInsaneSparkle");
+		if (translated[0] == '!') translated[0] = 0;
+		else strcpy(translated, "!");
+		strcat(translated, "IsInsaneSparkle");
 	}
 	else if (op == 75) {
 		strcat(translated, "IsBeginnerSparkle");
@@ -2262,6 +2288,7 @@ void _LR2SkinParser::Clear() {
 	font_cnt = 0;
 	filter_to_optionname.clear();
 	texturefont_id.clear();
+	memset(line_args, 0, sizeof(line_args));
 }
 
 // ----------------------- LR2Skin part end ------------------------

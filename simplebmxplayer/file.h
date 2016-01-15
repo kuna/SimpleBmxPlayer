@@ -54,3 +54,10 @@ public:
 
 	RString& GetFilePath();
 };
+
+namespace FileHelper {
+	/** @brief set basepath. useful for ConvertPathToAbsolute() */
+	void SetBasePath(const char *path);
+	/** @brief converts path to absolute path */
+	void ConvertPathToAbsolute(RString& path);
+}
