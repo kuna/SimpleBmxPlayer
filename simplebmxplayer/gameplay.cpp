@@ -9,6 +9,7 @@
 #include "image.h"
 #include "game.h"
 #include "util.h"
+#include "file.h"
 
 SkinRenderTree rtree;
 SkinOption skinoption;
@@ -91,9 +92,14 @@ bool GamePlay::LoadSkin(const char* path) {
 	playskin.GetDefaultOption(&skinoption);
 	skinoption.SetEnvironmentFromOption();
 
-	/// load skin resource
+	// load skin resource
+	// - skin resources are relative to .xml file.
+	RString skindirpath = IO::get_filedir(path);
+	FileHelper::ConvertPathToAbsolute(skindirpath);
+	FileHelper::PushBasePath(skindirpath);
 	SkinRenderHelper::LoadResourceFromSkin(rtree, playskin);
 	SkinRenderHelper::ConstructTreeFromSkin(rtree, playskin);
+	FileHelper::PopBasePath();
 
 	printf("Loaded Bms Skin Successfully\n");
 
@@ -142,7 +148,7 @@ bool GamePlay::LoadBmsResource() {
 	 * Set basic switch
 	 * and Get Bms base directory
 	 */
-	std::wstring bms_dir = IO::get_filedir(bmspath) + PATH_SEPARATOR;
+	std::wstring bms_dir = IO::get_filedir(bmspath) + PATH_SEPARATORW;
 
 	// load WAV/BMP
 	for (unsigned int i = 0; i < BmsConst::WORD_MAX_COUNT; ++i) {

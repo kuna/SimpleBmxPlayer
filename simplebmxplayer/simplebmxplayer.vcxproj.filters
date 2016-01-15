@@ -30,9 +30,6 @@
     <ClCompile Include="timer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="skin.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="gamesetting.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -73,6 +70,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="skinutil.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="skin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

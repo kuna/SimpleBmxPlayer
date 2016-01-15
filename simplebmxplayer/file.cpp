@@ -14,8 +14,15 @@ File::~File() {
 bool File::Open(const char *path, const char* mode) {
 	/* if file is already open then close it */
 	if (fp) Close();
-
-	int e = fopen_s(&fp, path, mode);
+	int e;
+#if _WIN32
+	wchar_t path_w[1024], mode_w[32];
+	ENCODING::utf8_to_wchar(path, path_w, 1024);
+	ENCODING::utf8_to_wchar(mode, mode_w, 32);
+	e = _wfopen_s(&fp, path_w, mode_w);
+#else
+	e = fopen_s(&fp, path, mode);
+#endif
 	if (e != 0)
 		return false;
 
@@ -85,15 +92,17 @@ size_t File::GetFileSize() {
 }
 
 namespace FileHelper {
-	char basepath[1024];
+	std::vector<RString> basepath_stack;
 
 	/* private */
 	bool CheckIsAbsolutePath(const char *path) {
 		return (path[0] != 0 && (path[0] == '/' || path[1] == ':'));
 	}
 
-	void SetBasePath(const char *path) {
+	/* mount */
+	void PushBasePath(const char *path) {
 		ASSERT(CheckIsAbsolutePath(path));
+		char basepath[1024];
 		strcpy(basepath, path);
 		if (path[strlen(path) - 1] != '/' || path[strlen(path) - 1] != '\\') {
 			if (strchr(path, '/'))
@@ -101,6 +110,17 @@ namespace FileHelper {
 			else
 				strcat(basepath, "\\");
 		}
+		basepath_stack.push_back(basepath);
+	}
+
+	/* unmount */
+	void PopBasePath() {
+		basepath_stack.pop_back();
+	}
+
+	RString& GetBasePath() {
+		ASSERT(basepath_stack.size() > 0);
+		return basepath_stack.back();
 	}
 
 	void ConvertPathToAbsolute(RString &path) {
@@ -112,7 +132,7 @@ namespace FileHelper {
 				break;
 			p2 = path.find(")", p);
 			if (p2 != RString::npos) {
-				RString key = path.substr(p + 1, p2 - p);
+				RString key = path.substr(p + 2, p2 - p - 2);
 				RString val = "";
 				if (STRPOOL->IsExists(key))
 					val = *STRPOOL->Get(key);
@@ -133,7 +153,6 @@ namespace FileHelper {
 		// if relative, then translate it into absolute
 		if (path.substr(0, 2) == "./" || path.substr(0, 2) == ".\\")
 			path = path.substr(2);
-		ASSERT(CheckIsAbsolutePath(basepath));
-		path = basepath + path;
+		path = GetBasePath() + path;
 	}
 }

@@ -57,7 +57,9 @@ public:
 
 namespace FileHelper {
 	/** @brief set basepath. useful for ConvertPathToAbsolute() */
-	void SetBasePath(const char *path);
+	void PushBasePath(const char *path);
+	void PopBasePath();
+	RString& GetBasePath();
 	/** @brief converts path to absolute path */
 	void ConvertPathToAbsolute(RString& path);
 }

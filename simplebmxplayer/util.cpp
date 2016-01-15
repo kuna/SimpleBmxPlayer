@@ -57,6 +57,22 @@ unsigned char g_LowerCase[256] =
 std::wstring to_wstring (int i) { std::wostringstream wss; wss << i; return wss.str(); }
 
 namespace IO {
+
+	std::string get_fileext(const std::string& filepath) {
+		auto i = filepath.find_last_of('.');
+		if (i == std::wstring::npos)
+			return "";
+		return filepath.substr(i);
+	}
+
+	std::string get_filedir(const std::string& filepath) {
+		int r1 = filepath.find_last_of('\\');
+		int r2 = filepath.find_last_of('/');
+		int r = (r1 == string::npos ? r2 : r1);
+		return filepath.substr(0, r);
+	}
+
+#ifdef _WIN32
 	std::wstring substitute_extension(const std::wstring& filepath, const std::wstring& newext) {
 		auto i = filepath.find_last_of(L'.');
 		if (i == std::wstring::npos)
@@ -65,13 +81,13 @@ namespace IO {
 	}
 
 	std::wstring substitute_filename(const std::wstring& filepath, const std::wstring& newname) {
-		auto i_start = filepath.find_last_of(PATH_SEPARATOR_CHAR);
+		auto i_start = filepath.find_last_of(PATH_SEPARATOR_WCHAR);
 		if (i_start == std::wstring::npos)
 			i_start = 0;
 		auto i_end = filepath.find_last_of(L'.');
 		if (i_end == std::wstring::npos)
 			i_end = filepath.size() - 1;
-		return filepath.substr(0, i_start) + PATH_SEPARATOR + newname + filepath.substr(i_end);
+		return filepath.substr(0, i_start) + PATH_SEPARATORW + newname + filepath.substr(i_end);
 	}
 
 	std::wstring get_fileext(const std::wstring& filepath) {
@@ -81,23 +97,17 @@ namespace IO {
 		return filepath.substr(i);
 	}
 
-	std::string get_fileext(const std::string& filepath) {
-		auto i = filepath.find_last_of('.');
-		if (i == std::wstring::npos)
-			return "";
-		return filepath.substr(i);
-	}
-
 	std::wstring get_filedir(const std::wstring& filepath) {
-		return filepath.substr(0, filepath.find_last_of(PATH_SEPARATOR_CHAR));
+		return filepath.substr(0, filepath.find_last_of(PATH_SEPARATOR_WCHAR));
 	}
 
 	std::wstring get_filename(const std::wstring& filepath) {
-		auto i = filepath.find_last_of(PATH_SEPARATOR_CHAR);
+		auto i = filepath.find_last_of(PATH_SEPARATOR_WCHAR);
 		if (i == std::wstring::npos)
 			return L"";
 		return filepath.substr(i + 1);
 	}
+#endif
 
 	bool is_file_exists(const std::wstring& filename) {
 		FILE *f;
@@ -163,7 +173,7 @@ namespace IO {
 			REPLACESTR(fn, L'<', L'_');
 			REPLACESTR(fn, L'>', L'_');
 		}
-		return get_filedir(filepath) + PATH_SEPARATOR + fn;
+		return get_filedir(filepath) + PATH_SEPARATORW + fn;
 	}
 }
 
@@ -179,6 +189,26 @@ namespace ENCODING {
 		char *but_out_iconv = (char*)out;
 		size_t len_in = wcslen(org) * 2;
 		size_t len_out = maxlen;
+
+		int r = iconv(cd, &buf_iconv, &len_in, &but_out_iconv, &len_out);
+		if ((int)r == -1)
+			return false;
+		*but_out_iconv = 0;
+
+		return true;
+	}
+
+	bool utf8_to_wchar(const char *org, wchar_t *out, int maxlen)
+	{
+		iconv_t cd = iconv_open("UTF-16LE", "UTF-8");
+		if ((int)cd == -1)
+			return false;
+
+		out[0] = 0;
+		const char *buf_iconv = (const char*)org;
+		char *but_out_iconv = (char*)out;
+		size_t len_in = strlen(org);
+		size_t len_out = maxlen * 2;
 
 		int r = iconv(cd, &buf_iconv, &len_in, &but_out_iconv, &len_out);
 		if ((int)r == -1)

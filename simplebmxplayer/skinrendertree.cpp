@@ -7,7 +7,7 @@ using namespace tinyxml2;
 
 // ------ SkinRenderCondition ----------------------
 
-RenderCondition::RenderCondition() {
+RenderCondition::RenderCondition() : condcnt(0) {
 	memset(not, 0, sizeof(not));
 }
 
@@ -223,9 +223,9 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 		else if (ISNAME(e, "Image")) {
 			obj = rtree.NewImageObject();
 		}
-		else if (ISNAME(e, "Number")) {
+		/*else if (ISNAME(e, "Number")) {
 
-		}
+		}*/
 		else {
 			// parsed as unknown object
 			// only parses SRC/DST condition
@@ -261,7 +261,7 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 }
 
 bool SkinRenderHelper::ConstructTreeFromSkin(SkinRenderTree &rtree, Skin &s) {
-	XMLElement *e = s.skinlayout.FirstChildElement("Skin");
+	XMLElement *e = s.skinlayout.FirstChildElement("Skin")->FirstChildElement();
 	ConstructTreeFromElement(rtree, &rtree, e);
 
 	return true;

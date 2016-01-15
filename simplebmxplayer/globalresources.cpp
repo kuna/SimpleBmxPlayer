@@ -11,14 +11,6 @@ ImagePool* IMAGEPOOL = 0;
 FontPool* FONTPOOL = 0;
 SoundPool* SOUNDPOOL = 0;
 
-/* some commonly used routine */
-namespace {
-	template<typename A, typename B>
-	bool exists(std::map<A, B> &m, A& key) {
-		return (m.find(key) != m.end())
-	}
-}
-
 bool StringPool::IsExists(const RString &key) {
 	return _stringpool.find(key) != _stringpool.end();
 }
@@ -143,7 +135,7 @@ Image* ImagePool::Load(const RString &path) {
 	FileHelper::ConvertPathToAbsolute(_path);
 	if (!IsExists(_path)) {
 		Image *img = new Image();
-		img->Load(path.c_str());
+		img->Load(_path.c_str());
 		_imagepool.insert(pair<RString, Image*>(_path, img));
 		_loadcount.insert(pair<Image*, int>(img, 1));
 		return img;

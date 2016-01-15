@@ -1,7 +1,6 @@
 #include "skin.h"
 #include "skinutil.h"
 using namespace SkinUtil;
-using namespace tinyxml2;
 
 // ---------------------------------------------------------
 
@@ -41,7 +40,7 @@ void Skin::GetDefaultOption(SkinOption *o) {
 	}
 
 	/*
-	 * CustomValue isn't supported in LR2 skin
+	 * CustomValue isn't supported in LR2 skin (dummy code here)
 	 */
 	XMLElement *ele_value = option->FirstChildElement("CustomValue");
 	while (ele_value) {

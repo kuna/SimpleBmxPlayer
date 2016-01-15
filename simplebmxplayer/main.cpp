@@ -14,7 +14,7 @@ int _tmain(int argc, _TCHAR **argv) {
 	 */
 	char utf8path[1024];
 	ENCODING::wchar_to_utf8(IO::get_filedir(argv[0]).c_str(), utf8path, 1024);
-	FileHelper::SetBasePath(utf8path);
+	FileHelper::PushBasePath(utf8path);
 
 	/*
 	 * Parse parameter for specific option

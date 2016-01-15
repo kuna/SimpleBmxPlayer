@@ -62,45 +62,45 @@
 
 //[画像定義],,
 //画像定義,filename,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\bomb\*.png,"			//0"
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\system\mainparts.png,,,,,,,,,"	//1"
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\system\frame.png,"		                 //2"
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\fc\*.png,,,,,,,,,,,,,,,,"		//3"
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\bomb\*.png,"			//0"
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\system\mainparts.png,,,,,,,,,"	//1"
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\system\frame.png,"		                 //2"
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\fc\*.png,,,,,,,,,,,,,,,,"		//3"
 #IMAGE,.dummy,,,,,,,,,,,,,,,		//4"
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\lanecover\*.png,"		                //5"
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\BG\frame bg\*.png,"		//6"
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\sara\*.png,"		//7"
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\note\*.png,,,,,,,,,,                                                   //8",,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\keyflash\*.png,"			//9",,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\progressbar\*.png,"		//10",,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\close\*.png,"		//11",,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\system\mainparts.png,"		//12",,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\judge\*.png,",,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\BG\full bg\*.png,"			//14",,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\laser\*.png,",,		                   //15",,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\number\score\*.png,"			//16",,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\number\gauge\*.png," //17
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\number\bpm\*.png," //18
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\lanecover\*.png,"		                //5"
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\BG\frame bg\*.png,"		//6"
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\sara\*.png,"		//7"
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\note\*.png,,,,,,,,,,                                                   //8",,
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\keyflash\*.png,"			//9",,
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\progressbar\*.png,"		//10",,
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\close\*.png,"		//11",,
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\system\mainparts.png,"		//12",,
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\judge\*.png,",,
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\BG\full bg\*.png,"			//14",,
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\laser\*.png,",,		                   //15",,
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\number\score\*.png,"			//16",,
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\number\gauge\*.png," //17
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\number\bpm\*.png," //18
 #IMAGE,.dummy,,,,,,,,,,,,,,,,,,, //19
 #IMAGE,.dummy,,,,,,,,,,,,,,,,,,,//20
 #IMAGE,.dummy,,,,,,,,,,,,,,,,,,, //21
 #IMAGE,.dummy,,,,,,,,,,,,,,,,,,,		                                        //22",,
 #IF,100,,,,,,,,,,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\ClearData\NOPLAY.png,,,,,,,,,,//23
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\ClearData\NOPLAY.png,,,,,,,,,,//23
 #ELSEIF,101,,,,,,,,,,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\ClearData\FAILED.png,,,,,,,,,,//23
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\ClearData\FAILED.png,,,,,,,,,,//23
 #ELSEIF,102,,,,,,,,,,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\ClearData\EASYCLEAR.png,,,,,,,,,,//23
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\ClearData\EASYCLEAR.png,,,,,,,,,,//23
 #ELSEIF,103,,,,,,,,,,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\ClearData\CLEAR.png,,,,,,,,,,//23
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\ClearData\CLEAR.png,,,,,,,,,,//23
 #ELSEIF,104,,,,,,,,,,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\ClearData\HARDCLEAR.png,,,,,,,,,,//23
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\ClearData\HARDCLEAR.png,,,,,,,,,,//23
 #ELSEIF,105,,,,,,,,,,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\ClearData\FULLCOMBO.png,,,,,,,,,,//23
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\ClearData\FULLCOMBO.png,,,,,,,,,,//23
 #ELSE,,,,,,,,,,,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\ClearData\dummy.png,,,,,,,,,,//23
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\ClearData\dummy.png,,,,,,,,,,//23
 #ENDIF,,,,,,,,,,,
-#IMAGE,.\LR2files\Theme\WMIX_play_HD\parts\gauge\*.png,"	//24",,
+#IMAGE,.\LR2files\Theme\Wisp_HD\play\parts\gauge\*.png,"	//24",,
 #IMAGE,.dummy,,,,,,,,,,,,,,,,,,,	//25",,
 #IMAGE,.dummy,,,,,,,,,,,,,,,,,,,,,		//26",,
 #IMAGE,CONTINUE,,,,,,,,,,//27
@@ -114,10 +114,10 @@
 #FONT,12,5,2,ヒラギノ角ゴ7
 
 //パスの次を1とすると、画像フォント使用不可設定が無効になり、かならず使用されます,,,,,,,,,,,,,,,,,,,,
-#LR2FONT,.\LR2files\Theme\WMIX_play_HD\font\title\font.lr2font,,,,,,,,,,,,,,,,,,,0
-#LR2FONT,.\LR2files\Theme\WMIX_play_HD\font\genre\font.lr2font,,,,,,,,,,,,,,,,,,,1
-#LR2FONT,.\LR2files\Theme\WMIX_play_HD\font\artist\font.lr2font,,,,,,,,,,,,,,,,,,,2
-#LR2FONT,.\LR2files\Theme\WMIX_play_HD\font\small\font.lr2font,,,,,,3
+#LR2FONT,.\LR2files\Theme\WMIX_play\HD\font\title\font.lr2font,,,,,,,,,,,,,,,,,,,0
+#LR2FONT,.\LR2files\Theme\WMIX_play\HD\font\genre\font.lr2font,,,,,,,,,,,,,,,,,,,1
+#LR2FONT,.\LR2files\Theme\WMIX_play\HD\font\artist\font.lr2font,,,,,,,,,,,,,,,,,,,2
+#LR2FONT,.\LR2files\Theme\WMIX_play\HD\font\small\font.lr2font,,,,,,3
 
 
 ///先読み

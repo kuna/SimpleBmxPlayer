@@ -87,6 +87,7 @@
     <ClCompile Include="file.cpp" />
     <ClCompile Include="globalresources.cpp" />
     <ClCompile Include="logger.cpp" />
+    <ClCompile Include="skin.cpp" />
     <ClCompile Include="skinlr2.cpp" />
     <ClCompile Include="skinoption.cpp" />
     <ClCompile Include="skintexturefont.cpp" />
@@ -100,7 +101,6 @@
     <ClCompile Include="luamanager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="player.cpp" />
-    <ClCompile Include="skin.cpp" />
     <ClCompile Include="skinrendertree.cpp" />
     <ClCompile Include="timer.cpp" />
   </ItemGroup>
