@@ -222,6 +222,8 @@ namespace Game {
 				}
 				if (e.type == SDL_KEYUP) {
 					// GamePlay::KeyPress(e.value);
+					// COMMENT: on test purpose. reset scene timer.
+					TIMERPOOL->Reset("OnScene");
 				}
 			}
 

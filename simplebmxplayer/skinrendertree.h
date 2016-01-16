@@ -107,6 +107,7 @@ public:
 	virtual void AddSRC(ImageSRC &src, const RString& condition = "", bool lua = false);
 	virtual void AddDST(ImageDST &dst, const RString& condition = "", bool lua = false);
 	virtual void Render();
+	bool EvaluateCondition();
 
 	/** @brief tests collsion and if true then do own work & return true. otherwise false. */
 	virtual bool Click(int x, int y);
@@ -233,7 +234,7 @@ namespace SkinRenderHelper {
 	bool CalculateFrame(ImageDST &dst, ImageDSTFrame &frame);
 	ImageDSTFrame Tween(ImageDSTFrame& a, ImageDSTFrame &b, double t, int acctype);
 	/** @brief in debug mode, border will drawn around object. */
-	void Render(Image *img, ImageSRC *src, ImageDSTFrame *frame);
+	void Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, int blend);
 
 	/** @brief replaces path string to a correct one */
 	void ConvertPath(RString& path);

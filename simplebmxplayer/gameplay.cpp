@@ -136,10 +136,12 @@ namespace GamePlay {
 
 	void RenderObject(SkinRenderObject *obj) {
 		if (obj->IsGroup()) {
-			// iterate all child
-			SkinGroupObject *group = obj->ToGroup();
-			for (auto child = group->begin(); child != group->end(); ++child) {
-				RenderObject(*child);
+			if (obj->EvaluateCondition()) {
+				// iterate all child
+				SkinGroupObject *group = obj->ToGroup();
+				for (auto child = group->begin(); child != group->end(); ++child) {
+					RenderObject(*child);
+				}
 			}
 		}
 		else if (obj->IsGeneral()) {

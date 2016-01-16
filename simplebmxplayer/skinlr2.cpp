@@ -343,7 +343,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		// SRC may have condition (attribute condition; normally not used)
 		XMLElement *obj;
 		XMLElement *src = s->skinlayout.NewElement("SRC");
-		src->SetAttribute("name", INT(args[2]));
+		src->SetAttribute("resid", INT(args[2]));
 		src->SetAttribute("x", INT(args[3]));
 		src->SetAttribute("y", INT(args[4]));
 		if (INT(args[5]) > 0) {

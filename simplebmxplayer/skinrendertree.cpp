@@ -49,7 +49,7 @@ bool RenderCondition::Evaluate() {
 		return r;
 	}
 	for (int i = 0; i < condcnt; i++) {
-		if (!cond[condcnt] || (not[condcnt] && cond[condcnt]->IsStarted()) || (!not[condcnt] && !cond[condcnt]->IsStarted()))
+		if (!cond[i] || (not[i] && cond[i]->IsStarted()) || (!not[i] && !cond[i]->IsStarted()))
 			return false;
 	}
 	return true;
@@ -81,6 +81,10 @@ void SkinRenderObject::AddDST(ImageDST &dst, const RString &condition, bool lua)
 	else
 		this->dst_condition[dstcnt].SetLuacondition(condition);
 	dstcnt++;
+}
+
+bool SkinRenderObject::EvaluateCondition() {
+	return condition.Evaluate();
 }
 
 bool SkinRenderObject::IsGroup() {
@@ -204,7 +208,7 @@ void SkinImageObject::Render() {
 	/* now all prepared? then start to draw */
 	ImageDSTFrame _frame;
 	if (SkinRenderHelper::CalculateFrame(*_dst, _frame))
-		SkinRenderHelper::Render(_img, _src, &_frame);
+		SkinRenderHelper::Render(_img, _src, &_frame, _dst->blend);
 }
 
 SkinNumberObject::SkinNumberObject(SkinRenderTree* owner) : SkinRenderObject(owner, NUMBER) {}
@@ -301,10 +305,10 @@ void ConstructDSTFromElement(ImageDST &dst, XMLElement *e) {
 		f.y = ef->IntAttribute("y");
 		f.w = ef->IntAttribute("w");
 		f.h = ef->IntAttribute("h");
-		f.a = ef->IntAttribute("a");
-		f.r = ef->IntAttribute("r");
-		f.g = ef->IntAttribute("g");
-		f.b = ef->IntAttribute("b");
+		f.a = 255;	ef->QueryIntAttribute("a", &f.a);
+		f.r = 255;	ef->QueryIntAttribute("r", &f.r);
+		f.g = 255;	ef->QueryIntAttribute("g", &f.g);
+		f.b = 255;	ef->QueryIntAttribute("b", &f.b);
 		f.angle = ef->IntAttribute("angle");
 		if (ef->Attribute("loopstart")) {
 			dst.loopstart = f.time;
@@ -402,10 +406,10 @@ void SkinRenderHelper::AddFrame(ImageDST &d, ImageDSTFrame &f) {
 SDL_Rect SkinRenderHelper::ToRect(ImageSRC &d, int time) {
 	int dx = d.w / d.divx;
 	int dy = d.h / d.divy;
-	int frame = time / d.cycle;
+	int frame = d.cycle ? time / d.cycle : 0;
 	int x = frame % d.divx;
 	int y = (frame / d.divx) % d.divy;
-	return { x*dx, y*dy, dx, dy };
+	return { d.x + x*dx, d.y + y*dy, dx, dy };
 }
 
 SDL_Rect SkinRenderHelper::ToRect(ImageDSTFrame &d) {
@@ -413,17 +417,17 @@ SDL_Rect SkinRenderHelper::ToRect(ImageDSTFrame &d) {
 }
 
 bool SkinRenderHelper::CalculateFrame(ImageDST &dst, ImageDSTFrame &frame) {
-	if (dst.timer != 0 || dst.frame.size() == 0) {
+	if (dst.timer == 0 || dst.frame.size() == 0) {
 		// this shouldnt happened
 		return false;
 	}
 
 	// timer should alive
-	if (dst.timer->IsStarted())
+	if (!dst.timer->IsStarted())
 		return false;
+	uint32_t time = dst.timer->GetTick();
 
 	// get current frame
-	uint32_t time = dst.timer->GetTick();
 	if (dst.loopstart > 0 && time > dst.loopstart) {
 		time = (time - dst.loopstart) % (dst.loopend - dst.loopstart) + dst.loopstart;
 	}
@@ -432,6 +436,12 @@ bool SkinRenderHelper::CalculateFrame(ImageDST &dst, ImageDSTFrame &frame) {
 		if (dst.frame[nframe].time >= time)
 			break;
 	}
+	nframe--;
+	// if smaller then first DST time, then hide
+	// (TODO) work with current speed, if time is 0 (acc is NONE)
+	if (nframe < 0)
+		return false;
+
 	// has next frame?
 	// if not, return current frame 
 	// if it does, Tween it.
@@ -469,9 +479,33 @@ ImageDSTFrame SkinRenderHelper::Tween(ImageDSTFrame &a, ImageDSTFrame &b, double
 	};
 }
 
-void SkinRenderHelper::Render(Image *img, ImageSRC *src, ImageDSTFrame *frame) {
+void SkinRenderHelper::Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, int blend) {
 	// if alpha == 0 then don't draw
 	if (frame->a == 0) return;
+
+	SDL_SetTextureAlphaMod(img->GetPtr(), frame->a);
+	SDL_SetTextureColorMod(img->GetPtr(), frame->r, frame->g, frame->b);
+
+	switch (blend) {
+	case 0:
+		/*
+		 * LR2 is strange; NO blending does BLENDING, actually.
+		 *
+		SDL_SetTextureBlendMode(img->GetPtr(), SDL_BlendMode::SDL_BLENDMODE_NONE);
+		break;
+		*/
+	case 1:
+		SDL_SetTextureBlendMode(img->GetPtr(), SDL_BlendMode::SDL_BLENDMODE_BLEND);
+		break;
+	case 2:
+		SDL_SetTextureBlendMode(img->GetPtr(), SDL_BlendMode::SDL_BLENDMODE_ADD);
+		break;
+	case 4:
+		SDL_SetTextureBlendMode(img->GetPtr(), SDL_BlendMode::SDL_BLENDMODE_MOD);
+		break;
+	default:
+		SDL_SetTextureBlendMode(img->GetPtr(), SDL_BlendMode::SDL_BLENDMODE_BLEND);
+	}
 
 	static Timer* basetimer(TIMERPOOL->Get("OnScene"));
 	SDL_Rect src_rect = ToRect(*src, basetimer->GetTick());
