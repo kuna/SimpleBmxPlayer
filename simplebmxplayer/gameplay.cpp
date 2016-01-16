@@ -48,7 +48,7 @@ namespace GamePlay {
 		// temp resource
 		int pitch;
 		Uint32 *p;
-		temptexture = SDL_CreateTexture(Game::GetRenderer(), SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, 20, 10);
+		temptexture = SDL_CreateTexture(Game::RENDERER, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, 20, 10);
 		SDL_LockTexture(temptexture, 0, (void**)&p, &pitch);
 		for (int i = 0; i < 20 * 10; i++)
 			p[i] = (255 << 24 | 255 << 16 | 120 << 8 | 120);
@@ -134,12 +134,28 @@ namespace GamePlay {
 		//OnGameStart->Start();
 	}
 
+	void RenderObject(SkinRenderObject *obj) {
+		if (obj->IsGroup()) {
+			// iterate all child
+			SkinGroupObject *group = obj->ToGroup();
+			for (auto child = group->begin(); child != group->end(); ++child) {
+				RenderObject(*child);
+			}
+		}
+		else if (obj->IsGeneral()) {
+			// let basic renderer do work
+			obj->Render();
+		}
+		else {
+			// ignore unknown object
+		}
+	}
+
 	void Render() {
 		/*
-		 * preparation for skin/note rendering
+		 * Make a recursion in render tree
 		 */
-		SDL_Rect src, dest;
-		SDL_Rect src_lnbody, src_lnstart, src_lnend;
+		RenderObject(&rtree);
 
 		/*
 		 * draw basic skin elements

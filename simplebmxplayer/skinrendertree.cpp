@@ -1,3 +1,5 @@
+
+#include "game.h"
 #include "skinrendertree.h"
 #include "globalresources.h"	// for evaluation condition
 #include "luamanager.h"
@@ -9,6 +11,7 @@ using namespace tinyxml2;
 
 RenderCondition::RenderCondition() : condcnt(0) {
 	memset(not, 0, sizeof(not));
+	memset(cond, 0, sizeof(cond));
 }
 
 void RenderCondition::Set(const RString &condition) {
@@ -54,8 +57,8 @@ bool RenderCondition::Evaluate() {
 
 // ------ Skin General rendering Objects -----------------
 
-SkinRenderObject::SkinRenderObject(int type):
-srccnt(0), dstcnt(0), tag(0), clickable(false), focusable(false), objtype(type) { }
+SkinRenderObject::SkinRenderObject(SkinRenderTree* owner, int type):
+rtree(owner), srccnt(0), dstcnt(0), tag(0), clickable(false), focusable(false), objtype(type) { }
 
 void SkinRenderObject::Clear() {
 	srccnt = 0;
@@ -80,6 +83,48 @@ void SkinRenderObject::AddDST(ImageDST &dst, const RString &condition, bool lua)
 	dstcnt++;
 }
 
+bool SkinRenderObject::IsGroup() {
+	switch (objtype) {
+	case GROUP:
+		return true;
+	}
+	return false;
+}
+
+bool SkinRenderObject::IsGeneral() {
+	switch (objtype) {
+	case IMAGE:
+	case NUMBER:
+	case GRAPH:
+	case SLIDER:
+	case TEXT:
+	case BUTTON:
+		return true;
+	}
+	return false;
+}
+
+SkinUnknownObject* SkinRenderObject::ToUnknown() {
+	if (objtype == UNKNOWN)
+		return (SkinUnknownObject*)this;
+	else
+		return 0;
+}
+
+SkinGroupObject* SkinRenderObject::ToGroup() {
+	if (objtype == GROUP)
+		return (SkinGroupObject*)this;
+	else
+		return 0;
+}
+
+SkinImageObject* SkinRenderObject::ToImage() {
+	if (objtype == IMAGE)
+		return (SkinImageObject*)this;
+	else
+		return 0;
+}
+
 // do nothing
 void SkinRenderObject::Render() {  }
 
@@ -101,11 +146,11 @@ bool SkinRenderObject::Hover(int x, int y) {
 	}
 }
 
-void SkinRenderObject::SetCondition(const RString &str) { condition = str; }
+void SkinRenderObject::SetCondition(const RString &str) { condition.Set(str); }
 
-SkinUnknownObject::SkinUnknownObject() : SkinRenderObject(UNKNOWN) {}
+SkinUnknownObject::SkinUnknownObject(SkinRenderTree* owner) : SkinRenderObject(owner, UNKNOWN) {}
 
-SkinGroupObject::SkinGroupObject() : SkinRenderObject(GROUP) {}
+SkinGroupObject::SkinGroupObject(SkinRenderTree* owner) : SkinRenderObject(owner, GROUP) {}
 
 void SkinGroupObject::AddChild(SkinRenderObject *obj) {
 	_childs.push_back(obj);
@@ -117,17 +162,62 @@ SkinGroupObject::begin() { return _childs.begin(); }
 std::vector<SkinRenderObject*>::iterator
 SkinGroupObject::end() { return _childs.end(); }
 
-SkinImageObject::SkinImageObject() : SkinRenderObject(IMAGE) {}
+SkinImageObject::SkinImageObject(SkinRenderTree* owner) : SkinRenderObject(owner, IMAGE) {
+	memset(img, 0, sizeof(img));
+}
 
-SkinNumberObject::SkinNumberObject() : SkinRenderObject(NUMBER) {}
+void SkinImageObject::Render() {
+	/* check for this object's basic render condition */
+	if (!condition.Evaluate()) return;
 
-SkinTextObject::SkinTextObject() : SkinRenderObject(TEXT) {}
+	Image* _img = 0;
+	ImageSRC *_src = 0;
+	for (int i = 0; i < srccnt; i++) {
+		if (src_condition[i].Evaluate()) {
+			/* if image isn't cached, then find it and cache */
+			if (img[i] == 0) {
+				img[i] = rtree->_imagekey[src[i].resid];
+				if (img[i] == 0) img[i] = (Image*)-1;
+			}
+			if ((int)img[i] == -1) break;		// this image is already failed to search
+			/* now we gotcha proper SRC & img */
+			_img = img[i];
+			_src = &src[i];
+			break;
+		}
+	}
+	/* if we hand't find proper SRC/IMG, don't render */
+	if (_img == 0 || _src == 0) return;
 
-SkinGraphObject::SkinGraphObject() : SkinRenderObject(GRAPH) {}
+	/* find proper DST */
+	ImageDST* _dst = 0;
+	for (int j = 0; j < dstcnt; j++) {
+		if (dst_condition[j].Evaluate()) {
+			_dst = &dst[j];
+			break;
+		}
+	}
+	/* if timer or dst is invalid, don't render */
+	if (!_dst) return;
+	if (!_dst->timer || !_dst->timer->IsStarted()) return;
 
-SkinSliderObject::SkinSliderObject() : SkinRenderObject(SLIDER) {}
+	/* now all prepared? then start to draw */
+	ImageDSTFrame _frame;
+	if (SkinRenderHelper::CalculateFrame(*_dst, _frame))
+		SkinRenderHelper::Render(_img, _src, &_frame);
+}
+
+SkinNumberObject::SkinNumberObject(SkinRenderTree* owner) : SkinRenderObject(owner, NUMBER) {}
+
+SkinTextObject::SkinTextObject(SkinRenderTree* owner) : SkinRenderObject(owner, TEXT) {}
+
+SkinGraphObject::SkinGraphObject(SkinRenderTree* owner) : SkinRenderObject(owner, GRAPH) {}
+
+SkinSliderObject::SkinSliderObject(SkinRenderTree* owner) : SkinRenderObject(owner, SLIDER) {}
 
 // ----- SkinRenderTree -------------------------------------
+
+SkinRenderTree::SkinRenderTree() : SkinGroupObject(this) {}
 
 SkinRenderTree::~SkinRenderTree() {
 	ReleaseAll();
@@ -143,7 +233,9 @@ void SkinRenderTree::ReleaseAll() {
 
 void SkinRenderTree::RegisterImage(RString &id, RString &path) {
 	Image *img = IMAGEPOOL->Load(path);
-	_imagekey.insert(std::pair<RString, Image*>(id, img));
+	if (img) {
+		_imagekey.insert(std::pair<RString, Image*>(id, img));
+	}
 }
 
 void SkinRenderTree::ReleaseAllResources() {
@@ -153,19 +245,19 @@ void SkinRenderTree::ReleaseAllResources() {
 }
 
 SkinUnknownObject* SkinRenderTree::NewUnknownObject() {
-	SkinUnknownObject* obj = new SkinUnknownObject();
+	SkinUnknownObject* obj = new SkinUnknownObject(this);
 	_objpool.push_back(obj);
 	return obj;
 }
 
 SkinGroupObject* SkinRenderTree::NewGroupObject() {
-	SkinGroupObject* obj = new SkinGroupObject();
+	SkinGroupObject* obj = new SkinGroupObject(this);
 	_objpool.push_back(obj);
 	return obj;
 }
 
 SkinImageObject* SkinRenderTree::NewImageObject() {
-	SkinImageObject* obj = new SkinImageObject();
+	SkinImageObject* obj = new SkinImageObject(this);
 	_objpool.push_back(obj);
 	return obj;
 }
@@ -182,15 +274,25 @@ void ConstructSRCFromElement(ImageSRC &src, XMLElement *e) {
 	src.h = e->IntAttribute("h");
 	src.cycle = e->IntAttribute("cycle");
 	src.divx = e->IntAttribute("divx");
+	if (src.divx < 1) src.divx = 1;
 	src.divy = e->IntAttribute("divy");
+	if (src.divy < 1) src.divy = 1;
 	const char *resid = e->Attribute("resid");
 	if (resid) src.resid = resid;
 }
 
 /* private */
 void ConstructDSTFromElement(ImageDST &dst, XMLElement *e) {
+	const char* timer = e->Attribute("timer");
+	if (timer) {
+		dst.timer = TIMERPOOL->Get(timer);
+	}
+	else {
+		dst.timer = TIMERPOOL->Get("OnScene");		// very basic timer, if none setted.
+	}
 	dst.blend = e->IntAttribute("blend");
 	dst.rotatecenter = e->IntAttribute("rotatecenter");
+	dst.loopstart = 0;
 	XMLElement *ef = e->FirstChildElement("Frame");
 	while (ef) {
 		ImageDSTFrame f;
@@ -204,9 +306,17 @@ void ConstructDSTFromElement(ImageDST &dst, XMLElement *e) {
 		f.g = ef->IntAttribute("g");
 		f.b = ef->IntAttribute("b");
 		f.angle = ef->IntAttribute("angle");
+		if (ef->Attribute("loopstart")) {
+			dst.loopstart = f.time;
+		}
+		dst.loopend = f.time;
 		SkinRenderHelper::AddFrame(dst, f);
 		ef = ef->NextSiblingElement("Frame");
 	}
+	
+	// CASE: no loop (div by 0 error)
+	if (dst.loopstart == dst.loopend)
+		dst.loopstart = 0;
 }
 
 /* private */
@@ -230,8 +340,8 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 			// parsed as unknown object
 			// only parses SRC/DST condition
 			obj = rtree.NewUnknownObject();
-			rtree.AddChild(obj);
 		}
+		group->AddChild(obj);
 
 		// parse common attribute: SRC, DST, condition
 		const char* condition = e->Attribute("condition");
@@ -289,12 +399,82 @@ void SkinRenderHelper::AddFrame(ImageDST &d, ImageDSTFrame &f) {
 	d.frame.push_back(f);
 }
 
-SDL_Rect& SkinRenderHelper::ToRect(ImageSRC &d, int time) {
-	SDL_Rect r;
-	return r;
+SDL_Rect SkinRenderHelper::ToRect(ImageSRC &d, int time) {
+	int dx = d.w / d.divx;
+	int dy = d.h / d.divy;
+	int frame = time / d.cycle;
+	int x = frame % d.divx;
+	int y = (frame / d.divx) % d.divy;
+	return { x*dx, y*dy, dx, dy };
 }
 
-SDL_Rect& SkinRenderHelper::ToRect(ImageDST &d, int time) {
-	SDL_Rect r;
-	return r;
+SDL_Rect SkinRenderHelper::ToRect(ImageDSTFrame &d) {
+	return { d.x, d.y, d.w, d.h };
+}
+
+bool SkinRenderHelper::CalculateFrame(ImageDST &dst, ImageDSTFrame &frame) {
+	if (dst.timer != 0 || dst.frame.size() == 0) {
+		// this shouldnt happened
+		return false;
+	}
+
+	// timer should alive
+	if (dst.timer->IsStarted())
+		return false;
+
+	// get current frame
+	uint32_t time = dst.timer->GetTick();
+	if (dst.loopstart > 0 && time > dst.loopstart) {
+		time = (time - dst.loopstart) % (dst.loopend - dst.loopstart) + dst.loopstart;
+	}
+	int nframe = 0;
+	for (; nframe < dst.frame.size(); nframe++) {
+		if (dst.frame[nframe].time >= time)
+			break;
+	}
+	// has next frame?
+	// if not, return current frame 
+	// if it does, Tween it.
+	if (nframe >= dst.frame.size() - 1) {
+		frame = dst.frame[nframe];
+	}
+	else {
+		// very-very rare case, but we should prevent `div by 0`
+		if (dst.frame[nframe + 1].time == dst.frame[nframe].time) {
+			frame = dst.frame[nframe];
+		}
+		else {
+			double t = (double)(time - dst.frame[nframe].time) / (dst.frame[nframe+1].time - dst.frame[nframe].time);
+			frame = Tween(dst.frame[nframe], dst.frame[nframe + 1], t, dst.acctype);
+		}
+	}
+
+	return true;
+}
+
+ImageDSTFrame SkinRenderHelper::Tween(ImageDSTFrame &a, ImageDSTFrame &b, double t, int acctype) {
+#define LINEAR(a, b) ((a)*(1-t) + (b)*t)
+	// test: only linear
+	return{
+		LINEAR(a.time, b.time),
+		LINEAR(a.x, b.x),
+		LINEAR(a.y, b.y),
+		LINEAR(a.w, b.w),
+		LINEAR(a.h, b.h),
+		LINEAR(a.a, b.a),
+		LINEAR(a.r, b.r),
+		LINEAR(a.g, b.g),
+		LINEAR(a.b, b.b),
+		LINEAR(a.angle, b.angle),
+	};
+}
+
+void SkinRenderHelper::Render(Image *img, ImageSRC *src, ImageDSTFrame *frame) {
+	// if alpha == 0 then don't draw
+	if (frame->a == 0) return;
+
+	static Timer* basetimer(TIMERPOOL->Get("OnScene"));
+	SDL_Rect src_rect = ToRect(*src, basetimer->GetTick());
+	SDL_Rect dst_rect = ToRect(*frame);
+	SDL_RenderCopy(Game::RENDERER, img->GetPtr(), &src_rect, &dst_rect);
 }

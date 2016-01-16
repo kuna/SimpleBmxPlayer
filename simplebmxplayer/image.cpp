@@ -66,7 +66,7 @@ bool Image::Load(const std::string& filepath, bool loop) {
 		}
 	}
 	else {
-		sdltex = IMG_LoadTexture(Game::GetRenderer(), filepath.c_str());
+		sdltex = IMG_LoadTexture(Game::RENDERER, filepath.c_str());
 		if (!sdltex)
 			return false;
 	}
@@ -121,7 +121,7 @@ bool Image::LoadMovie(const char *path) {
 	frame = av_frame_alloc();
 
 	// create basic texture
-	sdltex = SDL_CreateTexture(Game::GetRenderer(), SDL_PIXELFORMAT_YV12,
+	sdltex = SDL_CreateTexture(Game::RENDERER, SDL_PIXELFORMAT_YV12,
 		SDL_TEXTUREACCESS_STREAMING, codecctx->width, codecctx->height);
 	if (sdltex == 0) {
 		return false;

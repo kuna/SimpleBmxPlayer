@@ -22,15 +22,17 @@ namespace {
 		NONE = 0,		/* same as unknown */
 		GENERAL = 1,	/* handled by basic rendering function */
 		GROUP = 2,
-		SPECIAL = 3,
-		EXTERN = 4,
-		UNKNOWN = 5,
+		EXTERN = 3,
+		UNKNOWN = 4,
+		BASE = 5,
 		IMAGE = 10,
 		NUMBER = 11,
 		GRAPH = 12,
 		SLIDER = 13,
 		TEXT = 14,
 		BUTTON = 15,
+		/* some renderer specific objects ... */
+		BGA = 20,
 	};
 }
 struct ImageSRC {
@@ -43,9 +45,11 @@ struct ImageDSTFrame {
 	int x, y, w, h, a, r, g, b, angle;
 };
 struct ImageDST {
+	Timer *timer;
 	int blend;
 	int loopstart, loopend;
 	int rotatecenter;
+	int acctype;
 	std::vector<ImageDSTFrame> frame;
 };
 
@@ -59,8 +63,8 @@ class RenderCondition {
 private:
 	RString luacondition;
 	RString key[10];
-	Timer *cond[10];
 	bool not[10];
+	Timer *cond[10];
 	int condcnt;
 public:
 	RenderCondition();
@@ -70,16 +74,18 @@ public:
 };
 
 /* redeclaration */
+class SkinRenderTree;
 class SkinUnknownObject;
+class SkinGroupObject;
 class SkinImageObject;
 
 /** @brief very basic rendering object which does nothing. */
 class SkinRenderObject {
-private:
+protected:
 	/** @brief type of this object */
 	int objtype;
 	/** @brief condition for itself */
-	RString condition;
+	RenderCondition condition;
 	ImageSRC src[_MAX_RENDER_CONDITION];
 	RenderCondition src_condition[_MAX_RENDER_CONDITION];
 	Timer *timer_src[_MAX_RENDER_CONDITION];
@@ -93,8 +99,9 @@ private:
 	bool TestCollsion(int x, int y);
 	bool focusable;
 	bool clickable;
+	SkinRenderTree* rtree;
 public:
-	SkinRenderObject(int type = NONE);
+	SkinRenderObject(SkinRenderTree* owner, int type = NONE);
 	virtual void Clear();
 	virtual void SetCondition(const RString &str);
 	virtual void AddSRC(ImageSRC &src, const RString& condition = "", bool lua = false);
@@ -106,14 +113,17 @@ public:
 	/** @brief tests collsion and if true then do own work & return true. otherwise false. */
 	virtual bool Hover(int x, int y);
 
+	bool IsGroup();
+	bool IsGeneral();
 	SkinUnknownObject* ToUnknown();
+	SkinGroupObject* ToGroup();
 	SkinImageObject* ToImage();
 };
 
 class SkinUnknownObject : public SkinRenderObject {
 private:
 public:
-	SkinUnknownObject();
+	SkinUnknownObject(SkinRenderTree* owner);
 };
 
 class SkinGroupObject : public SkinRenderObject {
@@ -121,7 +131,7 @@ private:
 	/** @brief base elements */
 	std::vector<SkinRenderObject*> _childs;
 public:
-	SkinGroupObject();
+	SkinGroupObject(SkinRenderTree* owner);
 	void AddChild(SkinRenderObject* obj);
 	std::vector<SkinRenderObject*>::iterator begin();
 	std::vector<SkinRenderObject*>::iterator end();
@@ -131,15 +141,15 @@ class SkinImageObject : public SkinRenderObject {
 private:
 	Image *img[_MAX_RENDER_CONDITION];
 public:
-	SkinImageObject();
-	//virtual void Render();
+	SkinImageObject(SkinRenderTree* owner);
+	virtual void Render();
 };
 
 class SkinNumberObject : public SkinRenderObject {
 private:
 	//Font *fnt;
 public:
-	SkinNumberObject();
+	SkinNumberObject(SkinRenderTree* owner);
 	//virtual void Render();
 };
 
@@ -149,7 +159,7 @@ private:
 	int type;
 	int direction;
 public:
-	SkinGraphObject();
+	SkinGraphObject(SkinRenderTree* owner);
 	void SetType(int type);
 	void SetDirection(int direction);
 	//virtual void Render();
@@ -164,7 +174,7 @@ private:
 	int range;
 	//bool editable;	this part is manually controlled in program.
 public:
-	SkinSliderObject();
+	SkinSliderObject(SkinRenderTree* owner);
 	void SetMaxValue(int maxvalue);
 	void SetAlign(int align);
 	//virtual void Render();
@@ -177,7 +187,7 @@ private:
 	int align;
 	bool editable;
 public:
-	SkinTextObject();
+	SkinTextObject(SkinRenderTree* owner);
 	void SetEditable(bool editable);
 	void SetAlign(int align);
 	//virtual void Render();
@@ -188,7 +198,7 @@ private:
 	// only we need more is: handler.
 	//_Handler handler;
 public:
-	SkinButtonObject();
+	SkinButtonObject(SkinRenderTree* owner);
 	//virtual void Render();
 };
 
@@ -201,6 +211,7 @@ public:
 	/** @brief resources used in this game */
 	std::map<RString, Image*> _imagekey;
 public:
+	SkinRenderTree();
 	~SkinRenderTree();
 	/** @brief only releases all rendering object */
 	void ReleaseAll();
@@ -217,9 +228,13 @@ public:
 
 namespace SkinRenderHelper {
 	void AddFrame(ImageDST &d, ImageDSTFrame &f);
-	SDL_Rect & ToRect(ImageSRC &r, int time);
-	SDL_Rect & ToRect(ImageDST &r, int time);
-	ImageDSTFrame& Tween(ImageDSTFrame& a, ImageDSTFrame &b, double t);
+	SDL_Rect ToRect(ImageSRC &r, int time);
+	SDL_Rect ToRect(ImageDSTFrame &r);
+	bool CalculateFrame(ImageDST &dst, ImageDSTFrame &frame);
+	ImageDSTFrame Tween(ImageDSTFrame& a, ImageDSTFrame &b, double t, int acctype);
+	/** @brief in debug mode, border will drawn around object. */
+	void Render(Image *img, ImageSRC *src, ImageDSTFrame *frame);
+
 	/** @brief replaces path string to a correct one */
 	void ConvertPath(RString& path);
 	/** @brief constructs resid-object mapping and loads resources from XmlSkin. */

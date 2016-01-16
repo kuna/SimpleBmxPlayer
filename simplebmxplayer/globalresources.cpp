@@ -171,9 +171,15 @@ Image* ImagePool::Load(const RString &path) {
 	if (!IsExists(_path)) {
 		Image *img = new Image();
 		img->Load(_path.c_str());
-		_imagepool.insert(pair<RString, Image*>(_path, img));
-		_loadcount.insert(pair<Image*, int>(img, 1));
-		return img;
+		if (img->IsLoaded()) {
+			_imagepool.insert(pair<RString, Image*>(_path, img));
+			_loadcount.insert(pair<Image*, int>(img, 1));
+			return img;
+		}
+		else {
+			delete img;
+			return 0;
+		}
 	}
 	else {
 		Image *img = _imagepool[_path];
