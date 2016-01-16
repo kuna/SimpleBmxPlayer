@@ -89,7 +89,7 @@ bool SkinRenderObject::EvaluateCondition() {
 
 bool SkinRenderObject::IsGroup() {
 	switch (objtype) {
-	case GROUP:
+	case OBJTYPE::GROUP:
 		return true;
 	}
 	return false;
@@ -97,33 +97,33 @@ bool SkinRenderObject::IsGroup() {
 
 bool SkinRenderObject::IsGeneral() {
 	switch (objtype) {
-	case IMAGE:
-	case NUMBER:
-	case GRAPH:
-	case SLIDER:
-	case TEXT:
-	case BUTTON:
+	case OBJTYPE::IMAGE:
+	case OBJTYPE::NUMBER:
+	case OBJTYPE::GRAPH:
+	case OBJTYPE::SLIDER:
+	case OBJTYPE::TEXT:
+	case OBJTYPE::BUTTON:
 		return true;
 	}
 	return false;
 }
 
 SkinUnknownObject* SkinRenderObject::ToUnknown() {
-	if (objtype == UNKNOWN)
+	if (objtype == OBJTYPE::UNKNOWN)
 		return (SkinUnknownObject*)this;
 	else
 		return 0;
 }
 
 SkinGroupObject* SkinRenderObject::ToGroup() {
-	if (objtype == GROUP)
+	if (objtype == OBJTYPE::GROUP)
 		return (SkinGroupObject*)this;
 	else
 		return 0;
 }
 
 SkinImageObject* SkinRenderObject::ToImage() {
-	if (objtype == IMAGE)
+	if (objtype == OBJTYPE::IMAGE)
 		return (SkinImageObject*)this;
 	else
 		return 0;
@@ -152,9 +152,9 @@ bool SkinRenderObject::Hover(int x, int y) {
 
 void SkinRenderObject::SetCondition(const RString &str) { condition.Set(str); }
 
-SkinUnknownObject::SkinUnknownObject(SkinRenderTree* owner) : SkinRenderObject(owner, UNKNOWN) {}
+SkinUnknownObject::SkinUnknownObject(SkinRenderTree* owner) : SkinRenderObject(owner, OBJTYPE::UNKNOWN) {}
 
-SkinGroupObject::SkinGroupObject(SkinRenderTree* owner) : SkinRenderObject(owner, GROUP) {}
+SkinGroupObject::SkinGroupObject(SkinRenderTree* owner) : SkinRenderObject(owner, OBJTYPE::GROUP) {}
 
 void SkinGroupObject::AddChild(SkinRenderObject *obj) {
 	_childs.push_back(obj);
@@ -166,7 +166,7 @@ SkinGroupObject::begin() { return _childs.begin(); }
 std::vector<SkinRenderObject*>::iterator
 SkinGroupObject::end() { return _childs.end(); }
 
-SkinImageObject::SkinImageObject(SkinRenderTree* owner) : SkinRenderObject(owner, IMAGE) {
+SkinImageObject::SkinImageObject(SkinRenderTree* owner) : SkinRenderObject(owner, OBJTYPE::IMAGE) {
 	memset(img, 0, sizeof(img));
 }
 
@@ -208,16 +208,16 @@ void SkinImageObject::Render() {
 	/* now all prepared? then start to draw */
 	ImageDSTFrame _frame;
 	if (SkinRenderHelper::CalculateFrame(*_dst, _frame))
-		SkinRenderHelper::Render(_img, _src, &_frame, _dst->blend);
+		SkinRenderHelper::Render(_img, _src, &_frame, _dst->blend, _dst->rotatecenter);
 }
 
-SkinNumberObject::SkinNumberObject(SkinRenderTree* owner) : SkinRenderObject(owner, NUMBER) {}
+SkinNumberObject::SkinNumberObject(SkinRenderTree* owner) : SkinRenderObject(owner, OBJTYPE::NUMBER) {}
 
-SkinTextObject::SkinTextObject(SkinRenderTree* owner) : SkinRenderObject(owner, TEXT) {}
+SkinTextObject::SkinTextObject(SkinRenderTree* owner) : SkinRenderObject(owner, OBJTYPE::TEXT) {}
 
-SkinGraphObject::SkinGraphObject(SkinRenderTree* owner) : SkinRenderObject(owner, GRAPH) {}
+SkinGraphObject::SkinGraphObject(SkinRenderTree* owner) : SkinRenderObject(owner, OBJTYPE::GRAPH) {}
 
-SkinSliderObject::SkinSliderObject(SkinRenderTree* owner) : SkinRenderObject(owner, SLIDER) {}
+SkinSliderObject::SkinSliderObject(SkinRenderTree* owner) : SkinRenderObject(owner, OBJTYPE::SLIDER) {}
 
 // ----- SkinRenderTree -------------------------------------
 
@@ -296,6 +296,7 @@ void ConstructDSTFromElement(ImageDST &dst, XMLElement *e) {
 	}
 	dst.blend = e->IntAttribute("blend");
 	dst.rotatecenter = e->IntAttribute("rotatecenter");
+	dst.acctype = e->IntAttribute("acc");
 	dst.loopstart = 0;
 	XMLElement *ef = e->FirstChildElement("Frame");
 	while (ef) {
@@ -404,6 +405,7 @@ void SkinRenderHelper::AddFrame(ImageDST &d, ImageDSTFrame &f) {
 }
 
 SDL_Rect SkinRenderHelper::ToRect(ImageSRC &d, int time) {
+	// (TODO) if SRC x, y < 0 then we have to get it manually 
 	int dx = d.w / d.divx;
 	int dy = d.h / d.divy;
 	int frame = d.cycle ? time / d.cycle : 0;
@@ -463,23 +465,79 @@ bool SkinRenderHelper::CalculateFrame(ImageDST &dst, ImageDSTFrame &frame) {
 }
 
 ImageDSTFrame SkinRenderHelper::Tween(ImageDSTFrame &a, ImageDSTFrame &b, double t, int acctype) {
-#define LINEAR(a, b) ((a)*(1-t) + (b)*t)
-	// test: only linear
-	return{
-		LINEAR(a.time, b.time),
-		LINEAR(a.x, b.x),
-		LINEAR(a.y, b.y),
-		LINEAR(a.w, b.w),
-		LINEAR(a.h, b.h),
-		LINEAR(a.a, b.a),
-		LINEAR(a.r, b.r),
-		LINEAR(a.g, b.g),
-		LINEAR(a.b, b.b),
-		LINEAR(a.angle, b.angle),
-	};
+	switch (acctype) {
+	case ACCTYPE::LINEAR:
+#define TWEEN(a, b) ((a)*(1-t) + (b)*t)
+		return{
+			TWEEN(a.time, b.time),
+			TWEEN(a.x, b.x),
+			TWEEN(a.y, b.y),
+			TWEEN(a.w, b.w),
+			TWEEN(a.h, b.h),
+			TWEEN(a.a, b.a),
+			TWEEN(a.r, b.r),
+			TWEEN(a.g, b.g),
+			TWEEN(a.b, b.b),
+			TWEEN(a.angle, b.angle),
+		};
+#undef TWEEN
+		break;
+	case ACCTYPE::DECEL:
+#define T (sqrt(1-(t-1)*(t-1)))
+#define TWEEN(a, b) ((a)*(1-T) + (b)*T)
+		return{
+			TWEEN(a.time, b.time),
+			TWEEN(a.x, b.x),
+			TWEEN(a.y, b.y),
+			TWEEN(a.w, b.w),
+			TWEEN(a.h, b.h),
+			TWEEN(a.a, b.a),
+			TWEEN(a.r, b.r),
+			TWEEN(a.g, b.g),
+			TWEEN(a.b, b.b),
+			TWEEN(a.angle, b.angle),
+		};
+#undef TWEEN
+#undef T
+		break;
+	case ACCTYPE::ACCEL:
+#define T (-sqrt(1-t*t)+1)
+#define TWEEN(a, b) ((a)*(1-T) + (b)*T)
+		return{
+			TWEEN(a.time, b.time),
+			TWEEN(a.x, b.x),
+			TWEEN(a.y, b.y),
+			TWEEN(a.w, b.w),
+			TWEEN(a.h, b.h),
+			TWEEN(a.a, b.a),
+			TWEEN(a.r, b.r),
+			TWEEN(a.g, b.g),
+			TWEEN(a.b, b.b),
+			TWEEN(a.angle, b.angle),
+		};
+#undef TWEEN
+#undef T
+		break;
+	case ACCTYPE::NONE:
+#define TWEEN(a, b) (a)
+		return{
+			TWEEN(a.time, b.time),
+			TWEEN(a.x, b.x),
+			TWEEN(a.y, b.y),
+			TWEEN(a.w, b.w),
+			TWEEN(a.h, b.h),
+			TWEEN(a.a, b.a),
+			TWEEN(a.r, b.r),
+			TWEEN(a.g, b.g),
+			TWEEN(a.b, b.b),
+			TWEEN(a.angle, b.angle),
+		};
+#undef TWEEN
+		break;
+	}
 }
 
-void SkinRenderHelper::Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, int blend) {
+void SkinRenderHelper::Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, int blend, int rotationcenter) {
 	// if alpha == 0 then don't draw
 	if (frame->a == 0) return;
 
@@ -510,5 +568,39 @@ void SkinRenderHelper::Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, i
 	static Timer* basetimer(TIMERPOOL->Get("OnScene"));
 	SDL_Rect src_rect = ToRect(*src, basetimer->GetTick());
 	SDL_Rect dst_rect = ToRect(*frame);
-	SDL_RenderCopy(Game::RENDERER, img->GetPtr(), &src_rect, &dst_rect);
+
+	SDL_Point rot_center = { 0, 0 };
+	switch (rotationcenter) {
+	case ROTATIONCENTER::TOPLEFT:
+		rot_center = { 0, 0 };
+		break;
+	case ROTATIONCENTER::TOPCENTER:
+		rot_center = { dst_rect.w / 2, 0 };
+		break;
+	case ROTATIONCENTER::TOPRIGHT:
+		rot_center = { dst_rect.w, 0 };
+		break;
+	case ROTATIONCENTER::CENTERLEFT:
+		rot_center = { 0, dst_rect.h / 2 };
+		break;
+	case 0:
+	case ROTATIONCENTER::CENTER:
+		rot_center = { dst_rect.w / 2, dst_rect.h / 2 };
+		break;
+	case ROTATIONCENTER::CENTERRIGHT:
+		rot_center = { dst_rect.w, dst_rect.h / 2 };
+		break;
+	case ROTATIONCENTER::BOTTOMLEFT:
+		rot_center = { 0, dst_rect.h };
+		break;
+	case ROTATIONCENTER::BOTTOMCENTER:
+		rot_center = { dst_rect.w / 2, dst_rect.h };
+		break;
+	case ROTATIONCENTER::BOTTOMRIGHT:
+		rot_center = { dst_rect.w, dst_rect.h };
+		break;
+	}
+
+	SDL_RenderCopyEx(Game::RENDERER, img->GetPtr(), &src_rect, &dst_rect,
+		frame->angle, &rot_center, SDL_RendererFlip::SDL_FLIP_NONE);
 }

@@ -10,15 +10,8 @@
 #include "skin.h"
 #include <vector>
 
-namespace {
-	enum ACCTYPE {
-		ACC_NONE = 0,
-		ACC_LINEAR = 1,
-		ACC_EASEIN = 2,
-		ACC_EASEOUT = 3,
-		ACC_EASEINOUT = 4,
-	};
-	enum OBJECTTYPE {
+namespace OBJTYPE {
+	enum OBJTYPE {
 		NONE = 0,		/* same as unknown */
 		GENERAL = 1,	/* handled by basic rendering function */
 		GROUP = 2,
@@ -35,6 +28,28 @@ namespace {
 		BGA = 20,
 	};
 }
+namespace ROTATIONCENTER {
+	enum ROTATIONCENTER {
+		TOPLEFT = 7,
+		TOPCENTER = 8,
+		TOPRIGHT = 9,
+		CENTERLEFT = 4,
+		CENTER = 5,
+		CENTERRIGHT = 6,
+		BOTTOMLEFT = 1,
+		BOTTOMCENTER = 2,
+		BOTTOMRIGHT = 3,
+	};
+}
+namespace ACCTYPE {
+	enum ACCTYPE {
+		LINEAR = 0,
+		ACCEL = 1,
+		DECEL = 2,
+		NONE = 3,
+	};
+}
+
 struct ImageSRC {
 	RString resid;				// id can direct not only image but font.
 	int x, y, w, h;
@@ -101,7 +116,7 @@ protected:
 	bool clickable;
 	SkinRenderTree* rtree;
 public:
-	SkinRenderObject(SkinRenderTree* owner, int type = NONE);
+	SkinRenderObject(SkinRenderTree* owner, int type = OBJTYPE::NONE);
 	virtual void Clear();
 	virtual void SetCondition(const RString &str);
 	virtual void AddSRC(ImageSRC &src, const RString& condition = "", bool lua = false);
@@ -234,7 +249,7 @@ namespace SkinRenderHelper {
 	bool CalculateFrame(ImageDST &dst, ImageDSTFrame &frame);
 	ImageDSTFrame Tween(ImageDSTFrame& a, ImageDSTFrame &b, double t, int acctype);
 	/** @brief in debug mode, border will drawn around object. */
-	void Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, int blend);
+	void Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, int blend, int rotationcenter = ROTATIONCENTER::CENTER);
 
 	/** @brief replaces path string to a correct one */
 	void ConvertPath(RString& path);
