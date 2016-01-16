@@ -1,4 +1,5 @@
 #include "bmsresource.h"
+#include "globalresources.h"
 #include "util.h"
 #include "file.h"
 #include "logger.h"
@@ -10,9 +11,6 @@
 // TODO: call handler? if soundcall is required.
 
 namespace BmsResource {
-	/** @brief this mutex used when loading BMS resource */
-	std::mutex mutex_bmsresource;
-
 	SoundPool::SoundPool() {
 		memset(wav_table, 0, sizeof(wav_table));
 	}
@@ -85,6 +83,11 @@ namespace BmsResource {
 }
 
 namespace BmsHelper {
+	/** @brief this mutex used when loading BMS resource */
+	std::mutex		mutex_bmsresource;
+	/** @brief POSIX thread used when loading BMS file */
+	pthread_t		t_bmsresource;
+
 	bool LoadBms(const RString& path) {
 		// load bms file
 		try {
@@ -108,6 +111,7 @@ namespace BmsHelper {
 		* Set basic switch
 		* and Get Bms base directory
 		*/
+		mutex_bmsresource.lock();
 		FileHelper::PushBasePath(IO::get_filedir(BmsResource::bmspath).c_str());
 
 		// load WAV/BMP
@@ -122,11 +126,19 @@ namespace BmsHelper {
 		}
 
 		FileHelper::PopBasePath();
+		TIMERPOOL->Reset("OnSongLoadingEnd");
+		mutex_bmsresource.unlock();
 		return true;
 	}
 
+	void* _LoadBms(void*) { return 0; }
 	void LoadBmsOnThread(const RString &path) {
+		// TODO
+	}
 
+	void* _LoadBmsResource(void*) { int r = LoadBmsResource() ? 1 : 0; return (void*)r; }
+	void LoadBmsResourceOnThread() {
+		pthread_create(&t_bmsresource, 0, _LoadBmsResource, 0);
 	}
 
 	void UpdateTime(uint32_t time) {

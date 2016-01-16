@@ -117,3 +117,13 @@ bool Timer::IsPaused()
 	//Timer is running and paused
 	return mPaused && mStarted;
 }
+
+bool Timer::Trigger(bool condition) {
+	if (!IsStarted() && condition) {
+		Start();
+		return true;
+	}
+	else {
+		return false;
+	}
+}

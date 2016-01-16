@@ -19,6 +19,9 @@ namespace GamePlay {
 	// global resources
 	Timer			*OnScene;
 	Timer			*OnGameStart;
+	Timer			*OnSongLoading;
+	Timer			*OnSongLoadingEnd;
+	Timer			*OnReady;
 	RString			*Bmspath;
 	RString			*PlaySkinpath;
 
@@ -42,6 +45,9 @@ namespace GamePlay {
 		//HANDLERPOOL->Add("OnGamePlayBga", OnBmsBga);
 		OnScene = TIMERPOOL->Set("OnScene", false);
 		OnGameStart = TIMERPOOL->Set("OnGameStart", false);
+		OnSongLoading = TIMERPOOL->Set("OnSongLoading", false);
+		OnSongLoadingEnd = TIMERPOOL->Set("OnSongLoadingEnd", false);
+		OnReady = TIMERPOOL->Set("OnReady", false);
 		Bmspath = STRPOOL->Set("Bmspath");
 		PlaySkinpath = STRPOOL->Set("PlaySkinpath");
 
@@ -99,8 +105,8 @@ namespace GamePlay {
 
 	void LoadBms(const char *path) {
 		if (BmsHelper::LoadBms(path)) {
-			BmsHelper::LoadBmsResource();
 			LOG->Info("BMS loading finished successfully (%s)\n", path);
+			BmsHelper::LoadBmsResourceOnThread();
 		}
 		else {
 			LOG->Critical("BMS loading failed (%s)\n", path);
@@ -125,13 +131,14 @@ namespace GamePlay {
 		LoadBms(*Bmspath);
 
 		/*
-		 * tick once again
-		 * before scene start
+		 * initalize timers
 		 */
 		GameTimer::Tick();
+		OnSongLoading->Start();		// we're started to loading song
+		OnSongLoadingEnd->Stop();
+		OnReady->Stop();
+		OnGameStart->Stop();
 		OnScene->Start();
-		// OnGameStart: only do when bms loading is end
-		//OnGameStart->Start();
 	}
 
 	void RenderObject(SkinRenderObject *obj) {
@@ -154,6 +161,12 @@ namespace GamePlay {
 	}
 
 	void Render() {
+		/*
+		 * check timers
+		 */
+		OnReady->Trigger(OnSongLoadingEnd->IsStarted());
+		OnGameStart->Trigger(OnReady->GetTick() >= 5000);
+
 		/*
 		 * Make a recursion in render tree
 		 */

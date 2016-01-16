@@ -25,8 +25,8 @@ public:
 	void UnPause();
 	void Stop();
 
-	/** @brief return true when (!IsStarted() && condition) */
-	bool Trigger(bool condition);
+	/** @brief return true when (!IsStarted() && condition). Doesn't effect if timer is already started. */
+	bool Trigger(bool condition = true);
 	/** @brief toggle timer. */
 	void Toggle();
 };
