@@ -19,6 +19,9 @@ RString* StringPool::Set(const RString &key, const RString &value) {
 	if (!IsExists(key)) {
 		_stringpool.insert(std::pair<RString, RString>(key, value));
 	}
+	else {
+		_stringpool[key] = value;
+	}
 	return &_stringpool[key];
 }
 
@@ -83,6 +86,38 @@ Timer* TimerPool::Set(const RString &key, bool activate) {
 	}
 	return &_timerpool[key];
 }
+
+bool HandlerPool::IsExists(const RString &key) {
+	return _handlerpool.find(key) != _handlerpool.end();
+}
+
+_Handler HandlerPool::Add(const RString &key, _Handler h) {
+	if (!IsExists(key)) {
+		_handlerpool.insert(std::pair<RString, std::vector<_Handler>>(key, std::vector<_Handler>()));
+	}
+	_handlerpool[key].push_back(h);
+	return h;
+}
+
+bool HandlerPool::Call(const RString &key, void* arg) {
+	if (!IsExists(key)) return false;
+	for (auto it = _handlerpool[key].begin(); it != _handlerpool[key].end(); ++it)
+		(*it)(arg);
+	return true;
+}
+
+bool HandlerPool::Remove(const RString &key, _Handler h) {
+	if (!IsExists(key)) return false;
+	for (auto it = _handlerpool[key].begin(); it != _handlerpool[key].end(); ++it) {
+		if ((*it) == h) {
+			_handlerpool[key].erase(it);
+			return true;
+		}
+	}
+	return false;
+}
+
+void HandlerPool::Clear() { _handlerpool.clear(); }
 
 Timer* TimerPool::Get(const RString &key) {
 	if (!IsExists(key))

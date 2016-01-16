@@ -129,7 +129,7 @@ public:
 
 class SkinImageObject : public SkinRenderObject {
 private:
-	Image *img;
+	Image *img[_MAX_RENDER_CONDITION];
 public:
 	SkinImageObject();
 	//virtual void Render();

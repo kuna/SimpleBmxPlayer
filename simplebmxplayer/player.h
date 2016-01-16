@@ -1,9 +1,16 @@
+/*
+ * @description processor for each player.
+ * player type: Normal(Basic) / CPU(Auto) / Replay
+ * player contains: BGA status / Combo / Score Rate / Health / Note / Lain Lift / Speed
+ */
+
 #pragma once
 
 #include "bmsbel/bms_bms.h"
 #include "bmsinfo.h"
 #include "playrecord.h"
-#include <stdint.h>		// for Uint32 definition
+#include "timer.h"
+#include "global.h"
 
 typedef uint32_t Uint32;
 
@@ -95,6 +102,10 @@ private:
 	std::vector<BmsWord> keysound[20];	// sounding key value (per bar index)
 	int currentbar;
 	double health;						// player's health
+	struct BGASTATUS {
+		int missbga, bga, layer1, layer2;
+	} bga;
+	Timer *misstimer;					// timer used when miss occured
 
 	// note/time information
 	BmsBms *bms;
@@ -111,6 +122,8 @@ private:
 	// active note searcher
 	int GetNextAvailableNoteIndex(int notechannel);
 	BmsNote* GetCurrentNote(int notechannel);
+	// miss
+	void Miss(int missbga, int key);
 public:
 	Player();
 

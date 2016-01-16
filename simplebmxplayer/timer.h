@@ -37,9 +37,4 @@ public:
 namespace GameTimer {
 	extern Uint32 globalTick;
 	void Tick();
-
-	bool IsStarted(int n);
-	// if you set forced = true, that timer will be reseted.
-	void Start(int n, bool forced = false);
-	void Stop(int n);
 }

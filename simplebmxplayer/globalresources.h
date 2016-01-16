@@ -7,6 +7,7 @@
 #pragma once
 
 #include <map>
+#include <vector>
 #include "image.h"
 #include "audio.h"
 #include "timer.h"
@@ -63,13 +64,12 @@ public:
 typedef void (*_Handler)(void*);
 class HandlerPool {
 private:
-	std::map<RString, _Handler> _handlerpool;
+	std::map<RString, std::vector<_Handler>> _handlerpool;
 public:
 	bool IsExists(const RString &key);
-	void Add(const RString &key, _Handler h);
-	_Handler Get(const RString &key);
+	_Handler Add(const RString &key, _Handler h);
 	bool Call(const RString &key, void* arg);
-	void Remove(const RString &key);
+	bool Remove(const RString &key, _Handler h);
 	void Clear();
 };
 

@@ -39,3 +39,7 @@ namespace BmsHealthRecover {
 		PGREAT = 20,
 	};
 }
+
+#ifdef _WIN32
+#define USE_MBCS	// uses wchar_t/wstring - for windows
+#endif

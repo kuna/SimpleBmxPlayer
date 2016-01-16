@@ -40,7 +40,8 @@ private:
 	bool LoadMovie(const char *path);
 	void ReleaseMovie();
 public:
-	Image(std::wstring& filepath, bool loop=true);
+	Image(std::wstring& filepath, bool loop = true);
+	Image(std::string& filepath, bool loop = true);
 	Image();
 	~Image();
 	void Release();

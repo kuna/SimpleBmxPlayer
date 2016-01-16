@@ -8,7 +8,7 @@
 GameSetting setting;
 
 // bms info
-std::wstring bmspath;
+std::string bmspath;
 
 // SDL
 SDL_Window* gWindow = NULL;
@@ -42,9 +42,13 @@ void Game::Parameter::help() {
 }
 
 bool Game::Parameter::parse(int argc, _TCHAR **argv) {
+	char *buf = new char[10240];
 	if (argc <= 1)
 		return false;
-	bmspath = argv[1];
+
+	ENCODING::wchar_to_utf8(argv[1], buf, 10240);	bmspath = buf;
+
+	delete buf;
 	return true;
 }
 
@@ -65,17 +69,11 @@ std::map<RString, int> test_map;
 
 bool Game::Init() {
 	/*
-	* Must init Timer first
-	* - because various elements are uses timer using globalTick
-	*/
-	GameTimer::Tick();
-	GameTimer::Start(0);
-
-	/*
-	 * Init instances
+	 * Basic instances initalization
 	 */
-	PoolHelper::InitalizeAll();
+	GameTimer::Tick();
 	LUA = new LuaManager();
+	PoolHelper::InitalizeAll();
 
 	// register func (test)
 	//lua_pushcfunction(l, test);
@@ -123,6 +121,12 @@ bool Game::Init() {
 	}
 
 	/*
+	 * Scene instance initalization
+	 * (MUST after graphic initalization finished)
+	 */
+	GamePlay::Init();
+
+	/*
 	 * prepare game basic resource
 	 */
 	font = FC_CreateFont();
@@ -134,28 +138,12 @@ bool Game::Init() {
 	/*
 	 * prepare GamePlay
 	 */
-	GamePlay::Init();
-	// load BMS file
-	if (GamePlay::LoadBms(bmspath)) {
-		wprintf(L"Loaded BMS file successfully\n");
-	}
-	else {
-		wprintf(L"cannot load BMS file\n");
-		return false;
-	}
-	// start to load BMS resource file
-	if (GamePlay::LoadBmsResource()) {
-		wprintf(L"Loaded BMS resources successfully\n");
-	}
-	else {
-		wprintf(L"cannot load BMS resource file\n");
-		return false;
-	}
-	GamePlay::LoadSkin("../skin/Wisp_HD/play/HDPLAY_W.lr2skin");
+	STRPOOL->Set("PlaySkinpath",	"../skin/Wisp_HD/play/HDPLAY_W.lr2skin");
+	STRPOOL->Set("Bmspath",			bmspath);
 	// prepare player
 	PlayerSetting psetting;
 	psetting.speed = 310;
-	GamePlay::SetPlayer(psetting, 0);
+	//GamePlay::SetPlayer(psetting, 0);
 
 	return true;
 }

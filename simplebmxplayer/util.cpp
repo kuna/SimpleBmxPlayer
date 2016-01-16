@@ -57,7 +57,6 @@ unsigned char g_LowerCase[256] =
 std::wstring to_wstring (int i) { std::wostringstream wss; wss << i; return wss.str(); }
 
 namespace IO {
-
 	std::string get_fileext(const std::string& filepath) {
 		auto i = filepath.find_last_of('.');
 		if (i == std::wstring::npos)
@@ -72,7 +71,33 @@ namespace IO {
 		return filepath.substr(0, r);
 	}
 
-#ifdef _WIN32
+	std::string substitute_extension(const std::string& filepath, const std::string& newext) {
+		auto i = filepath.find_last_of('.');
+		if (i == std::wstring::npos)
+			return filepath + newext;
+		return filepath.substr(0, i) + newext;
+	}
+
+	std::string substitute_filename(const std::string& filepath, const std::string& newname) {
+		auto i_start = filepath.find_last_of(PATH_SEPARATOR_CHAR);
+		if (i_start == std::wstring::npos)
+			i_start = 0;
+		auto i_end = filepath.find_last_of('.');
+		if (i_end == std::wstring::npos)
+			i_end = filepath.size() - 1;
+		return filepath.substr(0, i_start) + PATH_SEPARATOR + newname + filepath.substr(i_end);
+	}
+
+	bool is_file_exists(const std::string& filename) {
+		FILE *f;
+		fopen_s(&f, filename.c_str(), "r");
+		if (!f)
+			return false;
+		fclose(f);
+		return true;
+	}
+
+#ifdef USE_MBCS
 	std::wstring substitute_extension(const std::wstring& filepath, const std::wstring& newext) {
 		auto i = filepath.find_last_of(L'.');
 		if (i == std::wstring::npos)
@@ -107,7 +132,6 @@ namespace IO {
 			return L"";
 		return filepath.substr(i + 1);
 	}
-#endif
 
 	bool is_file_exists(const std::wstring& filename) {
 		FILE *f;
@@ -175,6 +199,7 @@ namespace IO {
 		}
 		return get_filedir(filepath) + PATH_SEPARATORW + fn;
 	}
+#endif
 }
 
 namespace ENCODING {
@@ -213,7 +238,7 @@ namespace ENCODING {
 		int r = iconv(cd, &buf_iconv, &len_in, &but_out_iconv, &len_out);
 		if ((int)r == -1)
 			return false;
-		*but_out_iconv = 0;
+		*but_out_iconv = *(but_out_iconv + 1) = 0;
 
 		return true;
 	}

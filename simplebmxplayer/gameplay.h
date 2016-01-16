@@ -21,9 +21,6 @@ namespace {
 
 namespace GamePlay {
 	void Init();
-	bool LoadSkin(const char* path);
-	bool LoadBms(std::wstring& path);
-	bool LoadBmsResource();
 	void SetPlayer(const PlayerSetting& playersetting, int playernum);
 	void Start();
 	void Render();

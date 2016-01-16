@@ -48,4 +48,7 @@ void Logger::PrintToScreen(const char *msg, int type) {
 #endif
 	printf(msg);
 	printf("\n");
+
+	// set to default again
+	SetConsoleTextAttribute(hConsole, 7);
 }

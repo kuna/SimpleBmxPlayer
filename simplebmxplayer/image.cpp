@@ -42,6 +42,10 @@ Image::Image(std::wstring& filepath, bool loop) : Image() {
 	Load(filepath.c_str(), loop);
 }
 
+Image::Image(std::string& filepath, bool loop) : Image() {
+	Load(filepath.c_str(), loop);
+}
+
 bool Image::Load(const std::wstring& filepath, bool loop) {
 	char path_utf8[1024];
 	ENCODING::wchar_to_utf8(filepath.c_str(), path_utf8, 1024);

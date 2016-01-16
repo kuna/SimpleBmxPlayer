@@ -84,6 +84,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="audio.cpp" />
+    <ClCompile Include="bmsresource.cpp" />
     <ClCompile Include="file.cpp" />
     <ClCompile Include="globalresources.cpp" />
     <ClCompile Include="logger.cpp" />
@@ -96,7 +97,6 @@
     <ClCompile Include="game.cpp" />
     <ClCompile Include="gameplay.cpp" />
     <ClCompile Include="gamesetting.cpp" />
-    <ClCompile Include="handler.cpp" />
     <ClCompile Include="image.cpp" />
     <ClCompile Include="luamanager.cpp" />
     <ClCompile Include="main.cpp" />
@@ -124,7 +124,7 @@
     <ClInclude Include="game.h" />
     <ClInclude Include="gameplay.h" />
     <ClInclude Include="gamesetting.h" />
-    <ClInclude Include="handler.h" />
+    <ClInclude Include="handlerargs.h" />
     <ClInclude Include="image.h" />
     <ClInclude Include="luamanager.h" />
     <ClInclude Include="player.h" />
@@ -144,6 +144,7 @@
     <Library Include="..\lib\ffmpeg\postproc.lib" />
     <Library Include="..\lib\ffmpeg\swresample.lib" />
     <Library Include="..\lib\ffmpeg\swscale.lib" />
+    <Library Include="..\lib\x86\pthreadVC2.lib" />
     <Library Include="..\lib\x86\SDL2.lib" />
     <Library Include="..\lib\x86\SDL2main.lib" />
     <Library Include="..\lib\x86\SDL2_image.lib" />

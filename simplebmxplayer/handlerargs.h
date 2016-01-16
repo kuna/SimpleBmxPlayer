@@ -1,29 +1,10 @@
 /*
- * namespace Handler
- * - you may add/call registered handler from here.
+ * @description definitions of arguments used for global handlers
  */
 #pragma once
 
 #include "bmsbel\bms_word.h"
 #define MAX_HANDLER_COUNT 1000
-
-namespace {
-	enum HANDLER {
-		OnGameInitalized = 0,
-		OnGamePlaySceneStarted = 1,
-		OnGamePlayStarted = 2,
-		OnGamePlaySound = 3,
-		OnGamePlayJudge = 5,
-		OnGamePlayBga = 6,
-		OnGamePlayEnd = 9,
-	};
-}
-
-namespace Handler {
-	void AddHandler(int h, void(*f)(void*));
-	void RemoveHandler(int h, void(*f)(void*));
-	void CallHandler(int h, void* arg);
-}
 
 // for handler argument
 struct OnGamePlaySoundArg {
