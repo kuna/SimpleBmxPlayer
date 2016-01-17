@@ -327,7 +327,7 @@ namespace Game {
 		// - FPS font
 		FC_FreeFont(font);
 
-		// release instances
+		// release basic instances
 		PoolHelper::ReleaseAll();
 		delete LUA;
 

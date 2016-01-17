@@ -159,19 +159,20 @@ void Image::Sync(Uint32 t) {
 
 
 	int uvPitch = codecctx->width / 2;
-	AVPacket packet;
+	AVPacket *packet;
+	packet = av_packet_alloc();
 	int frameFinished;
-	while (av_read_frame(moviectx, &packet) >= 0) {
+	while (av_read_frame(moviectx, packet) >= 0) {
 		// Is this a packet from the video stream? (not audio stream!)
-		if (packet.stream_index == moviestream) {
+		if (packet->stream_index == moviestream) {
 			// Decode video frame
-			avcodec_decode_video2(codecctx, frame, &frameFinished, &packet);
+			avcodec_decode_video2(codecctx, frame, &frameFinished, packet);
 
 			/*
 			* we need to get pts; video clock from presentation clock.
 			*/
 			int64_t pts;
-			if (packet.dts != AV_NOPTS_VALUE) {
+			if (packet->dts != AV_NOPTS_VALUE) {
 				pts = av_frame_get_best_effort_timestamp(frame);
 			}
 			else {
@@ -194,7 +195,7 @@ void Image::Sync(Uint32 t) {
 				sws_scale(sws_ctx, (uint8_t const * const *)frame->data,
 					frame->linesize, 0, codecctx->height, pict.data,
 					pict.linesize);
-
+				
 				SDL_UpdateYUVTexture(
 					sdltex,
 					NULL,
@@ -206,9 +207,10 @@ void Image::Sync(Uint32 t) {
 					uvPitch
 					);
 			}
+			break;
 		}
-		break;
 	}
+	av_packet_free(&packet);
 }
 
 void Image::Reset() {
