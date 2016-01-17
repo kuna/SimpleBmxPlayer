@@ -56,7 +56,9 @@ public:
 };
 
 namespace FileHelper {
-	/** @brief set basepath. useful for ConvertPathToAbsolute() */
+	/** @brief set basepath. useful for ConvertPathToAbsolute()
+	 * TODO: if archive file given as input, then open archive file(mount).
+	 */
 	void PushBasePath(const char *path);
 	void PopBasePath();
 	RString& GetBasePath();

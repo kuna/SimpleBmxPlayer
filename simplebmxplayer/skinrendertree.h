@@ -9,6 +9,8 @@
 #include "timer.h"
 #include "skin.h"
 #include <vector>
+#include "tinyxml2.h"
+using namespace tinyxml2;
 
 namespace OBJTYPE {
 	enum OBJTYPE {
@@ -24,8 +26,10 @@ namespace OBJTYPE {
 		SLIDER = 13,
 		TEXT = 14,
 		BUTTON = 15,
+		LIST = 16,
 		/* some renderer specific objects ... */
 		BGA = 20,
+		PLAYLANE = 21,
 	};
 }
 namespace ROTATIONCENTER {
@@ -218,6 +222,59 @@ public:
 	//virtual void Render();
 };
 
+/** @description
+ * a very basic list object
+ *
+ * Generally, This object cannot be used only itself;
+ * It should implemented in some other object.
+ * This object just supplies position for listitem.
+ *
+ * It doesn't render something itself, and it doesn't parses child object.
+ * May better to extend this class to draw something you want.
+ * Use it on your own.
+ */
+class SkinListObject: public SkinRenderObject {
+private:
+	Uint32				listsize;
+	double				listscroll;
+	Uint32				x, y, w, h;
+	Uint32				select_dx, select_dy;
+public:
+	void RenderListItem(int idx, SkinRenderObject *obj);
+};
+
+/** @brief specific object used during play */
+class SkinPlayObject : public SkinRenderObject {
+private:
+	struct NOTE {
+		ImageSRC normal;
+		ImageSRC ln_end;
+		ImageSRC ln_body;
+		ImageSRC ln_start;
+		ImageSRC mine;
+		ImageDST dst;
+		Image* img;			// COMMENT: do we need to have multiple image?
+	};
+	SkinImageObject *imgobj_judgeline;
+	SkinImageObject *imgobj_line;
+public:
+	NOTE		Note[20];
+	NOTE		AutoNote[20];
+	Uint32		x, y, w, h;
+public:
+	SkinPlayObject(SkinRenderTree* owner);
+	void ConstructLane(XMLElement *laneobj);
+	void SetJudgelineObject(XMLElement *judgelineobj);
+	void SetLineObject(XMLElement *lineobj);
+	Uint32 GetLaneHeight();
+	/** @brief check is this object is suitable for drawing lane. use for performance optimization */
+	bool IsLaneExists(int laneindex);
+	/** @brief `pos = 1` means note on the top of the lane */
+	void RenderLane(int laneindex, double pos, bool mine = false);
+	/** @brief for longnote. */
+	void RenderLane(int laneindex, double pos_start, double pos_end);
+};
+
 /** @brief rendering tree which is used in real rendering - based on Xml skin structure */
 class SkinRenderTree: public SkinGroupObject {
 public:
@@ -235,6 +292,7 @@ public:
 	SkinUnknownObject* NewUnknownObject();
 	SkinGroupObject* NewGroupObject();
 	SkinImageObject* NewImageObject();
+	SkinPlayObject* NewPlayObject();
 
 	/** @brief load image at globalresources. */
 	void RegisterImage(RString& id, RString& path);
@@ -244,12 +302,13 @@ public:
 
 namespace SkinRenderHelper {
 	void AddFrame(ImageDST &d, ImageDSTFrame &f);
+	void ConstructBasicRenderObject(SkinRenderObject *obj, XMLElement *e);
 	SDL_Rect ToRect(ImageSRC &r, int time);
 	SDL_Rect ToRect(ImageDSTFrame &r);
 	bool CalculateFrame(ImageDST &dst, ImageDSTFrame &frame);
 	ImageDSTFrame Tween(ImageDSTFrame& a, ImageDSTFrame &b, double t, int acctype);
 	/** @brief in debug mode, border will drawn around object. */
-	void Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, int blend, int rotationcenter = ROTATIONCENTER::CENTER);
+	void Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, int blend = 1, int rotationcenter = ROTATIONCENTER::CENTER);
 
 	/** @brief replaces path string to a correct one */
 	void ConvertPath(RString& path);

@@ -12,30 +12,27 @@
 #include "file.h"
 #include "logger.h"
 
-SkinRenderTree rtree;
-SkinOption skinoption;
-
 namespace GamePlay {
 	// global resources
-	Timer			*OnScene;
-	Timer			*OnGameStart;
-	Timer			*OnSongLoading;
-	Timer			*OnSongLoadingEnd;
-	Timer			*OnReady;
-	RString			*Bmspath;
-	RString			*PlaySkinpath;
+	Timer				*OnScene;
+	Timer				*OnGameStart;
+	Timer				*OnSongLoading;
+	Timer				*OnSongLoadingEnd;
+	Timer				*OnReady;
+	RString				*Bmspath;
+	RString				*PlaySkinpath;
 
-	// bms skin related
-	// skin resource will be loaded in GlobalResource
-	Skin playskin;
+	// bms skin resource
+	// skin resource will be loaded in GlobalResource, 
+	// so we don't need to take care of it
+	Skin				playskin;
+	SkinRenderTree		rtree;
+	SkinOption			skinoption;
 
 	// bms play related
-	Player player[2];	// player available up to 2
-	int lanestart;
-	int laneheight;
+	Player				player[2];	// player available up to 2
 
 	double speed_multiply;
-	Timer gametimer;
 
 	SDL_Texture* temptexture;	// only for test purpose
 
@@ -98,6 +95,7 @@ namespace GamePlay {
 		printf("Loaded Bms Skin Successfully\n");
 
 		// prefetch note render information
+		// COMMENT: setplayer should removed, move it to here
 		// TODO
 
 		return true;
@@ -116,10 +114,10 @@ namespace GamePlay {
 	void SetPlayer(const PlayerSetting& playersetting, int playernum) {
 		// set player
 		player[playernum].SetPlayerSetting(playersetting);	// TODO: is this have any meaning?
-		player[playernum].Prepare(&BmsResource::BMS, 0, true, 0);
+		player[playernum].Prepare(&BmsResource::BMS, 0);
 
 		// do some option change from player
-		SetSpeed(playersetting.speed);
+		player[playernum].SetSpeed(playersetting.speed);
 	}
 
 	void Start() {
@@ -168,7 +166,13 @@ namespace GamePlay {
 		OnGameStart->Trigger(OnReady->GetTick() >= 5000);
 
 		/*
-		 * Make a recursion in render tree
+		 * BMS update
+		 */
+		if (OnGameStart->IsStarted())
+			BmsHelper::Update(OnGameStart->GetTick());
+
+		/*
+		 * draw interface (make a render tree recursion)
 		 */
 		RenderObject(&rtree);
 
@@ -307,12 +311,5 @@ namespace GamePlay {
 
 		// temp resource
 		if (temptexture) SDL_DestroyTexture(temptexture);
-	}
-
-	// ---------------------------
-
-	void SetSpeed(double speed) {
-		//speed_multiply = 900.0 / speed * 1.0;								// normal multiply (1x: show 4 beat in a screen)
-		speed_multiply = (double)laneheight / speed * 1000 * (120 / BmsResource::BMS.GetBaseBPM());	// if you use constant `green` speed ... (= 1 measure per 310ms)
 	}
 }

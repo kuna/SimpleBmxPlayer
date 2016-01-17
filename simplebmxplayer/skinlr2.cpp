@@ -562,6 +562,17 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			// TODO: onclick event
 			obj->SetName("Button");
 		}
+		/* some special object (PLAY lane object) */
+		else if (OBJTYPE_IS("JUDGELINE")) {
+			obj->SetName("JUDGELINE");
+			XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid, &s->skinlayout);
+			playarea->LinkEndChild(obj);
+		}
+		else if (OBJTYPE_IS("LINE")) {
+			obj->SetName("LINE");
+			XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid, &s->skinlayout);
+			playarea->LinkEndChild(obj);
+		}
 		else if (OBJTYPE_IS("ONMOUSE")) {
 			// depreciated/ignore
 			// TODO: support this by SRC_HOVER tag.
@@ -574,14 +585,14 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		// return new line
 		return nl;
 	}
+	/*
+	 * SELECT part 
+	 */
 	else if (CMD_STARTSWITH("#DST_BAR_BODY", 13)) {
 		// select menu part
 		int isProcessSelectBarDST = ProcessSelectBar_DST(line);
 		if (isProcessSelectBarDST)
 			return isProcessSelectBarDST;
-	}
-	else if (CMD_STARTSWITH("#DST_", 5)) {
-		// just ignore
 	}
 	else if (CMD_IS("#BAR_CENTER")) {
 		// set center and property ...
@@ -591,6 +602,27 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	else if (CMD_IS("#BAR_AVAILABLE")) {
 		// depreciated, not parse
 		printf("#BAR_AVAILABLE - depreciated, Ignore.\n");
+	}
+	/*
+	 * PLAY part 
+	 */
+	else if (CMD_STARTSWITH("#DST_NOTE", 9)) {
+		char **args = line_args[line];
+		int objectid = INT(args[1]);
+		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		XMLElement *dst = FindElement(lane, "DST", &s->skinlayout);
+		dst->SetAttribute("time", 0);
+		dst->SetAttribute("x", INT(args[3]));
+		dst->SetAttribute("y", INT(args[4]));
+		dst->SetAttribute("w", INT(args[5]));
+		dst->SetAttribute("h", INT(args[6]));
+	}
+	/*
+	 * etc
+	 */
+	else if (CMD_STARTSWITH("#DST_", 5)) {
+		// just ignore
 	}
 	else {
 		printf("Unknown Type: %s (%dL) - Ignore.\n", args[0], line_position[line]);
@@ -687,13 +719,6 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line) {
 		// add src to here
 		src->SetName("SRC_AUTO_MINE");
 		lane->LinkEndChild(src);
-		return line + 1;
-	}
-	else if (OBJTYPE_IS("LINE")) {
-		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid, &s->skinlayout);
-		// add src to here
-		src->SetName("SRC_LINE");
-		playarea->LinkEndChild(src);
 		return line + 1;
 	}
 	else if (OBJTYPE_IS("JUDGELINE")) {

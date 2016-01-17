@@ -25,7 +25,4 @@ namespace GamePlay {
 	void Start();
 	void Render();
 	void Release();
-
-	// change
-	void SetSpeed(double speed);
 };

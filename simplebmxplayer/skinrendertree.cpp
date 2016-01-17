@@ -4,8 +4,13 @@
 #include "globalresources.h"	// for evaluation condition
 #include "luamanager.h"
 #include "util.h"
+#include "logger.h"
 #include "tinyxml2.h"
 using namespace tinyxml2;
+
+// redefinition;
+void ConstructSRCFromElement(ImageSRC &, XMLElement *);
+void ConstructDSTFromElement(ImageDST &, XMLElement *);
 
 // ------ SkinRenderCondition ----------------------
 
@@ -219,6 +224,79 @@ SkinGraphObject::SkinGraphObject(SkinRenderTree* owner) : SkinRenderObject(owner
 
 SkinSliderObject::SkinSliderObject(SkinRenderTree* owner) : SkinRenderObject(owner, OBJTYPE::SLIDER) {}
 
+SkinPlayObject::SkinPlayObject(SkinRenderTree* owner) : 
+SkinRenderObject(owner, OBJTYPE::PLAYLANE), imgobj_judgeline(0), imgobj_line(0) {}
+
+void SkinPlayObject::ConstructLane(XMLElement *lane) {
+	if (!lane)
+		return;
+
+	int idx = lane->IntAttribute("index");
+	if (idx < 0 || idx >= 20) {
+		LOG->Warn("Invalid Lane found in <Play> object (%d), ignore.", idx);
+		return;
+	}
+	XMLElement *src_element;
+	src_element = lane->FirstChildElement("SRC_NOTE");
+	if (src_element) {
+		ConstructSRCFromElement(Note[idx].normal, src_element);
+		Note[idx].img = rtree->_imagekey[Note[idx].normal.resid];
+	}
+	src_element = lane->FirstChildElement("SRC_LN_START");
+	if (src_element) ConstructSRCFromElement(Note[idx].ln_start, src_element);
+	src_element = lane->FirstChildElement("SRC_LN_BODY");
+	if (src_element) ConstructSRCFromElement(Note[idx].ln_body, src_element);
+	src_element = lane->FirstChildElement("SRC_LN_END");
+	if (src_element) ConstructSRCFromElement(Note[idx].ln_end, src_element);
+	src_element = lane->FirstChildElement("SRC_MINE");
+	if (src_element) ConstructSRCFromElement(Note[idx].mine, src_element);
+	src_element = lane->FirstChildElement("SRC_AUTO_NOTE");
+	if (src_element) {
+		ConstructSRCFromElement(AutoNote[idx].normal, src_element);
+		AutoNote[idx].img = rtree->_imagekey[Note[idx].normal.resid];
+	}
+	src_element = lane->FirstChildElement("SRC_AUTO_LN_START");
+	if (src_element) ConstructSRCFromElement(AutoNote[idx].ln_start, src_element);
+	src_element = lane->FirstChildElement("SRC_AUTO_LN_BODY");
+	if (src_element) ConstructSRCFromElement(AutoNote[idx].ln_body, src_element);
+	src_element = lane->FirstChildElement("SRC_AUTO_LN_END");
+	if (src_element) ConstructSRCFromElement(AutoNote[idx].ln_end, src_element);
+	src_element = lane->FirstChildElement("SRC_AUTO_MINE");
+	if (src_element) ConstructSRCFromElement(AutoNote[idx].mine, src_element);
+	XMLElement *dst = lane->FirstChildElement("DST");
+	if (dst) {
+		ConstructDSTFromElement(Note[idx].dst, dst);
+		//ConstructDSTFromElement(AutoNote[idx].dst, dst);
+	}
+}
+
+void SkinPlayObject::SetJudgelineObject(XMLElement *judgelineobj) {
+	if (!imgobj_judgeline) 
+		imgobj_judgeline = rtree->NewImageObject();
+	SkinRenderHelper::ConstructBasicRenderObject(imgobj_judgeline, judgelineobj);
+}
+
+void SkinPlayObject::SetLineObject(XMLElement *lineobj) {
+	if (!imgobj_line)
+		imgobj_line = rtree->NewImageObject();
+	SkinRenderHelper::ConstructBasicRenderObject(imgobj_line, lineobj);
+}
+
+Uint32 SkinPlayObject::GetLaneHeight() { return h; }
+
+bool SkinPlayObject::IsLaneExists(int laneindex) { return Note[laneindex].normal.w > 0; }
+
+void SkinPlayObject::RenderLane(int laneindex, double pos, bool mine) { 
+	// TODO: in case of Auto?
+	if (IsLaneExists(laneindex)) {
+		ImageDSTFrame frame;
+		if (!SkinRenderHelper::CalculateFrame(Note[laneindex].dst, frame))
+			return;
+		frame.y += h * pos;
+		SkinRenderHelper::Render(Note[laneindex].img, &Note[laneindex].normal, &frame);
+	}
+}
+
 // ----- SkinRenderTree -------------------------------------
 
 SkinRenderTree::SkinRenderTree() : SkinGroupObject(this) {}
@@ -262,6 +340,12 @@ SkinGroupObject* SkinRenderTree::NewGroupObject() {
 
 SkinImageObject* SkinRenderTree::NewImageObject() {
 	SkinImageObject* obj = new SkinImageObject(this);
+	_objpool.push_back(obj);
+	return obj;
+}
+
+SkinPlayObject* SkinRenderTree::NewPlayObject() {
+	SkinPlayObject* obj = new SkinPlayObject(this);
 	_objpool.push_back(obj);
 	return obj;
 }
@@ -341,6 +425,24 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 		/*else if (ISNAME(e, "Number")) {
 
 		}*/
+		/*
+		 * Special object parsing start
+		 */
+		else if (ISNAME(e, "Play")) {
+			SkinPlayObject *p = rtree.NewPlayObject();
+			p->x = e->IntAttribute("x");
+			p->y = e->IntAttribute("y");
+			p->w = e->IntAttribute("w");
+			p->h = e->IntAttribute("h");
+			XMLElement *lane = e->FirstChildElement("Lane");
+			while (lane) {
+				p->ConstructLane(lane);
+				lane = lane->NextSiblingElement("Lane");
+			}
+			p->SetJudgelineObject(e->FirstChildElement("JUDGELINE"));
+			p->SetLineObject(e->FirstChildElement("LINE"));
+			obj = p;
+		}
 		else {
 			// parsed as unknown object
 			// only parses SRC/DST condition
@@ -349,24 +451,7 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 		group->AddChild(obj);
 
 		// parse common attribute: SRC, DST, condition
-		const char* condition = e->Attribute("condition");
-		if (condition) obj->SetCondition(condition);
-		XMLElement *src = e->FirstChildElement("SRC");
-		while (src) {
-			ImageSRC _s;
-			ConstructSRCFromElement(_s, src);
-			const char* _cond = e->Attribute("condition");
-			obj->AddSRC(_s, _cond?_cond:"");
-			src = e->NextSiblingElement("SRC");
-		}
-		XMLElement *dst = e->FirstChildElement("DST");
-		while (dst) {
-			ImageDST _d;
-			ConstructDSTFromElement(_d, dst);
-			const char* _cond = e->Attribute("condition");
-			obj->AddDST(_d, _cond?_cond:"");
-			dst = e->NextSiblingElement("DST");
-		}
+		SkinRenderHelper::ConstructBasicRenderObject(obj, e);
 		
 		// some elements need processing after SRC/DST is read
 
@@ -398,6 +483,27 @@ bool SkinRenderHelper::LoadResourceFromSkin(SkinRenderTree &rtree, Skin &s) {
 	}
 
 	return true;
+}
+
+void SkinRenderHelper::ConstructBasicRenderObject(SkinRenderObject *obj, XMLElement *e) {
+	const char* condition = e->Attribute("condition");
+	if (condition) obj->SetCondition(condition);
+	XMLElement *src = e->FirstChildElement("SRC");
+	while (src) {
+		ImageSRC _s;
+		ConstructSRCFromElement(_s, src);
+		const char* _cond = e->Attribute("condition");
+		obj->AddSRC(_s, _cond ? _cond : "");
+		src = e->NextSiblingElement("SRC");
+	}
+	XMLElement *dst = e->FirstChildElement("DST");
+	while (dst) {
+		ImageDST _d;
+		ConstructDSTFromElement(_d, dst);
+		const char* _cond = e->Attribute("condition");
+		obj->AddDST(_d, _cond ? _cond : "");
+		dst = e->NextSiblingElement("DST");
+	}
 }
 
 void SkinRenderHelper::AddFrame(ImageDST &d, ImageDSTFrame &f) {

@@ -3,6 +3,7 @@
 #include "util.h"
 #include "file.h"
 #include "logger.h"
+#include "handlerargs.h"
 #include <mutex>
 
 #include "pthread\pthread.h"
@@ -44,7 +45,7 @@ namespace BmsResource {
 			wav_table[channel.ToInteger()] = audio;
 		}
 		else {
-			LOG->Warn("[Warning] %ls - cannot load WAV file\n", wav_path.c_str());
+			LOG->Warn("[Warning] %ls - cannot load WAV file", wav_path.c_str());
 			if (audio) delete audio;
 			return false;
 		}
@@ -69,17 +70,18 @@ namespace BmsResource {
 			bmp_table[channel.ToInteger()] = image;
 		}
 		else {
-			LOG->Warn("[Warning] %s - cannot load BMP file\n", bmp_path.c_str());
+			LOG->Warn("[Warning] %s - cannot load BMP file", bmp_path.c_str());
 			delete image;
 			return false;
 		}
 		return true;
 	}
 
-	SoundPool	SOUND;
-	ImagePool	IMAGE;
-	BmsBms		BMS;
-	RString		bmspath;
+	SoundPool			SOUND;
+	ImagePool			IMAGE;
+	BmsBms				BMS;
+	BmsTimeManager		BMSTIME;
+	RString				bmspath;
 }
 
 namespace BmsHelper {
@@ -88,20 +90,33 @@ namespace BmsHelper {
 	/** @brief POSIX thread used when loading BMS file */
 	pthread_t		t_bmsresource;
 
+	/* privates */
+	Uint32			currentbar;
+	BGAInformation	currentbga;
+
 	bool LoadBms(const RString& path) {
-		// load bms file
+		bool succeed = false;
+		// lock first, so LoadBmsResource() can wait 
+		// until BMS is fully loaded.
+		mutex_bmsresource.lock();
+
+		// clear instance
+		BmsResource::BMS.Clear();
+		BmsResource::BMSTIME.Clear();
+		BmsResource::bmspath = path;
+
+		// load bms file & create time table
 		try {
-			BmsResource::BMS.Clear();
-			BmsResource::bmspath = path;
-			wchar_t wpath[1024];
-			ENCODING::utf8_to_wchar(path, wpath, 1024);
-			BmsParser::Parse(wpath, BmsResource::BMS);		// TODO: replace it with UTF8
+			BmsParser::Parse(path, BmsResource::BMS);
+			BmsResource::BMS.CalculateTime(BmsResource::BMSTIME);
+			succeed = true;
 		}
 		catch (BmsException &e) {
 			wprintf(L"%ls\n", e.Message());
-			return false;
 		}
-		return true;
+
+		mutex_bmsresource.unlock();
+		return succeed;
 	}
 
 
@@ -141,7 +156,8 @@ namespace BmsHelper {
 		pthread_create(&t_bmsresource, 0, _LoadBmsResource, 0);
 	}
 
-	void UpdateTime(uint32_t time) {
+#define FOREACH_CHANNEL
+	void Update(uint32_t time) {
 		/*
 		* sync bms texture (movie)
 		*/
@@ -151,12 +167,84 @@ namespace BmsHelper {
 		}
 
 		/*
-		 * (TODO) sync background image
+		 * get new bar position
+		 * if bar has no update, then exit
 		 */
+		Uint32 newbar = BmsResource::BMSTIME.GetBarIndexFromTime(time);
+		if (newbar == currentbar) return;
 
 		/*
-		 * (TODO) check for background keysound
+		 * check for background keysound & background image
+		 * If there's bar change, then it'll check for keysound
 		 */
+		for (; currentbar <= newbar; ++currentbar)
+		{
+			// call event handler for BGA/BGM
+			BmsChannel& bgmchannel		= BmsResource::BMS.GetChannelManager()[BmsWord(1)];
+			BmsChannel& missbgachannel	= BmsResource::BMS.GetChannelManager()[BmsWord(4)];
+			BmsChannel& bgachannel		= BmsResource::BMS.GetChannelManager()[BmsWord(4)];
+			BmsChannel& bgachannel2		= BmsResource::BMS.GetChannelManager()[BmsWord(7)];
+			BmsChannel& bgachannel3		= BmsResource::BMS.GetChannelManager()[BmsWord(10)];
+			for (auto it = bgmchannel.Begin(); it != bgmchannel.End(); ++it) {
+				// TODO: fix bmsbuffer structure
+				// only BGM can have multiple channel...?
+				if (currentbar > (**it).GetLength())
+					continue;
+				BmsWord current_word((**it)[currentbar]);
+				if (current_word == BmsWord::MIN)
+					continue;
+				BmsHelper::PlaySound(current_word.ToInteger());
+			}
+			for (auto it = bgachannel.Begin(); it != bgachannel.End(); it++) {
+				if (currentbar > (**it).GetLength())
+					continue;
+				BmsWord current_word((**it)[currentbar]);
+				if (current_word == BmsWord::MIN)
+					continue;
+				currentbga.mainbga = current_word;
+			}
+			for (auto it = bgachannel2.Begin(); it != bgachannel2.End(); it++) {
+				if (currentbar > (**it).GetLength())
+					continue;
+				BmsWord current_word((**it)[currentbar]);
+				if (current_word == BmsWord::MIN)
+					continue;
+				currentbga.layer1bga = current_word;
+			}
+			for (auto it = bgachannel3.Begin(); it != bgachannel3.End(); it++) {
+				if (currentbar > (**it).GetLength())
+					continue;
+				BmsWord current_word((**it)[currentbar]);
+				if (current_word == BmsWord::MIN)
+					continue;
+				currentbga.layer2bga = current_word;
+			}
+			for (auto it = missbgachannel.Begin(); it != missbgachannel.End(); it++) {
+				if (currentbar > (**it).GetLength())
+					continue;
+				BmsWord current_word((**it)[currentbar]);
+				if (current_word == BmsWord::MIN)
+					continue;
+				currentbga.missbga = current_word;
+			}
+		}
+
+		/*
+		 * all updating works are done
+		 * update currentbar now
+		 */
+		currentbar = newbar;
+	}
+
+	void ResetTime(uint32_t time) {
+		// just reset bar position
+		// and check for keysound
+		currentbar = BmsResource::BMSTIME.GetBarIndexFromTime(time);
+		Update(time);
+	}
+
+	Uint32 GetCurrentBar() {
+		return currentbar;
 	}
 
 	void PlaySound(int channel) {

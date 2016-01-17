@@ -1,5 +1,5 @@
 /*
- * @description loads Bms file & Bms resources.
+ * @description loads/manages Bms file & Bms resources. (only single object)
  * Contains: Bms / Bms Resource / Bms Progress(Includes BGA/BGM)
  * - we don't need to have multiple-bms-files-loaded states. only one file is enough.
  *   so we have only one bms global object. if multi file is necessary, then we may have to refactor it ...
@@ -47,6 +47,10 @@ namespace BmsResource {
 	extern BmsBms		BMS;
 }
 
+//
+// TODO:	BmsHelper isn't an independent module, but kind of a tool of BmsResource.
+//			maybe I need to refactor this.
+//
 namespace BmsHelper {
 	/** @brief only loads Bms data. call LoadBmsResource() to load related resources. */
 	bool LoadBms(const RString &bmspath);
@@ -63,9 +67,16 @@ namespace BmsHelper {
 	void PlaySound(int channel);
 
 	/** @brief Update time. BGA/BGM is automatically setted by progressed time. */
-	void UpdateTime(uint32_t time);
+	void Update(uint32_t time);
 	/** @brief Reset time. BGA/BGM is resetted to pointing time. */
 	void ResetTime(uint32_t time);
+
+	struct BGAInformation {
+		BmsWord missbga;
+		BmsWord mainbga;
+		BmsWord layer1bga;
+		BmsWord layer2bga;
+	};
 
 	Image* GetMissBGA();
 	Image* GetMainBGA();
