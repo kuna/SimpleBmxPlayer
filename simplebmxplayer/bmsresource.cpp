@@ -45,7 +45,7 @@ namespace BmsResource {
 			wav_table[channel.ToInteger()] = audio;
 		}
 		else {
-			LOG->Warn("[Warning] %ls - cannot load WAV file", wav_path.c_str());
+			LOG->Warn("[Warning] %s - cannot load WAV file", wav_path.c_str());
 			if (audio) delete audio;
 			return false;
 		}
@@ -133,10 +133,10 @@ namespace BmsHelper {
 		for (unsigned int i = 0; i < BmsConst::WORD_MAX_COUNT; ++i) {
 			BmsWord word(i);
 			if (BmsResource::BMS.GetRegistArraySet()["WAV"].IsExists(word)) {
-				BmsResource::IMAGE.Load(i, BmsResource::BMS.GetRegistArraySet()["WAV"][word]);
+				BmsResource::SOUND.Load(i, BmsResource::BMS.GetRegistArraySet()["WAV"][word]);
 			}
 			if (BmsResource::BMS.GetRegistArraySet()["BMP"].IsExists(word)) {
-				BmsResource::SOUND.Load(i, BmsResource::BMS.GetRegistArraySet()["BMP"][word]);
+				BmsResource::IMAGE.Load(i, BmsResource::BMS.GetRegistArraySet()["BMP"][word]);
 			}
 		}
 
@@ -171,7 +171,7 @@ namespace BmsHelper {
 		 * if bar has no update, then exit
 		 */
 		Uint32 newbar = BmsResource::BMSTIME.GetBarIndexFromTime(time / 1000.0);
-		if (newbar == currentbar) return;
+		if (currentbar == newbar) return;
 
 		/*
 		 * check for background keysound & background image
@@ -228,11 +228,6 @@ namespace BmsHelper {
 				currentbga.missbga = current_word;
 			}
 		}
-
-		/*
-		 * all updating works are done
-		 * update currentbar now
-		 */
 		currentbar = newbar;
 	}
 

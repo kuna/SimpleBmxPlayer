@@ -68,18 +68,20 @@ namespace GamePlay {
 
 		// load play skin (lr2)
 		// and create render tree
+		RString abspath = path;
+		FileHelper::ConvertPathToAbsolute(abspath);
 		bool r = false;
-		if (strstr(path, ".lr2skin") == 0) {
+		if (strstr(abspath, ".lr2skin") == 0) {
 			r = playskin.Parse(path);
 		}
 		else {
 			_LR2SkinParser *lr2skin = new _LR2SkinParser();
-			r = lr2skin->ParseLR2Skin(path, &playskin);
+			r = lr2skin->ParseLR2Skin(abspath, &playskin);
 			delete lr2skin;
 		}
 		if (!r)
 		{
-			printf("Failed to load skin %s\n", path);
+			printf("Failed to load skin %s\n", abspath);
 			return false;
 		}
 

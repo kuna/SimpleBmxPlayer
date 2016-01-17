@@ -1,5 +1,6 @@
 #include "gamesetting.h"
 #include "tinyxml2.h"
+#include "file.h"
 
 #define INT(s) (atoi(s))
 #define SAFE_STR(s) ((s)?(s):"")
@@ -11,8 +12,10 @@ bool GameSetting::DefaultSetting() {
 }
 
 bool GameSetting::LoadSetting(const char *path) {
+	RString abspath = path;
+	FileHelper::ConvertPathToAbsolute(abspath);
 	XMLDocument doc;
-	if (doc.LoadFile(path) != XML_NO_ERROR)
+	if (doc.LoadFile(abspath) != XML_NO_ERROR)
 		return false;
 
 	XMLElement* ele_setting = doc.FirstChildElement("settings");
