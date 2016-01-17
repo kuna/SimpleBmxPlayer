@@ -170,7 +170,7 @@ namespace BmsHelper {
 		 * get new bar position
 		 * if bar has no update, then exit
 		 */
-		Uint32 newbar = BmsResource::BMSTIME.GetBarIndexFromTime(time);
+		Uint32 newbar = BmsResource::BMSTIME.GetBarIndexFromTime(time / 1000.0);
 		if (newbar == currentbar) return;
 
 		/*

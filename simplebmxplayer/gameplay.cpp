@@ -128,6 +128,8 @@ namespace GamePlay {
 		SWITCH_ON("IsScoreGraph");
 		SWITCH_ON("IsAutoPlay");
 		SWITCH_ON("IsBGA");
+		SWITCH_ON("983");
+		//SWITCH_ON("Is1PSuddenChange");
 
 		/*
 		 * Load skin & bms resource
@@ -161,6 +163,10 @@ namespace GamePlay {
 			// let basic renderer do work
 			obj->Render();
 		}
+		/* Ingeneral Objects: need special care! */
+		else if (obj->ToBGA()) {
+			obj->ToBGA()->RenderBGA(BmsResource::IMAGE.Get(1));
+		}
 		else {
 			// ignore unknown object
 		}
@@ -170,9 +176,9 @@ namespace GamePlay {
 		/*
 		 * check timers
 		 */
-		if (OnReady->Trigger(OnSongLoadingEnd->IsStarted()))
+		if (OnReady->Trigger(OnSongLoadingEnd->IsStarted() && OnScene->GetTick() >= 3000))
 			OnSongLoading->Stop();
-		//OnGameStart->Trigger(OnReady->GetTick() >= 5000);
+		OnGameStart->Trigger(OnReady->GetTick() >= 2000);
 
 		/*
 		 * BMS update

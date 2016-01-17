@@ -155,4 +155,81 @@ namespace FileHelper {
 			path = path.substr(2);
 		path = GetBasePath() + path;
 	}
+
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+	void GetFileList(const char* folderpath, std::vector<RString>& out, bool getfileonly) {
+		RString directory = folderpath;
+		ConvertPathToAbsolute(directory);
+
+#ifdef _WIN32
+		HANDLE dir;
+		WIN32_FIND_DATA file_data;
+
+		wchar_t *directory_w = new wchar_t[1024];
+		ENCODING::utf8_to_wchar(directory.c_str(), directory_w, 1024);
+		if ((dir = FindFirstFileW((wstring(directory_w) + L"/*").c_str(), &file_data)) == INVALID_HANDLE_VALUE)
+			return; /* No files found */
+
+		do {
+			const wstring file_name = file_data.cFileName;
+			const bool is_directory = (file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+
+			if (file_name[0] == '.')
+				continue;
+
+			if (getfileonly && is_directory)
+				continue;
+
+			const wstring full_file_name = wstring(directory_w) + L"/" + file_name;
+			char *full_file_name_utf8 = new char[2048];
+			ENCODING::wchar_to_utf8(full_file_name.c_str(), full_file_name_utf8, 2048);
+			out.push_back(full_file_name_utf8);
+			delete full_file_name_utf8;
+		} while (FindNextFile(dir, &file_data));
+
+		delete directory_w;
+		FindClose(dir);
+#else
+		DIR *dir;
+		class dirent *ent;
+		class stat st;
+
+		dir = opendir(directory);
+		while ((ent = readdir(dir)) != NULL) {
+			const string file_name = ent->d_name;
+			const string full_file_name = directory + "/" + file_name;
+
+			if (file_name[0] == '.')
+				continue;
+
+			if (stat(full_file_name.c_str(), &st) == -1)
+				continue;
+
+			const bool is_directory = (st.st_mode & S_IFDIR) != 0;
+
+			if (getfileonly && is_directory)
+				continue;
+
+			out.push_back(full_file_name);
+		}
+		closedir(dir);
+#endif
+	}
+
+	void FilterFileList(const char *extfilters, std::vector<RString>& filelist) {
+		std::vector<RString> filters;
+		split(extfilters, ";", filters);
+
+		for (auto filepath = filelist.begin(); filepath != filelist.end(); ) {
+			for (auto ext = filters.begin(); ext != filters.end(); ++ext) {
+				if (EndsWith(*filepath, *ext)) {
+					filepath = filelist.erase(filepath);
+					continue;
+				}
+			}
+			++filepath;
+		}
+	}
 }

@@ -229,6 +229,22 @@ void Image::ReleaseMovie() {
 	if (moviectx) { avformat_close_input(&moviectx); moviectx = 0; }
 }
 
+int Image::GetWidth() {
+	if (!IsLoaded())
+		return 0;
+	int w;
+	SDL_QueryTexture(sdltex, 0, 0, &w, 0);
+	return w;
+}
+
+int Image::GetHeight() {
+	if (!IsLoaded())
+		return 0;
+	int h;
+	SDL_QueryTexture(sdltex, 0, 0, 0, &h);
+	return h;
+}
+
 Image::~Image() {
 	Release();
 }

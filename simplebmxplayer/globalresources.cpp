@@ -1,5 +1,6 @@
 #include "globalresources.h"
 #include "file.h"
+#include "util.h"
 
 StringPool* STRPOOL = 0;
 DoublePool* DOUBLEPOOL = 0;
@@ -186,6 +187,14 @@ Image* ImagePool::Load(const RString &path) {
 	FileHelper::ConvertPathToAbsolute(_path);
 	if (!IsExists(_path)) {
 		Image *img = new Image();
+		// if filename == '*', then get any file in that directory
+		if (IO::substitute_extension(IO::get_filename(_path), "") == "*") {
+			RString _directory = IO::get_filedir(_path);
+			std::vector<RString> filelist;
+			FileHelper::GetFileList(_directory, filelist);
+			if (filelist.size() > 0)
+				_path = filelist[0];
+		}
 		img->Load(_path.c_str());
 		if (img->IsLoaded()) {
 			_imagepool.insert(pair<RString, Image*>(_path, img));
@@ -269,7 +278,14 @@ Audio* SoundPool::Load(const RString &path) {
 	RString _path = path;
 	FileHelper::ConvertPathToAbsolute(_path);
 	if (!IsExists(_path)) {
-		// TODO
+		// if filename == '*', then get any file in that directory
+		if (IO::substitute_extension(IO::get_filename(_path), "") == "*") {
+			RString _directory = IO::get_filedir(_path);
+			std::vector<RString> filelist;
+			FileHelper::GetFileList(_directory, filelist);
+			if (filelist.size() > 0)
+				_path = filelist[0];
+		}
 		Audio *audio = new Audio(_path);
 		_soundpool.insert(pair<RString, Audio*>(_path, audio));
 		_loadcount.insert(pair<Audio*, int>(audio, 1));

@@ -16,6 +16,7 @@
 #pragma once
 
 #include "global.h"
+#include <vector>
 
 class FileBasic {
 public:
@@ -62,6 +63,8 @@ namespace FileHelper {
 	void PushBasePath(const char *path);
 	void PopBasePath();
 	RString& GetBasePath();
+	void GetFileList(const char *folderpath, std::vector<RString>& filelist, bool getfileonly = true);
+	void FilterFileList(const char *extfilters, std::vector<RString>& filelist);
 	/** @brief converts path to absolute path */
 	void ConvertPathToAbsolute(RString& path);
 }

@@ -105,9 +105,6 @@
     <ClCompile Include="timer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="README.md" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="audio.h" />
     <ClInclude Include="bmsinfo.h" />
     <ClInclude Include="bmsplayer.h" />

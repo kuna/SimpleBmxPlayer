@@ -134,6 +134,13 @@ SkinImageObject* SkinRenderObject::ToImage() {
 		return 0;
 }
 
+SkinBgaObject* SkinRenderObject::ToBGA() {
+	if (objtype == OBJTYPE::BGA)
+		return (SkinBgaObject*)this;
+	else
+		return 0;
+}
+
 // do nothing
 void SkinRenderObject::Render() {  }
 
@@ -297,6 +304,18 @@ void SkinPlayObject::RenderLane(int laneindex, double pos, bool mine) {
 	}
 }
 
+SkinBgaObject::SkinBgaObject(SkinRenderTree *t) : SkinRenderObject(t, OBJTYPE::BGA) {
+	src[0] = { "", 0, 0, -1, -1, 1, 1, 0 };
+	srccnt = 1;
+}
+
+void SkinBgaObject::RenderBGA(Image *bga) {
+	if (!bga) return;
+	ImageDSTFrame frame;
+	SkinRenderHelper::CalculateFrame(dst[0], frame);
+	SkinRenderHelper::Render(bga, &src[0], &frame, 0, 5);
+}
+
 // ----- SkinRenderTree -------------------------------------
 
 SkinRenderTree::SkinRenderTree() : SkinGroupObject(this) {}
@@ -346,6 +365,12 @@ SkinImageObject* SkinRenderTree::NewImageObject() {
 
 SkinPlayObject* SkinRenderTree::NewPlayObject() {
 	SkinPlayObject* obj = new SkinPlayObject(this);
+	_objpool.push_back(obj);
+	return obj;
+}
+
+SkinBgaObject* SkinRenderTree::NewBgaObject() {
+	SkinBgaObject* obj = new SkinBgaObject(this);
 	_objpool.push_back(obj);
 	return obj;
 }
@@ -442,6 +467,10 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 			p->SetLineObject(e->FirstChildElement("LINE"));
 			obj = p;
 		}
+		else if (ISNAME(e, "Bga")) {
+			SkinBgaObject *bga = rtree.NewBgaObject();
+			obj = bga;
+		}
 		else {
 			// parsed as unknown object
 			// only parses SRC/DST condition
@@ -507,8 +536,10 @@ void SkinRenderHelper::AddFrame(ImageDST &d, ImageDSTFrame &f) {
 	d.frame.push_back(f);
 }
 
-SDL_Rect SkinRenderHelper::ToRect(ImageSRC &d, int time) {
-	// (TODO) if SRC x, y < 0 then we have to get it manually 
+SDL_Rect SkinRenderHelper::ToRect(ImageSRC &d, int time, int image_width, int image_height) {
+	// if SRC x, y < 0 then Set width/height with image's total width/height.
+	//if (d.w <= 0) d.w = image_width;
+	//if (d.h <= 0) d.h = image_height;
 	int dx = d.w / d.divx;
 	int dy = d.h / d.divy;
 	int frame = d.cycle ? time / d.cycle : 0;
@@ -669,6 +700,8 @@ void SkinRenderHelper::Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, i
 	}
 
 	static Timer* basetimer(TIMERPOOL->Get("OnScene"));
+	if (src->w <= 0) src->w = img->GetWidth();
+	if (src->h <= 0) src->h = img->GetHeight();
 	SDL_Rect src_rect = ToRect(*src, basetimer->GetTick());
 	SDL_Rect dst_rect = ToRect(*frame);
 

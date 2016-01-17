@@ -97,6 +97,7 @@ class SkinRenderTree;
 class SkinUnknownObject;
 class SkinGroupObject;
 class SkinImageObject;
+class SkinBgaObject;
 
 /** @brief very basic rendering object which does nothing. */
 class SkinRenderObject {
@@ -138,6 +139,7 @@ public:
 	SkinUnknownObject* ToUnknown();
 	SkinGroupObject* ToGroup();
 	SkinImageObject* ToImage();
+	SkinBgaObject* ToBGA();
 };
 
 class SkinUnknownObject : public SkinRenderObject {
@@ -275,6 +277,13 @@ public:
 	void RenderLane(int laneindex, double pos_start, double pos_end);
 };
 
+/** @brief do nothing; just catch this object if you want to draw BGA. */
+class SkinBgaObject : public SkinRenderObject {
+public:
+	SkinBgaObject(SkinRenderTree *);
+	void RenderBGA(Image *bga);
+};
+
 /** @brief rendering tree which is used in real rendering - based on Xml skin structure */
 class SkinRenderTree: public SkinGroupObject {
 public:
@@ -293,6 +302,7 @@ public:
 	SkinGroupObject* NewGroupObject();
 	SkinImageObject* NewImageObject();
 	SkinPlayObject* NewPlayObject();
+	SkinBgaObject* NewBgaObject();
 
 	/** @brief load image at globalresources. */
 	void RegisterImage(RString& id, RString& path);
@@ -303,7 +313,7 @@ public:
 namespace SkinRenderHelper {
 	void AddFrame(ImageDST &d, ImageDSTFrame &f);
 	void ConstructBasicRenderObject(SkinRenderObject *obj, XMLElement *e);
-	SDL_Rect ToRect(ImageSRC &r, int time);
+	SDL_Rect ToRect(ImageSRC &r, int time, int image_width = 0, int image_height = 0);
 	SDL_Rect ToRect(ImageDSTFrame &r);
 	bool CalculateFrame(ImageDST &dst, ImageDSTFrame &frame);
 	ImageDSTFrame Tween(ImageDSTFrame& a, ImageDSTFrame &b, double t, int acctype);

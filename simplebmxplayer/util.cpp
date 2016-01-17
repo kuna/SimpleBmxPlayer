@@ -65,10 +65,7 @@ namespace IO {
 	}
 
 	std::string get_filedir(const std::string& filepath) {
-		int r1 = filepath.find_last_of('\\');
-		int r2 = filepath.find_last_of('/');
-		int r = (r1 == string::npos ? r2 : r1);
-		return filepath.substr(0, r);
+		return filepath.substr(0, filepath.find_last_of("/\\"));
 	}
 
 	std::string substitute_extension(const std::string& filepath, const std::string& newext) {
@@ -79,7 +76,7 @@ namespace IO {
 	}
 
 	std::string substitute_filename(const std::string& filepath, const std::string& newname) {
-		auto i_start = filepath.find_last_of(PATH_SEPARATOR_CHAR);
+		auto i_start = filepath.find_last_of("/\\");
 		if (i_start == std::wstring::npos)
 			i_start = 0;
 		auto i_end = filepath.find_last_of('.');
@@ -97,6 +94,13 @@ namespace IO {
 		return true;
 	}
 
+	std::string get_filename(const std::string& filepath) {
+		auto i = filepath.find_last_of("/\\");
+		if (i == std::wstring::npos)
+			return "";
+		return filepath.substr(i + 1);
+	}
+
 #ifdef USE_MBCS
 	std::wstring substitute_extension(const std::wstring& filepath, const std::wstring& newext) {
 		auto i = filepath.find_last_of(L'.');
@@ -106,7 +110,7 @@ namespace IO {
 	}
 
 	std::wstring substitute_filename(const std::wstring& filepath, const std::wstring& newname) {
-		auto i_start = filepath.find_last_of(PATH_SEPARATOR_WCHAR);
+		auto i_start = filepath.find_last_of(L"/\\");
 		if (i_start == std::wstring::npos)
 			i_start = 0;
 		auto i_end = filepath.find_last_of(L'.');
@@ -123,11 +127,11 @@ namespace IO {
 	}
 
 	std::wstring get_filedir(const std::wstring& filepath) {
-		return filepath.substr(0, filepath.find_last_of(PATH_SEPARATOR_WCHAR));
+		return filepath.substr(0, filepath.find_last_of(L"/\\"));
 	}
 
 	std::wstring get_filename(const std::wstring& filepath) {
-		auto i = filepath.find_last_of(PATH_SEPARATOR_WCHAR);
+		auto i = filepath.find_last_of(L"/\\");
 		if (i == std::wstring::npos)
 			return L"";
 		return filepath.substr(i + 1);

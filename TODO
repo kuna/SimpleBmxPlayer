@@ -1,0 +1,51 @@
+TODO
+
+
+o skinrendertree 완성 (개략적으로라도; noneobject까지)
+o 기존 xml 프로젝트랑 연동하기 (lexartree)
+o 일단 컴파일 강행하고, 1.렌더트리생성확인 하기 2.리소스 로드하고 3.화면에 띄우기
+o lua 작동여부 대충 파악하고 확인
+o globalpool 대충 완성하고, 
+- lua와 연동 확인
+o filemanager 만들어서 쉽게 파일 읽기 가능한지 확인하기
+  - zlib 도입
+- 키 인풋, 마우스 collision 확인.
+- Autoplay 및 정상종료.
+- 그래프/슬라이더 도입.
+o 쓰레드 도입.
+- 폰트
+  - 비트맵폰트: 속성에 cycle 넣고 animate 가능하게 만듬.
+<플레이 프로젝트 끝. 다음 프로젝트에서 계속 ...>
+
+- LIST 오브젝트 구현 & LR2SKINCONVERTER에서 LIST 오브젝트 만들도록 하기.
+- Onmouseover/click 직접 확인하기
+- Button Handler 구현
+- select music 구현
+- result 구현
+- select -> decide -> play -> result -> select 루틴 확인.
+- DP 테스트.
+<Alpha01 version>
+- sqlite3 도입
+- song loader(dialog) 구현
+- Error handling & exception & exception screen 구현
+- 옵션 창 구현
+  - 키세팅
+  - 스킨 세팅
+  - 프로그램 기본 세팅
+- 랜덤/미러 등의 옵션 지원
+- 심화 세팅창 구현
+  - 올롱놋, 커스텀seed 등 ...
+- RATE?배속 수정 기능 및 EQ 등 추가
+- BATTLE모드 테스트.
+<Alpha02 version>
+
+- 리플레이 지원
+- 코스모드 지원
+- 인랭 서버 구현
+- 인랭 기능 very basic 구현
+<Beta version>
+
+- 기존 LR2 기록 import 지원
+  - 리버싱 필요...?
+- 실시간대전/채팅?/SNS공유?/플러그인?
+<1st version>
