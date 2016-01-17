@@ -21,6 +21,8 @@ const int Grade::GRADE_D = 3;
 const int Grade::GRADE_E = 2;
 const int Grade::GRADE_F = 1;
 
+// OnPoorBGA
+
 Grade::Grade() : Grade(0) {}
 Grade::Grade(int notecnt): notecnt(notecnt) {}
 int Grade::CalculateScore() {

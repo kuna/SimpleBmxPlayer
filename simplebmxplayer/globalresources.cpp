@@ -84,6 +84,12 @@ Timer* TimerPool::Set(const RString &key, bool activate) {
 			t.Start();
 		_timerpool.insert(std::pair<RString, Timer>(key, t));
 	}
+	else {
+		if (activate)
+			_timerpool[key].Start();
+		else
+			_timerpool[key].Stop();
+	}
 	return &_timerpool[key];
 }
 

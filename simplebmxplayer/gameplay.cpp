@@ -124,7 +124,10 @@ namespace GamePlay {
 		/*
 		* Initalize timers (temporarily)
 		*/
-		TIMERPOOL->Set("OnDiffAnother", true);
+		SWITCH_ON("OnDiffAnother");
+		SWITCH_ON("IsScoreGraph");
+		SWITCH_ON("IsAutoPlay");
+		SWITCH_ON("IsBGA");
 
 		/*
 		 * Load skin & bms resource

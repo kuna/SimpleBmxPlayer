@@ -999,6 +999,11 @@ int _LR2SkinParser::GenerateTexturefontString(XMLElement *src, int startgidx, in
 	return font_cnt-1;
 }
 
+#define SETOPTION(s) (strcat(translated, s))
+#define SETNEGATIVEOPTION(s) \
+if (translated[0] == '!') translated[0] = 0;\
+else strcpy(translated, "!");\
+strcat(translated, s);
 const char* _LR2SkinParser::TranslateOPs(int op) {
 	/*
 	 * In Rhythmus, there's no object called OP(condition) code. but, all conditions have timer code, and that does OP code's work.
@@ -1016,265 +1021,637 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 		/* this is an constant code - but should NOT given as argument, I suggest. */
 		strcat(translated, "true");
 	}
-	else if (op == 1) {
-		strcat(translated, "IsSelectBarFolder");
-	}
-	else if (op == 2) {
-		strcat(translated, "IsSelectBarSong");
-	}
-	else if (op == 3) {
-		strcat(translated, "IsSelectBarCourse");
-	}
-	else if (op == 4) {
-		strcat(translated, "IsSelectBarNewCourse");
-	}
-	else if (op == 5) {
-		strcat(translated, "IsSelectBarPlayable");
-	}
-	else if (op == 10) {
-		strcat(translated, "IsDoublePlay");
-	}
-	else if (op == 11) {
-		strcat(translated, "IsBattlePlay");
-	}
-	else if (op == 12) {
-		strcat(translated, "IsDoublePlay");	// this includes battle
-	}
-	else if (op == 13) {
-		strcat(translated, "IsBattlePlay");	// this includes ghost battle
-	}
-	else if (op == 20) {
-		strcat(translated, "OnPanel");
-	}
-	else if (op == 21) {
-		strcat(translated, "OnPanel1");
-	}
-	else if (op == 22) {
-		strcat(translated, "OnPanel2");
-	}
-	else if (op == 23) {
-		strcat(translated, "OnPanel3");
-	}
-	else if (op == 24) {
-		strcat(translated, "OnPanel4");
-	}
-	else if (op == 25) {
-		strcat(translated, "OnPanel5");
-	}
-	else if (op == 26) {
-		strcat(translated, "OnPanel6");
-	}
-	else if (op == 27) {
-		strcat(translated, "OnPanel7");
-	}
-	else if (op == 28) {
-		strcat(translated, "OnPanel8");
-	}
-	else if (op == 29) {
-		strcat(translated, "OnPanel9");
-	}
-	else if (op == 30) {
-		strcat(translated, "IsBGANormal");		// Depreciated; won't be used
-	}
-	else if (op == 31) {
-		strcat(translated, "IsBGA");
-	}
-	else if (op == 32) {
-		strcat(translated, "IsAutoPlay");
-	}
-	else if (op == 33) {
-		if (translated[0] == '!') translated[0] = 0;
-		else strcpy(translated, "!");
-		strcat(translated, "IsAutoPlay");	// IsAutoPlayOff: depreciated
-	}
-	else if (op == 34) {
-		strcat(translated, "IsGhostOff");			// hmm ...
-	}
-	else if (op == 35) {
-		strcat(translated, "IsGhostA");
-	}
-	else if (op == 36) {
-		strcat(translated, "IsGhostB");
-	}
-	else if (op == 37) {
-		strcat(translated, "IsGhostC");
-	}
-	else if (op == 38) {
-		strcat(translated, "IsScoreGraphOff");
-	}
-	else if (op == 39) {
-		strcat(translated, "IsScoreGraph");
-	}
-	else if (op == 40) {
-		if (translated[0] == '!') translated[0] = 0;
-		else strcpy(translated, "!");
-		strcat(translated, "IsBGA");
-	}
-	else if (op == 41) {
-		strcat(translated, "IsBGA");
-	}
-	else if (op == 42) {
-		strcat(translated, "Is1PGrooveGuage");
-	}
-	else if (op == 43) {
-		strcat(translated, "Is1PHardGuage");
-	}
-	else if (op == 44) {
-		strcat(translated, "Is2PGrooveGuage");
-	}
-	else if (op == 45) {
-		strcat(translated, "Is2PHardGuage");
-	}
-	else if (op == 46) {
-		strcat(translated, "IsDiffFiltered");		// on select menu; but depreciated?
-	}
-	else if (op == 47) {
-		if (translated[0] == '!') translated[0] = 0;
-		else strcpy(translated, "!");
-		strcat(translated, "IsDifficultyFilter");
-	}
-	else if (op == 50) {
-		if (translated[0] == '!') translated[0] = 0;
-		else strcpy(translated, "!");
-		strcat(translated, "IsOnline");
-	}
-	else if (op == 51) {
-		strcat(translated, "IsOnline");
-	}
-	else if (op == 52) {
-		strcat(translated, "not IsExtraMode");		// meaningless ...?
-	}
-	else if (op == 53) {
-		strcat(translated, "IsExtraMode");
-	}
-	else if (op == 54) {
-		if (translated[0] == '!') translated[0] = 0;
-		else strcpy(translated, "!");
-		strcat(translated, "Is1PAutoSC");
-	}
-	else if (op == 55) {
-		strcat(translated, "Is1PAutoSC");
-	}
-	else if (op == 56) {
-		if (translated[0] == '!') translated[0] = 0;
-		else strcpy(translated, "!");
-		strcat(translated, "Is2PAutoSC");
-	}
-	else if (op == 57) {
-		strcat(translated, "Is2PAutoSC");
-	}
-	else if (op == 60) {
-		if (translated[0] == '!') translated[0] = 0;
-		else strcpy(translated, "!");
-		strcat(translated, "IsRecordable");
-	}
-	else if (op == 61) {
-		strcat(translated, "IsRecordable");
-	}
-	else if (op == 62) {
-		if (translated[0] == '!') translated[0] = 0;
-		else strcpy(translated, "!");
-		strcat(translated, "IsRecordable");
-	}
-	else if (op == 63) {
-		strcat(translated, "IsEasyClear");
-	}
-	else if (op == 64) {
-		strcat(translated, "IsGrooveClear");
-	}
-	else if (op == 65) {
-		strcat(translated, "IsHardClear");
-	}/* NO EXH in LR2
-	else if (op == 66) {
+	else if (op > 0 && op < 300) {
+		if (op == 1) {
+			strcat(translated, "IsSelectBarFolder");
+		}
+		else if (op == 2) {
+			strcat(translated, "IsSelectBarSong");
+		}
+		else if (op == 3) {
+			strcat(translated, "IsSelectBarCourse");
+		}
+		else if (op == 4) {
+			strcat(translated, "IsSelectBarNewCourse");
+		}
+		else if (op == 5) {
+			strcat(translated, "IsSelectBarPlayable");
+		}
+		else if (op == 10) {
+			strcat(translated, "IsDoublePlay");
+		}
+		else if (op == 11) {
+			strcat(translated, "IsBattlePlay");
+		}
+		else if (op == 12) {
+			strcat(translated, "IsDoublePlay");	// this includes battle
+		}
+		else if (op == 13) {
+			strcat(translated, "IsBattlePlay");	// this includes ghost battle
+		}
+		else if (op == 20) {
+			strcat(translated, "OnPanel");
+		}
+		else if (op == 21) {
+			strcat(translated, "OnPanel1");
+		}
+		else if (op == 22) {
+			strcat(translated, "OnPanel2");
+		}
+		else if (op == 23) {
+			strcat(translated, "OnPanel3");
+		}
+		else if (op == 24) {
+			strcat(translated, "OnPanel4");
+		}
+		else if (op == 25) {
+			strcat(translated, "OnPanel5");
+		}
+		else if (op == 26) {
+			strcat(translated, "OnPanel6");
+		}
+		else if (op == 27) {
+			strcat(translated, "OnPanel7");
+		}
+		else if (op == 28) {
+			strcat(translated, "OnPanel8");
+		}
+		else if (op == 29) {
+			strcat(translated, "OnPanel9");
+		}
+		else if (op == 30) {
+			strcat(translated, "IsBGANormal");		// Depreciated; won't be used
+		}
+		else if (op == 31) {
+			strcat(translated, "IsBGA");
+		}
+		else if (op == 32) {
+			strcat(translated, "IsAutoPlay");
+		}
+		else if (op == 33) {
+			SETNEGATIVEOPTION("IsAutoPlay");
+		}
+		else if (op == 34) {
+			strcat(translated, "IsGhostOff");			// hmm ...
+		}
+		else if (op == 35) {
+			strcat(translated, "IsGhostA");
+		}
+		else if (op == 36) {
+			strcat(translated, "IsGhostB");
+		}
+		else if (op == 37) {
+			strcat(translated, "IsGhostC");
+		}
+		else if (op == 38) {
+			SETNEGATIVEOPTION("IsScoreGraph");
+		}
+		else if (op == 39) {
+			SETOPTION("IsScoreGraph");
+		}
+		else if (op == 40) {
+			SETNEGATIVEOPTION("IsBGA");
+		}
+		else if (op == 41) {
+			strcat(translated, "IsBGA");
+		}
+		else if (op == 42) {
+			strcat(translated, "Is1PGrooveGuage");
+		}
+		else if (op == 43) {
+			strcat(translated, "Is1PHardGuage");
+		}
+		else if (op == 44) {
+			strcat(translated, "Is2PGrooveGuage");
+		}
+		else if (op == 45) {
+			strcat(translated, "Is2PHardGuage");
+		}
+		else if (op == 46) {
+			strcat(translated, "IsDiffFiltered");		// on select menu; but depreciated?
+		}
+		else if (op == 47) {
+			SETNEGATIVEOPTION("IsDifficultyFilter");
+		}
+		else if (op == 50) {
+			SETNEGATIVEOPTION("IsOnline");
+		}
+		else if (op == 51) {
+			strcat(translated, "IsOnline");
+		}
+		else if (op == 52) {
+			strcat(translated, "not IsExtraMode");		// meaningless ...?
+		}
+		else if (op == 53) {
+			strcat(translated, "IsExtraMode");
+		}
+		else if (op == 54) {
+			SETNEGATIVEOPTION("Is1PAutoSC");
+		}
+		else if (op == 55) {
+			strcat(translated, "Is1PAutoSC");
+		}
+		else if (op == 56) {
+			if (translated[0] == '!') translated[0] = 0;
+			else strcpy(translated, "!");
+			strcat(translated, "Is2PAutoSC");
+		}
+		else if (op == 57) {
+			strcat(translated, "Is2PAutoSC");
+		}
+		else if (op == 60) {
+			if (translated[0] == '!') translated[0] = 0;
+			else strcpy(translated, "!");
+			strcat(translated, "IsRecordable");
+		}
+		else if (op == 61) {
+			strcat(translated, "IsRecordable");
+		}
+		else if (op == 62) {
+			if (translated[0] == '!') translated[0] = 0;
+			else strcpy(translated, "!");
+			strcat(translated, "IsRecordable");
+		}
+		else if (op == 63) {
+			strcat(translated, "IsEasyClear");
+		}
+		else if (op == 64) {
+			strcat(translated, "IsGrooveClear");
+		}
+		else if (op == 65) {
+			strcat(translated, "IsHardClear");
+		}/* NO EXH in LR2
+		else if (op == 66) {
 		strcat(translated, "IsEXHClear");
-	}*/
-	else if (op == 66) {
-		strcat(translated, "IsFCClear");
+		}*/
+		else if (op == 66) {
+			strcat(translated, "IsFCClear");
+		}
+		else if (op == 70) {
+			SETNEGATIVEOPTION("IsBeginnerSparkle");
+		}
+		else if (op == 71) {
+			SETNEGATIVEOPTION("IsNormalSparkle");
+		}
+		else if (op == 72) {
+			SETNEGATIVEOPTION("IsHyperSparkle");
+		}
+		else if (op == 73) {
+			SETNEGATIVEOPTION("IsAnotherSparkle");
+		}
+		else if (op == 74) {
+			SETNEGATIVEOPTION("IsInsaneSparkle");
+		}
+		else if (op == 75) {
+			strcat(translated, "IsBeginnerSparkle");
+		}
+		else if (op == 76) {
+			strcat(translated, "IsNormalSparkle");
+		}
+		else if (op == 77) {
+			strcat(translated, "IsHyperSparkle");
+		}
+		else if (op == 78) {
+			strcat(translated, "IsAnotherSparkle");
+		}
+		else if (op == 79) {
+			strcat(translated, "IsInsaneSparkle");
+		}
+		else if (op == 80) {
+			strcat(translated, "OnSongLoading");
+		}
+		else if (op == 81) {
+			strcat(translated, "OnSongLoadingEnd");
+		}
+		else if (op == 84) {
+			strcat(translated, "OnSongReplay");
+		}
+		else if (op == 90) {
+			strcat(translated, "OnResultClear");
+		}
+		else if (op == 91) {
+			strcat(translated, "OnResultFail");
+		}
+		else if (op == 150) {
+			strcat(translated, "OnDiffNone");			// I suggest to use DiffValue == 0 then this.
+		}
+		else if (op == 151) {
+			strcat(translated, "OnDiffBeginner");
+		}
+		else if (op == 152) {
+			strcat(translated, "OnDiffNormal");
+		}
+		else if (op == 153) {
+			strcat(translated, "OnDiffHyper");
+		}
+		else if (op == 154) {
+			strcat(translated, "OnDiffAnother");
+		}
+		else if (op == 155) {
+			strcat(translated, "OnDiffInsane");
+		}
+		else if (op == 160) {
+			strcat(translated, "Is7Keys");
+		}
+		else if (op == 161) {
+			strcat(translated, "Is5Keys");
+		}
+		else if (op == 162) {
+			strcat(translated, "Is14Keys");
+		}
+		else if (op == 163) {
+			strcat(translated, "Is10Keys");
+		}
+		else if (op == 164) {
+			strcat(translated, "Is9Keys");
+		}
+		/* 165 ~ : should we work with it? (same with op 160 ~ 161) */
+		else if (op == 170) {
+			SETOPTION("IsBGA");
+		}
+		else if (op == 171) {
+			SETNEGATIVEOPTION("IsBGA");
+		}
+		else if (op == 172) {
+			SETOPTION("IsLongNote");
+		}
+		else if (op == 173) {
+			SETNEGATIVEOPTION("IsLongNote");
+		}
+		else if (op == 174) {
+			SETOPTION("IsBmsReadme");
+		}
+		else if (op == 175) {
+			SETNEGATIVEOPTION("IsBmsReadme");
+		}
+		else if (op == 176) {
+			SETOPTION("IsBpmChange");
+		}
+		else if (op == 177) {
+			SETNEGATIVEOPTION("IsBpmChange");
+		}
+		else if (op == 178) {
+			SETOPTION("IsBmsRandomCommand");
+		}
+		else if (op == 179) {
+			SETNEGATIVEOPTION("IsBmsRandomCommand");
+		}
+		else if (op == 180) {
+			SETOPTION("IsJudgeVERYHARD");
+		}
+		else if (op == 181) {
+			SETOPTION("IsJudgeHARD");
+		}
+		else if (op == 182) {
+			SETOPTION("IsJudgeNORMAL");
+		}
+		else if (op == 183) {
+			SETOPTION("IsJudgeEASY");
+		}
+		else if (op == 184) {
+			SETOPTION("IsLevelSparkle");
+		}
+		else if (op == 185) {
+			SETNEGATIVEOPTION("IsLevelSparkle");
+		}
+		else if (op == 186) {
+			SETOPTION("IsLevelSparkle");
+		}
+		else if (op == 190) {
+			SETNEGATIVEOPTION("IsStageFile");
+		}
+		else if (op == 191) {
+			SETOPTION("IsStageFile");
+		}
+		else if (op == 192) {
+			SETNEGATIVEOPTION("IsBANNER");
+		}
+		else if (op == 193) {
+			SETOPTION("IsBANNER");
+		}
+		else if (op == 194) {
+			SETNEGATIVEOPTION("IsBACKBMP");
+		}
+		else if (op == 195) {
+			SETOPTION("IsBACKBMP");
+		}
+		else if (op == 196) {
+			SETNEGATIVEOPTION("IsPlayable");
+		}
+		else if (op == 197) {
+			SETOPTION("IsReplayable");
+		}
 	}
-	else if (op == 70) {
-		if (translated[0] == '!') translated[0] = 0;
-		else strcpy(translated, "!");
-		strcat(translated, "IsBeginnerSparkle");
+	/* during play */
+	else if (op >= 200 && op < 300) {
+		if (op == 200) {
+			SETOPTION("Is1PAAA");
+		}
+		else if (op == 201) {
+			SETOPTION("Is1PAA");
+		}
+		else if (op == 202) {
+			SETOPTION("Is1PA");
+		}
+		else if (op == 203) {
+			SETOPTION("Is1PB");
+		}
+		else if (op == 204) {
+			SETOPTION("Is1PC");
+		}
+		else if (op == 205) {
+			SETOPTION("Is1PD");
+		}
+		else if (op == 206) {
+			SETOPTION("Is1PE");
+		}
+		else if (op == 207) {
+			SETOPTION("Is1PF");
+		}
+		else if (op == 210) {
+			SETOPTION("Is2PAAA");
+		}
+		else if (op == 211) {
+			SETOPTION("Is2PAA");
+		}
+		else if (op == 212) {
+			SETOPTION("Is2PA");
+		}
+		else if (op == 213) {
+			SETOPTION("Is2PB");
+		}
+		else if (op == 214) {
+			SETOPTION("Is2PC");
+		}
+		else if (op == 215) {
+			SETOPTION("Is2PD");
+		}
+		else if (op == 216) {
+			SETOPTION("Is2PE");
+		}
+		else if (op == 217) {
+			SETOPTION("Is2PF");
+		}
+		else if (op == 220) {
+			SETOPTION("Is1PReachAAA");
+		}
+		else if (op == 221) {
+			SETOPTION("Is1PReachAA");
+		}
+		else if (op == 222) {
+			SETOPTION("Is1PReachA");
+		}
+		else if (op == 223) {
+			SETOPTION("Is1PReachB");
+		}
+		else if (op == 224) {
+			SETOPTION("Is1PReachC");
+		}
+		else if (op == 225) {
+			SETOPTION("Is1PReachD");
+		}
+		else if (op == 226) {
+			SETOPTION("Is1PReachE");
+		}
+		else if (op == 227) {
+			SETOPTION("Is1PReachF");
+		}
+		/* 23X : I dont want to implement these useless one ... hmm... don't want ... .... */
+		else if (op == 241) {
+			SETOPTION("On1PJudgePerfect");
+		}
+		else if (op == 242) {
+			SETOPTION("On1PJudgeGreat");
+		}
+		else if (op == 243) {
+			SETOPTION("On1PJudgeGood");
+		}
+		else if (op == 244) {
+			SETOPTION("On1PJudgeBad");
+		}
+		else if (op == 245) {
+			SETOPTION("On1PJudgePoor");
+		}
+		else if (op == 246) {
+			SETOPTION("On1PJudgePoor");		// ÍöPOOR
+		}
+		else if (op == 247) {
+			SETOPTION("On1PPoorBGA");
+		}
+		else if (op == 248) {
+			SETNEGATIVEOPTION("On1PPoorBGA");
+		}/*
+		else if (op == 220) {
+		SETOPTION("Is1PReachAAA");
+		}
+		else if (op == 221) {
+		SETOPTION("Is1PReachAA");
+		}
+		else if (op == 222) {
+		SETOPTION("Is1PReachA");
+		}
+		else if (op == 223) {
+		SETOPTION("Is1PReachB");
+		}
+		else if (op == 224) {
+		SETOPTION("Is1PReachC");
+		}
+		else if (op == 225) {
+		SETOPTION("Is1PReachD");
+		}
+		else if (op == 226) {
+		SETOPTION("Is1PReachE");
+		}
+		else if (op == 227) {
+		SETOPTION("Is1PReachF");
+		}*/
+		/* 23X : I dont want to implement these useless one ... hmm... don't want ... .... */
+		else if (op == 261) {
+			SETOPTION("On2PJudgePerfect");
+		}
+		else if (op == 262) {
+			SETOPTION("On2PJudgeGreat");
+		}
+		else if (op == 263) {
+			SETOPTION("On2PJudgeGood");
+		}
+		else if (op == 264) {
+			SETOPTION("On2PJudgeBad");
+		}
+		else if (op == 265) {
+			SETOPTION("On2PJudgePoor");
+		}
+		else if (op == 266) {
+			SETOPTION("On2PJudgePoor");		// ÍöPOOR
+		}
+		else if (op == 267) {
+			SETOPTION("On2PPoorBGA");
+		}
+		else if (op == 268) {
+			SETNEGATIVEOPTION("On2PPoorBGA");
+		}
+		/* SUD/LIFT */
+		else if (op == 270) {
+			strcat(translated, "On1PSuddenChange");
+		}
+		else if (op == 271) {
+			strcat(translated, "On2PSuddenChange");
+		}
+		/* Course related */
+		else if (op == 280) {
+			strcat(translated, "IsCourse1Stage");
+		}
+		else if (op == 281) {
+			strcat(translated, "IsCourse2Stage");
+		}
+		else if (op == 282) {
+			strcat(translated, "IsCourse3Stage");
+		}
+		else if (op == 283) {
+			strcat(translated, "IsCourse4Stage");
+		}
+		else if (op == 289) {
+			strcat(translated, "IsCourseFinal");
+		}
+		else if (op == 290) {
+			strcat(translated, "IsCourse");
+		}
+		else if (op == 291) {
+			strcat(translated, "IsGrading");		// Ó«êÈìãïÒ
+		}
+		else if (op == 292) {
+			strcat(translated, "ExpertCourse");
+		}
+		else if (op == 293) {
+			strcat(translated, "ClassCourse");
+		}
 	}
-	else if (op == 71) {
-		if (translated[0] == '!') translated[0] = 0;
-		else strcpy(translated, "!");
-		strcat(translated, "IsNormalSparkle");
+	/* result screen */
+	else if (op >= 300 && op < 400) {
+		if (op == 300) {
+			SETOPTION("Is1PAAA");
+		}
+		else if (op == 301) {
+			SETOPTION("Is1PAA");
+		}
+		else if (op == 302) {
+			SETOPTION("Is1PA");
+		}
+		else if (op == 303) {
+			SETOPTION("Is1PB");
+		}
+		else if (op == 304) {
+			SETOPTION("Is1PC");
+		}
+		else if (op == 305) {
+			SETOPTION("Is1PD");
+		}
+		else if (op == 306) {
+			SETOPTION("Is1PE");
+		}
+		else if (op == 307) {
+			SETOPTION("Is1PF");
+		}
+		else if (op == 310) {
+			SETOPTION("Is2PAAA");
+		}
+		else if (op == 311) {
+			SETOPTION("Is2PAA");
+		}
+		else if (op == 312) {
+			SETOPTION("Is2PA");
+		}
+		else if (op == 313) {
+			SETOPTION("Is2PB");
+		}
+		else if (op == 314) {
+			SETOPTION("Is2PC");
+		}
+		else if (op == 315) {
+			SETOPTION("Is2PD");
+		}
+		else if (op == 316) {
+			SETOPTION("Is2PE");
+		}
+		else if (op == 317) {
+			SETOPTION("Is2PF");
+		}
+		else if (op == 320) {
+			SETOPTION("IsBeforeAAA");
+		}
+		else if (op == 321) {
+			SETOPTION("IsBeforeAA");
+		}
+		else if (op == 322) {
+			SETOPTION("IsBeforeA");
+		}
+		else if (op == 323) {
+			SETOPTION("IsBeforeB");
+		}
+		else if (op == 324) {
+			SETOPTION("IsBeforeC");
+		}
+		else if (op == 325) {
+			SETOPTION("IsBeforeD");
+		}
+		else if (op == 326) {
+			SETOPTION("IsBeforeE");
+		}
+		else if (op == 327) {
+			SETOPTION("IsBeforeF");
+		}
+		else if (op == 340) {
+			SETOPTION("IsAfterAAA");
+		}
+		else if (op == 341) {
+			SETOPTION("IsAfterAA");
+		}
+		else if (op == 342) {
+			SETOPTION("IsAfterA");
+		}
+		else if (op == 343) {
+			SETOPTION("IsAfterB");
+		}
+		else if (op == 344) {
+			SETOPTION("IsAfterC");
+		}
+		else if (op == 345) {
+			SETOPTION("IsAfterD");
+		}
+		else if (op == 346) {
+			SETOPTION("IsAfterE");
+		}
+		else if (op == 347) {
+			SETOPTION("IsAfterF");
+		}
+		else if (op == 330) {
+			SETOPTION("IsResultUpdated");
+		}
+		else if (op == 331) {
+			SETOPTION("IsMaxcomboUpdated");
+		}
+		else if (op == 332) {
+			SETOPTION("IsMinBPUpdated");
+		}
+		else if (op == 333) {
+			SETOPTION("IsResultUpdated");	// ??
+		}
+		else if (op == 334) {
+			SETOPTION("IsIRRankUpdated");
+		}
+		else if (op == 334) {
+			SETOPTION("IsIRRankUpdated");	// ??
+		}
 	}
-	else if (op == 72) {
-		if (translated[0] == '!') translated[0] = 0;
-		else strcpy(translated, "!");
-		strcat(translated, "IsHyperSparkle");
+	/* TODO: change it into Lua script ...? */
+	else if (op == 400) {
+		SETOPTION("Is714KEY");
 	}
-	else if (op == 73) {
-		if (translated[0] == '!') translated[0] = 0;
-		else strcpy(translated, "!");
-		strcat(translated, "IsAnotherSparkle");
+	else if (op == 401) {
+		SETOPTION("Is9KEY");
 	}
-	else if (op == 74) {
-		if (translated[0] == '!') translated[0] = 0;
-		else strcpy(translated, "!");
-		strcat(translated, "IsInsaneSparkle");
-	}
-	else if (op == 75) {
-		strcat(translated, "IsBeginnerSparkle");
-	}
-	else if (op == 76) {
-		strcat(translated, "IsNormalSparkle");
-	}
-	else if (op == 77) {
-		strcat(translated, "IsHyperSparkle");
-	}
-	else if (op == 78) {
-		strcat(translated, "IsAnotherSparkle");
-	}
-	else if (op == 79) {
-		strcat(translated, "IsInsaneSparkle");
-	}
-	else if (op == 80) {
-		strcat(translated, "OnSongLoading");
-	}
-	else if (op == 81) {
-		strcat(translated, "OnSongLoadingEnd");
-	}
-	else if (op == 84) {
-		strcat(translated, "OnSongReplay");
-	}
-	else if (op == 90) {
-		strcat(translated, "OnResultClear");
-	}
-	else if (op == 91) {
-		strcat(translated, "OnResultFail");
-	}
-	else if (op == 150) {
-		strcat(translated, "OnDiffNone");			// I suggest to use DiffValue == 0 then this.
-	}
-	else if (op == 151) {
-		strcat(translated, "OnDiffBeginner");
-	}
-	else if (op == 152) {
-		strcat(translated, "OnDiffNormal");
-	}
-	else if (op == 153) {
-		strcat(translated, "OnDiffHyper");
-	}
-	else if (op == 154) {
-		strcat(translated, "OnDiffAnother");
-	}
-	else if (op == 155) {
-		strcat(translated, "OnDiffInsane");
-	}
-	else if (op == 270) {
-		strcat(translated, "On1PSuddenChange");
-	}
-	else if (op == 271) {
-		strcat(translated, "On2PSuddenChange");
-	}
-	else if (op == 292) {
-		strcat(translated, "ExpertCourse");
-	}
-	else if (op == 293) {
-		strcat(translated, "ClassCourse");
+	else if (op == 402) {
+		SETOPTION("Is510KEY");
 	}
 	else if (op >= 900)
 	{
@@ -1283,7 +1660,9 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 	}
 	else {
 		// unknown!
+		// we can return '0', but I think it's better to return "UNKNOWN", for safety.
 		return 0;
+		//return "UNKNOWN";
 	}
 	return translated;
 }
@@ -1381,124 +1760,124 @@ const char* _LR2SkinParser::TranslateTimer(int timer) {
 		strcpy(translated, "On2PFullCombo");
 	}
 	else if (timer == 50) {
-		strcpy(translated, "On1PKeySCGreat");
+		strcpy(translated, "On1PJudgeSCOkay");
 	}
 	else if (timer == 51) {
-		strcpy(translated, "On1PKey1Great");
+		strcpy(translated, "On1PJudge1Okay");
 	}
 	else if (timer == 52) {
-		strcpy(translated, "On1PKey2Great");
+		strcpy(translated, "On1PJudge2Okay");
 	}
 	else if (timer == 53) {
-		strcpy(translated, "On1PKey3Great");
+		strcpy(translated, "On1PJudge3Okay");
 	}
 	else if (timer == 54) {
-		strcpy(translated, "On1PKey4Great");
+		strcpy(translated, "On1PJudge4Okay");
 	}
 	else if (timer == 55) {
-		strcpy(translated, "On1PKey5Great");
+		strcpy(translated, "On1PJudge5Okay");
 	}
 	else if (timer == 56) {
-		strcpy(translated, "On1PKey6Great");
+		strcpy(translated, "On1PJudge6Okay");
 	}
 	else if (timer == 57) {
-		strcpy(translated, "On1PKey7Great");
+		strcpy(translated, "On1PJudge7Okay");
 	}
 	else if (timer == 58) {
-		strcpy(translated, "On1PKey8Great");
+		strcpy(translated, "On1PJudge8Okay");
 	}
 	else if (timer == 59) {
-		strcpy(translated, "On1PKey9Great");
+		strcpy(translated, "On1PJudge9Okay");
 	}
 	else if (timer == 60) {
-		strcpy(translated, "On2PKeySCGreat");
+		strcpy(translated, "On2PJudgeSCOkay");
 	}
 	else if (timer == 61) {
-		strcpy(translated, "On2PKey1Great");
+		strcpy(translated, "On2PJudge1Okay");
 	}
 	else if (timer == 62) {
-		strcpy(translated, "On2PKey2Great");
+		strcpy(translated, "On2PJudge2Okay");
 	}
 	else if (timer == 63) {
-		strcpy(translated, "On2PKey3Great");
+		strcpy(translated, "On2PJudge3Okay");
 	}
 	else if (timer == 64) {
-		strcpy(translated, "On2PKey4Great");
+		strcpy(translated, "On2PJudge4Okay");
 	}
 	else if (timer == 65) {
-		strcpy(translated, "On2PKey5Great");
+		strcpy(translated, "On2PJudge5Okay");
 	}
 	else if (timer == 66) {
-		strcpy(translated, "On2PKey6Great");
+		strcpy(translated, "On2PJudge6Okay");
 	}
 	else if (timer == 67) {
-		strcpy(translated, "On2PKey7Great");
+		strcpy(translated, "On2PJudge7Okay");
 	}
 	else if (timer == 68) {
-		strcpy(translated, "On2PKey8Great");
+		strcpy(translated, "On2PJudge8Okay");
 	}
 	else if (timer == 69) {
-		strcpy(translated, "On2PKey9Great");
+		strcpy(translated, "On2PJudge9Okay");
 	}
 	else if (timer == 70) {
-		strcpy(translated, "On1PKeySCHold");
+		strcpy(translated, "On1PJudgeSCHold");
 	}
 	else if (timer == 71) {
-		strcpy(translated, "On1PKey1Hold");
+		strcpy(translated, "On1PJudge1Hold");
 	}
 	else if (timer == 72) {
-		strcpy(translated, "On1PKey2Hold");
+		strcpy(translated, "On1PJudge2Hold");
 	}
 	else if (timer == 73) {
-		strcpy(translated, "On1PKey3Hold");
+		strcpy(translated, "On1PJudge3Hold");
 	}
 	else if (timer == 74) {
-		strcpy(translated, "On1PKey4Hold");
+		strcpy(translated, "On1PJudge4Hold");
 	}
 	else if (timer == 75) {
-		strcpy(translated, "On1PKey5Hold");
+		strcpy(translated, "On1PJudge5Hold");
 	}
 	else if (timer == 76) {
-		strcpy(translated, "On1PKey6Hold");
+		strcpy(translated, "On1PJudge6Hold");
 	}
 	else if (timer == 77) {
-		strcpy(translated, "On1PKey7Hold");
+		strcpy(translated, "On1PJudge7Hold");
 	}
 	else if (timer == 78) {
-		strcpy(translated, "On1PKey8Hold");
+		strcpy(translated, "On1PJudge8Hold");
 	}
 	else if (timer == 79) {
-		strcpy(translated, "On1PKey9Hold");
+		strcpy(translated, "On1PJudge9Hold");
 	}
 	else if (timer == 80) {
-		strcpy(translated, "On2PKeySCHold");
+		strcpy(translated, "On2PJudgeSCHold");
 	}
 	else if (timer == 81) {
-		strcpy(translated, "On2PKey1Hold");
+		strcpy(translated, "On2PJudge1Hold");
 	}
 	else if (timer == 82) {
-		strcpy(translated, "On2PKey2Hold");
+		strcpy(translated, "On2PJudge2Hold");
 	}
 	else if (timer == 83) {
-		strcpy(translated, "On2PKey3Hold");
+		strcpy(translated, "On2PJudge3Hold");
 	}
 	else if (timer == 84) {
-		strcpy(translated, "On2PKey4Hold");
+		strcpy(translated, "On2PJudge4Hold");
 	}
 	else if (timer == 85) {
-		strcpy(translated, "On2PKey5Hold");
+		strcpy(translated, "On2PJudge5Hold");
 	}
 	else if (timer == 86) {
-		strcpy(translated, "On2PKey6Hold");
+		strcpy(translated, "On2PJudge6Hold");
 	}
 	else if (timer == 87) {
-		strcpy(translated, "On2PKey7Hold");
+		strcpy(translated, "On2PJudge7Hold");
 	}
 	else if (timer == 88) {
-		strcpy(translated, "On2PKey8Hold");
+		strcpy(translated, "On2PJudge8Hold");
 	}
 	else if (timer == 89) {
-		strcpy(translated, "On2PKey9Hold");
+		strcpy(translated, "On2PJudge9Hold");
 	}
 	else if (timer == 100) {
 		strcpy(translated, "On1PKeySCPress");
@@ -1623,9 +2002,20 @@ const char* _LR2SkinParser::TranslateTimer(int timer) {
 	else if (timer == 140) {
 		strcpy(translated, "OnBeat");
 	}
+	else if (timer == 143) {
+		strcpy(translated, "On1PLastNote");
+	}
+	else if (timer == 144) {
+		strcpy(translated, "On2PLastNote");
+	}
+	else if (timer == 150) {
+		strcpy(translated, "OnResult");
+	}
 	else {
 		// unknown timer!
+		// we can return '0', but I think it's better to return "UNKNOWN", for safety.
 		return 0;
+		//return "UNKNOWN";
 	}
 	return translated;
 }

@@ -123,3 +123,6 @@ namespace PoolHelper {
 	void InitalizeAll();
 	void ReleaseAll();
 }
+
+#define SWITCH_ON(s) (TIMERPOOL->Set(s, true))
+#define SWITCH_OFF(s) (TIMERPOOL->Set(s, false))
