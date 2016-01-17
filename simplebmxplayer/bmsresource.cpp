@@ -141,7 +141,7 @@ namespace BmsHelper {
 		}
 
 		FileHelper::PopBasePath();
-		TIMERPOOL->Reset("OnSongLoadingEnd");
+		TIMERPOOL->Set("OnSongLoadingEnd");
 		mutex_bmsresource.unlock();
 		return true;
 	}
@@ -249,5 +249,17 @@ namespace BmsHelper {
 
 	void PlaySound(int channel) {
 		BmsResource::SOUND.Play(channel);
+	}
+
+	double GetCurrentPosFromTime(double time_sec) {
+		return BmsResource::BMSTIME.GetAbsBeatFromTime(time_sec);
+	}
+
+	double GetCurrentPosFromBar(int bar) {
+		return BmsResource::BMSTIME[bar].absbeat;
+	}
+
+	double GetCurrentTimeFromBar(int bar) {
+		return BmsResource::BMSTIME[bar].time;
 	}
 }

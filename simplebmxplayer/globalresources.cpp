@@ -95,8 +95,7 @@ Timer* TimerPool::Set(const RString &key, bool activate) {
 }
 
 void TimerPool::Reset(const RString &key) {
-	if (!IsExists(key)) return;
-	_timerpool[key].Start();
+	Set(key, true);
 }
 
 void TimerPool::Stop(const RString &key) {

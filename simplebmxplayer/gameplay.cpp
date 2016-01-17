@@ -14,13 +14,13 @@
 
 namespace GamePlay {
 	// global resources
-	Timer				*OnScene;
-	Timer				*OnGameStart;
-	Timer				*OnSongLoading;
-	Timer				*OnSongLoadingEnd;
-	Timer				*OnReady;
-	RString				*Bmspath;
-	RString				*PlaySkinpath;
+	Timer*				OnScene;
+	Timer*				OnGameStart;
+	Timer*				OnSongLoading;
+	Timer*				OnSongLoadingEnd;
+	Timer*				OnReady;
+	RString*			Bmspath;
+	RString*			PlaySkinpath;
 
 	// bms skin resource
 	// skin resource will be loaded in GlobalResource, 
@@ -30,7 +30,7 @@ namespace GamePlay {
 	SkinOption			skinoption;
 
 	// bms play related
-	Player				player[2];	// player available up to 2
+	Player*				player[2];	// player available up to 2
 
 	double speed_multiply;
 
@@ -47,6 +47,10 @@ namespace GamePlay {
 		OnReady = TIMERPOOL->Set("OnReady", false);
 		Bmspath = STRPOOL->Set("Bmspath");
 		PlaySkinpath = STRPOOL->Set("PlaySkinpath");
+
+		// make player & prepare
+		player[0] = new PlayerAuto();
+		player[1] = new Player();
 
 		// temp resource
 		int pitch;
@@ -111,19 +115,11 @@ namespace GamePlay {
 		}
 	}
 
-	void SetPlayer(const PlayerSetting& playersetting, int playernum) {
-		// set player
-		player[playernum].SetPlayerSetting(playersetting);	// TODO: is this have any meaning?
-		player[playernum].Prepare(&BmsResource::BMS, 0);
-
-		// do some option change from player
-		player[playernum].SetSpeed(playersetting.speed);
-	}
-
 	void Start() {
 		/*
 		* Initalize timers (temporarily)
 		*/
+		GameTimer::Tick();
 		SWITCH_ON("OnDiffAnother");
 		SWITCH_ON("IsScoreGraph");
 		SWITCH_ON("IsAutoPlay");
@@ -139,13 +135,24 @@ namespace GamePlay {
 		LoadBms(*Bmspath);
 
 		/*
-		 * initalize timers
-		 */
-		GameTimer::Tick();
-		OnSongLoading->Start();		// we're started to loading song
+		* initalize timers
+		*/
+		OnScene->Stop();
 		OnSongLoadingEnd->Stop();
 		OnReady->Stop();
 		OnGameStart->Stop();
+		OnSongLoading->Stop();
+		OnSongLoading->Start();
+
+		/*
+		 * BMS load end, so set player
+		 */
+		PlayerSetting psetting;
+		psetting.speed = 310;
+		player[0]->SetPlayerSetting(psetting);		// TODO: is this have any meaning?
+		player[0]->SetSpeed(psetting.speed);
+		player[0]->Prepare(0);
+
 		OnScene->Start();
 	}
 
@@ -166,6 +173,11 @@ namespace GamePlay {
 		else if (obj->ToBGA()) {
 			obj->ToBGA()->RenderBGA(BmsResource::IMAGE.Get(1));
 		}
+		else if (obj->ToPlayObject()) {
+			SkinPlayObject* play = obj->ToPlayObject();
+			if (player[0]) player[0]->RenderNote(play);
+			// if player[1] ~~
+		}
 		else {
 			// ignore unknown object
 		}
@@ -184,6 +196,12 @@ namespace GamePlay {
 		 */
 		if (OnGameStart->IsStarted())
 			BmsHelper::Update(OnGameStart->GetTick());
+
+		/*
+		 * Player update
+		 */
+		if (player[0]) player[0]->Update();
+		if (player[1]) player[1]->Update();
 
 		/*
 		 * draw interface (make a render tree recursion)
@@ -315,6 +333,10 @@ namespace GamePlay {
 	}
 
 	void Release() {
+		// remove player
+		if (player[0]) delete player[0];
+		if (player[1]) delete player[1];
+
 		// skin clear (COMMENT: we don't need to release skin in real. just in beta version.)
 		// we don't need to clear BMS data until next BMS is loaded
 		rtree.ReleaseAll();

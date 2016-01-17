@@ -100,6 +100,7 @@ class SkinUnknownObject;
 class SkinGroupObject;
 class SkinImageObject;
 class SkinBgaObject;
+class SkinPlayObject;
 
 /** @brief very basic rendering object which does nothing. */
 class SkinRenderObject {
@@ -142,6 +143,7 @@ public:
 	SkinGroupObject* ToGroup();
 	SkinImageObject* ToImage();
 	SkinBgaObject* ToBGA();
+	SkinPlayObject* ToPlayObject();
 };
 
 class SkinUnknownObject : public SkinRenderObject {

@@ -21,7 +21,6 @@ namespace {
 
 namespace GamePlay {
 	void Init();
-	void SetPlayer(const PlayerSetting& playersetting, int playernum);
 	void Start();
 	void Render();
 	void Release();

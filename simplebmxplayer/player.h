@@ -14,36 +14,41 @@
 #include "global.h"
 
 typedef uint32_t Uint32;
+class SkinPlayObject;
 
 /*
  * class Grade
  * - stores current play's score and evaluate
  *
  */
+namespace JUDGETYPE {
+	const int JUDGE_PGREAT	= 5;
+	const int JUDGE_GREAT	= 4;
+	const int JUDGE_GOOD	= 3;
+	const int JUDGE_POOR	= 2;
+	const int JUDGE_EMPTYPOOR	= 2;	// TODO
+	const int JUDGE_BAD		= 1;
+	const int JUDGE_EARLY	= 10;	// it's too early, so it should have no effect
+	const int JUDGE_LATE	= 11;	// it's too late, so it should have no effect
+}
+
+namespace GRADETYPE {
+	const int GRADE_AAA	= 8;
+	const int GRADE_AA	= 7;
+	const int GRADE_A	= 6;
+	const int GRADE_B	= 5;
+	const int GRADE_C	= 4;
+	const int GRADE_D	= 3;
+	const int GRADE_E	= 2;
+	const int GRADE_F	= 1;
+}
+
 class Grade {
 private:
 	int grade[6];
 	int notecnt;
 	int combo;
 	int maxcombo;
-
-public:
-	static const int JUDGE_PGREAT;
-	static const int JUDGE_GREAT;
-	static const int JUDGE_GOOD;
-	static const int JUDGE_POOR;
-	static const int JUDGE_BAD;
-	static const int JUDGE_EARLY;	// it's too early, so it should have no effect
-	static const int JUDGE_LATE;	// it's too late, so it should have no effect
-
-	static const int GRADE_AAA;
-	static const int GRADE_AA;
-	static const int GRADE_A;
-	static const int GRADE_B;
-	static const int GRADE_C;
-	static const int GRADE_D;
-	static const int GRADE_E;
-	static const int GRADE_F;
 public:
 	Grade(int notecnt);
 	Grade();
@@ -109,9 +114,13 @@ protected:
 	int					speed_type;			// TODO
 
 	// some prefetch timers
-	Timer*				gametimer;			// elapsed time
+	Timer*				bmstimer;			// elapsed time
 	Timer*				misstimer;			// timer used when miss occured
-	Image*				currentmissbga;	// when miss occurs, get current Miss BGA
+	Timer*				lanepress[20];
+	Timer*				lanehold[20];
+	Timer*				laneup[20];
+	Timer*				lanejudgeokay[20];
+	Image*				currentmissbga;		// when miss occurs, get current Miss BGA
 
 	// grade information
 	Grade				grade;
@@ -123,8 +132,6 @@ protected:
 	double				health;							// player's health
 
 	// note/time information
-	BmsBms*				bms;
-	BmsTimeManager		bmstime;
 	BmsNoteContainer	bmsnote;
 	int					keys;
 	Uint32				currenttime;
@@ -137,8 +144,8 @@ protected:
 	// active note searcher
 	int GetNextAvailableNoteIndex(int notechannel);
 	BmsNote* GetCurrentNote(int notechannel);
-	// miss
-	void Miss(int missbga, int key);
+	/** @brief make judgement. silent = true will not set JUDGE timer. */
+	void MakeJudge(int judgetype, int playside, bool silent = false);
 public:
 	Player(int type = PLAYERTYPE::NORMAL);
 
@@ -147,7 +154,7 @@ public:
 	 * Generate Note object / 
 	 * Must call before game play starts, or there'll be nothing(no note/play) during gameplay.
 	 */
-	void Prepare(BmsBms *bms, int playside);
+	void Prepare(int playside);
 	/*
 	 * @brief 
 	 * Update late note/note position
@@ -169,11 +176,13 @@ public:
 	/** @brief How much elapsed from last MISS? effects to MISS BGA. */
 	double GetLastMissTime();
 
+	/** @brief renders note */
+	void RenderNote(SkinPlayObject *);
+
 	/** @Get/Set */
 	double GetSpeed();
 	void SetSpeed(double speed);
 	Grade GetGrade();
-	double GetCurrentPos();
 	int GetCurrentBar();
 	int GetCurrentNoteBar(int channel);
 	bool IsNoteAvailable(int notechannel);
@@ -181,11 +190,6 @@ public:
 	bool IsDead();
 	bool IsFinished();	// TODO
 	void SetPlayerSetting(const PlayerSetting& setting);
-
-	// handler
-	void SetOnSound(void(*func)(BmsWord, int));
-	void SetOnBga(void(*func)(BmsWord, BmsChannelType::BMSCHANNEL));
-	void SetOnJudge(void(*func)(int ,int));
 };
 
 /*

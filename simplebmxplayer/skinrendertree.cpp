@@ -147,6 +147,13 @@ SkinBgaObject* SkinRenderObject::ToBGA() {
 		return 0;
 }
 
+SkinPlayObject* SkinRenderObject::ToPlayObject() {
+	if (objtype == OBJTYPE::PLAYLANE)
+		return (SkinPlayObject*)this;
+	else
+		return 0;
+}
+
 // do nothing
 void SkinRenderObject::Render() {  }
 
@@ -305,7 +312,7 @@ void SkinPlayObject::RenderLane(int laneindex, double pos, bool mine) {
 		ImageDSTFrame frame;
 		if (!SkinRenderHelper::CalculateFrame(Note[laneindex].dst, frame))
 			return;
-		frame.y += h * pos;
+		frame.y -= h * pos;
 		SkinRenderHelper::Render(Note[laneindex].img, &Note[laneindex].normal, &frame);
 	}
 }
@@ -635,7 +642,7 @@ bool SkinRenderHelper::CalculateFrame(ImageDST &dst, ImageDSTFrame &frame) {
 	}
 	int nframe = 0;
 	for (; nframe < dst.frame.size(); nframe++) {
-		if (dst.frame[nframe].time >= time)
+		if (dst.frame[nframe].time > time)
 			break;
 	}
 	nframe--;
@@ -803,6 +810,16 @@ void SkinRenderHelper::Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, i
 		break;
 	}
 
+	// in LR2, negative size doesn't mean flipping.
+	if (dst_rect.h < 0) {
+		dst_rect.y += dst_rect.h;
+		dst_rect.h *= -1;
+	}
+	if (dst_rect.w < 0) {
+		dst_rect.x += dst_rect.h;
+		dst_rect.w *= -1;
+	}
+	SDL_RendererFlip flip = SDL_RendererFlip::SDL_FLIP_NONE;
 	SDL_RenderCopyEx(Game::RENDERER, img->GetPtr(), &src_rect, &dst_rect,
-		frame->angle, &rot_center, SDL_RendererFlip::SDL_FLIP_NONE);
+		frame->angle, &rot_center, flip);
 }

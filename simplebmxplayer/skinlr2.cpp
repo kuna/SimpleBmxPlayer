@@ -612,11 +612,12 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
 		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
 		XMLElement *dst = FindElement(lane, "DST", &s->skinlayout);
-		dst->SetAttribute("time", 0);
-		dst->SetAttribute("x", INT(args[3]));
-		dst->SetAttribute("y", INT(args[4]));
-		dst->SetAttribute("w", INT(args[5]));
-		dst->SetAttribute("h", INT(args[6]));
+		XMLElement *frame = FindElement(dst, "Frame", &s->skinlayout);
+		frame->SetAttribute("time", 0);
+		frame->SetAttribute("x", INT(args[3]));
+		frame->SetAttribute("y", INT(args[4]));
+		frame->SetAttribute("w", INT(args[5]));
+		frame->SetAttribute("h", INT(args[6]));
 	}
 	/*
 	 * etc

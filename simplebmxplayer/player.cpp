@@ -2,31 +2,28 @@
 #include "global.h"
 #include "handlerargs.h"
 #include "bmsresource.h"
+#include "skinrendertree.h"
+#include "util.h"
 #include <time.h>
-
-const int Grade::JUDGE_PGREAT = 5;
-const int Grade::JUDGE_GREAT = 4;
-const int Grade::JUDGE_GOOD = 3;
-const int Grade::JUDGE_POOR = 2;
-const int Grade::JUDGE_BAD = 1;
-const int Grade::JUDGE_EARLY = 10;
-const int Grade::JUDGE_LATE = 11;
-
-const int Grade::GRADE_AAA = 8;
-const int Grade::GRADE_AA = 7;
-const int Grade::GRADE_A = 6;
-const int Grade::GRADE_B = 5;
-const int Grade::GRADE_C = 4;
-const int Grade::GRADE_D = 3;
-const int Grade::GRADE_E = 2;
-const int Grade::GRADE_F = 1;
 
 // OnPoorBGA
 
+/* constant value - used for rendering & initalizing */
+namespace {
+	const int lane_to_channel[] = {
+		6, 1, 2, 3, 4, 5, 8, 9, 6, 7,
+		16, 11, 12, 13, 14, 15, 16, 18, 19, 17,
+	};
+	const int channel_to_lane[] = {
+		0, 1, 2, 3, 4, 5, 0, 9, 6, 7,
+		0, 1, 2, 3, 4, 5, 0, 9, 6, 7,
+	};
+}
+
 Grade::Grade() : Grade(0) {}
-Grade::Grade(int notecnt): notecnt(notecnt) {}
+Grade::Grade(int notecnt) : notecnt(notecnt) {}
 int Grade::CalculateScore() {
-	return grade[Grade::JUDGE_PGREAT] * 2 + grade[Grade::JUDGE_GREAT];
+	return grade[JUDGETYPE::JUDGE_PGREAT] * 2 + grade[JUDGETYPE::JUDGE_GREAT];
 }
 double Grade::CalculateRate() {
 	return (double)CalculateScore() / notecnt * 100;
@@ -34,25 +31,25 @@ double Grade::CalculateRate() {
 int Grade::CalculateGrade() {
 	double rate = CalculateRate();
 	if (rate >= 8.0 / 9)
-		return Grade::GRADE_AAA;
+		return GRADETYPE::GRADE_AAA;
 	else if (rate >= 7.0 / 9)
-		return Grade::GRADE_AA;
+		return GRADETYPE::GRADE_AA;
 	else if (rate >= 6.0 / 9)
-		return Grade::GRADE_A;
+		return GRADETYPE::GRADE_A;
 	else if (rate >= 5.0 / 9)
-		return Grade::GRADE_B;
+		return GRADETYPE::GRADE_B;
 	else if (rate >= 4.0 / 9)
-		return Grade::GRADE_C;
+		return GRADETYPE::GRADE_C;
 	else if (rate >= 3.0 / 9)
-		return Grade::GRADE_D;
+		return GRADETYPE::GRADE_D;
 	else if (rate >= 2.0 / 9)
-		return Grade::GRADE_E;
+		return GRADETYPE::GRADE_E;
 	else
-		return Grade::GRADE_F;
+		return GRADETYPE::GRADE_F;
 }
 void Grade::AddGrade(const int type) {
 	grade[type]++;
-	if (type >= Grade::JUDGE_GOOD) {
+	if (type >= JUDGETYPE::JUDGE_GOOD) {
 		combo++;
 		if (maxcombo < combo) maxcombo = combo;
 	}
@@ -66,7 +63,27 @@ void Grade::AddGrade(const int type) {
 Player::Player(int type) {
 	this->playertype = type;
 	// initalize variables
+	bmstimer = TIMERPOOL->Get("OnGameStart");
+	misstimer = TIMERPOOL->Get("On1PMiss");
+	memset(lanepress, 0, sizeof(lanepress));
+	memset(laneup, 0, sizeof(laneup));
+	memset(lanehold, 0, sizeof(lanehold));
+	memset(lanejudgeokay, 0, sizeof(lanejudgeokay));
+
 	for (int i = 0; i < 20; i++) {
+		int player = i / 10 + 1;
+		if (i == 6) {
+			lanepress[i] = TIMERPOOL->Set(ssprintf("On%dPKeySCPress", player), false);
+			laneup[i] = TIMERPOOL->Set(ssprintf("On%dPKeySCUp", player), false);
+			lanehold[i] = TIMERPOOL->Set(ssprintf("On%dPJudgeSCHold", player), false);
+			lanejudgeokay[i] = TIMERPOOL->Set(ssprintf("On%dPJudgeSCOkay", player), false);
+		}
+		else {
+			lanepress[i] = TIMERPOOL->Set(ssprintf("On%dPKey%dPress", player, channel_to_lane[i]), false);
+			laneup[i] = TIMERPOOL->Set(ssprintf("On%dPKey%dUp", player, channel_to_lane[i]), false);
+			lanehold[i] = TIMERPOOL->Set(ssprintf("On%dPJudge%dHold", player, channel_to_lane[i]), false);
+			lanejudgeokay[i] = TIMERPOOL->Set(ssprintf("On%dPJudge%dOkay", player, channel_to_lane[i]), false);
+		}
 		noteindex[i] = -1;
 	}
 }
@@ -74,19 +91,19 @@ Player::Player(int type) {
 int Player::CheckJudgeByTiming(double delta) {
 	double abs_delta = abs(delta);
 	if (abs_delta <= BmsJudgeTiming::PGREAT)
-		return Grade::JUDGE_PGREAT;
+		return JUDGETYPE::JUDGE_PGREAT;
 	else if (abs_delta <= BmsJudgeTiming::GREAT)
-		return Grade::JUDGE_GREAT;
+		return JUDGETYPE::JUDGE_GREAT;
 	else if (abs_delta <= BmsJudgeTiming::GOOD)
-		return Grade::JUDGE_GOOD;
+		return JUDGETYPE::JUDGE_GOOD;
 	else if (abs_delta <= BmsJudgeTiming::BAD)
-		return Grade::JUDGE_BAD;
+		return JUDGETYPE::JUDGE_BAD;
 	else if (abs_delta <= BmsJudgeTiming::POOR)
-		return Grade::JUDGE_POOR;
+		return JUDGETYPE::JUDGE_POOR;
 	else if (delta < 0)
-		return Grade::JUDGE_LATE;
+		return JUDGETYPE::JUDGE_LATE;
 	else
-		return Grade::JUDGE_EARLY;
+		return JUDGETYPE::JUDGE_EARLY;
 }
 
 bool Player::IsNoteAvailable(int notechannel) {
@@ -118,13 +135,12 @@ bool Player::IsLongNote(int notechannel) {
 	return longnotestartpos[notechannel] > -1;
 }
 
-void Player::Prepare(BmsBms* bms, int playside) {
+void Player::Prepare(int playside) {
 	// set objects and initalize
-	this->bms = bms;
 	this->playside = playside;
 
 	// create note object
-	bms->GetNotes(bmsnote);
+	BmsResource::BMS.GetNotes(bmsnote);
 
 	// initalize grade instance
 	grade = Grade(bmsnote.GetNoteCount());
@@ -178,7 +194,7 @@ void Player::Reset() {
 
 void Player::Update() {
 	// get time
-	currenttime = gametimer->GetTick();
+	currenttime = bmstimer->GetTick();
 	double time_sec = currenttime / 1000.0;
 
 	// and recalculate note index/bgm index/position
@@ -195,13 +211,13 @@ void Player::Update() {
 				// ignore the note
 			}
 			// if not autoplay, check timing for poor
-			else if (CheckJudgeByTiming(bmstime.GetRow(noteindex[i]).time - time_sec) == Grade::JUDGE_LATE) {
+			else if (CheckJudgeByTiming(BmsHelper::GetCurrentTimeFromBar(noteindex[i]) - time_sec) == JUDGETYPE::JUDGE_LATE) {
 				BmsNote& note = bmsnote[i][noteindex[i]];
 				// if LNSTART, also kill LNEND & 2 miss
 				if (note.type == BmsNote::NOTE_LNSTART) {
 					note.type = BmsNote::NOTE_NONE;
 					noteindex[i] = GetNextAvailableNoteIndex(i);
-					grade.AddGrade(Grade::JUDGE_POOR);
+					MakeJudge(JUDGETYPE::JUDGE_POOR, playside);
 				}
 				// if LNEND, reset longnotestartpos & remove LNSTART note
 				else if (note.type == BmsNote::NOTE_LNEND) {
@@ -212,9 +228,7 @@ void Player::Update() {
 				// make judge
 				// (CLAIM) if hidden note isn't ignored by GetNextAvailableNoteIndex(), 
 				// you have to hit it or you'll get miss.
-				grade.AddGrade(Grade::JUDGE_POOR);
-				OnGamePlayJudgeArg handler_arg(Grade::JUDGE_POOR, note.channel<10 ? 0 : 1);
-				//Handler::CallHandler(OnGamePlayJudge, &handler_arg);
+				MakeJudge(JUDGETYPE::JUDGE_POOR, playside);
 			}
 
 			// retrieve next note
@@ -230,10 +244,8 @@ void Player::UpKey(int keychannel) {
 		if (IsNoteAvailable(keychannel) && GetCurrentNote(keychannel)->type == BmsNote::NOTE_LNEND) {
 			double t = currenttime / 1000.0;
 			// make judge
-			int judge = CheckJudgeByTiming(t - bmstime.GetRow(noteindex[keychannel]).time);
-			OnGamePlayJudgeArg handler_arg(judge, keychannel<10 ? 0 : 1);
-			// make judge
-			//Handler::CallHandler(OnGamePlayJudge, &handler_arg);
+			int judge = CheckJudgeByTiming(t - BmsHelper::GetCurrentTimeFromBar(noteindex[keychannel]));
+			MakeJudge(judge, playside);
 			// get next note and remove current longnote
 			bmsnote[keychannel][longnotestartpos[keychannel]].type = BmsNote::NOTE_NONE;
 			bmsnote[keychannel][noteindex[keychannel]].type = BmsNote::NOTE_NONE;
@@ -242,14 +254,15 @@ void Player::UpKey(int keychannel) {
 		longnotestartpos[keychannel] = -1;
 	}
 }
+
 void Player::PressKey(int keychannel) {
 	// make judge
 	if (IsNoteAvailable(keychannel)) {
 		double t = currenttime / 1000.0;
-		int judge = CheckJudgeByTiming(t - bmstime.GetRow(noteindex[keychannel]).time);
+		int judge = CheckJudgeByTiming(t - BmsHelper::GetCurrentTimeFromBar(noteindex[keychannel]));
 		if (GetCurrentNote(keychannel)->type == BmsNote::NOTE_LNSTART) {
 			// store longnote start pos & set longnote status
-			grade.AddGrade(judge);
+			MakeJudge(judge, playside, true);
 			longnotestartpos[keychannel] = noteindex[keychannel];
 		}
 		else if (GetCurrentNote(keychannel)->type == BmsNote::NOTE_MINE) {
@@ -260,16 +273,24 @@ void Player::PressKey(int keychannel) {
 				health -= GetCurrentNote(keychannel)->value.ToInteger();
 		}
 		else if (GetCurrentNote(keychannel)->type == BmsNote::NOTE_NORMAL) {
-			// judge
-			grade.AddGrade(judge);
-			OnGamePlayJudgeArg handler_arg(Grade::JUDGE_POOR, keychannel<10 ? 0 : 1);
-			// make judge
-			//Handler::CallHandler(OnGamePlayJudge, &handler_arg);
+			MakeJudge(judge, playside);
 		}
 	}
 
 	// make sound
 	BmsHelper::PlaySound(keysound[keychannel][currentbar].ToInteger());
+}
+
+void Player::MakeJudge(int judgetype, int playside, bool silent) {
+	grade.AddGrade(judgetype);
+	if (!silent) {
+		// TODO set timer
+		switch (judgetype) {
+
+		}
+		// TODO: make judge event
+		//Handler::CallHandler(OnGamePlayJudge, &judgearg);
+	}
 }
 
 double Player::GetLastMissTime() {
@@ -279,17 +300,14 @@ double Player::GetLastMissTime() {
 
 double Player::GetSpeed() { return setting.speed; }
 
-double Player::GetCurrentPos() {
-	// calculate abspos
-	return bmstime.GetAbsBeatFromTime(currenttime / 1000.0);
-}
-
 int Player::GetCurrentBar() {
 	return currentbar;
 }
+
 int Player::GetCurrentNoteBar(int channel) {
 	return noteindex[channel];
 }
+
 Grade Player::GetGrade() {
 	return grade;
 }
@@ -334,13 +352,28 @@ void Player::SetPlayerSetting(const PlayerSetting& setting) {
 	this->setting = setting;
 }
 
+void Player::RenderNote(SkinPlayObject *playobj) {
+	double currentpos = BmsHelper::GetCurrentPosFromTime(bmstimer->GetTick() / 1000.0);
+	// in lane, 0 == SC
+	for (int lane = 0; lane <= 7; lane++) {
+		int channel = lane_to_channel[lane];
+		int currentnotebar = GetCurrentNoteBar(channel);
+		while (currentnotebar >= 0) {
+			double pos = BmsHelper::GetCurrentPosFromBar(currentnotebar) - currentpos;
+			if (pos > 1) break;
+			playobj->RenderLane(lane, pos);
+			currentnotebar = GetAvailableNoteIndex(channel, currentnotebar+1);
+		}
+	}
+}
+
 // ------ PlayerAuto -----------------------------------
 
 PlayerAuto::PlayerAuto() : Player(PLAYERTYPE::AUTO) {}
 
 void PlayerAuto::Update() {
 	// get time
-	currenttime = gametimer->GetTick();
+	currenttime = bmstimer->GetTick();
 	double time_sec = currenttime / 1000.0;
 
 	// and recalculate note index/bgm index/position
@@ -355,39 +388,47 @@ void PlayerAuto::Update() {
 			// if note is mine, then lets ignore as fast as we can
 			if (GetCurrentNote(i)->type == BmsNote::NOTE_MINE) {
 				// ignore the note
-				continue;
 			}
 			else {
 				// Autoplay -> Automatically play
 				BmsNote& note = bmsnote[i][noteindex[i]];
 				if (GetCurrentNote(i)->type == BmsNote::NOTE_LNSTART) {
 					BmsHelper::PlaySound(note.value.ToInteger());
-					grade.AddGrade(Grade::JUDGE_PGREAT);
+					MakeJudge(JUDGETYPE::JUDGE_PGREAT, playside, true);
 					// we won't judge on LNSTART
 					longnotestartpos[i] = noteindex[i];
+					if (lanehold[i]) lanehold[i]->Start();
+					if (lanepress[i]) {
+						laneup[i]->Stop();
+						lanepress[i]->Start();
+					}
 				}
 				else if (GetCurrentNote(i)->type == BmsNote::NOTE_LNEND) {
-					// we won't play sound(turn off) on LNEND
-					OnGamePlaySoundArg soundarg(note.value, 0);
-					//Handler::CallHandler(OnGamePlaySound, &soundarg);
-					grade.AddGrade(Grade::JUDGE_PGREAT);
-					OnGamePlayJudgeArg judgearg(Grade::JUDGE_PGREAT, note.channel<10 ? 0 : 1);
-					// TODO: make judge event
-					//Handler::CallHandler(OnGamePlayJudge, &judgearg);
+					// TODO we won't play sound(turn off) on LNEND
+					MakeJudge(JUDGETYPE::JUDGE_PGREAT, playside);
 					longnotestartpos[i] = -1;
+					if (lanehold[i]) lanehold[i]->Stop();
 				}
 				else if (GetCurrentNote(i)->type == BmsNote::NOTE_NORMAL) {
-					OnGamePlaySoundArg soundarg(note.value, 1);
-					//Handler::CallHandler(OnGamePlaySound, &soundarg);
-					grade.AddGrade(Grade::JUDGE_PGREAT);
-					OnGamePlayJudgeArg judgearg(Grade::JUDGE_PGREAT, note.channel<10 ? 0 : 1);
-					// TODO: make judge event
-					//Handler::CallHandler(OnGamePlayJudge, &judgearg);
+					BmsHelper::PlaySound(note.value.ToInteger());
+					MakeJudge(JUDGETYPE::JUDGE_PGREAT, playside);
+					if (lanepress[i]) {
+						laneup[i]->Stop();
+						lanepress[i]->Start();
+					}
 				}
 			}
 
 			// fetch next note
 			noteindex[i] = GetNextAvailableNoteIndex(i);
+		}
+
+		/*
+		 * pressing lane is automatically up-ped
+		 * about after 100ms.
+		 */
+		if (lanepress[i] && laneup[i] && laneup[i]->Trigger(lanepress[i]->GetTick() > 100)) {
+			lanepress[i]->Stop();
 		}
 	}
 }

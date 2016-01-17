@@ -242,10 +242,6 @@ namespace Game {
 		 */
 		STRPOOL->Set("PlaySkinpath", "../skin/Wisp_HD/play/HDPLAY_W.lr2skin");
 		STRPOOL->Set("Bmspath", bmspath);
-		// prepare player
-		PlayerSetting psetting;
-		psetting.speed = 310;
-		//GamePlay::SetPlayer(psetting, 0);
 
 		return true;
 	}
