@@ -54,38 +54,138 @@ namespace Game {
 		return true;
 	}
 
-	int test(Lua* l) {
-		int a = (int)lua_tointeger(l, -1);
-		lua_pop(l, 1);
-		lua_pushinteger(l, a + 1);
-		return 1;	// one return value
-	}
+	/* 
+	 * registering basic lua function start 
+	 * TODO: generating rendering object (after we're done enough)
+	 */
+	namespace {
+		int InitTimer(Lua* l) {
+			RString key = (const char*)lua_tostring(l, -1);
+			lua_pop(l, 1);
+			TIMERPOOL->Set(key, false);
+			// no return value
+			return 0;
+		}
 
-	int test2(Lua* l) {
-		RString str = (const char*)lua_tostring(l, -1);
-		lua_pushinteger(l, str.size());
-		return 1;	// one return value
-	}
+		int SetTimer(Lua* l) {
+			RString key = (const char*)lua_tostring(l, -1);
+			lua_pop(l, 1);
+			TIMERPOOL->Set(key);
+			//lua_pushinteger(l, a + 1);
+			// no return value
+			return 0;
+		}
 
-	std::map<RString, int> test_map;
+		int SetInt(Lua* l) {
+			int val = (int)lua_tointeger(l, -1);
+			lua_pop(l, 1);
+			RString key = (const char*)lua_tostring(l, -1);
+			lua_pop(l, 1);
+			INTPOOL->Set(key, val);
+			return 0;	// no return value
+		}
+
+		int SetFloat(Lua* l) {
+			int val = (int)lua_tointeger(l, -1);
+			lua_pop(l, 1);
+			RString key = (const char*)lua_tostring(l, -1);
+			lua_pop(l, 1);
+			INTPOOL->Set(key, val);
+			return 0;	// no return value
+		}
+
+		int SetString(Lua* l) {
+			int val = (int)lua_tointeger(l, -1);
+			lua_pop(l, 1);
+			RString key = (const char*)lua_tostring(l, -1);
+			lua_pop(l, 1);
+			INTPOOL->Set(key, val);
+			return 0;	// no return value
+		}
+
+		int IsTimer(Lua *l) {
+			RString key = (const char*)lua_tostring(l, -1);
+			lua_pop(l, 1);
+			Timer* t = TIMERPOOL->Get(key);
+			if (t && t->IsStarted())
+				lua_pushboolean(l, 1);
+			else
+				lua_pushboolean(l, 0);
+			return 1;
+		}
+
+		int GetTime(Lua *l) {
+			RString key = (const char*)lua_tostring(l, -1);
+			lua_pop(l, 1);
+			Timer *t = TIMERPOOL->Get(key);
+			if (t)
+				lua_pushinteger(l, t->GetTick());
+			else
+				lua_pushinteger(l, 0);
+			return 1;
+		}
+
+		int GetInt(Lua *l) {
+			RString key = (const char*)lua_tostring(l, -1);
+			lua_pop(l, 1);
+			int *v = INTPOOL->Get(key);
+			if (v)
+				lua_pushinteger(l, *v);
+			else
+				lua_pushinteger(l, 0);
+			return 1;
+		}
+
+		int GetFloat(Lua *l) {
+			RString key = (const char*)lua_tostring(l, -1);
+			lua_pop(l, 1);
+			double *d = DOUBLEPOOL->Get(key);
+			if (d)
+				lua_pushnumber(l, *d);
+			else
+				lua_pushnumber(l, 0);
+			return 1;
+		}
+
+		int GetString(Lua *l) {
+			RString key = (const char*)lua_tostring(l, -1);
+			lua_pop(l, 1);
+			RString *s = STRPOOL->Get(key);
+			if (s)
+				lua_pushstring(l, *s);
+			else
+				lua_pushstring(l, "");
+			return 1;
+		}
+
+		void RegisterBasicLuaFunction() {
+			Lua *l;
+			l = LUA->Get();
+			lua_register(l, "SetTimer", SetTimer);
+			lua_register(l, "SetSwitch", SetTimer);
+			lua_register(l, "InitTimer", InitTimer);
+			lua_register(l, "InitSwitch", InitTimer);
+			lua_register(l, "SetInt", SetInt);
+			lua_register(l, "SetFloat", SetFloat);
+			lua_register(l, "SetString", SetString);
+			lua_register(l, "IsTimer", IsTimer);
+			lua_register(l, "IsSwitch", IsTimer);
+			lua_register(l, "GetTime", GetTime);
+			lua_register(l, "GetInt", GetInt);
+			lua_register(l, "GetFloat", GetFloat);
+			lua_register(l, "GetString", GetString);
+			LUA->Release(l);
+		}
+	}
 
 	bool Init() {
 		/*
 		 * Basic instances initalization
 		 */
 		GameTimer::Tick();
-		LUA = new LuaManager();
 		PoolHelper::InitalizeAll();
-
-		// register func (test)
-		//lua_pushcfunction(l, test);
-		Lua *l;
-		l = LUA->Get();
-		lua_register(l, "test", test);
-		lua_register(l, "test2", test2);
-		LUA->Release(l);
-		for (int i = 0; i < 1024; i++)
-			test_map.insert(std::pair<RString, int>(ssprintf("Test%d", i), i));
+		LUA = new LuaManager();
+		RegisterBasicLuaFunction();
 
 		/*
 		 * Load basic setting file ...
@@ -180,27 +280,6 @@ namespace Game {
 	}
 
 	void Render() {
-		// Lua test(benchmark)
-		// execut func
-		Lua *l = LUA->Get();
-		for (int i = 0; i < 500; i++) {
-#if 0
-			RString e;
-			//LuaHelpers::RunScript(l, "return 3", "test", e, 0, 1);
-			//LuaHelpers::RunScript(l, "return test(3)", "test", e, 0, 1);
-			LuaHelpers::RunScript(l, "return test2('abcde')", "test2", e, 0, 1);
-
-			// get res
-			int res = (int)lua_tointeger(l, -1);
-			lua_pop(l, 1);
-			//printf("%d\n", res);
-#endif
-
-			int k = test_map["Test0"];
-			fps = fps + k;
-		}
-		LUA->Release(l);
-
 		// nothing to do just render GamePlay ...
 		GamePlay::Render();
 	}

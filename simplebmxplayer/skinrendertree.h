@@ -27,6 +27,7 @@ namespace OBJTYPE {
 		TEXT = 14,
 		BUTTON = 15,
 		LIST = 16,
+		SCRIPT = 17,
 		/* some renderer specific objects ... */
 		BGA = 20,
 		PLAYLANE = 21,
@@ -85,6 +86,7 @@ private:
 	bool not[10];
 	Timer *cond[10];
 	int condcnt;
+	int evaluate_count;
 public:
 	RenderCondition();
 	void Set(const RString &conditionstring);
@@ -284,6 +286,19 @@ public:
 	void RenderBGA(Image *bga);
 };
 
+/** @brief it actually doesn't renders anything, but able to work with Render() method. */
+class SkinScriptObject : public SkinRenderObject {
+	bool runoneveryframe;
+	int runtime;
+	RString script;
+public:
+	SkinScriptObject(SkinRenderTree *);
+	void SetRunCondition(bool oneveryframe = false);
+	void LoadFile(const RString &filepath);
+	void SetScript(const RString &script);
+	virtual void Render();
+};
+
 /** @brief rendering tree which is used in real rendering - based on Xml skin structure */
 class SkinRenderTree: public SkinGroupObject {
 public:
@@ -303,6 +318,7 @@ public:
 	SkinImageObject* NewImageObject();
 	SkinPlayObject* NewPlayObject();
 	SkinBgaObject* NewBgaObject();
+	SkinScriptObject* NewScriptObject();
 
 	/** @brief load image at globalresources. */
 	void RegisterImage(RString& id, RString& path);

@@ -128,7 +128,7 @@ namespace GamePlay {
 		SWITCH_ON("IsScoreGraph");
 		SWITCH_ON("IsAutoPlay");
 		SWITCH_ON("IsBGA");
-		SWITCH_ON("983");
+		//SWITCH_ON("983");
 		//SWITCH_ON("Is1PSuddenChange");
 
 		/*

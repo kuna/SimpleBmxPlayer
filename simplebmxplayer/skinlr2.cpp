@@ -328,7 +328,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		for (int i = 1; i < 50 && args[i]; i++) {
 			const char *c = INT(args[i]) ? TranslateOPs(INT(args[i])) : 0;
 			if (c)
-				luacode << "SetTimer(" << c << ")\n";
+				luacode << "SetTimer(\"" << c << "\")\n";
 		}
 		setoption->SetText(("\n" + luacode.str()).c_str());
 		cur_e->LinkEndChild(setoption);

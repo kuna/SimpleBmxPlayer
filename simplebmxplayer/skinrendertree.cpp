@@ -4,6 +4,7 @@
 #include "globalresources.h"	// for evaluation condition
 #include "luamanager.h"
 #include "util.h"
+#include "file.h"
 #include "logger.h"
 #include "tinyxml2.h"
 using namespace tinyxml2;
@@ -14,7 +15,7 @@ void ConstructDSTFromElement(ImageDST &, XMLElement *);
 
 // ------ SkinRenderCondition ----------------------
 
-RenderCondition::RenderCondition() : condcnt(0) {
+RenderCondition::RenderCondition() : condcnt(0), evaluate_count(0) {
 	memset(not, 0, sizeof(not));
 	memset(cond, 0, sizeof(cond));
 }
@@ -42,18 +43,22 @@ void RenderCondition::SetLuacondition(const RString &condition) {
 }
 
 bool RenderCondition::Evaluate() {
+	evaluate_count++;
 	if (luacondition.size()) {
 		// getting Lua object doesn't cost much; but evaluating does.
 		// aware not to use lua conditional script.
 		Lua* l = LUA->Get();
 		RString e;
-		LuaHelpers::RunScript(l, luacondition, "RenderCondition", e, 0, 1);
+		LuaHelpers::RunScript(l, luacondition, "Skin_RenderCondition", e, 0, 1);
 		bool r = (bool)lua_toboolean(l, -1);
 		lua_pop(l, 1);
 		LUA->Release(l);
 		return r;
 	}
 	for (int i = 0; i < condcnt; i++) {
+		// if condition is empty, then attempt to find once more
+		// this causes a lot frame drop, so we do finding only 10 times
+		if (!cond[i] && evaluate_count < 10) cond[i] = TIMERPOOL->Get(key[i]);
 		if (cond[i] == 0 || (not[i] && cond[i]->IsStarted()) || (!not[i] && !cond[i]->IsStarted()))
 			return false;
 	}
@@ -108,6 +113,7 @@ bool SkinRenderObject::IsGeneral() {
 	case OBJTYPE::SLIDER:
 	case OBJTYPE::TEXT:
 	case OBJTYPE::BUTTON:
+	case OBJTYPE::SCRIPT:
 		return true;
 	}
 	return false;
@@ -316,6 +322,43 @@ void SkinBgaObject::RenderBGA(Image *bga) {
 	SkinRenderHelper::Render(bga, &src[0], &frame, 0, 5);
 }
 
+SkinScriptObject::SkinScriptObject(SkinRenderTree *t)
+	: SkinRenderObject(t, OBJTYPE::SCRIPT), runoneveryframe(false), runtime(0) {}
+
+void SkinScriptObject::SetRunCondition(bool oneveryframe) {
+	runoneveryframe = oneveryframe;
+}
+
+void SkinScriptObject::LoadFile(const RString &filepath) {
+	RString _filepath = filepath;
+	FileHelper::ConvertPathToAbsolute(_filepath);
+	RString out;
+	if (GetFileContents(_filepath, out)) {
+		script = out;
+	}
+	else {
+		LOG->Warn("Failed to load Lua Script(%s)", filepath);
+	}
+}
+
+void SkinScriptObject::SetScript(const RString &script_) {
+	script = script_;
+}
+
+void SkinScriptObject::Render() {
+	if (runtime && !runoneveryframe) return;
+
+	Lua *l = LUA->Get();
+	RString err;
+	if (!LuaHelpers::RunScript(l, script, "Skin_Script", err)) {
+		LOG->Warn("Error occured during Lua Script - %s", err.c_str());
+	}
+	LUA->Release(l);
+
+	runtime++;
+}
+
+
 // ----- SkinRenderTree -------------------------------------
 
 SkinRenderTree::SkinRenderTree() : SkinGroupObject(this) {}
@@ -371,6 +414,12 @@ SkinPlayObject* SkinRenderTree::NewPlayObject() {
 
 SkinBgaObject* SkinRenderTree::NewBgaObject() {
 	SkinBgaObject* obj = new SkinBgaObject(this);
+	_objpool.push_back(obj);
+	return obj;
+}
+
+SkinScriptObject* SkinRenderTree::NewScriptObject() {
+	SkinScriptObject* obj = new SkinScriptObject(this);
 	_objpool.push_back(obj);
 	return obj;
 }
@@ -438,6 +487,13 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 	while (e) {
 		SkinRenderObject *obj;
 
+		if (ISNAME(e, "Init")) {
+			/*
+			 * Init object is only called once;
+			 * it doesn't added to render tree if it's conditions is bad
+			 * (TODO)
+			 */
+		}
 		if (ISNAME(e, "If") || ISNAME(e, "Group")) {
 			SkinGroupObject *g = rtree.NewGroupObject();
 			ConstructTreeFromElement(rtree, g, e->FirstChildElement());
@@ -449,6 +505,16 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 		/*else if (ISNAME(e, "Number")) {
 
 		}*/
+		else if (ISNAME(e, "Lua")) {
+			SkinScriptObject *script = rtree.NewScriptObject();
+			if (e->Attribute("OnRender"))
+				script->SetRunCondition(true);
+			if (e->Attribute("src"))
+				script->LoadFile(e->Attribute("src"));
+			else if (e->GetText())
+				script->SetScript(e->GetText());
+			obj = script;
+		}
 		/*
 		 * Special object parsing start
 		 */
