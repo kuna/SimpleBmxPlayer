@@ -733,10 +733,8 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line) {
 				break;
 			}
 		}
-		// add src to here
-		src->SetName("SRC_JUDGELINE");
-		playarea->LinkEndChild(src);
-		return line + 1;
+		// but don't add SRC; we'll add it to PlayArea
+		return 0;
 	}
 
 	// not an play object
