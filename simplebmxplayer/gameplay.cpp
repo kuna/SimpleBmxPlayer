@@ -122,8 +122,14 @@ namespace GamePlay {
 
 	void Start() {
 		/*
+		* Initalize timers (temporarily)
+		*/
+		TIMERPOOL->Set("OnDiffAnother", true);
+
+		/*
 		 * Load skin & bms resource
 		 * (bms resource is loaded with thread)
+		 * (Timers must created before this called)
 		 */
 		LoadSkin(*PlaySkinpath);
 		LoadBms(*Bmspath);
@@ -140,13 +146,12 @@ namespace GamePlay {
 	}
 
 	void RenderObject(SkinRenderObject *obj) {
+		if (!obj->EvaluateCondition()) return;
 		if (obj->IsGroup()) {
-			if (obj->EvaluateCondition()) {
-				// iterate all child
-				SkinGroupObject *group = obj->ToGroup();
-				for (auto child = group->begin(); child != group->end(); ++child) {
-					RenderObject(*child);
-				}
+			// iterate all child
+			SkinGroupObject *group = obj->ToGroup();
+			for (auto child = group->begin(); child != group->end(); ++child) {
+				RenderObject(*child);
 			}
 		}
 		else if (obj->IsGeneral()) {
@@ -162,8 +167,9 @@ namespace GamePlay {
 		/*
 		 * check timers
 		 */
-		OnReady->Trigger(OnSongLoadingEnd->IsStarted());
-		OnGameStart->Trigger(OnReady->GetTick() >= 5000);
+		if (OnReady->Trigger(OnSongLoadingEnd->IsStarted()))
+			OnSongLoading->Stop();
+		//OnGameStart->Trigger(OnReady->GetTick() >= 5000);
 
 		/*
 		 * BMS update

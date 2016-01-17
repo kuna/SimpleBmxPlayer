@@ -54,7 +54,7 @@ bool RenderCondition::Evaluate() {
 		return r;
 	}
 	for (int i = 0; i < condcnt; i++) {
-		if (!cond[i] || (not[i] && cond[i]->IsStarted()) || (!not[i] && !cond[i]->IsStarted()))
+		if (cond[i] == 0 || (not[i] && cond[i]->IsStarted()) || (!not[i] && !cond[i]->IsStarted()))
 			return false;
 	}
 	return true;
@@ -415,7 +415,6 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 
 		if (ISNAME(e, "If") || ISNAME(e, "Group")) {
 			SkinGroupObject *g = rtree.NewGroupObject();
-			rtree.AddChild(g);
 			ConstructTreeFromElement(rtree, g, e->FirstChildElement());
 			obj = g;
 		}
@@ -452,8 +451,6 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 
 		// parse common attribute: SRC, DST, condition
 		SkinRenderHelper::ConstructBasicRenderObject(obj, e);
-		
-		// some elements need processing after SRC/DST is read
 
 		// search for next element
 		e = e->NextSiblingElement();
