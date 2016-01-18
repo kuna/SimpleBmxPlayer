@@ -158,11 +158,18 @@ class SkinGroupObject : public SkinRenderObject {
 private:
 	/** @brief base elements */
 	std::vector<SkinRenderObject*> _childs;
+	/** @brief canvas. if 0, then only pushs offset for drawing childs. */
+	SDL_Texture *t, *_org;
 public:
-	SkinGroupObject(SkinRenderTree* owner);
+	SkinGroupObject(SkinRenderTree* owner, bool createTexture = false);
+	~SkinGroupObject();
 	void AddChild(SkinRenderObject* obj);
 	std::vector<SkinRenderObject*>::iterator begin();
 	std::vector<SkinRenderObject*>::iterator end();
+	virtual void Render();
+	/** @brief  */
+	void SetAsRenderTarget();
+	void ResetRenderTarget();
 };
 
 class SkinImageObject : public SkinRenderObject {
@@ -252,7 +259,7 @@ public:
 };
 
 /** @brief specific object used during play */
-class SkinPlayObject : public SkinRenderObject {
+class SkinPlayObject : public SkinGroupObject {
 private:
 	struct NOTE {
 		ImageSRC normal;
@@ -311,14 +318,18 @@ public:
 
 	/** @brief resources used in this game */
 	std::map<RString, Image*> _imagekey;
+
+	/** @brief decide group object's texture size */
+	int _scr_w, _scr_h;
 public:
-	SkinRenderTree();
+	SkinRenderTree(int skinwidth, int skinheight);
 	~SkinRenderTree();
+	void SetSkinSize(int skinwidth, int skinheight);
 	/** @brief only releases all rendering object */
 	void ReleaseAll();
 
 	SkinUnknownObject* NewUnknownObject();
-	SkinGroupObject* NewGroupObject();
+	SkinGroupObject* NewGroupObject(bool clipping = false);
 	SkinImageObject* NewImageObject();
 	SkinPlayObject* NewPlayObject();
 	SkinBgaObject* NewBgaObject();
@@ -339,6 +350,9 @@ namespace SkinRenderHelper {
 	ImageDSTFrame Tween(ImageDSTFrame& a, ImageDSTFrame &b, double t, int acctype);
 	/** @brief in debug mode, border will drawn around object. */
 	void Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, int blend = 1, int rotationcenter = ROTATIONCENTER::CENTER);
+
+	void PushRenderOffset(int x, int y);
+	void PopRenderOffset();
 
 	/** @brief replaces path string to a correct one */
 	void ConvertPath(RString& path);

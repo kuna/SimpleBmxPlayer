@@ -26,7 +26,7 @@ namespace GamePlay {
 	// skin resource will be loaded in GlobalResource, 
 	// so we don't need to take care of it
 	Skin				playskin;
-	SkinRenderTree		rtree;
+	SkinRenderTree*		rtree;
 	SkinOption			skinoption;
 
 	// bms play related
@@ -37,6 +37,9 @@ namespace GamePlay {
 	SDL_Texture* temptexture;	// only for test purpose
 
 	void Init() {
+		// initalize
+		rtree = new SkinRenderTree(1280, 760);
+
 		// initalize global resources
 		//HANDLERPOOL->Add("OnGamePlaySound", OnBmsSound);
 		//HANDLERPOOL->Add("OnGamePlayBga", OnBmsBga);
@@ -95,8 +98,8 @@ namespace GamePlay {
 		RString skindirpath = IO::get_filedir(path);
 		FileHelper::ConvertPathToAbsolute(skindirpath);
 		FileHelper::PushBasePath(skindirpath);
-		SkinRenderHelper::LoadResourceFromSkin(rtree, playskin);
-		SkinRenderHelper::ConstructTreeFromSkin(rtree, playskin);
+		SkinRenderHelper::LoadResourceFromSkin(*rtree, playskin);
+		SkinRenderHelper::ConstructTreeFromSkin(*rtree, playskin);
 		FileHelper::PopBasePath();
 
 		printf("Loaded Bms Skin Successfully\n");
@@ -164,9 +167,13 @@ namespace GamePlay {
 		if (obj->IsGroup()) {
 			// iterate all child
 			SkinGroupObject *group = obj->ToGroup();
+			group->SetAsRenderTarget();
 			for (auto child = group->begin(); child != group->end(); ++child) {
 				RenderObject(*child);
 			}
+			group->ResetRenderTarget();
+			// if textured object, must call Render method.
+			obj->Render();
 		}
 		else if (obj->IsGeneral()) {
 			// let basic renderer do work
@@ -209,7 +216,7 @@ namespace GamePlay {
 		/*
 		 * draw interface (make a render tree recursion)
 		 */
-		RenderObject(&rtree);
+		RenderObject(rtree);
 
 		/*
 		 * draw basic skin elements
@@ -342,8 +349,7 @@ namespace GamePlay {
 
 		// skin clear (COMMENT: we don't need to release skin in real. just in beta version.)
 		// we don't need to clear BMS data until next BMS is loaded
-		rtree.ReleaseAll();
-		rtree.ReleaseAllResources();
+		delete rtree;
 		playskin.Release();
 		//bmsresource.Clear();
 		//bms.Clear();

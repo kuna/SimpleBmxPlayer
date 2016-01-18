@@ -136,6 +136,23 @@ void _LR2SkinParser::ParseSkinLineArgument(char *p, char **args) {
 	args[i] = 0;
 }
 
+/* a simple private macro for PLAYLANE (reset position) */
+void MakeFrameRelative(int x, int y, XMLElement *frame) {
+	frame->SetAttribute("x", frame->IntAttribute("x") - x);
+	frame->SetAttribute("y", frame->IntAttribute("y") - y);
+}
+void MakeRelative(int x, int y, XMLElement *e) {
+	XMLElement *dst = e->FirstChildElement("DST");
+	while (dst) {
+		XMLElement *frame = dst->FirstChildElement("Frame");
+		while (frame) {
+			MakeFrameRelative(x, y, frame);
+			frame = frame->NextSiblingElement("Frame");
+		}
+		dst = e->NextSiblingElement("DST");
+	}
+}
+
 int _LR2SkinParser::ParseSkinLine(int line) {
 	// get current line's string & argument
 	char **args;			// contains linebuffer's address
@@ -507,8 +524,25 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		 */
 		if (OBJTYPE_IS("IMAGE")) {
 			// nothing to do (general object)
-			// but in some case it may have 'value' ...
-			// if then, it'll be src-condition dependent.
+			// but it's not in some special OP/Timer code
+			if ((timer >= 50 && timer < 60) ||
+				(timer >= 70 && timer < 80) ||
+				(timer >= 100 && timer < 110) ||
+				(timer >= 120 && timer < 130)) {
+				// P1
+				XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", 1, &s->skinlayout);
+				MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
+				playarea->LinkEndChild(obj);
+			}
+			else if ((timer >= 60 && timer < 70) ||
+				(timer >= 80 && timer < 90) ||
+				(timer >= 110 && timer < 120) ||
+				(timer >= 130 && timer < 140)) {
+				// P2
+				XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", 2, &s->skinlayout);
+				MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
+				playarea->LinkEndChild(obj);
+			}
 		}
 		else if (OBJTYPE_IS("BGA")) {
 			// change tag to BGA and remove SRC tag
@@ -564,15 +598,19 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			// TODO: onclick event
 			obj->SetName("Button");
 		}
-		/* some special object (PLAY lane object) */
+		/* 
+		 * some special object (PLAY lane object) 
+		 */
 		else if (OBJTYPE_IS("JUDGELINE")) {
 			obj->SetName("JUDGELINE");
 			XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid, &s->skinlayout);
+			MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
 			playarea->LinkEndChild(obj);
 		}
 		else if (OBJTYPE_IS("LINE")) {
 			obj->SetName("LINE");
 			XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid, &s->skinlayout);
+			MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
 			playarea->LinkEndChild(obj);
 		}
 		else if (OBJTYPE_IS("ONMOUSE")) {

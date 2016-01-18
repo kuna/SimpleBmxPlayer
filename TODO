@@ -6,15 +6,16 @@ o 기존 xml 프로젝트랑 연동하기 (lexartree)
 o 일단 컴파일 강행하고, 1.렌더트리생성확인 하기 2.리소스 로드하고 3.화면에 띄우기
 o lua 작동여부 대충 파악하고 확인
 o globalpool 대충 완성하고, 
-- lua와 연동 확인
+o lua와 연동 확인
 o filemanager 만들어서 쉽게 파일 읽기 가능한지 확인하기
   - zlib 도입
-- 키 인풋, 마우스 collision 확인.
-- Autoplay 및 정상종료.
-- 그래프/슬라이더 도입.
 o 쓰레드 도입.
+- 그래프/슬라이더 도입.
 - 폰트
   - 비트맵폰트: 속성에 cycle 넣고 animate 가능하게 만듬.
+- 키 인풋, 마우스 collision 확인.
+- 리프트/서든 작업.
+- Autoplay 및 정상종료.
 <플레이 프로젝트 끝. 다음 프로젝트에서 계속 ...>
 
 - LIST 오브젝트 구현 & LR2SKINCONVERTER에서 LIST 오브젝트 만들도록 하기.
