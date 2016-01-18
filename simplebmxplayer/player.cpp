@@ -217,7 +217,7 @@ void Player::Update() {
 				if (note.type == BmsNote::NOTE_LNSTART) {
 					note.type = BmsNote::NOTE_NONE;
 					noteindex[i] = GetNextAvailableNoteIndex(i);
-					MakeJudge(JUDGETYPE::JUDGE_POOR, playside);
+					MakeJudge(JUDGETYPE::JUDGE_POOR, i);
 				}
 				// if LNEND, reset longnotestartpos & remove LNSTART note
 				else if (note.type == BmsNote::NOTE_LNEND) {
@@ -228,7 +228,7 @@ void Player::Update() {
 				// make judge
 				// (CLAIM) if hidden note isn't ignored by GetNextAvailableNoteIndex(), 
 				// you have to hit it or you'll get miss.
-				MakeJudge(JUDGETYPE::JUDGE_POOR, playside);
+				MakeJudge(JUDGETYPE::JUDGE_POOR, i);
 			}
 
 			// retrieve next note
@@ -245,7 +245,7 @@ void Player::UpKey(int keychannel) {
 			double t = currenttime / 1000.0;
 			// make judge
 			int judge = CheckJudgeByTiming(t - BmsHelper::GetCurrentTimeFromBar(noteindex[keychannel]));
-			MakeJudge(judge, playside);
+			MakeJudge(judge, keychannel);
 			// get next note and remove current longnote
 			bmsnote[keychannel][longnotestartpos[keychannel]].type = BmsNote::NOTE_NONE;
 			bmsnote[keychannel][noteindex[keychannel]].type = BmsNote::NOTE_NONE;
@@ -262,7 +262,7 @@ void Player::PressKey(int keychannel) {
 		int judge = CheckJudgeByTiming(t - BmsHelper::GetCurrentTimeFromBar(noteindex[keychannel]));
 		if (GetCurrentNote(keychannel)->type == BmsNote::NOTE_LNSTART) {
 			// store longnote start pos & set longnote status
-			MakeJudge(judge, playside, true);
+			MakeJudge(judge, keychannel, true);
 			longnotestartpos[keychannel] = noteindex[keychannel];
 		}
 		else if (GetCurrentNote(keychannel)->type == BmsNote::NOTE_MINE) {
@@ -273,7 +273,7 @@ void Player::PressKey(int keychannel) {
 				health -= GetCurrentNote(keychannel)->value.ToInteger();
 		}
 		else if (GetCurrentNote(keychannel)->type == BmsNote::NOTE_NORMAL) {
-			MakeJudge(judge, playside);
+			MakeJudge(judge, keychannel);
 		}
 	}
 
@@ -281,8 +281,10 @@ void Player::PressKey(int keychannel) {
 	BmsHelper::PlaySound(keysound[keychannel][currentbar].ToInteger());
 }
 
-void Player::MakeJudge(int judgetype, int playside, bool silent) {
+void Player::MakeJudge(int judgetype, int channel, bool silent) {
 	grade.AddGrade(judgetype);
+	if (judgetype >= JUDGETYPE::JUDGE_GREAT && lanejudgeokay[channel])
+		lanejudgeokay[channel]->Start();
 	if (!silent) {
 		// TODO set timer
 		switch (judgetype) {
@@ -394,7 +396,7 @@ void PlayerAuto::Update() {
 				BmsNote& note = bmsnote[i][noteindex[i]];
 				if (GetCurrentNote(i)->type == BmsNote::NOTE_LNSTART) {
 					BmsHelper::PlaySound(note.value.ToInteger());
-					MakeJudge(JUDGETYPE::JUDGE_PGREAT, playside, true);
+					MakeJudge(JUDGETYPE::JUDGE_PGREAT, i, true);
 					// we won't judge on LNSTART
 					longnotestartpos[i] = noteindex[i];
 					if (lanehold[i]) lanehold[i]->Start();
@@ -405,13 +407,13 @@ void PlayerAuto::Update() {
 				}
 				else if (GetCurrentNote(i)->type == BmsNote::NOTE_LNEND) {
 					// TODO we won't play sound(turn off) on LNEND
-					MakeJudge(JUDGETYPE::JUDGE_PGREAT, playside);
+					MakeJudge(JUDGETYPE::JUDGE_PGREAT, i);
 					longnotestartpos[i] = -1;
 					if (lanehold[i]) lanehold[i]->Stop();
 				}
 				else if (GetCurrentNote(i)->type == BmsNote::NOTE_NORMAL) {
 					BmsHelper::PlaySound(note.value.ToInteger());
-					MakeJudge(JUDGETYPE::JUDGE_PGREAT, playside);
+					MakeJudge(JUDGETYPE::JUDGE_PGREAT, i);
 					if (lanepress[i]) {
 						laneup[i]->Stop();
 						lanepress[i]->Start();
@@ -425,9 +427,9 @@ void PlayerAuto::Update() {
 
 		/*
 		 * pressing lane is automatically up-ped
-		 * about after 100ms.
+		 * about after 50ms.
 		 */
-		if (lanepress[i] && laneup[i] && laneup[i]->Trigger(lanepress[i]->GetTick() > 100)) {
+		if (lanepress[i] && laneup[i] && laneup[i]->Trigger(lanepress[i]->GetTick() > 50)) {
 			lanepress[i]->Stop();
 		}
 	}

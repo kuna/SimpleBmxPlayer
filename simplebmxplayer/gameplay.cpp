@@ -85,7 +85,8 @@ namespace GamePlay {
 			return false;
 		}
 
-		// load skin option, and set Environment.
+		// load skin (default) option, and set Environment.
+		// MUST do before loading skin resource.
 		playskin.GetDefaultOption(&skinoption);
 		skinoption.SetEnvironmentFromOption();
 
@@ -119,16 +120,6 @@ namespace GamePlay {
 
 	void Start() {
 		/*
-		* Initalize timers (temporarily)
-		*/
-		GameTimer::Tick();
-		SWITCH_ON("OnDiffAnother");
-		SWITCH_ON("IsScoreGraph");
-		SWITCH_ON("IsAutoPlay");
-		SWITCH_ON("IsBGA");
-		//SWITCH_ON("Is1PSuddenChange");
-
-		/*
 		 * Load skin & bms resource
 		 * (bms resource is loaded with thread)
 		 * (Timers must created before this called)
@@ -137,14 +128,20 @@ namespace GamePlay {
 		LoadBms(*Bmspath);
 
 		/*
-		* initalize timers
-		*/
+		 * initalize timers
+		 * MUST DO after skin is loaded
+		 */
+		GameTimer::Tick();
+		SWITCH_ON("OnDiffAnother");
+		SWITCH_ON("IsScoreGraph");
+		SWITCH_ON("IsAutoPlay");
+		SWITCH_ON("IsBGA");
+		//SWITCH_ON("Is1PSuddenChange");
 		OnScene->Stop();
 		OnSongLoadingEnd->Stop();
 		OnReady->Stop();
 		OnGameStart->Stop();
 		OnSongLoading->Stop();
-		OnSongLoading->Start();
 
 		/*
 		 * BMS load end, so set player
@@ -155,6 +152,10 @@ namespace GamePlay {
 		player[0]->SetSpeed(psetting.speed);
 		player[0]->Prepare(0);
 
+		/*
+		 * must call at the end
+		 */
+		OnSongLoading->Start();
 		OnScene->Start();
 	}
 

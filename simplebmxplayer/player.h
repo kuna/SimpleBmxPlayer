@@ -145,7 +145,7 @@ protected:
 	int GetNextAvailableNoteIndex(int notechannel);
 	BmsNote* GetCurrentNote(int notechannel);
 	/** @brief make judgement. silent = true will not set JUDGE timer. */
-	void MakeJudge(int judgetype, int playside, bool silent = false);
+	void MakeJudge(int judgetype, int channel, bool silent = false);
 public:
 	Player(int type = PLAYERTYPE::NORMAL);
 

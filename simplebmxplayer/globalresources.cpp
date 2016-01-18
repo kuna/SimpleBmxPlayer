@@ -47,6 +47,7 @@ double* DoublePool::Set(const RString &key, double value) {
 }
 
 double* DoublePool::Get(const RString &key) {
+	// if no timer exists, then create on as unknown State
 	if (!IsExists(key))
 		return 0;
 	return &_doublepool[key];
@@ -103,6 +104,17 @@ void TimerPool::Stop(const RString &key) {
 	_timerpool[key].Stop();
 }
 
+Timer* TimerPool::Get(const RString &key) {
+	// don't make null string timer
+	if (!key.size())
+		return 0;
+	// if no timer exists, then create on as unknown State
+	if (!IsExists(key)) {
+		_timerpool.insert(std::pair<RString, Timer>(key, Timer(TIMERSTATUS::UNKNOWN)));
+	}
+	return &_timerpool[key];
+}
+
 bool HandlerPool::IsExists(const RString &key) {
 	return _handlerpool.find(key) != _handlerpool.end();
 }
@@ -134,12 +146,6 @@ bool HandlerPool::Remove(const RString &key, _Handler h) {
 }
 
 void HandlerPool::Clear() { _handlerpool.clear(); }
-
-Timer* TimerPool::Get(const RString &key) {
-	if (!IsExists(key))
-		return 0;
-	return &_timerpool[key];
-}
 
 ImagePool::~ImagePool() { ReleaseAll(); }
 

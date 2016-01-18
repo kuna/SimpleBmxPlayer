@@ -16,23 +16,16 @@ namespace GameTimer {
 //
 // original source from http://lazyfoo.net
 //
-Timer::Timer()
+Timer::Timer(int status)
 {
 	//Initialize the variables
-	mStartTick = 0;
-	mPausedTick = 0;
-
-	mPaused = false;
-	mStarted = false;
+	mStatus = status;
 }
 
 void Timer::Start()
 {
 	//Start the timer
-	mStarted = true;
-
-	//Unpause the timer
-	mPaused = false;
+	mStatus = TIMERSTATUS::START;
 
 	//Get the current clock time
 	mStartTick = GameTimer::globalTick;
@@ -42,10 +35,7 @@ void Timer::Start()
 void Timer::Stop()
 {
 	//Stop the timer
-	mStarted = false;
-
-	//Unpause the timer
-	mPaused = false;
+	mStatus = TIMERSTATUS::STOP;
 
 	//Clear tick variables
 	mStartTick = 0;
@@ -55,10 +45,10 @@ void Timer::Stop()
 void Timer::Pause()
 {
 	//If the timer is running and isn't already paused
-	if (mStarted && !mPaused)
+	if (mStatus == TIMERSTATUS::START)
 	{
 		//Pause the timer
-		mPaused = true;
+		mStatus = TIMERSTATUS::PAUSE;
 
 		//Calculate the paused ticks
 		mPausedTick = GameTimer::globalTick - mStartTick;
@@ -69,10 +59,10 @@ void Timer::Pause()
 void Timer::UnPause()
 {
 	//If the timer is running and paused
-	if (mStarted && mPaused)
+	if (mStatus = TIMERSTATUS::PAUSE)
 	{
 		//Unpause the timer
-		mPaused = false;
+		mStatus = TIMERSTATUS::START;
 
 		//Reset the starting ticks
 		mStartTick = SDL_GetTicks() - mPausedTick;
@@ -87,35 +77,40 @@ Uint32 Timer::GetTick()
 	//The actual timer time
 	Uint32 time = 0;
 
-	//If the timer is running
-	if (mStarted)
+	//If the timer is paused
+	if (mStatus == TIMERSTATUS::PAUSE)
 	{
-		//If the timer is paused
-		if (mPaused)
-		{
-			//Return the number of ticks when the timer was paused
-			time = mPausedTick;
-		}
-		else
-		{
-			//Return the current time minus the start time
-			time = GameTimer::globalTick - mStartTick;
-		}
+		//Return the number of ticks when the timer was paused
+		time = mPausedTick;
+	}
+	// or if the timer is running
+	else if (mStatus == TIMERSTATUS::START)
+	{
+		//Return the current time minus the start time
+		time = GameTimer::globalTick - mStartTick;
 	}
 
 	return time;
 }
 
+bool Timer::IsUnknown() {
+	return (mStatus == TIMERSTATUS::UNKNOWN);
+}
+
 bool Timer::IsStarted()
 {
 	//Timer is running and paused or unpaused
-	return mStarted;
+	return (mStatus == TIMERSTATUS::START);
 }
 
 bool Timer::IsPaused()
 {
 	//Timer is running and paused
-	return mPaused && mStarted;
+	return (mStatus == TIMERSTATUS::PAUSE);
+}
+
+bool Timer::IsStopped() {
+	return (mStatus == TIMERSTATUS::STOP);
 }
 
 bool Timer::Trigger(bool condition) {

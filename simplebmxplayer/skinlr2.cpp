@@ -357,6 +357,8 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		if (INT(args[9]))
 			src->SetAttribute("cycle", INT(args[9]));
 		int sop1 = 0, sop2 = 0, sop3 = 0;
+		if (INT(args[10]))
+			src->SetAttribute("timer", TranslateTimer(INT(args[10])));
 		if (args[11]) sop1 = INT(args[11]);
 		if (args[12]) sop2 = INT(args[12]);
 		if (args[13]) sop3 = INT(args[13]);

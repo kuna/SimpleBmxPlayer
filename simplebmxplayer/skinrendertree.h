@@ -57,8 +57,10 @@ namespace ACCTYPE {
 
 struct ImageSRC {
 	RString resid;				// id can direct not only image but font.
+	Timer *timer;
 	int x, y, w, h;
 	int divx, divy, cycle;
+	int loop;
 };
 struct ImageDSTFrame {
 	int time;
@@ -331,7 +333,7 @@ public:
 namespace SkinRenderHelper {
 	void AddFrame(ImageDST &d, ImageDSTFrame &f);
 	void ConstructBasicRenderObject(SkinRenderObject *obj, XMLElement *e);
-	SDL_Rect ToRect(ImageSRC &r, int time, int image_width = 0, int image_height = 0);
+	SDL_Rect ToRect(ImageSRC &r);
 	SDL_Rect ToRect(ImageDSTFrame &r);
 	bool CalculateFrame(ImageDST &dst, ImageDSTFrame &frame);
 	ImageDSTFrame Tween(ImageDSTFrame& a, ImageDSTFrame &b, double t, int acctype);

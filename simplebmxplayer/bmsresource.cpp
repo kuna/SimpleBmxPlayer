@@ -28,6 +28,14 @@ namespace BmsResource {
 		return false;
 	}
 
+	bool SoundPool::Stop(BmsWord channel) {
+		if (wav_table[channel.ToInteger()]) {
+			wav_table[channel.ToInteger()]->Stop();
+			return true;
+		}
+		return false;
+	}
+
 	bool SoundPool::Load(BmsWord channel, const RString &path) {
 		if (BMS.GetRegistArraySet()["WAV"].IsNotExists(channel))
 			return false;
@@ -159,6 +167,10 @@ namespace BmsHelper {
 #define FOREACH_CHANNEL
 	void Update(uint32_t time) {
 		/*
+		* BMS related timer/value update
+		*/
+
+		/*
 		* sync bms texture (movie)
 		*/
 		for (int i = 0; i < BmsConst::WORD_MAX_VALUE; i++) {
@@ -179,6 +191,10 @@ namespace BmsHelper {
 		 */
 		for (; currentbar <= newbar; ++currentbar)
 		{
+			// OnBeat
+			if (BmsResource::BMSTIME[currentbar].measure)
+				TIMERPOOL->Set("OnBeat");
+
 			// call event handler for BGA/BGM
 			BmsChannel& bgmchannel		= BmsResource::BMS.GetChannelManager()[BmsWord(1)];
 			BmsChannel& missbgachannel	= BmsResource::BMS.GetChannelManager()[BmsWord(4)];
@@ -243,6 +259,7 @@ namespace BmsHelper {
 	}
 
 	void PlaySound(int channel) {
+		BmsResource::SOUND.Stop(channel);
 		BmsResource::SOUND.Play(channel);
 	}
 

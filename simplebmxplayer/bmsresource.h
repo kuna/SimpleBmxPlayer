@@ -25,6 +25,7 @@ namespace BmsResource {
 		SoundPool();
 		BmsWav* Get(BmsWord channel);
 		bool Play(BmsWord channel);
+		bool Stop(BmsWord channel);
 		bool Load(BmsWord channel, const RString &path);
 		void UnloadAll();
 	};

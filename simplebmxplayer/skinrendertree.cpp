@@ -33,6 +33,11 @@ void RenderCondition::Set(const RString &condition) {
 		else {
 			not[condcnt] = false;
 		}
+		/*
+		 * Create timer although it's not created yet.
+		 * - and stop them all if they're activated.
+		 * This will be better then using Get() method.
+		 */
 		cond[condcnt] = TIMERPOOL->Get(*it);
 		condcnt++;
 	}
@@ -58,8 +63,11 @@ bool RenderCondition::Evaluate() {
 	for (int i = 0; i < condcnt; i++) {
 		// if condition is empty, then attempt to find once more
 		// this causes a lot frame drop, so we do finding only 10 times
-		if (!cond[i] && evaluate_count < 10) cond[i] = TIMERPOOL->Get(key[i]);
-		if (cond[i] == 0 || (not[i] && cond[i]->IsStarted()) || (!not[i] && !cond[i]->IsStarted()))
+		//if (!cond[i] && evaluate_count < 10) cond[i] = TIMERPOOL->Get(key[i]);
+		if (cond[i] == 0
+			|| cond[i]->IsUnknown()
+			|| (not[i] && cond[i]->IsStarted())
+			|| (!not[i] && cond[i]->IsStopped()))
 			return false;
 	}
 	return true;
@@ -260,6 +268,7 @@ void SkinPlayObject::ConstructLane(XMLElement *lane) {
 	src_element = lane->FirstChildElement("SRC_NOTE");
 	if (src_element) {
 		ConstructSRCFromElement(Note[idx].normal, src_element);
+		// TODO: move resid to Lane attribute
 		Note[idx].img = rtree->_imagekey[Note[idx].normal.resid];
 	}
 	src_element = lane->FirstChildElement("SRC_LN_START");
@@ -304,7 +313,7 @@ void SkinPlayObject::SetLineObject(XMLElement *lineobj) {
 
 Uint32 SkinPlayObject::GetLaneHeight() { return h; }
 
-bool SkinPlayObject::IsLaneExists(int laneindex) { return Note[laneindex].normal.w > 0; }
+bool SkinPlayObject::IsLaneExists(int laneindex) { return Note[laneindex].img; }
 
 void SkinPlayObject::RenderLane(int laneindex, double pos, bool mine) { 
 	// TODO: in case of Auto?
@@ -318,7 +327,7 @@ void SkinPlayObject::RenderLane(int laneindex, double pos, bool mine) {
 }
 
 SkinBgaObject::SkinBgaObject(SkinRenderTree *t) : SkinRenderObject(t, OBJTYPE::BGA) {
-	src[0] = { "", 0, 0, -1, -1, 1, 1, 0 };
+	src[0] = { "", 0, 0, 0, -1, -1, 1, 1, 0, 0 };
 	srccnt = 1;
 }
 
@@ -441,6 +450,10 @@ void ConstructSRCFromElement(ImageSRC &src, XMLElement *e) {
 	src.y = e->IntAttribute("y");
 	src.w = e->IntAttribute("w");
 	src.h = e->IntAttribute("h");
+	src.timer = TIMERPOOL->Get("OnScene");
+	const char* timer_name = e->Attribute("timer");
+	if (timer_name)
+		src.timer = TIMERPOOL->Get(timer_name);
 	src.cycle = e->IntAttribute("cycle");
 	src.divx = e->IntAttribute("divx");
 	if (src.divx < 1) src.divx = 1;
@@ -448,6 +461,9 @@ void ConstructSRCFromElement(ImageSRC &src, XMLElement *e) {
 	if (src.divy < 1) src.divy = 1;
 	const char *resid = e->Attribute("resid");
 	if (resid) src.resid = resid;
+	src.loop = 0;
+	if (e->Attribute("loop"))
+		src.loop = e->IntAttribute("loop");
 }
 
 /* private */
@@ -538,6 +554,7 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 			}
 			p->SetJudgelineObject(e->FirstChildElement("JUDGELINE"));
 			p->SetLineObject(e->FirstChildElement("LINE"));
+			// TODO: fetch lane effect, or other lane relative images as child
 			obj = p;
 		}
 		else if (ISNAME(e, "Bga")) {
@@ -609,13 +626,15 @@ void SkinRenderHelper::AddFrame(ImageDST &d, ImageDSTFrame &f) {
 	d.frame.push_back(f);
 }
 
-SDL_Rect SkinRenderHelper::ToRect(ImageSRC &d, int time, int image_width, int image_height) {
+SDL_Rect SkinRenderHelper::ToRect(ImageSRC &d) {
 	// if SRC x, y < 0 then Set width/height with image's total width/height.
-	//if (d.w <= 0) d.w = image_width;
-	//if (d.h <= 0) d.h = image_height;
 	int dx = d.w / d.divx;
 	int dy = d.h / d.divy;
-	int frame = d.cycle ? time / d.cycle : 0;
+	Uint32 time = 0;
+	if (d.timer) time = d.timer->GetTick();
+	int frame = d.cycle ? time * d.divx * d.divy / d.cycle : 0;
+	if (!d.loop && frame >= d.divx * d.divy)
+		frame = d.divx * d.divy - 1;
 	int x = frame % d.divx;
 	int y = (frame / d.divx) % d.divy;
 	return { d.x + x*dx, d.y + y*dy, dx, dy };
@@ -772,10 +791,9 @@ void SkinRenderHelper::Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, i
 		SDL_SetTextureBlendMode(img->GetPtr(), SDL_BlendMode::SDL_BLENDMODE_BLEND);
 	}
 
-	static Timer* basetimer(TIMERPOOL->Get("OnScene"));
 	if (src->w <= 0) src->w = img->GetWidth();
 	if (src->h <= 0) src->h = img->GetHeight();
-	SDL_Rect src_rect = ToRect(*src, basetimer->GetTick());
+	SDL_Rect src_rect = ToRect(*src);
 	SDL_Rect dst_rect = ToRect(*frame);
 
 	SDL_Point rot_center = { 0, 0 };

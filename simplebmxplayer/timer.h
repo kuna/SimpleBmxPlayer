@@ -2,6 +2,13 @@
 
 #include "SDL/SDL_timer.h"
 
+namespace TIMERSTATUS {
+	const int STOP = 0;
+	const int START = 1;
+	const int PAUSE = 2;
+	const int UNKNOWN = 3;
+}
+
 /*
  * General timer
  * - you have to update GameTimer::Tick() to use this class
@@ -11,13 +18,15 @@ class Timer {
 private:
 	Uint32 mStartTick;
 	Uint32 mPausedTick;
-	bool mPaused;
-	bool mStarted;
+	int mStatus;
 public:
-	Timer();
-	void Tick();
+	Timer(int status = TIMERSTATUS::STOP);
 
+	// set timer as unknown state
+	void SetAsUnknown();
+	bool IsStopped();
 	bool IsPaused();
+	bool IsUnknown();
 	bool IsStarted();
 	Uint32 GetTick();
 	void Start();
