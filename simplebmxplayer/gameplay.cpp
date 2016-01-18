@@ -162,34 +162,44 @@ namespace GamePlay {
 		OnScene->Start();
 	}
 
-	void RenderObject(SkinRenderObject *obj) {
-		if (!obj->EvaluateCondition()) return;
-		if (obj->IsGroup()) {
-			// iterate all child
-			SkinGroupObject *group = obj->ToGroup();
+	namespace {
+		/* object rendering part */
+		void RenderObject(SkinRenderObject*);
+		void RenderGroup(SkinGroupObject *group) {
+			// iterate a group
 			group->SetAsRenderTarget();
 			for (auto child = group->begin(); child != group->end(); ++child) {
 				RenderObject(*child);
 			}
 			group->ResetRenderTarget();
 			// if textured object, must call Render method.
-			obj->Render();
+			group->Render();
 		}
-		else if (obj->IsGeneral()) {
-			// let basic renderer do work
-			obj->Render();
-		}
-		/* Ingeneral Objects: need special care! */
-		else if (obj->ToBGA()) {
-			obj->ToBGA()->RenderBGA(BmsResource::IMAGE.Get(1));
-		}
-		else if (obj->ToPlayObject()) {
-			SkinPlayObject* play = obj->ToPlayObject();
-			if (player[0]) player[0]->RenderNote(play);
-			// if player[1] ~~
-		}
-		else {
-			// ignore unknown object
+		void RenderObject(SkinRenderObject *obj) {
+			if (!obj->EvaluateCondition()) return;
+			if (obj->IsGroup()) {
+				// iterate all child
+				RenderGroup(obj->ToGroup());
+			}
+			else if (obj->IsGeneral()) {
+				// let basic renderer do work
+				obj->Render();
+			}
+			/* Ingeneral Objects: need special care! */
+			else if (obj->ToBGA()) {
+				obj->ToBGA()->RenderBGA(BmsResource::IMAGE.Get(1));
+			}
+			else if (obj->ToPlayObject()) {
+				SkinPlayObject* play = obj->ToPlayObject();
+				RenderGroup(play);								// draw other objects first
+				if (player[0]) player[0]->RenderNote(play);		// and draw note/judgeline/line ...
+				// TODO: judgeline is also drawed in RenderGroup
+				// TODD: method - SetJudgelineThickness()
+				// if player[1] ~~
+			}
+			else {
+				// ignore unknown object
+			}
 		}
 	}
 

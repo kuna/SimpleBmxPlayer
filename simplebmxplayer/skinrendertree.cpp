@@ -12,6 +12,20 @@ using namespace tinyxml2;
 // redefinition;
 void ConstructSRCFromElement(ImageSRC &, XMLElement *);
 void ConstructDSTFromElement(ImageDST &, XMLElement *);
+namespace SkinRenderHelper {
+	struct _Offset {
+		int x, y;
+	};
+	std::vector<_Offset> _offset_stack;
+	_Offset _offset_calculated = { 0, 0 };
+	void RecalculateOffset() {
+		_offset_calculated = { 0, 0 };
+		for (auto it = _offset_stack.begin(); it != _offset_stack.end(); ++it) {
+			_offset_calculated.x += it->x;
+			_offset_calculated.y += it->y;
+		}
+	}
+}
 
 // ------ SkinRenderCondition ----------------------
 
@@ -190,10 +204,10 @@ SkinUnknownObject::SkinUnknownObject(SkinRenderTree* owner) : SkinRenderObject(o
 SkinGroupObject::SkinGroupObject(SkinRenderTree* owner, bool createTex)
 	: SkinRenderObject(owner, OBJTYPE::GROUP) 
 {
+	group_w = rtree->GetWidth();
+	group_h = rtree->GetHeight();
 	if (createTex) {
-		t = SDL_CreateTexture(Game::RENDERER, 
-			SDL_PIXELFORMAT_RGBA8888, 
-			SDL_TEXTUREACCESS_TARGET, 100, 100);
+		t = rtree->GenerateTexture();
 	}
 	else {
 		t = NULL;
@@ -244,15 +258,16 @@ void SkinGroupObject::Render() {
 			}
 		}
 		ImageDSTFrame frame;
-		if (!_dst || !SkinRenderHelper::CalculateFrame(*_dst, frame)) {
-			SkinRenderHelper::PushRenderOffset(0, 0);
-		}
-		else {
-			SkinRenderHelper::PushRenderOffset(frame.x, frame.y);
-		}
+		if (!_dst || !SkinRenderHelper::CalculateFrame(*_dst, frame))
+			return;
+		SDL_Rect src = {
+			SkinRenderHelper::_offset_calculated.x,
+			SkinRenderHelper::_offset_calculated.y,
+			group_w, group_h,
+		};
 		SDL_Rect r;
 		SkinRenderHelper::ToRect(frame);
-		SDL_RenderCopy(Game::RENDERER, t, &r, &r);
+		SDL_RenderCopy(Game::RENDERER, t, &src, &r);
 	}
 }
 
@@ -265,6 +280,17 @@ SkinGroupObject::~SkinGroupObject() {
 
 void SkinGroupObject::AddChild(SkinRenderObject *obj) {
 	_childs.push_back(obj);
+}
+
+void SkinGroupObject::SetGroupSize(int w, int h) {
+	group_w = w;
+	group_h = h;
+	if (group_w <= 0) {
+		group_w = rtree->GetWidth();
+	}
+	if (group_h <= 0) {
+		group_h = rtree->GetHeight();
+	}
 }
 
 std::vector<SkinRenderObject*>::iterator
@@ -376,12 +402,14 @@ void SkinPlayObject::ConstructLane(XMLElement *lane) {
 }
 
 void SkinPlayObject::SetJudgelineObject(XMLElement *judgelineobj) {
+	if (!judgelineobj) return;
 	if (!imgobj_judgeline) 
 		imgobj_judgeline = rtree->NewImageObject();
 	SkinRenderHelper::ConstructBasicRenderObject(imgobj_judgeline, judgelineobj);
 }
 
 void SkinPlayObject::SetLineObject(XMLElement *lineobj) {
+	if (!lineobj) return;
 	if (!imgobj_line)
 		imgobj_line = rtree->NewImageObject();
 	SkinRenderHelper::ConstructBasicRenderObject(imgobj_line, lineobj);
@@ -481,6 +509,16 @@ void SkinRenderTree::ReleaseAllResources() {
 		IMAGEPOOL->Release(it->second);
 	_imagekey.clear();
 }
+
+SDL_Texture* SkinRenderTree::GenerateTexture() {
+	return SDL_CreateTexture(Game::RENDERER,
+		SDL_PIXELFORMAT_RGBA8888,
+		SDL_TEXTUREACCESS_TARGET, _scr_w, _scr_h);
+}
+
+int SkinRenderTree::GetWidth() { return _scr_w; }
+
+int SkinRenderTree::GetHeight() { return _scr_h; }
 
 SkinUnknownObject* SkinRenderTree::NewUnknownObject() {
 	SkinUnknownObject* obj = new SkinUnknownObject(this);
@@ -595,13 +633,14 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 			 * (TODO)
 			 */
 		}
-		if (ISNAME(e, "If")) {
+		else if (ISNAME(e, "If")) {
 			SkinGroupObject *g = rtree.NewGroupObject();
 			ConstructTreeFromElement(rtree, g, e->FirstChildElement());
 			obj = g;
 		}
-		if (ISNAME(e, "Group")) {
+		else if (ISNAME(e, "Group")) {
 			SkinGroupObject *g = rtree.NewGroupObject(true);
+			g->SetGroupSize(e->IntAttribute("w"), e->IntAttribute("h"));
 			ConstructTreeFromElement(rtree, g, e->FirstChildElement());
 			obj = g;
 		}
@@ -638,6 +677,8 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 			p->SetJudgelineObject(e->FirstChildElement("JUDGELINE"));
 			p->SetLineObject(e->FirstChildElement("LINE"));
 			// TODO: fetch lane effect, or other lane relative images as child
+			ConstructTreeFromElement(rtree, p, e->FirstChildElement());
+
 			obj = p;
 		}
 		else if (ISNAME(e, "Bga")) {
@@ -843,21 +884,6 @@ ImageDSTFrame SkinRenderHelper::Tween(ImageDSTFrame &a, ImageDSTFrame &b, double
 		};
 #undef TWEEN
 		break;
-	}
-}
-
-namespace SkinRenderHelper {
-	struct _Offset {
-		int x, y;
-	};
-	std::vector<_Offset> _offset_stack;
-	_Offset _offset_calculated = { 0, 0 };
-	void RecalculateOffset() {
-		_offset_calculated = { 0, 0 };
-		for (auto it = _offset_stack.begin(); it != _offset_stack.end(); ++it) {
-			_offset_calculated.x += it->x;
-			_offset_calculated.y += it->y;
-		}
 	}
 }
 

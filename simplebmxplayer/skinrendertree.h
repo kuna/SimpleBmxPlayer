@@ -160,6 +160,7 @@ private:
 	std::vector<SkinRenderObject*> _childs;
 	/** @brief canvas. if 0, then only pushs offset for drawing childs. */
 	SDL_Texture *t, *_org;
+	int group_w, group_h;
 public:
 	SkinGroupObject(SkinRenderTree* owner, bool createTexture = false);
 	~SkinGroupObject();
@@ -167,9 +168,12 @@ public:
 	std::vector<SkinRenderObject*>::iterator begin();
 	std::vector<SkinRenderObject*>::iterator end();
 	virtual void Render();
-	/** @brief  */
+	/** @brief reset coordination from group object */
 	void SetAsRenderTarget();
+	/** @brief reset coordination from group object */
 	void ResetRenderTarget();
+	/** @brief cropping group size */
+	void SetGroupSize(int w, int h);
 };
 
 class SkinImageObject : public SkinRenderObject {
@@ -327,6 +331,9 @@ public:
 	void SetSkinSize(int skinwidth, int skinheight);
 	/** @brief only releases all rendering object */
 	void ReleaseAll();
+	int GetWidth();
+	int GetHeight();
+	SDL_Texture* GenerateTexture();
 
 	SkinUnknownObject* NewUnknownObject();
 	SkinGroupObject* NewGroupObject(bool clipping = false);
