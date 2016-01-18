@@ -46,6 +46,8 @@ bool _LR2SkinParser::ParseLR2Skin(const char *filepath, Skin *s) {
 	s->skinlayout.LinkEndChild(option);
 	s->skinlayout.LinkEndChild(resource);
 	s->skinlayout.LinkEndChild(skin);
+	info->SetAttribute("width", 1280);
+	info->SetAttribute("height", 760);
 
 	// load skin line
 	// because lr2skin file format has no end tag, 
@@ -530,7 +532,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 				(timer >= 100 && timer < 110) ||
 				(timer >= 120 && timer < 130)) {
 				// P1
-				XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", 1, &s->skinlayout);
+				XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", 0, &s->skinlayout);
 				MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
 				playarea->LinkEndChild(obj);
 			}
@@ -539,7 +541,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 				(timer >= 110 && timer < 120) ||
 				(timer >= 130 && timer < 140)) {
 				// P2
-				XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", 2, &s->skinlayout);
+				XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", 1, &s->skinlayout);
 				MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
 				playarea->LinkEndChild(obj);
 			}
@@ -767,10 +769,20 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line) {
 		// find DST object to set Lane attribute
 		for (int _l = line + 1; _l < line_total; _l++) {
 			if (line_args[_l][0] && strcmp(line_args[_l][0], "#DST_JUDGELINE") == 0 && INT(line_args[_l][1]) == objectid) {
-				playarea->SetAttribute("x", INT(line_args[_l][3]));
-				playarea->SetAttribute("y", 0);
-				playarea->SetAttribute("w", INT(line_args[_l][5]));
-				playarea->SetAttribute("h", INT(line_args[_l][4]));
+				int x = INT(line_args[_l][3]);
+				int y = 0;
+				int w = INT(line_args[_l][5]);
+				int h = INT(line_args[_l][4]);
+				playarea->SetAttribute("x", x);
+				playarea->SetAttribute("y", y);
+				playarea->SetAttribute("w", w);
+				playarea->SetAttribute("h", h);
+				XMLElement *dst = FindElement(playarea, "DST", &s->skinlayout);
+				XMLElement *frame = FindElement(dst, "Frame", &s->skinlayout);
+				frame->SetAttribute("x", x);
+				frame->SetAttribute("y", y);
+				frame->SetAttribute("w", w);
+				frame->SetAttribute("h", h);
 				break;
 			}
 		}

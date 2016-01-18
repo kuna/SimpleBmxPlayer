@@ -183,13 +183,13 @@ namespace BmsHelper {
 		 * if bar has no update, then exit
 		 */
 		Uint32 newbar = BmsResource::BMSTIME.GetBarIndexFromTime(time / 1000.0);
-		if (currentbar == newbar) return;
 
 		/*
 		 * check for background keysound & background image
 		 * If there's bar change, then it'll check for keysound
 		 */
-		for (; currentbar <= newbar; ++currentbar)
+		if (currentbar == newbar) return;
+		for (; currentbar <= newbar; currentbar++)
 		{
 			// OnBeat
 			if (BmsResource::BMSTIME[currentbar].measure)
@@ -273,5 +273,21 @@ namespace BmsHelper {
 
 	double GetCurrentTimeFromBar(int bar) {
 		return BmsResource::BMSTIME[bar].time;
+	}
+
+	Image* GetMainBGA() {
+		return currentbga.mainbga != 0 ? BmsResource::IMAGE.Get(currentbga.mainbga) : 0;
+	}
+
+	Image *GetMissBGA() {
+		return BmsResource::IMAGE.Get(currentbga.missbga);
+	}
+
+	Image *GetLayer1BGA() {
+		return currentbga.layer1bga != 0 ? BmsResource::IMAGE.Get(currentbga.layer1bga) : 0;
+	}
+
+	Image *GetLayer2BGA() {
+		return currentbga.layer2bga != 0 ? BmsResource::IMAGE.Get(currentbga.layer2bga) : 0;
 	}
 }

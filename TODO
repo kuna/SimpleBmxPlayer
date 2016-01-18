@@ -15,6 +15,9 @@ o 쓰레드 도입.
   - 비트맵폰트: 속성에 cycle 넣고 animate 가능하게 만듬.
 - 키 인풋, 마우스 collision 확인.
 - 리프트/서든 작업.
+o Lane에 DST 없애기 -> 직접 속성으로 바꿔서 처리 더 수월하게 하기.
+- PlayArea를 group처럼 하기 -> Texture 생성하도록 만들기 (잘 생각해보자. update도 있고 등등 ...)
+o 기본 SRC 타이머는 loop -> 몇개만 loop=0 속성 추가해놓기.
 - Autoplay 및 정상종료.
 <플레이 프로젝트 끝. 다음 프로젝트에서 계속 ...>
 

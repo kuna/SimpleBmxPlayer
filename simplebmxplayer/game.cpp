@@ -216,7 +216,7 @@ namespace Game {
 			wprintf(L"Failed to create window\n");
 			return -1;
 		}
-		RENDERER = SDL_CreateRenderer(WINDOW, -1, SDL_RENDERER_ACCELERATED);
+		RENDERER = SDL_CreateRenderer(WINDOW, -1, SDL_RENDERER_ACCELERATED);// | SDL_RENDERER_PRESENTVSYNC);
 		if (!RENDERER) {
 			wprintf(L"Failed to create Renderer\n");
 			return -1;

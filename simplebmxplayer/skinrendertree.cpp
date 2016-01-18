@@ -394,11 +394,17 @@ void SkinPlayObject::ConstructLane(XMLElement *lane) {
 	if (src_element) ConstructSRCFromElement(AutoNote[idx].ln_end, src_element);
 	src_element = lane->FirstChildElement("SRC_AUTO_MINE");
 	if (src_element) ConstructSRCFromElement(AutoNote[idx].mine, src_element);
-	XMLElement *dst = lane->FirstChildElement("DST");
-	if (dst) {
-		ConstructDSTFromElement(Note[idx].dst, dst);
-		//ConstructDSTFromElement(AutoNote[idx].dst, dst);
-	}
+#define SETFRAME(attr)	Note[idx].f.##attr = lane->IntAttribute(#attr);
+	SETFRAME(x);
+	SETFRAME(y);
+	SETFRAME(w);
+	SETFRAME(h);
+	Note[idx].f.a = 255;
+	Note[idx].f.r = 255;
+	Note[idx].f.g = 255;
+	Note[idx].f.b = 255;
+	Note[idx].f.angle = 0;
+#undef SETFRAME
 }
 
 void SkinPlayObject::SetJudgelineObject(XMLElement *judgelineobj) {
@@ -419,14 +425,34 @@ Uint32 SkinPlayObject::GetLaneHeight() { return h; }
 
 bool SkinPlayObject::IsLaneExists(int laneindex) { return Note[laneindex].img; }
 
-void SkinPlayObject::RenderLane(int laneindex, double pos, bool mine) { 
-	// TODO: in case of Auto?
+void SkinPlayObject::RenderLane(int laneindex, double pos, bool mine) {
 	if (IsLaneExists(laneindex)) {
-		ImageDSTFrame frame;
-		if (!SkinRenderHelper::CalculateFrame(Note[laneindex].dst, frame))
+		ImageDSTFrame lane;
+		if (!SkinRenderHelper::CalculateFrame(dst[0], lane))
 			return;
+		ImageDSTFrame frame = Note[laneindex].f;
+		frame.x += lane.x;
 		frame.y -= h * pos;
 		SkinRenderHelper::Render(Note[laneindex].img, &Note[laneindex].normal, &frame);
+	}
+}
+
+void SkinPlayObject::RenderLane(int laneindex, double pos_start, double pos_end) {
+	if (IsLaneExists(laneindex)) {
+		ImageDSTFrame lane;
+		if (!SkinRenderHelper::CalculateFrame(dst[0], lane))
+			return;
+		ImageDSTFrame frame = Note[laneindex].f;
+		frame.x += lane.x;
+		ImageDSTFrame bodyframe = frame;
+		ImageDSTFrame endframe = frame;
+		frame.y -= h * pos_start;
+		endframe.y -= h * pos_end;
+		bodyframe.y = endframe.y + endframe.h;
+		bodyframe.h = frame.y - endframe.y - endframe.h;
+		SkinRenderHelper::Render(Note[laneindex].img, &Note[laneindex].ln_body, &bodyframe);
+		SkinRenderHelper::Render(Note[laneindex].img, &Note[laneindex].ln_end, &endframe);
+		SkinRenderHelper::Render(Note[laneindex].img, &Note[laneindex].ln_start, &frame);
 	}
 }
 
@@ -577,7 +603,7 @@ void ConstructSRCFromElement(ImageSRC &src, XMLElement *e) {
 	if (src.divy < 1) src.divy = 1;
 	const char *resid = e->Attribute("resid");
 	if (resid) src.resid = resid;
-	src.loop = 0;
+	src.loop = 1;
 	if (e->Attribute("loop"))
 		src.loop = e->IntAttribute("loop");
 }

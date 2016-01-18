@@ -187,11 +187,16 @@ namespace GamePlay {
 			}
 			/* Ingeneral Objects: need special care! */
 			else if (obj->ToBGA()) {
-				obj->ToBGA()->RenderBGA(BmsResource::IMAGE.Get(1));
+				obj->ToBGA()->RenderBGA(BmsHelper::GetMissBGA());
+				obj->ToBGA()->RenderBGA(BmsHelper::GetLayer1BGA());
+				obj->ToBGA()->RenderBGA(BmsHelper::GetLayer2BGA());
+				obj->ToBGA()->RenderBGA(BmsHelper::GetMainBGA());
 			}
 			else if (obj->ToPlayObject()) {
 				SkinPlayObject* play = obj->ToPlayObject();
 				RenderGroup(play);								// draw other objects first
+				//play->RenderLane(1, 0.2, 0.4);
+
 				if (player[0]) player[0]->RenderNote(play);		// and draw note/judgeline/line ...
 				// TODO: judgeline is also drawed in RenderGroup
 				// TODD: method - SetJudgelineThickness()
@@ -221,135 +226,12 @@ namespace GamePlay {
 		 * Player update
 		 */
 		if (player[0]) player[0]->Update();
-		if (player[1]) player[1]->Update();
+		//if (player[1]) player[1]->Update();
 
 		/*
 		 * draw interface (make a render tree recursion)
 		 */
 		RenderObject(rtree);
-
-		/*
-		 * draw basic skin elements
-		 * - we'll going to comment it until Lua part is finished.
-		 */
-	#if 0
-		for (auto it = playskin.begin(); it != playskin.end(); ++it) {
-			(*it).GetRenderData(renderdata);
-			if (!renderdata.img)
-				continue;
-			src.x = renderdata.src.x;
-			src.y = renderdata.src.y;
-			src.w = renderdata.src.w;
-			src.h = renderdata.src.h;
-			dest.x = renderdata.dst.x;
-			dest.y = renderdata.dst.y;
-			dest.w = renderdata.dst.w;
-			dest.h = renderdata.dst.h;
-			switch (renderdata.blend) {
-			case 0:
-				SDL_SetTextureBlendMode(renderdata.img->GetPtr(), SDL_BLENDMODE_NONE);
-				break;
-			case 1:
-				SDL_SetTextureBlendMode(renderdata.img->GetPtr(), SDL_BLENDMODE_BLEND);
-				break;
-			case 2:
-				SDL_SetTextureBlendMode(renderdata.img->GetPtr(), SDL_BLENDMODE_ADD);
-				break;
-			case 3:
-				break;
-			case 4:
-				SDL_SetTextureBlendMode(renderdata.img->GetPtr(), SDL_BLENDMODE_MOD);
-				break;
-			}
-			//SDL_SetTextureAlphaMod(renderdata.img->GetPtr(), 120);
-			SDL_RenderCopy(Game::GetRenderer(), renderdata.img->GetPtr(), &src, &dest);
-		}
-	#endif
-
-		/*
-		 * we're currently working with skin parsing,
-		 * so we'll going to block under these codes currently (related with playing)
-		 */
-	#if 0
-
-		/*
-		 * BGA rendering
-		 */
-		SDL_Rect bga_dst;
-		playskin.bga.ToRect(bga_dst);
-		if (bmsresource.IsBMPLoaded(bgavalue.ToInteger()))
-			SDL_RenderCopy(Game::GetRenderer(), bmsresource.GetBMP(bgavalue.ToInteger())->GetPtr(), 0, &bga_dst);
-
-		/*
-		 * note rendering
-		 */
-		for (int pidx = 0; pidx < 2; pidx++) {
-			// only for prepared player
-			if (player[pidx].IsFinished())
-				continue;
-			// set player time(play sound) and ...
-			player[pidx].SetTime(gametimer.GetTick());
-			// get note pos
-			double notepos = player[pidx].GetCurrentPos();
-			// render notes
-			int lnstartpos[20];
-			bool lnstart[20];
-			BmsTimeManager& bmstime = player[pidx].GetBmsTimeManager();
-			BmsNoteContainer& bmsnote = player[pidx].GetBmsNotes();
-			for (int i = 0; i < 20; i++) {
-				// init lnstart
-				dest.x = skin_note[i].dst.x;
-				dest.w = skin_note[i].dst.w;
-				src.x = skin_note[i].src.x;		src.y = skin_note[i].src.y;
-				src.w = skin_note[i].src.w;		src.h = skin_note[i].src.h;
-				src_lnbody.x = skin_lnbody[i].src.x;		src_lnbody.y = skin_lnbody[i].src.y;
-				src_lnbody.w = skin_lnbody[i].src.w;		src_lnbody.h = 1;
-				src_lnstart.x = skin_lnstart[i].src.x;		src_lnstart.y = skin_lnstart[i].src.y;
-				src_lnstart.w = skin_lnstart[i].src.w;		src_lnstart.h = skin_lnstart[i].src.h;
-				src_lnend.x = skin_lnend[i].src.x;		src_lnend.y = skin_lnend[i].src.y;
-				src_lnend.w = skin_lnend[i].src.w;		src_lnend.h = skin_lnend[i].src.h;
-				lnstartpos[i] = laneheight + lanestart;
-				lnstart[i] = false;
-				for (int nidx = player[pidx].GetCurrentNoteBar(i);
-					nidx >= 0 && nidx < bmstime.GetSize();
-					nidx = player[pidx].GetAvailableNoteIndex(i, nidx + 1)) {
-					double ypos = laneheight - (bmstime[nidx].absbeat - notepos) * speed_multiply + lanestart;
-					switch (bmsnote[i][nidx].type){
-					case BmsNote::NOTE_NORMAL:
-						dest.y = ypos;		dest.h = skin_note[i].dst.h;
-						SDL_RenderCopy(Game::GetRenderer(), skin_note[i].img->GetPtr(), &src, &dest);
-						break;
-					case BmsNote::NOTE_LNSTART:
-						lnstartpos[i] = ypos;
-						lnstart[i] = true;
-						break;
-					case BmsNote::NOTE_LNEND:
-						dest.y = ypos + skin_lnstart[i].dst.h;		dest.h = lnstartpos[i] - ypos - skin_lnstart[i].dst.h;
-						SDL_RenderCopy(Game::GetRenderer(), skin_lnbody[i].img->GetPtr(), &src_lnbody, &dest);
-						dest.y = lnstartpos[i];						dest.h = skin_lnstart[i].dst.h;
-						SDL_RenderCopy(Game::GetRenderer(), skin_lnstart[i].img->GetPtr(), &src_lnstart, &dest);
-						dest.y = ypos;								dest.h = skin_lnend[i].dst.h;
-						SDL_RenderCopy(Game::GetRenderer(), skin_lnend[i].img->GetPtr(), &src_lnend, &dest);
-						lnstart[i] = false;
-						break;
-					}
-					// off the screen -> exit loop
-					if (ypos < -lanestart)
-						break;
-				}
-				// if LN_end hasn't found
-				// then draw it to end of the screen
-				if (lnstart[i]) {
-					dest.y = lanestart + skin_lnstart[i].dst.h;		dest.h = lnstartpos[i] - 0 - skin_lnstart[i].dst.h;
-					SDL_RenderCopy(Game::GetRenderer(), skin_lnbody[i].img->GetPtr(), &src_lnbody, &dest);
-					dest.y = lnstartpos[i] + lanestart;				dest.h = skin_lnstart[i].dst.h;
-					SDL_RenderCopy(Game::GetRenderer(), skin_lnstart[i].img->GetPtr(), &src_lnstart, &dest);
-					dest.y = lanestart;								dest.h = skin_lnend[i].dst.h;
-					SDL_RenderCopy(Game::GetRenderer(), skin_lnend[i].img->GetPtr(), &src_lnend, &dest);
-				}
-			}
-		}
-	#endif
 	}
 
 	void Release() {

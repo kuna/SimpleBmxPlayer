@@ -141,6 +141,10 @@ public:
 
 	bool IsGroup();
 	bool IsGeneral();
+
+	//ImageDSTFrame CalculateDSTFrame();
+	//SDL_Rect CalculateSRCRect();
+
 	SkinUnknownObject* ToUnknown();
 	SkinGroupObject* ToGroup();
 	SkinImageObject* ToImage();
@@ -271,7 +275,7 @@ private:
 		ImageSRC ln_body;
 		ImageSRC ln_start;
 		ImageSRC mine;
-		ImageDST dst;
+		ImageDSTFrame f;
 		Image* img;			// COMMENT: do we need to have multiple image?
 	};
 	SkinImageObject *imgobj_judgeline;
@@ -288,6 +292,8 @@ public:
 	Uint32 GetLaneHeight();
 	/** @brief check is this object is suitable for drawing lane. use for performance optimization */
 	bool IsLaneExists(int laneindex);
+	/** @brief Updates information of Rendering information */
+	void Update();
 	/** @brief `pos = 1` means note on the top of the lane */
 	void RenderLane(int laneindex, double pos, bool mine = false);
 	/** @brief for longnote. */

@@ -527,24 +527,32 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		if (OBJTYPE_IS("IMAGE")) {
 			// nothing to do (general object)
 			// but it's not in some special OP/Timer code
-			if ((timer >= 50 && timer < 60) ||
-				(timer >= 70 && timer < 80) ||
-				(timer >= 100 && timer < 110) ||
-				(timer >= 120 && timer < 130)) {
-				// P1
-				XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", 0, &s->skinlayout);
-				MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
-				playarea->LinkEndChild(obj);
+			// - include BOMB/LANE effect into PLAYLANE object
+			// (we may want to include BOMB/OnBeat, but it's programs's limit. Can't do it now.)
+			// (do it yourself)
+			if (!(src->IntAttribute("w") < 100 && src->IntAttribute("h") < 100)) {
+				if (//(timer >= 50 && timer < 60) ||
+					(timer >= 70 && timer < 80) ||
+					(timer >= 100 && timer < 110) ||
+					(timer >= 120 && timer < 130)) {
+					// P1
+					XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", 0, &s->skinlayout);
+					MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
+					playarea->LinkEndChild(obj);
+				}
+				else if (//(timer >= 60 && timer < 70) ||
+					(timer >= 80 && timer < 90) ||
+					(timer >= 110 && timer < 120) ||
+					(timer >= 130 && timer < 140)) {
+					// P2
+					XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", 1, &s->skinlayout);
+					MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
+					playarea->LinkEndChild(obj);
+				}
 			}
-			else if ((timer >= 60 && timer < 70) ||
-				(timer >= 80 && timer < 90) ||
-				(timer >= 110 && timer < 120) ||
-				(timer >= 130 && timer < 140)) {
-				// P2
-				XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", 1, &s->skinlayout);
-				MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
-				playarea->LinkEndChild(obj);
-			}
+			// however, BOMB SRC effect(SRC loop) MUST TURN OFF
+			if ((timer >= 50 && timer < 60) || (timer >= 60 && timer < 70))
+				obj->FirstChildElement("SRC")->SetAttribute("loop", 0);
 		}
 		else if (OBJTYPE_IS("BGA")) {
 			// change tag to BGA and remove SRC tag
@@ -653,13 +661,10 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		int objectid = INT(args[1]);
 		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
 		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
-		XMLElement *dst = FindElement(lane, "DST", &s->skinlayout);
-		XMLElement *frame = FindElement(dst, "Frame", &s->skinlayout);
-		frame->SetAttribute("time", 0);
-		frame->SetAttribute("x", INT(args[3]));
-		frame->SetAttribute("y", INT(args[4]));
-		frame->SetAttribute("w", INT(args[5]));
-		frame->SetAttribute("h", INT(args[6]));
+		lane->SetAttribute("x", INT(args[3]) - playarea->IntAttribute("x"));
+		lane->SetAttribute("y", INT(args[4]) - playarea->IntAttribute("y"));
+		lane->SetAttribute("w", INT(args[5]));
+		lane->SetAttribute("h", INT(args[6]));
 	}
 	/*
 	 * etc
@@ -712,7 +717,7 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line) {
 		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
 		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
 		// add src to here
-		src->SetName("SRC_LN_END");
+		src->SetName("SRC_LN_START");
 		lane->LinkEndChild(src);
 		return line + 1;
 	}
@@ -778,7 +783,7 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line) {
 				playarea->SetAttribute("w", w);
 				playarea->SetAttribute("h", h);
 				XMLElement *dst = FindElement(playarea, "DST", &s->skinlayout);
-				XMLElement *frame = FindElement(playarea, "Frame", &s->skinlayout);
+				XMLElement *frame = FindElement(dst, "Frame", &s->skinlayout);
 				frame->SetAttribute("x", x);
 				frame->SetAttribute("y", y);
 				frame->SetAttribute("w", w);

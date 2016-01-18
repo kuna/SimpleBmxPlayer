@@ -356,15 +356,40 @@ void Player::SetPlayerSetting(const PlayerSetting& setting) {
 
 void Player::RenderNote(SkinPlayObject *playobj) {
 	double currentpos = BmsHelper::GetCurrentPosFromTime(bmstimer->GetTick() / 1000.0);
+	// TODO: draw LINE/JUDGELINE
+
 	// in lane, 0 == SC
+	// we have to check lane to ~ 20, actually.
+	// COMMENT: maybe we have to convert lane number into channel number?
+	double lnpos[20] = { 0, };
+	bool lnstart[20] = { false, };
 	for (int lane = 0; lane <= 7; lane++) {
 		int channel = lane_to_channel[lane];
 		int currentnotebar = GetCurrentNoteBar(channel);
 		while (currentnotebar >= 0) {
 			double pos = BmsHelper::GetCurrentPosFromBar(currentnotebar) - currentpos;
+			switch (bmsnote[channel][currentnotebar].type) {
+			case BmsNote::NOTE_NORMAL:
+				playobj->RenderLane(lane, pos);
+				break;
+			case BmsNote::NOTE_LNSTART:
+				lnpos[channel] = pos;
+				lnstart[channel] = true;
+				break;
+			case BmsNote::NOTE_LNEND:
+				if (!lnstart[channel]) {
+					playobj->RenderLane(lane, 0, pos);
+				}
+				playobj->RenderLane(lane, lnpos[channel], pos);
+				lnstart[channel] = false;
+				break;
+			}
 			if (pos > 1) break;
-			playobj->RenderLane(lane, pos);
 			currentnotebar = GetAvailableNoteIndex(channel, currentnotebar+1);
+		}
+		// draw last ln
+		if (lnstart[channel]) {
+			playobj->RenderLane(lane, lnpos[channel], 2.0);
 		}
 	}
 }
