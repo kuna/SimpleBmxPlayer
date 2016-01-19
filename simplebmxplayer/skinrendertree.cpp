@@ -94,6 +94,7 @@ bool RenderCondition::Evaluate() {
 
 // ------ Skin General rendering Objects -----------------
 
+#pragma region SKINRENDEROBJECT
 SkinRenderObject::SkinRenderObject(SkinRenderTree* owner, int type)
 	: rtree(owner), dstcnt(0), tag(0), 
 	clickable(false), focusable(false), invertcondition(false), objtype(type) { }
@@ -177,7 +178,6 @@ SkinPlayObject* SkinRenderObject::ToPlayObject() {
 		return 0;
 }
 
-#pragma region SKINRENDEROBJECT
 // do nothing
 void SkinRenderObject::Render() {  }
 
@@ -798,7 +798,7 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 			if (e->Attribute("value")) {
 				SkinTextObject *text = rtree.NewTextObject();
 				text->SetValue(STRPOOL->Get(e->Attribute("value")));
-				text->SetFont(FONTPOOL->Get("_system"));
+				text->SetFont(FONTPOOL->GetByID("_system"));
 				obj = text;
 			}
 		}
@@ -806,7 +806,7 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 			if (e->Attribute("value")) {
 				SkinNumberObject *num = rtree.NewNumberObject();
 				num->SetValue(INTPOOL->Get(e->Attribute("value")));
-				num->SetFont(FONTPOOL->Get("_system"));
+				num->SetFont(FONTPOOL->GetByID("_system"));
 				obj = num;
 			}
 		}

@@ -96,7 +96,8 @@ public:
 	~FontPool();
 	void ReleaseAll();
 
-	bool IsExists(const RString &path);
+	bool IsExists(const RString &id);
+	bool IsIDExists(const RString &id);
 	Font* LoadTTFFont(const RString &path, int size, SDL_Color color, int thickness = 0,
 		SDL_Color bordercolor = FC_MakeColor(0, 0, 0, 255), int border = 1,
 		int style = TTF_STYLE_NORMAL, const char* texturepath = 0);
@@ -106,6 +107,7 @@ public:
 	Font* LoadTextureFont(const RString &path);
 	Font* LoadTextureFontFromTextData(const RString &id, const RString &textdata);
 	Font* Get(const RString &path);
+	Font* GetByID(const RString &id);
 	bool Release(Font *f);
 };
 

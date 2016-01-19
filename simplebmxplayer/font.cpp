@@ -61,7 +61,7 @@ int Font::GetWidth(const char* text) {
 
 void Font::Render(const char* text, int x, int y) {
 	if (ttffont) {
-		FC_Draw(ttffont, Game::RENDERER, 0, 0, text);
+		FC_Draw(ttffont, Game::RENDERER, x, y, text);
 	}
 	else if (texturefont) {
 		texturefont->Render(text, x, y);

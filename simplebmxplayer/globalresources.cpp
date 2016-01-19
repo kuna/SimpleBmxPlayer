@@ -27,8 +27,10 @@ RString* StringPool::Set(const RString &key, const RString &value) {
 }
 
 RString* StringPool::Get(const RString &key) {
-	if (!IsExists(key))
-		return 0;
+	// create one if not exists
+	if (!IsExists(key)) {
+		Set(key);
+	}
 	return &_stringpool[key];
 }
 
@@ -75,8 +77,10 @@ int* IntPool::Set(const RString &key, int value) {
 }
 
 int* IntPool::Get(const RString &key) {
-	if (!IsExists(key))
-		return 0;
+	// create one if not exists
+	if (!IsExists(key)) {
+		Set(key, 0);
+	}
 	return &_intpool[key];
 }
 
@@ -276,7 +280,11 @@ bool FontPool::Release(Font *f) {
 bool FontPool::IsExists(const RString &path) {
 	RString _path = path;
 	FileHelper::ConvertPathToAbsolute(_path);
-	return (_fontpool.find(_path) != _fontpool.end());
+	return IsIDExists(_path);
+}
+
+bool FontPool::IsIDExists(const RString &id) {
+	return (_fontpool.find(id) != _fontpool.end());
 }
 
 Font* FontPool::LoadTTFFont(const RString &path, 
@@ -303,7 +311,7 @@ Font* FontPool::LoadTTFFont(const RString& id, const RString &path,
 		}
 		f->LoadTTFFont(_path, size, color, border, bordercolor, style, thickness, texturepath);
 		if (f->IsLoaded()) {
-			_fontpool.insert(pair<RString, Font*>(_path, f));
+			_fontpool.insert(pair<RString, Font*>(id, f));
 			_loadcount.insert(pair<Font*, int>(f, 1));
 			return f;
 		}
@@ -322,8 +330,12 @@ Font* FontPool::LoadTTFFont(const RString& id, const RString &path,
 Font* FontPool::Get(const RString &path) {
 	RString _path = path;
 	FileHelper::ConvertPathToAbsolute(_path);
-	if (IsExists(_path)) {
-		return _fontpool[_path];
+	return GetByID(_path);
+}
+
+Font* FontPool::GetByID(const RString &id) {
+	if (IsIDExists(id)) {
+		return _fontpool[id];
 	}
 	else {
 		return 0;
