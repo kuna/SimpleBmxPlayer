@@ -347,7 +347,15 @@ void SkinImageObject::Render() {
 SkinTextObject::SkinTextObject(SkinRenderTree* owner)
 	: SkinRenderObject(owner, OBJTYPE::TEXT), fnt(0), v(0), align(0), editable(false) {}
 
-void SkinTextObject::SetFont(Font* f) { fnt = f; }
+void SkinTextObject::SetFont(const char* resid) { 
+	if (!resid || rtree->_fontkey.find(resid) == rtree->_fontkey.end()) {
+		// use system font (fallback)
+		fnt = FONTPOOL->GetByID("_system");
+	}
+	else {
+		fnt = rtree->_fontkey[resid];
+	}
+}
 
 void SkinTextObject::SetValue(RString* s) { v = s; }
 
@@ -355,7 +363,7 @@ void SkinTextObject::SetEditable(bool editable) { this->editable = editable; }
 
 void SkinTextObject::SetAlign(int align) { this->align = align; }
 
-void SkinTextObject::Render() { if (v) RenderText(*v); }
+void SkinTextObject::Render() { if (v && drawable) RenderText(*v); }
 
 void SkinTextObject::RenderText(const char* s) {
 	if (fnt) {
@@ -373,7 +381,7 @@ SkinNumberObject::SkinNumberObject(SkinRenderTree* owner)
 
 void SkinNumberObject::SetValue(int *i) { v = i; }
 
-void SkinNumberObject::Render() { if (v) RenderInt(*v); }
+void SkinNumberObject::Render() { if (v && drawable) RenderInt(*v); }
 
 void SkinNumberObject::RenderInt(int n) {
 	char buf[20];
@@ -823,7 +831,7 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 			if (e->Attribute("value")) {
 				SkinTextObject *text = rtree.NewTextObject();
 				text->SetValue(STRPOOL->Get(e->Attribute("value")));
-				text->SetFont(FONTPOOL->GetByID("_system"));
+				text->SetFont(e->Attribute("resid"));
 				obj = text;
 			}
 		}
@@ -831,7 +839,7 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 			if (e->Attribute("value")) {
 				SkinNumberObject *num = rtree.NewNumberObject();
 				num->SetValue(INTPOOL->Get(e->Attribute("value")));
-				num->SetFont(FONTPOOL->GetByID("_system"));
+				num->SetFont(e->Attribute("resid"));
 				obj = num;
 			}
 		}

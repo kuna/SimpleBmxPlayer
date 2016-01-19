@@ -83,8 +83,6 @@ TextureFont::~TextureFont() { Release(); }
 void TextureFont::Release() {
 	// in fact, it doesn't release anything
 	// but reduce image texture count reference
-	// TODO
-	//for (int i = 0; i)
 	for (int i = 0; i < imgs_cnt; i++) {
 		IMAGEPOOL->Release(imgs[i]);
 	}
@@ -180,8 +178,12 @@ void TextureFont::Render(const RString& text, int x, int y) {
 		SkinTextureFont::Glyph* g = GetGlyph(glyphcode);
 		if (!g) continue;
 		SDL_Rect src = { g->x, g->y, g->w, g->h };
-		SDL_Rect dst = { x, y, x + g->w, y + g->h };
-		SDL_RenderCopy(Game::RENDERER, imgs[g->image]->GetPtr(), &src, &dst);
+		SDL_Rect dst = { leftpos, y, g->w, g->h };
+		SDL_Texture *t = imgs[g->image]->GetPtr();
+		SDL_SetTextureBlendMode(t, SDL_BlendMode::SDL_BLENDMODE_BLEND);
+		SDL_SetTextureColorMod(t, 255, 255, 255);
+		SDL_RenderCopy(Game::RENDERER, t, &src, &dst);
 		leftpos += g->w;
+		p++;
 	}
 }

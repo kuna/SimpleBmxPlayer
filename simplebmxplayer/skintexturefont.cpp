@@ -93,8 +93,8 @@ void SkinTextureFont::LoadFromText(const char *text) {
 	}
 	delete buf;
 }
-std::string SkinTextureFont::GetImagePath(int imgno) {
-	return imagepath[imgno];
+const char* SkinTextureFont::GetImagePath(int imgno) {
+	return imagepath[imgno].c_str();
 }
 int SkinTextureFont::GetImageCount() {
 	return imgcnt;

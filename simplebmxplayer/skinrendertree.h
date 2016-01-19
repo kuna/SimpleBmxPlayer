@@ -211,7 +211,7 @@ private:
 	RString *v;
 public:
 	SkinTextObject(SkinRenderTree* owner);
-	void SetFont(Font* f);
+	void SetFont(const char* resid);
 	void SetEditable(bool editable);
 	void SetAlign(int align);
 	void SetValue(RString* s);
@@ -370,7 +370,7 @@ public:
 	void ReleaseAll();
 	int GetWidth();
 	int GetHeight();
-	SDL_Texture* GenerateTexture();
+	SDL_Texture* GenerateTexture();		// TODO move it to group class
 	SkinRenderObject* GetElementById(RString &id);
 
 	SkinUnknownObject* NewUnknownObject();
