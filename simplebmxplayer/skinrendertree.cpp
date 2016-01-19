@@ -367,9 +367,18 @@ void SkinTextObject::Render() { if (v && drawable) RenderText(*v); }
 
 void SkinTextObject::RenderText(const char* s) {
 	if (fnt) {
-		// TODO: make width stretch
+		// check align
+		int left_offset = 0;
+		switch (align) {
+		case 1:		// center
+			left_offset = (dst_cached.frame.w - fnt->GetWidth(s)) / 2;
+			break;
+		case 2:		// right
+			left_offset = dst_cached.frame.w - fnt->GetWidth(s);
+			break;
+		}
 		fnt->Render(s, 
-			SkinRenderHelper::_offset_calculated.x + dst_cached.frame.x, 
+			left_offset + SkinRenderHelper::_offset_calculated.x + dst_cached.frame.x, 
 			SkinRenderHelper::_offset_calculated.y + dst_cached.frame.y);
 	}
 }
@@ -381,11 +390,53 @@ SkinNumberObject::SkinNumberObject(SkinRenderTree* owner)
 
 void SkinNumberObject::SetValue(int *i) { v = i; }
 
+void SkinNumberObject::SetLength(int length) { this->length = length; }
+
+void SkinNumberObject::Set24Mode(bool b) { mode24 = b; }
+
 void SkinNumberObject::Render() { if (v && drawable) RenderInt(*v); }
 
 void SkinNumberObject::RenderInt(int n) {
 	char buf[20];
-	itoa(n, buf, 10);
+	if (!length) {
+		itoa(n, buf, 10);
+	}
+	else {
+		buf[length] = 0;
+		for (int i = length - 1; i >= 0; i--) {
+			if (n == 0 && i < length - 1) {
+				buf[i] = '*';
+			}
+			else {
+				buf[i] = '0' + n % 10;
+			}
+			n /= 10;
+		}
+	}
+	if (mode24) {
+		if (n < 0) {
+			char t1[] = "0123456789";
+			char t2[] = "ABCDEFGHIJ";
+			for (int i = 0; i < strlen(buf); i++) {
+				for (int j = 0; j < strlen(t1); j++) {
+					if (buf[i] == t1[j]) {
+						buf[i] = t2[j];
+						break;
+					}
+				}
+			}
+			for (int i = strlen(buf); i >= 0; i--) {
+				buf[i + 1] = buf[i];
+			}
+			buf[0] = '-';
+		}
+		else {
+			for (int i = strlen(buf); i >= 0; i--) {
+				buf[i + 1] = buf[i];
+			}
+			buf[0] = '+';
+		}
+	}
 	RenderText(buf);
 }
 
@@ -831,6 +882,7 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 			if (e->Attribute("value")) {
 				SkinTextObject *text = rtree.NewTextObject();
 				text->SetValue(STRPOOL->Get(e->Attribute("value")));
+				text->SetAlign(e->IntAttribute("align"));
 				text->SetFont(e->Attribute("resid"));
 				obj = text;
 			}
@@ -839,6 +891,9 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 			if (e->Attribute("value")) {
 				SkinNumberObject *num = rtree.NewNumberObject();
 				num->SetValue(INTPOOL->Get(e->Attribute("value")));
+				num->SetAlign(e->IntAttribute("align"));
+				num->SetLength(e->IntAttribute("length"));
+				num->Set24Mode(e->IntAttribute("24mode"));
 				num->SetFont(e->Attribute("resid"));
 				obj = num;
 			}

@@ -29,6 +29,7 @@ private:
 	int imgcnt;
 	int cycle;
 	std::map<uint32_t, Glyphs> glyphs;	// stores glyph (up to 4 bytes; UTF32)
+	int fallback_width;					// when no glyph(even '?') found, use this as empty space
 
 	void AddGlyph(Glyphs& glyphs, uint8_t imageidx, uint16_t x, uint16_t y, uint16_t w, uint16_t h);
 public:
@@ -37,6 +38,8 @@ public:
 	void AddImageSrc(const std::string& imagepath);
 	void AddGlyph(uint32_t unicode, uint8_t imageidx, uint16_t x, uint16_t y, uint16_t w, uint16_t h);
 	void SetCycle(int cycle);
+	void SetFallbackWidth(int w);
+	int GetFallbackWidth();
 	const char* GetImagePath(int imgno);
 	int GetImageCount();
 

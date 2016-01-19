@@ -166,6 +166,8 @@ int TextureFont::GetWidth(const RString& text) {
 	while ((glyphcode = GetCodepointFromUTF8String(&p, 1)) > 0) {
 		SkinTextureFont::Glyph* g = GetGlyph(glyphcode);
 		if (g) r += g->w;
+		else r += stf.GetFallbackWidth();
+		p++;
 	}
 	return r;
 }
@@ -176,14 +178,13 @@ void TextureFont::Render(const RString& text, int x, int y) {
 	uint32_t glyphcode;
 	while ((glyphcode = GetCodepointFromUTF8String(&p, 1)) > 0) {
 		SkinTextureFont::Glyph* g = GetGlyph(glyphcode);
-		if (!g) continue;
-		SDL_Rect src = { g->x, g->y, g->w, g->h };
-		SDL_Rect dst = { leftpos, y, g->w, g->h };
-		SDL_Texture *t = imgs[g->image]->GetPtr();
-		SDL_SetTextureBlendMode(t, SDL_BlendMode::SDL_BLENDMODE_BLEND);
-		SDL_SetTextureColorMod(t, 255, 255, 255);
-		SDL_RenderCopy(Game::RENDERER, t, &src, &dst);
-		leftpos += g->w;
+		if (g) {
+			SDL_Rect src = { g->x, g->y, g->w, g->h };
+			SDL_Rect dst = { leftpos, y, g->w, g->h };
+			SDL_Texture *t = imgs[g->image]->GetPtr();
+			SDL_RenderCopy(Game::RENDERER, t, &src, &dst);
+			leftpos += g->w;
+		} else leftpos += stf.GetFallbackWidth();
 		p++;
 	}
 }

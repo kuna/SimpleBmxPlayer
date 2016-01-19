@@ -579,6 +579,16 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			*/
 			if (TranslateNumber(sop1))
 				obj->SetAttribute("value", TranslateNumber(sop1));
+			/*
+			 * LR2's NUMBER alignment is a bit strange ...
+			 * why is it different from string's alignment ... fix it
+			 */
+			if (sop2 == 2)
+				sop2 = 1;
+			else if (sop2 == 1)
+				sop2 = 2;
+			else if (sop2 == 0)
+				sop2 = 0;
 			obj->SetAttribute("align", sop2);
 			/*
 			* if type == 11 or 24, then set length
@@ -587,7 +597,16 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			* plus and minus - with proper condition.)
 			*/
 			if (sop3)
-				dst->SetAttribute("length", sop3);
+				obj->SetAttribute("length", sop3);
+
+			// remove some attrs
+			obj->DeleteAttribute("x");
+			obj->DeleteAttribute("y");
+			obj->DeleteAttribute("w");
+			obj->DeleteAttribute("h");
+			obj->DeleteAttribute("divx");
+			obj->DeleteAttribute("divy");
+			obj->DeleteAttribute("cycle");
 		}
 		else if (OBJTYPE_IS("SLIDER")) {
 			// change tag to slider and add attr
@@ -1021,11 +1040,12 @@ int _LR2SkinParser::GenerateTexturefontString(XMLElement *obj) {
 
 	// get image file path from resource
 	XMLElement *resource = s->skinlayout.FirstChildElement("Resource");
-	XMLElement *img = FindElementWithAttribute(resource, "Image", "name", obj->Attribute("name"));
+	XMLElement *img = FindElementWithAttribute(resource, "Image", "name", obj->Attribute("resid"));
 	// create font data
 	SkinTextureFont tfont;
 	tfont.AddImageSrc(img->Attribute("path"));
 	tfont.SetCycle(obj->IntAttribute("cycle"));
+	tfont.SetFallbackWidth(dw);
 	char glyphs[] = "0123456789*+ABCDEFGHIJ#-";
 	for (int r = 0; r < repcnt; r++) {
 		for (int i = 0; i < fonttype; i++) {
@@ -2476,7 +2496,7 @@ const char* _LR2SkinParser::TranslateNumber(int code) {
 		strcpy(translated, "GhostTotalRate");	// estimated value
 	}
 	else if (code == 136) {
-		strcpy(translated, "(GhostTotalRate * 100) / 100");
+		strcpy(translated, "GhostTotalRate_decimal");
 	}
 	/*
 	 * 150 ~ 158: TODO (useless?)
@@ -2542,7 +2562,7 @@ const char* _LR2SkinParser::TranslateNumber(int code) {
 		strcpy(translated, "ResultRate");
 	}
 	else if (code == 184) {
-		strcpy(translated, "(ResultRate * 100) / 100");
+		strcpy(translated, "ResultRate_decimal");
 	}
 	/* ignore IR Beta3: 200 ~ 250 */
 	/* rival (in select menu) */
@@ -2556,7 +2576,7 @@ const char* _LR2SkinParser::TranslateNumber(int code) {
 		strcpy(translated, "RivalRate");
 	}
 	else if (code == 273) {
-		strcpy(translated, "(RivalRate * 100) % 100");
+		strcpy(translated, "RivalRate_decimal");
 	}
 	else if (code == 274) {
 		strcpy(translated, "RivalCombo");

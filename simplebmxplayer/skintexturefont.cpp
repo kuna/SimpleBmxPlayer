@@ -10,6 +10,7 @@ void SkinTextureFont::Clear() {
 	glyphs.clear();
 	imgcnt = 0;
 	cycle = 0;
+	fallback_width = 0;
 }
 
 void SkinTextureFont::AddImageSrc(const std::string& imagepath) {
@@ -61,7 +62,7 @@ void SkinTextureFont::LoadFromText(const char *text) {
 	char *np;
 	while ((np = strchr(p, '\n')) != 0) {
 		*np = 0;
-		if (strcmp(p, "[resource]") == 0)
+		if (strcmp(p, "[info]") == 0)
 			mode = 0;
 		else if (strcmp(p, "[glyphs]") == 0)
 			mode = 1;
@@ -72,7 +73,9 @@ void SkinTextureFont::LoadFromText(const char *text) {
 			else if (sscanf(p, "image%d=%s", &args[0], arg_str) == 2)
 				imagepath[args[0]] = arg_str;
 			else if (sscanf(p, "cycle=%d", &args[0]) == 1)
-				SetCycle(args[0]);
+				cycle = args[0];
+			else if (sscanf(p, "fallback_width=%d", &args[0]) == 1)
+				fallback_width = args[0];
 		}
 		else if (mode == 1) {
 			if (sscanf(p, "%d=%s", &args[0], _buffer) == 2) {
@@ -99,6 +102,8 @@ const char* SkinTextureFont::GetImagePath(int imgno) {
 int SkinTextureFont::GetImageCount() {
 	return imgcnt;
 }
+void SkinTextureFont::SetFallbackWidth(int w) { fallback_width = w; }
+int SkinTextureFont::GetFallbackWidth() { return fallback_width; }
 bool SkinTextureFont::SaveToFile(const char* filepath) {
 	FILE *f = fopen(filepath, "w");
 	if (!f)
@@ -112,12 +117,14 @@ bool SkinTextureFont::SaveToFile(const char* filepath) {
 }
 void SkinTextureFont::SaveToText(std::string& out) {
 	std::ostringstream ss;
-	ss << "[resource]\n";
+	ss << "[info]\n";
 	for (int i = 0; i < imgcnt; i++) {
 		ss << "image" << i << "=" << imagepath[i];
 		ss << "\n";
 	}
 	ss << "imagecnt=" << imgcnt << "\n";
+	if (fallback_width > 0)
+		ss << "fallback_width=" << fallback_width << "\n";
 
 	ss << "[glyphs]\n";
 	for (auto it = glyphs.begin(); it != glyphs.end(); ++it) {

@@ -140,6 +140,7 @@ namespace GamePlay {
 		SWITCH_OFF("IsAutoPlay");
 		SWITCH_ON("IsBGA");
 		SWITCH_ON("IsExtraMode");
+		SWITCH_ON("OnDiffInsane");
 		//SWITCH_ON("Is1PSuddenChange");
 		//SWITCH_ON("981");
 		DOUBLEPOOL->Set("TargetExScore", 0.5);

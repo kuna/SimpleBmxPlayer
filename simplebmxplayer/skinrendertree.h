@@ -221,11 +221,16 @@ public:
 
 class SkinNumberObject : public SkinTextObject {
 private:
+	bool mode24;
+	int length;
 	int *v;
 public:
 	SkinNumberObject(SkinRenderTree* owner);
 	void SetValue(int *i);
+	void SetLength(int length);
+	void Set24Mode(bool b);
 	virtual void Render();
+	/** @brief make string for rendering and call SkinTextObject::RenderText() */
 	void RenderInt(int n);
 };
 
