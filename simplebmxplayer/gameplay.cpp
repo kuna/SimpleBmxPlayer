@@ -137,9 +137,10 @@ namespace GamePlay {
 		GameTimer::Tick();
 		SWITCH_ON("OnDiffAnother");
 		SWITCH_ON("IsScoreGraph");
-		SWITCH_ON("IsAutoPlay");
+		SWITCH_OFF("IsAutoPlay");
 		SWITCH_ON("IsBGA");
 		//SWITCH_ON("Is1PSuddenChange");
+		//SWITCH_ON("951");
 		OnScene->Stop();
 		OnSongLoadingEnd->Stop();
 		OnReady->Stop();
@@ -156,7 +157,7 @@ namespace GamePlay {
 		player[0]->Prepare(0);
 
 		/*
-		 * must call at the end
+		 * must call at the end of the scene preparation
 		 */
 		OnSongLoading->Start();
 		OnScene->Start();

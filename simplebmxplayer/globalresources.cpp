@@ -43,6 +43,9 @@ double* DoublePool::Set(const RString &key, double value) {
 	if (!IsExists(key)) {
 		_doublepool.insert(std::pair<RString, double>(key, value));
 	}
+	else {
+		_doublepool[key] = value;
+	}
 	return &_doublepool[key];
 }
 
@@ -65,6 +68,9 @@ int* IntPool::Set(const RString &key, int value) {
 	if (!IsExists(key)) {
 		_intpool.insert(std::pair<RString, int>(key, value));
 	}
+	else {
+		_intpool[key] = value;
+	}
 	return &_intpool[key];
 }
 
@@ -85,6 +91,8 @@ Timer* TimerPool::Set(const RString &key, bool activate) {
 		Timer t;
 		if (activate)
 			t.Start();
+		else
+			t.Stop();
 		_timerpool.insert(std::pair<RString, Timer>(key, t));
 	}
 	else {

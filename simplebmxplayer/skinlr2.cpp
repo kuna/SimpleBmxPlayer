@@ -179,8 +179,19 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	if (!cur_e)
 		return line + 1;
 	if (CMD_IS("#ELSE")) {
-		// we tend to ignore #ELSE clause ... (nothing we can process about it)
-		cur_e = 0;
+		// #ELSE: find last #IF clause, and copy condition totally.
+		// not perfect, but maybe we can make a deal :)
+		XMLElement *prev_if = cur_e->LastChildElement("If");
+		if (prev_if) {
+			XMLElement *group = s->skinlayout.NewElement("Ifnot");
+			group->SetAttribute("condition", prev_if->Attribute("condition"));
+			cur_e->LinkEndChild(group);
+			cur_e = group;
+		}
+		else {
+			// we tend to ignore #ELSE clause ... it's wrong.
+			cur_e = 0;
+		}
 		return line + 1;
 	}
 	else if (CMD_IS("#IF") || CMD_IS("#ELSEIF")) {
@@ -602,7 +613,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			obj->SetAttribute("edit", args[5]);
 		}
 		else if (OBJTYPE_IS("BARGRAPH")) {
-			obj->SetName("BarGraph");
+			obj->SetName("Graph");
 			if (TranslateGraph(sop1))
 				obj->SetAttribute("value", TranslateGraph(sop1));
 			obj->SetAttribute("direction", sop2);
@@ -845,7 +856,7 @@ int _LR2SkinParser::ProcessSelectBar(XMLElement *obj, int line) {
 	int objectid = INT(args[1]);
 
 	// select menu part
-	if (CMD_STARTSWITH("#SRC_BAR", 8)) {
+	if (!OBJTYPE_IS("BARGRAPH") && CMD_STARTSWITH("#SRC_BAR", 8)) {
 		XMLElement *selectmenu = FindElement(cur_e, "SelectMenu", &s->skinlayout);
 		if (OBJTYPE_IS("BAR_BODY")) {
 			// only register SRC object
@@ -2123,6 +2134,9 @@ const char* _LR2SkinParser::TranslateSlider(int code) {
 	}
 	else if (code == 5) {
 		strcpy(translated, "Sudden2P");
+	}
+	else if (code == 6) {
+		strcpy(translated, "PlayProgress");
 	}
 	// Lift isn't supported in LR2
 	/* else (skin scroll, FX, etc ...) are all depreciated, so ignore. */

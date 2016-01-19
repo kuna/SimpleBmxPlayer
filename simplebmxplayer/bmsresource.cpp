@@ -169,6 +169,7 @@ namespace BmsHelper {
 		/*
 		* BMS related timer/value update
 		*/
+		DOUBLEPOOL->Set("PlayProgress", time / 1000.0 / BmsResource::BMSTIME.GetEndTime());
 
 		/*
 		* sync bms texture (movie)

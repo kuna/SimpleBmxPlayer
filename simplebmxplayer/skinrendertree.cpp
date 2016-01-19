@@ -52,7 +52,7 @@ void RenderCondition::Set(const RString &condition) {
 		 * - and stop them all if they're activated.
 		 * This will be better then using Get() method.
 		 */
-		cond[condcnt] = TIMERPOOL->Get(*it);
+		cond[condcnt] = TIMERPOOL->Get(key[condcnt]);
 		condcnt++;
 	}
 }
@@ -81,8 +81,9 @@ bool RenderCondition::Evaluate() {
 		if (cond[i] == 0
 			|| cond[i]->IsUnknown()
 			|| (not[i] && cond[i]->IsStarted())
-			|| (!not[i] && cond[i]->IsStopped()))
+			|| (!not[i] && cond[i]->IsStopped())) {
 			return false;
+		}
 	}
 	return true;
 }
@@ -105,8 +106,10 @@ void SkinRenderObject::AddDST(ImageDST &dst, const RString &condition, bool lua)
 	dstcnt++;
 }
 
+void SkinRenderObject::InvertCondition(bool b) { invertcondition = b; }
+
 bool SkinRenderObject::EvaluateCondition() {
-	return condition.Evaluate();
+	return !invertcondition ^ condition.Evaluate();
 }
 
 bool SkinRenderObject::IsGroup() {
@@ -212,10 +215,8 @@ SkinUnknownObject::SkinUnknownObject(SkinRenderTree* owner) : SkinRenderObject(o
 
 #pragma region SKINGROUPOBJECT
 SkinGroupObject::SkinGroupObject(SkinRenderTree* owner, bool createTex)
-	: SkinRenderObject(owner, OBJTYPE::GROUP) 
+	: SkinImageObject(owner, OBJTYPE::GROUP) 
 {
-	group_w = rtree->GetWidth();
-	group_h = rtree->GetHeight();
 	if (createTex) {
 		t = rtree->GenerateTexture();
 	}
@@ -270,13 +271,10 @@ void SkinGroupObject::Render() {
 		ImageDSTFrame frame;
 		if (!_dst || !SkinRenderHelper::CalculateFrame(*_dst, frame))
 			return;
-		SDL_Rect src = {
-			SkinRenderHelper::_offset_calculated.x,
-			SkinRenderHelper::_offset_calculated.y,
-			group_w, group_h,
-		};
-		SDL_Rect r;
-		SkinRenderHelper::ToRect(frame);
+		if (imgsrc.w <= 0) imgsrc.w = rtree->GetWidth();
+		if (imgsrc.h <= 0) imgsrc.h = rtree->GetHeight();
+		SDL_Rect src = SkinRenderHelper::ToRect(imgsrc);
+		SDL_Rect r = SkinRenderHelper::ToRect(frame);
 		SDL_RenderCopy(Game::RENDERER, t, &src, &r);
 	}
 }
@@ -292,17 +290,6 @@ void SkinGroupObject::AddChild(SkinRenderObject *obj) {
 	_childs.push_back(obj);
 }
 
-void SkinGroupObject::SetGroupSize(int w, int h) {
-	group_w = w;
-	group_h = h;
-	if (group_w <= 0) {
-		group_w = rtree->GetWidth();
-	}
-	if (group_h <= 0) {
-		group_h = rtree->GetHeight();
-	}
-}
-
 std::vector<SkinRenderObject*>::iterator
 SkinGroupObject::begin() { return _childs.begin(); }
 
@@ -311,6 +298,7 @@ SkinGroupObject::end() { return _childs.end(); }
 #pragma endregion SKINGROUPOBJECT
 
 SkinImageObject::SkinImageObject(SkinRenderTree* owner, int type) : SkinRenderObject(owner, type) {
+	imgsrc = { 0, 0, 0, 0 };
 	img = 0;
 }
 
@@ -338,18 +326,27 @@ SkinGraphObject::SkinGraphObject(SkinRenderTree* owner) : SkinImageObject(owner,
 
 void SkinGraphObject::SetValue(double *d) { v = d; }
 
+void SkinGraphObject::SetType(int type) { this->type = type;  }
+
+void SkinGraphObject::SetDirection(int direction) { this->direction = direction; }
+
 void SkinGraphObject::Render() {
 	if (drawable && img) {
 		ImageDSTFrame f = dst_cached.frame;
-		f.y *= *v;
+		f.h *= *v;
 		SkinRenderHelper::Render(img, &imgsrc, &f,
 			dst_cached.dst->blend, dst_cached.dst->rotatecenter);
 	}
 }
 
-SkinSliderObject::SkinSliderObject(SkinRenderTree* owner) : SkinImageObject(owner, OBJTYPE::SLIDER) {}
+SkinSliderObject::SkinSliderObject(SkinRenderTree* owner)
+	: SkinImageObject(owner, OBJTYPE::SLIDER), range(0), direction(0) {}
 
 void SkinSliderObject::SetValue(double *d) { v = d; }
+
+void SkinSliderObject::SetRange(int range) { this->range = range; }
+
+void SkinSliderObject::SetDirection(int directio) { this->direction = directio; }
 
 void SkinSliderObject::Render() {
 	if (drawable && img) {
@@ -703,9 +700,15 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 			ConstructTreeFromElement(rtree, g, e->FirstChildElement());
 			obj = g;
 		}
+		else if (ISNAME(e, "Ifnot")) {
+			SkinGroupObject *g = rtree.NewGroupObject();
+			g->InvertCondition(true);
+			ConstructTreeFromElement(rtree, g, e->FirstChildElement());
+			obj = g;
+		}
 		else if (ISNAME(e, "Group")) {
 			SkinGroupObject *g = rtree.NewGroupObject(true);
-			g->SetGroupSize(e->IntAttribute("w"), e->IntAttribute("h"));
+			g->SetSRC(e);
 			ConstructTreeFromElement(rtree, g, e->FirstChildElement());
 			obj = g;
 		}
@@ -719,6 +722,8 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 				SkinSliderObject *slider = rtree.NewSliderObject();
 				slider->SetSRC(e);
 				slider->SetValue(DOUBLEPOOL->Get(e->Attribute("value")));
+				slider->SetRange(e->IntAttribute("range"));
+				slider->SetDirection(e->IntAttribute("direction"));
 				obj = slider;
 			}
 		}

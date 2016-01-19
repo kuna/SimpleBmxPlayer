@@ -130,6 +130,8 @@ protected:
 	bool TestCollsion(int x, int y);
 	bool focusable;
 	bool clickable;
+	bool invertcondition;
+
 	SkinRenderTree* rtree;
 public:
 	SkinRenderObject(SkinRenderTree* owner, int type = OBJTYPE::NONE);
@@ -141,6 +143,8 @@ public:
 	/* @brief draw object to screen with it's own basic style */
 	virtual void Render();
 	bool EvaluateCondition();
+	/** @brief should we have to invert condition? maybe useful for IFNOT clause. */
+	void InvertCondition(bool b);
 
 	/** @brief tests collsion and if true then do own work & return true. otherwise false. */
 	virtual bool Click(int x, int y);
@@ -163,13 +167,23 @@ public:
 	SkinUnknownObject(SkinRenderTree* owner);
 };
 
-class SkinGroupObject : public SkinRenderObject {
+class SkinImageObject : public SkinRenderObject {
+protected:
+	ImageSRC imgsrc;
+	Image *img;
+public:
+	SkinImageObject(SkinRenderTree* owner, int type = OBJTYPE::IMAGE);
+	void SetSRC(XMLElement *e);
+	void SetImage(Image *img);
+	virtual void Render();
+};
+
+class SkinGroupObject : public SkinImageObject {
 private:
 	/** @brief base elements */
 	std::vector<SkinRenderObject*> _childs;
 	/** @brief canvas. if 0, then only pushs offset for drawing childs. */
 	SDL_Texture *t, *_org;
-	int group_w, group_h;
 public:
 	SkinGroupObject(SkinRenderTree* owner, bool createTexture = false);
 	~SkinGroupObject();
@@ -181,19 +195,6 @@ public:
 	void SetAsRenderTarget();
 	/** @brief reset coordination from group object */
 	void ResetRenderTarget();
-	/** @brief cropping group size */
-	void SetGroupSize(int w, int h);
-};
-
-class SkinImageObject : public SkinRenderObject {
-protected:
-	ImageSRC imgsrc;
-	Image *img;
-public:
-	SkinImageObject(SkinRenderTree* owner, int type = OBJTYPE::IMAGE);
-	void SetSRC(XMLElement *e);
-	void SetImage(Image *img);
-	virtual void Render();
 };
 
 class SkinNumberObject : public SkinRenderObject {
