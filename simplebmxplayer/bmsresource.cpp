@@ -171,7 +171,14 @@ namespace BmsHelper {
 		/*
 		* BMS related timer/value update
 		*/
+		int remaintime = BmsResource::BMSTIME.GetEndTime() * 1000 - time;
+		if (remaintime < 0) remaintime = 0;
 		DOUBLEPOOL->Set("PlayProgress", time / 1000.0 / BmsResource::BMSTIME.GetEndTime());
+		INTPOOL->Set("PlayBPM", BmsResource::BMSTIME[currentbar].bpm);
+		INTPOOL->Set("PlayMinute", time / 1000 / 60);
+		INTPOOL->Set("PlaySecond", time / 1000 % 60);
+		INTPOOL->Set("PlayRemainMinute", remaintime / 1000 / 60);
+		INTPOOL->Set("PlayRemainSecond", remaintime / 1000 % 60);
 
 		/*
 		* sync bms texture (movie)

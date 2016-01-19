@@ -192,7 +192,10 @@ namespace GamePlay {
 				// let basic renderer do work
 				obj->Render();
 			}
-			/* Ingeneral Objects: need special care! */
+			/*
+			 * Under these are Ingeneral Objects: 
+			 * need special care! 
+			 */
 			else if (obj->ToBGA()) {
 				obj->ToBGA()->RenderBGA(BmsHelper::GetMissBGA());
 				obj->ToBGA()->RenderBGA(BmsHelper::GetLayer1BGA());

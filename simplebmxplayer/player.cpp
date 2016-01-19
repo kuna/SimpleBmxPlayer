@@ -20,15 +20,17 @@ namespace {
 	};
 }
 
+#pragma region GRADE
 Grade::Grade() : Grade(0) {}
 Grade::Grade(int notecnt) : notecnt(notecnt), combo(0), maxcombo(0) {
 	memset(grade, 0, sizeof(grade));
 }
-int Grade::CalculateScore() {
+int Grade::CalculateEXScore() {
 	return grade[JUDGETYPE::JUDGE_PGREAT] * 2 + grade[JUDGETYPE::JUDGE_GREAT];
 }
+int Grade::CalculateScore() { return CalculateRate() * 200000; }
 double Grade::CalculateRate() {
-	return (double)CalculateScore() / notecnt / 2;
+	return (double)CalculateEXScore() / notecnt / 2;
 }
 int Grade::CalculateGrade() {
 	double rate = CalculateRate();
@@ -59,6 +61,9 @@ void Grade::AddGrade(const int type) {
 		combo = 0;
 	}
 }
+int Grade::GetMaxCombo() { return maxcombo; }
+int Grade::GetCombo() { return combo; }
+#pragma endregion GRADE
 
 // ------- Player ----------------------------------------
 
@@ -92,6 +97,7 @@ Player::Player(int type) {
 	exscore_graph = DOUBLEPOOL->Get("ExScore");
 	highscore_graph = DOUBLEPOOL->Get("HighScore");
 	playscore = INTPOOL->Get("PlayScore");
+	playexscore = INTPOOL->Get("PlayExScore");
 	playmaxcombo = INTPOOL->Get("PlayMaxCombo");
 	playtotalnotes = INTPOOL->Get("PlayTotalNotes");
 	playgrooveguage = INTPOOL->Get("PlayGrooveGuage");
@@ -298,6 +304,9 @@ void Player::MakeJudge(int judgetype, int channel, bool silent) {
 	// update graph/number
 	*exscore_graph = grade.CalculateRate();
 	*highscore_graph = grade.CalculateRate();
+	*playscore = grade.CalculateScore();
+	*playexscore = grade.CalculateEXScore();
+	*playmaxcombo = grade.GetMaxCombo();
 	if (!silent) {
 		// TODO set timer
 		switch (judgetype) {

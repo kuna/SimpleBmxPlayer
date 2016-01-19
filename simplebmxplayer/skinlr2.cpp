@@ -415,12 +415,13 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 
 		int looptime = 0, blend = 0, timer = 0, rotatecenter = -1, acc = 0;
 		int op1 = 0, op2 = 0, op3 = 0;
-		int nl;
 		XMLElement *dst = s->skinlayout.NewElement("DST");
 		obj->LinkEndChild(dst);
-		for (nl = line + 1; nl < line_total; nl++) {
+		for (int nl = line + 1; nl < line_total; nl++) {
 			args = line_args[nl];
 			if (!args[0]) continue;
+			if (CMD_IS("#ENDIF"))
+				continue;			// we can ignore #ENDIF command, maybe
 			if (!CMD_STARTSWITH("#DST_", 5))
 				break;
 			// if it's very first line (parse basic element)
@@ -667,7 +668,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		}
 
 		// return new line
-		return nl;
+		return line+1;
 	}
 	/*
 	 * SELECT part 
@@ -2411,7 +2412,7 @@ const char* _LR2SkinParser::TranslateNumber(int code) {
 		strcpy(translated, "PlayRate");
 	}
 	else if (code == 103) {
-		strcpy(translated, "(PlayRate * 100) % 100");
+		strcpy(translated, "PlayRate_decimal");
 	}
 	else if (code == 104) {
 		strcpy(translated, "PlayCombo");

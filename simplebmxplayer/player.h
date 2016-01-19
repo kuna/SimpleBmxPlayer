@@ -52,10 +52,15 @@ private:
 public:
 	Grade(int notecnt);
 	Grade();
+	int CalculateEXScore();
 	int CalculateScore();
 	double CalculateRate();
 	int CalculateGrade();
 	void AddGrade(const int type);
+
+	// getter/setter
+	int GetMaxCombo();
+	int GetCombo();
 };
 
 /*
@@ -124,6 +129,7 @@ protected:
 	double*				exscore_graph;
 	double*				highscore_graph;
 	int*				playscore;
+	int*				playexscore;
 	int*				playmaxcombo;
 	int*				playtotalnotes;
 	int*				playgrooveguage;
