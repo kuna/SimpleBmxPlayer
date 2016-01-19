@@ -47,9 +47,10 @@ double* DoublePool::Set(const RString &key, double value) {
 }
 
 double* DoublePool::Get(const RString &key) {
-	// if no timer exists, then create on as unknown State
-	if (!IsExists(key))
-		return 0;
+	// if no timer exists, then create as 0
+	if (!IsExists(key)) {
+		return Set(key, 0);
+	}
 	return &_doublepool[key];
 }
 

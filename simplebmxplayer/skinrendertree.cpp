@@ -90,20 +90,10 @@ bool RenderCondition::Evaluate() {
 // ------ Skin General rendering Objects -----------------
 
 SkinRenderObject::SkinRenderObject(SkinRenderTree* owner, int type):
-rtree(owner), srccnt(0), dstcnt(0), tag(0), clickable(false), focusable(false), objtype(type) { }
+rtree(owner), dstcnt(0), tag(0), clickable(false), focusable(false), objtype(type) { }
 
 void SkinRenderObject::Clear() {
-	srccnt = 0;
 	dstcnt = 0;
-}
-
-void SkinRenderObject::AddSRC(ImageSRC &src, const RString &condition, bool lua) {
-	this->src[srccnt] = src;
-	if (!lua)
-		this->src_condition[srccnt].Set(condition);
-	else
-		this->src_condition[srccnt].SetLuacondition(condition);
-	srccnt++;
 }
 
 void SkinRenderObject::AddDST(ImageDST &dst, const RString &condition, bool lua) {
@@ -179,8 +169,26 @@ SkinPlayObject* SkinRenderObject::ToPlayObject() {
 // do nothing
 void SkinRenderObject::Render() {  }
 
+void SkinRenderObject::Update() {
+	// fill DST
+	dst_cached.dst = 0;
+	for (int j = 0; j < dstcnt; j++) {
+		if (dst_condition[j].Evaluate()) {
+			dst_cached.dst = &dst[j];
+			break;
+		}
+	}
+	if (dst_cached.dst) {
+		drawable = SkinRenderHelper::CalculateFrame(*dst_cached.dst, dst_cached.frame);
+	}
+	else {
+		drawable = false;
+	}
+}
+
 bool SkinRenderObject::Click(int x, int y) {
-	if (clickable) {
+	// must call after Update()
+	if (drawable && clickable) {
 
 	}
 	else {
@@ -189,7 +197,8 @@ bool SkinRenderObject::Click(int x, int y) {
 }
 
 bool SkinRenderObject::Hover(int x, int y) {
-	if (focusable) {
+	// must call after Update()
+	if (drawable && focusable) {
 
 	}
 	else {
@@ -201,6 +210,7 @@ void SkinRenderObject::SetCondition(const RString &str) { condition.Set(str); }
 
 SkinUnknownObject::SkinUnknownObject(SkinRenderTree* owner) : SkinRenderObject(owner, OBJTYPE::UNKNOWN) {}
 
+#pragma region SKINGROUPOBJECT
 SkinGroupObject::SkinGroupObject(SkinRenderTree* owner, bool createTex)
 	: SkinRenderObject(owner, OBJTYPE::GROUP) 
 {
@@ -298,60 +308,62 @@ SkinGroupObject::begin() { return _childs.begin(); }
 
 std::vector<SkinRenderObject*>::iterator
 SkinGroupObject::end() { return _childs.end(); }
+#pragma endregion SKINGROUPOBJECT
 
-SkinImageObject::SkinImageObject(SkinRenderTree* owner) : SkinRenderObject(owner, OBJTYPE::IMAGE) {
-	memset(img, 0, sizeof(img));
+SkinImageObject::SkinImageObject(SkinRenderTree* owner, int type) : SkinRenderObject(owner, type) {
+	img = 0;
+}
+
+void SkinImageObject::SetImage(Image *img) {
+	this->img = img;
+}
+
+void SkinImageObject::SetSRC(XMLElement *e) {
+	ConstructSRCFromElement(imgsrc, e);
+	if (e->Attribute("resid"))
+		SetImage(rtree->_imagekey[e->Attribute("resid")]);
 }
 
 void SkinImageObject::Render() {
-	/* check for this object's basic render condition */
-	if (!condition.Evaluate()) return;
-
-	Image* _img = 0;
-	ImageSRC *_src = 0;
-	for (int i = 0; i < srccnt; i++) {
-		if (src_condition[i].Evaluate()) {
-			/* if image isn't cached, then find it and cache */
-			if (img[i] == 0) {
-				img[i] = rtree->_imagekey[src[i].resid];
-				if (img[i] == 0) img[i] = (Image*)-1;
-			}
-			if ((int)img[i] == -1) break;		// this image is already failed to search
-			/* now we gotcha proper SRC & img */
-			_img = img[i];
-			_src = &src[i];
-			break;
-		}
-	}
-	/* if we hand't find proper SRC/IMG, don't render */
-	if (_img == 0 || _src == 0) return;
-
-	/* find proper DST */
-	ImageDST* _dst = 0;
-	for (int j = 0; j < dstcnt; j++) {
-		if (dst_condition[j].Evaluate()) {
-			_dst = &dst[j];
-			break;
-		}
-	}
-	/* if timer or dst is invalid, don't render */
-	if (!_dst) return;
-	if (!_dst->timer || !_dst->timer->IsStarted()) return;
-
-	/* now all prepared? then start to draw */
-	ImageDSTFrame _frame;
-	if (SkinRenderHelper::CalculateFrame(*_dst, _frame))
-		SkinRenderHelper::Render(_img, _src, &_frame, _dst->blend, _dst->rotatecenter);
+	if (drawable && img)
+		SkinRenderHelper::Render(img, &imgsrc, &dst_cached.frame, 
+		dst_cached.dst->blend, dst_cached.dst->rotatecenter);
 }
 
 SkinNumberObject::SkinNumberObject(SkinRenderTree* owner) : SkinRenderObject(owner, OBJTYPE::NUMBER) {}
 
 SkinTextObject::SkinTextObject(SkinRenderTree* owner) : SkinRenderObject(owner, OBJTYPE::TEXT) {}
 
-SkinGraphObject::SkinGraphObject(SkinRenderTree* owner) : SkinRenderObject(owner, OBJTYPE::GRAPH) {}
+SkinGraphObject::SkinGraphObject(SkinRenderTree* owner) : SkinImageObject(owner, OBJTYPE::GRAPH) {}
 
-SkinSliderObject::SkinSliderObject(SkinRenderTree* owner) : SkinRenderObject(owner, OBJTYPE::SLIDER) {}
+void SkinGraphObject::SetValue(double *d) { v = d; }
 
+void SkinGraphObject::Render() {
+	if (drawable && img) {
+		ImageDSTFrame f = dst_cached.frame;
+		f.y *= *v;
+		SkinRenderHelper::Render(img, &imgsrc, &f,
+			dst_cached.dst->blend, dst_cached.dst->rotatecenter);
+	}
+}
+
+SkinSliderObject::SkinSliderObject(SkinRenderTree* owner) : SkinImageObject(owner, OBJTYPE::SLIDER) {}
+
+void SkinSliderObject::SetValue(double *d) { v = d; }
+
+void SkinSliderObject::Render() {
+	if (drawable && img) {
+		ImageDSTFrame f = dst_cached.frame;
+		f.y += *v * range;
+		SkinRenderHelper::Render(img, &imgsrc, &f,
+			dst_cached.dst->blend, dst_cached.dst->rotatecenter);
+	}
+
+}
+
+SkinButtonObject::SkinButtonObject(SkinRenderTree* owner) : SkinImageObject(owner, OBJTYPE::BUTTON) {}
+
+#pragma region PLAYOBJECT
 SkinPlayObject::SkinPlayObject(SkinRenderTree* owner) : 
 SkinGroupObject(owner), imgobj_judgeline(0), imgobj_line(0) {
 	objtype = OBJTYPE::PLAYLANE;
@@ -367,11 +379,10 @@ void SkinPlayObject::ConstructLane(XMLElement *lane) {
 		return;
 	}
 	XMLElement *src_element;
+	Note[idx].img = rtree->_imagekey[lane->Attribute("resid")];
 	src_element = lane->FirstChildElement("SRC_NOTE");
 	if (src_element) {
 		ConstructSRCFromElement(Note[idx].normal, src_element);
-		// TODO: move resid to Lane attribute
-		Note[idx].img = rtree->_imagekey[Note[idx].normal.resid];
 	}
 	src_element = lane->FirstChildElement("SRC_LN_START");
 	if (src_element) ConstructSRCFromElement(Note[idx].ln_start, src_element);
@@ -382,9 +393,9 @@ void SkinPlayObject::ConstructLane(XMLElement *lane) {
 	src_element = lane->FirstChildElement("SRC_MINE");
 	if (src_element) ConstructSRCFromElement(Note[idx].mine, src_element);
 	src_element = lane->FirstChildElement("SRC_AUTO_NOTE");
+	Note[idx].img = rtree->_imagekey[lane->Attribute("resid")];
 	if (src_element) {
 		ConstructSRCFromElement(AutoNote[idx].normal, src_element);
-		AutoNote[idx].img = rtree->_imagekey[Note[idx].normal.resid];
 	}
 	src_element = lane->FirstChildElement("SRC_AUTO_LN_START");
 	if (src_element) ConstructSRCFromElement(AutoNote[idx].ln_start, src_element);
@@ -425,7 +436,7 @@ Uint32 SkinPlayObject::GetLaneHeight() { return h; }
 
 bool SkinPlayObject::IsLaneExists(int laneindex) { return Note[laneindex].img; }
 
-void SkinPlayObject::RenderLane(int laneindex, double pos, bool mine) {
+void SkinPlayObject::RenderNote(int laneindex, double pos, bool mine) {
 	if (IsLaneExists(laneindex)) {
 		ImageDSTFrame lane;
 		if (!SkinRenderHelper::CalculateFrame(dst[0], lane))
@@ -437,7 +448,7 @@ void SkinPlayObject::RenderLane(int laneindex, double pos, bool mine) {
 	}
 }
 
-void SkinPlayObject::RenderLane(int laneindex, double pos_start, double pos_end) {
+void SkinPlayObject::RenderNote(int laneindex, double pos_start, double pos_end) {
 	if (IsLaneExists(laneindex)) {
 		ImageDSTFrame lane;
 		if (!SkinRenderHelper::CalculateFrame(dst[0], lane))
@@ -455,19 +466,20 @@ void SkinPlayObject::RenderLane(int laneindex, double pos_start, double pos_end)
 		SkinRenderHelper::Render(Note[laneindex].img, &Note[laneindex].ln_start, &frame);
 	}
 }
+#pragma endregion PLAYOBJECT
 
-SkinBgaObject::SkinBgaObject(SkinRenderTree *t) : SkinRenderObject(t, OBJTYPE::BGA) {
-	src[0] = { "", 0, 0, 0, -1, -1, 1, 1, 0, 0 };
-	srccnt = 1;
-}
+#pragma region BGAOBJECT
+SkinBgaObject::SkinBgaObject(SkinRenderTree *t) : SkinRenderObject(t, OBJTYPE::BGA) {}
 
 void SkinBgaObject::RenderBGA(Image *bga) {
 	if (!bga) return;
-	ImageDSTFrame frame;
-	SkinRenderHelper::CalculateFrame(dst[0], frame);
-	SkinRenderHelper::Render(bga, &src[0], &frame, 0, 5);
+	if (!drawable) return;
+	ImageSRC src = { 0, 0, 0, 0, 0, 1, 1, 0, 0 };
+	SkinRenderHelper::Render(bga, &src, &dst_cached.frame, 0, 5);
 }
+#pragma endregion BGAOBJECT
 
+#pragma region SCRIPTOBJECT
 SkinScriptObject::SkinScriptObject(SkinRenderTree *t)
 	: SkinRenderObject(t, OBJTYPE::SCRIPT), runoneveryframe(false), runtime(0) {}
 
@@ -503,10 +515,11 @@ void SkinScriptObject::Render() {
 
 	runtime++;
 }
-
+#pragma endregion SCRIPTOBJECT
 
 // ----- SkinRenderTree -------------------------------------
 
+#pragma region SKINRENDERTREE
 SkinRenderTree::SkinRenderTree(int w, int h) : SkinGroupObject(this) { SetSkinSize(w, h); }
 
 void SkinRenderTree::SetSkinSize(int w, int h) { _scr_w = w, _scr_h = h; }
@@ -521,6 +534,7 @@ void SkinRenderTree::ReleaseAll() {
 		delete *it;
 	}
 	_objpool.clear();
+	_idpool.clear();
 }
 
 void SkinRenderTree::RegisterImage(RString &id, RString &path) {
@@ -564,6 +578,30 @@ SkinImageObject* SkinRenderTree::NewImageObject() {
 	return obj;
 }
 
+SkinSliderObject* SkinRenderTree::NewSliderObject() {
+	SkinSliderObject* obj = new SkinSliderObject(this);
+	_objpool.push_back(obj);
+	return obj;
+}
+
+SkinGraphObject* SkinRenderTree::NewGraphObject() {
+	SkinGraphObject* obj = new SkinGraphObject(this);
+	_objpool.push_back(obj);
+	return obj;
+}
+
+SkinTextObject* SkinRenderTree::NewTextObject() {
+	SkinTextObject* obj = new SkinTextObject(this);
+	_objpool.push_back(obj);
+	return obj;
+}
+
+SkinNumberObject* SkinRenderTree::NewNumberObject() {
+	SkinNumberObject* obj = new SkinNumberObject(this);
+	_objpool.push_back(obj);
+	return obj;
+}
+
 SkinPlayObject* SkinRenderTree::NewPlayObject() {
 	SkinPlayObject* obj = new SkinPlayObject(this);
 	_objpool.push_back(obj);
@@ -581,8 +619,11 @@ SkinScriptObject* SkinRenderTree::NewScriptObject() {
 	_objpool.push_back(obj);
 	return obj;
 }
+#pragma endregion SKINRENDERTREE
 
 // ------ SkinRenderHelper -----------------------------
+
+#pragma region SKINRENDERHELPER
 
 #define ISNAME(e, s) (strcmp(e->Name(), s) == 0)
 
@@ -601,8 +642,6 @@ void ConstructSRCFromElement(ImageSRC &src, XMLElement *e) {
 	if (src.divx < 1) src.divx = 1;
 	src.divy = e->IntAttribute("divy");
 	if (src.divy < 1) src.divy = 1;
-	const char *resid = e->Attribute("resid");
-	if (resid) src.resid = resid;
 	src.loop = 1;
 	if (e->Attribute("loop"))
 		src.loop = e->IntAttribute("loop");
@@ -650,7 +689,7 @@ void ConstructDSTFromElement(ImageDST &dst, XMLElement *e) {
 /* private */
 void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XMLElement *e) {
 	while (e) {
-		SkinRenderObject *obj;
+		SkinRenderObject *obj = 0;
 
 		if (ISNAME(e, "Init")) {
 			/*
@@ -671,7 +710,25 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 			obj = g;
 		}
 		else if (ISNAME(e, "Image")) {
-			obj = rtree.NewImageObject();
+			SkinImageObject *img = rtree.NewImageObject();
+			img->SetSRC(e);
+			obj = img;
+		}
+		else if (ISNAME(e, "Slider")) {
+			if (e->Attribute("value")) {
+				SkinSliderObject *slider = rtree.NewSliderObject();
+				slider->SetSRC(e);
+				slider->SetValue(DOUBLEPOOL->Get(e->Attribute("value")));
+				obj = slider;
+			}
+		}
+		else if (ISNAME(e, "Graph")) {
+			if (e->Attribute("value")) {
+				SkinGraphObject *graph = rtree.NewGraphObject();
+				graph->SetSRC(e);
+				graph->SetValue(DOUBLEPOOL->Get(e->Attribute("value")));
+				obj = graph;
+			}
 		}
 		/*else if (ISNAME(e, "Number")) {
 
@@ -695,10 +752,10 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 			p->y = e->IntAttribute("y");
 			p->w = e->IntAttribute("w");
 			p->h = e->IntAttribute("h");
-			XMLElement *lane = e->FirstChildElement("Lane");
+			XMLElement *lane = e->FirstChildElement("Note");
 			while (lane) {
 				p->ConstructLane(lane);
-				lane = lane->NextSiblingElement("Lane");
+				lane = lane->NextSiblingElement("Note");
 			}
 			p->SetJudgelineObject(e->FirstChildElement("JUDGELINE"));
 			p->SetLineObject(e->FirstChildElement("LINE"));
@@ -716,10 +773,12 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 			// only parses SRC/DST condition
 			obj = rtree.NewUnknownObject();
 		}
-		group->AddChild(obj);
 
-		// parse common attribute: SRC, DST, condition
-		SkinRenderHelper::ConstructBasicRenderObject(obj, e);
+		if (obj) {
+			group->AddChild(obj);
+			// parse common attribute: DST, condition
+			SkinRenderHelper::ConstructBasicRenderObject(obj, e);
+		}
 
 		// search for next element
 		e = e->NextSiblingElement();
@@ -754,14 +813,8 @@ bool SkinRenderHelper::LoadResourceFromSkin(SkinRenderTree &rtree, Skin &s) {
 void SkinRenderHelper::ConstructBasicRenderObject(SkinRenderObject *obj, XMLElement *e) {
 	const char* condition = e->Attribute("condition");
 	if (condition) obj->SetCondition(condition);
-	XMLElement *src = e->FirstChildElement("SRC");
-	while (src) {
-		ImageSRC _s;
-		ConstructSRCFromElement(_s, src);
-		const char* _cond = e->Attribute("condition");
-		obj->AddSRC(_s, _cond ? _cond : "");
-		src = e->NextSiblingElement("SRC");
-	}
+	ImageSRC _s;
+	ConstructSRCFromElement(_s, e);
 	XMLElement *dst = e->FirstChildElement("DST");
 	while (dst) {
 		ImageDST _d;
@@ -1006,3 +1059,5 @@ void SkinRenderHelper::Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, i
 	SDL_RenderCopyEx(Game::RENDERER, img->GetPtr(), &src_rect, &dst_rect,
 		frame->angle, &rot_center, flip);
 }
+
+#pragma endregion SKINRENDERHELPER

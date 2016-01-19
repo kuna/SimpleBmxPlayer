@@ -370,7 +370,7 @@ void Player::RenderNote(SkinPlayObject *playobj) {
 			double pos = BmsHelper::GetCurrentPosFromBar(currentnotebar) - currentpos;
 			switch (bmsnote[channel][currentnotebar].type) {
 			case BmsNote::NOTE_NORMAL:
-				playobj->RenderLane(lane, pos);
+				playobj->RenderNote(lane, pos);
 				break;
 			case BmsNote::NOTE_LNSTART:
 				lnpos[channel] = pos;
@@ -378,9 +378,9 @@ void Player::RenderNote(SkinPlayObject *playobj) {
 				break;
 			case BmsNote::NOTE_LNEND:
 				if (!lnstart[channel]) {
-					playobj->RenderLane(lane, 0, pos);
+					playobj->RenderNote(lane, 0, pos);
 				}
-				playobj->RenderLane(lane, lnpos[channel], pos);
+				playobj->RenderNote(lane, lnpos[channel], pos);
 				lnstart[channel] = false;
 				break;
 			}
@@ -389,7 +389,7 @@ void Player::RenderNote(SkinPlayObject *playobj) {
 		}
 		// draw last ln
 		if (lnstart[channel]) {
-			playobj->RenderLane(lane, lnpos[channel], 2.0);
+			playobj->RenderNote(lane, lnpos[channel], 2.0);
 		}
 	}
 }

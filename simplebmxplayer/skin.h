@@ -37,7 +37,7 @@ public:
 class _LR2SkinParser {
 private:
 	Skin *s;
-	tinyxml2::XMLElement *cur_e;							// current base element
+	tinyxml2::XMLElement *cur_e;				// current base element
 	char lines[MAX_LINE][MAX_LINE_CHARACTER];	// contain included lines
 	char *line_args[MAX_LINE][100];				// contain arguments for each lines
 	int line_position[MAX_LINE];				// line position per each included files
@@ -60,7 +60,7 @@ private:
 	/*
 	 * OP/Timer/etc code translator
 	 */
-	int GenerateTexturefontString(tinyxml2::XMLElement *srcelement, int startgidx, int endgidx, bool minus = false);	// for #XXX_NUMBER object
+	int GenerateTexturefontString(tinyxml2::XMLElement *srcelement);	// for #XXX_NUMBER object
 	void ConvertToTextureFont(tinyxml2::XMLElement *numele);
 
 	/*
@@ -74,7 +74,7 @@ private:
 	/*
 	 * under are a little macros
 	 */
-	int ProcessLane(tinyxml2::XMLElement *src, int line);			// process commands about lane
+	int ProcessLane(tinyxml2::XMLElement *src, int line, int resid);			// process commands about lane
 	int ProcessCombo(tinyxml2::XMLElement *obj, int line);		// process commands about combo
 	int ProcessSelectBar(tinyxml2::XMLElement *obj, int line);	// process commands about select bar
 	int ProcessSelectBar_DST(int line);					// process commands about select bar

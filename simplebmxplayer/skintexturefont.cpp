@@ -9,16 +9,25 @@ SkinTextureFont::SkinTextureFont() {
 void SkinTextureFont::Clear() {
 	glyphs.clear();
 	imgcnt = 0;
+	cycle = 0;
 }
+
 void SkinTextureFont::AddImageSrc(const std::string& imagepath) {
-	AddImageSrc(imagepath, 0, 0, 0, 0);
+	this->imagepath[imgcnt++] = imagepath;
 }
-void SkinTextureFont::AddImageSrc(const std::string& imagepath, uint16_t srcx, uint16_t srcy, uint16_t srcw, uint16_t srch) {
-	this->imagepath[imgcnt] = imagepath;
-	imagesrc[imgcnt++] = Glyph{ 0, srcx, srcy, srcw, srch };
+
+void SkinTextureFont::AddGlyph(Glyphs &gs, uint8_t image, uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
+	gs.glyphs[gs.glyphcnt++] = { image, x, y, w, h };
 }
+
 void SkinTextureFont::AddGlyph(uint32_t unicode, uint8_t image, uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
-	glyphs.insert(std::pair<uint32_t, Glyph>(unicode, { image, x, y, w, h }));
+	Glyphs gs;
+	gs.glyphcnt = 0;
+	AddGlyph(gs, image, x, y, w, h);
+	glyphs.insert(std::pair<uint32_t, Glyphs>(unicode, gs));
+}
+void SkinTextureFont::SetCycle(int cycle) {
+	cycle = 0;
 }
 bool SkinTextureFont::LoadFromFile(const char *filepath) {
 	FILE *f = fopen(filepath, "r");
@@ -42,6 +51,7 @@ void SkinTextureFont::LoadFromText(const char *text) {
 	Clear();
 
 	/*
+	 * mode: means parsing mode
 	 * 0: [resource]
 	 * 1: [glyph]
 	 */
@@ -55,22 +65,26 @@ void SkinTextureFont::LoadFromText(const char *text) {
 			mode = 0;
 		else if (strcmp(p, "[glyphs]") == 0)
 			mode = 1;
+
 		else if (mode == 0) {
 			if (sscanf(p, "imagecnt=%d", &args[0]))
 				imgcnt = args[0];
-			else if (sscanf(p, "image%d=%s,%d,%d,%d,%d", &args[0], arg_str,
-				&args[1], &args[2], &args[3], &args[4]) == 6) {
-				imagepath[args[0]] = arg_str;
-				imagesrc[args[0]] = { 0, args[1], args[2], args[3], args[4] };
-			}
 			else if (sscanf(p, "image%d=%s", &args[0], arg_str) == 2) {
 				imagepath[args[0]] = arg_str;
-				imagesrc[args[0]] = { 0, 0, 0, 0, 0 };
 			}
 		}
 		else if (mode == 1) {
-			if (sscanf(p, "%d=%d,%d,%d,%d,%d", &args[0], &args[1], &args[2], &args[3], &args[4], &args[5]) == 6) {
-				glyphs.insert(std::pair<uint32_t, Glyph>(args[0], { args[1], args[2], args[3], args[4], args[5] }));
+			if (sscanf(p, "%d=%s", &args[0], _buffer) == 2) {
+				Glyphs gs;
+				char *p2 = _buffer;
+				do {
+					if (sscanf(p2, "%d,%d,%d,%d,%d", &args[1], &args[2], &args[3], &args[4], &args[5]) == 5) {
+						AddGlyph(gs, args[1], args[2], args[3], args[4], args[5]);
+					}
+					p2 = strchr(p2, ';');
+					if (p2) p2++;
+				} while (p2 > 0);
+				glyphs.insert(std::pair<uint32_t, Glyphs>(args[0], gs));
 			}
 		}
 		p = np + 1;
@@ -92,25 +106,33 @@ void SkinTextureFont::SaveToText(std::string& out) {
 	ss << "[resource]\n";
 	for (int i = 0; i < imgcnt; i++) {
 		ss << "image" << i << "=" << imagepath[i];
-		if (imagesrc[i].w > 0)
-			ss << "," << imagesrc[i].x << "," << imagesrc[i].y << "," 
-			   << imagesrc[i].w << "," << imagesrc[i].h;
 		ss << "\n";
 	}
 	ss << "imagecnt=" << imgcnt << "\n";
 
 	ss << "[glyphs]\n";
 	for (auto it = glyphs.begin(); it != glyphs.end(); ++it) {
-		sprintf_s(_buffer, "%d=%d,%d,%d,%d,%d\n", it->first, it->second.image, 
-			it->second.x, it->second.y, it->second.w, it->second.h);
-		ss << _buffer;
+		ss << it->first << "=";
+		Glyphs& gs = it->second;
+		for (int i = 0; i < gs.glyphcnt; i++) {
+			sprintf_s(_buffer, "%d,%d,%d,%d,%d;", gs.glyphs[i].image,
+				gs.glyphs[i].x, gs.glyphs[i].y, gs.glyphs[i].w, gs.glyphs[i].h);
+			if (i == gs.glyphcnt - 1)
+				_buffer[strlen(_buffer) - 1] = 0;
+			ss << _buffer;
+		}
+		ss << "\n";
 	}
 
 	out = ss.str();
 }
-SkinTextureFont::Glyph* SkinTextureFont::GetGlyph(uint32_t unicode) {
+SkinTextureFont::Glyph* SkinTextureFont::GetGlyph(uint32_t unicode, uint32_t time) {
 	if (glyphs.find(unicode) == glyphs.end())
 		return 0;
-	else
-		return &glyphs[unicode];
+	else {
+		int frame_num = 0;
+		if (cycle > 0)
+			frame_num = (time * glyphs[unicode].glyphcnt / cycle) % glyphs[unicode].glyphcnt;
+		return &glyphs[unicode].glyphs[frame_num];
+	}
 }

@@ -177,6 +177,8 @@ namespace GamePlay {
 		}
 		void RenderObject(SkinRenderObject *obj) {
 			if (!obj->EvaluateCondition()) return;
+			// update first and see ...
+			obj->Update();
 			if (obj->IsGroup()) {
 				// iterate all child
 				RenderGroup(obj->ToGroup());

@@ -56,7 +56,6 @@ namespace ACCTYPE {
 }
 
 struct ImageSRC {
-	RString resid;				// id can direct not only image but font.
 	Timer *timer;
 	int x, y, w, h;
 	int divx, divy, cycle;
@@ -75,7 +74,7 @@ struct ImageDST {
 	std::vector<ImageDSTFrame> frame;
 };
 
-#define _MAX_RENDER_CONDITION 10
+#define _MAX_RENDER_CONDITION 20
 
 /** @brief a simple condition evaluator for fast performance 
  * supporting format: divided by comma (only AND operator, maximum 10)
@@ -101,6 +100,10 @@ class SkinRenderTree;
 class SkinUnknownObject;
 class SkinGroupObject;
 class SkinImageObject;
+class SkinSliderObject;
+class SkinGraphObject;
+class SkinTextObject;
+class SkinButtonObject;
 class SkinBgaObject;
 class SkinPlayObject;
 
@@ -111,14 +114,17 @@ protected:
 	int objtype;
 	/** @brief condition for itself */
 	RenderCondition condition;
-	ImageSRC src[_MAX_RENDER_CONDITION];
-	RenderCondition src_condition[_MAX_RENDER_CONDITION];
-	Timer *timer_src[_MAX_RENDER_CONDITION];
-	size_t srccnt;
 	ImageDST dst[_MAX_RENDER_CONDITION];
 	RenderCondition dst_condition[_MAX_RENDER_CONDITION];
-	Timer *timer_dst[_MAX_RENDER_CONDITION];
 	size_t dstcnt;
+	/** @brief this value is filled when you call Update() method. */
+	struct ImageDSTCached {
+		ImageDST *dst;
+		ImageDSTFrame frame;
+	} dst_cached;
+	/** @brief different from visible. decided by Renderer(Update() method) */
+	bool drawable;
+
 	void *tag;		// for various use
 
 	bool TestCollsion(int x, int y);
@@ -129,8 +135,10 @@ public:
 	SkinRenderObject(SkinRenderTree* owner, int type = OBJTYPE::NONE);
 	virtual void Clear();
 	virtual void SetCondition(const RString &str);
-	virtual void AddSRC(ImageSRC &src, const RString& condition = "", bool lua = false);
 	virtual void AddDST(ImageDST &dst, const RString& condition = "", bool lua = false);
+	/* @brief must call before update object or do something */
+	virtual void Update();
+	/* @brief draw object to screen with it's own basic style */
 	virtual void Render();
 	bool EvaluateCondition();
 
@@ -141,9 +149,6 @@ public:
 
 	bool IsGroup();
 	bool IsGeneral();
-
-	//ImageDSTFrame CalculateDSTFrame();
-	//SDL_Rect CalculateSRCRect();
 
 	SkinUnknownObject* ToUnknown();
 	SkinGroupObject* ToGroup();
@@ -181,10 +186,13 @@ public:
 };
 
 class SkinImageObject : public SkinRenderObject {
-private:
-	Image *img[_MAX_RENDER_CONDITION];
+protected:
+	ImageSRC imgsrc;
+	Image *img;
 public:
-	SkinImageObject(SkinRenderTree* owner);
+	SkinImageObject(SkinRenderTree* owner, int type = OBJTYPE::IMAGE);
+	void SetSRC(XMLElement *e);
+	void SetImage(Image *img);
 	virtual void Render();
 };
 
@@ -196,31 +204,37 @@ public:
 	//virtual void Render();
 };
 
-class SkinGraphObject : public SkinRenderObject {
+class SkinGraphObject : public SkinImageObject {
 private:
 	/* elements needed for drawing */
 	int type;
 	int direction;
+	double *v;
 public:
 	SkinGraphObject(SkinRenderTree* owner);
 	void SetType(int type);
 	void SetDirection(int direction);
-	//virtual void Render();
+	void SetValue(double* pv);
+	virtual void Render();
+	// TODO
+	void EditValue(int dx, int dy);
 };
 
-class SkinSliderObject : public SkinRenderObject {
+class SkinSliderObject : public SkinImageObject {
 private:
 	/* elements needed for drawing */
-	int value;
-	int maxvalue;
 	int direction;
 	int range;
-	//bool editable;	this part is manually controlled in program.
+	double *v;
+	//bool editable;	this part is manually controlled in program...?
 public:
 	SkinSliderObject(SkinRenderTree* owner);
-	void SetMaxValue(int maxvalue);
-	void SetAlign(int align);
-	//virtual void Render();
+	void SetDirection(int direction);
+	void SetRange(int range);
+	void SetValue(double* pv);
+	virtual void Render();
+	// TODO
+	void EditValue(int dx, int dy);
 };
 
 class SkinTextObject : public SkinRenderObject {
@@ -236,8 +250,10 @@ public:
 	//virtual void Render();
 };
 
-class SkinButtonObject : public SkinRenderObject {
+class SkinButtonObject : public SkinImageObject {
 private:
+	ImageSRC hover;
+	Image* img_hover;
 	// only we need more is: handler.
 	//_Handler handler;
 public:
@@ -292,12 +308,10 @@ public:
 	Uint32 GetLaneHeight();
 	/** @brief check is this object is suitable for drawing lane. use for performance optimization */
 	bool IsLaneExists(int laneindex);
-	/** @brief Updates information of Rendering information */
-	void Update();
 	/** @brief `pos = 1` means note on the top of the lane */
-	void RenderLane(int laneindex, double pos, bool mine = false);
+	void RenderNote(int laneindex, double pos, bool mine = false);
 	/** @brief for longnote. */
-	void RenderLane(int laneindex, double pos_start, double pos_end);
+	void RenderNote(int laneindex, double pos_start, double pos_end);
 };
 
 /** @brief do nothing; just catch this object if you want to draw BGA. */
@@ -331,6 +345,9 @@ public:
 
 	/** @brief decide group object's texture size */
 	int _scr_w, _scr_h;
+
+	/** @brief stores element ID-pointer. use GetElementById() to use this array. */
+	std::map<RString, SkinRenderObject*> _idpool;
 public:
 	SkinRenderTree(int skinwidth, int skinheight);
 	~SkinRenderTree();
@@ -340,10 +357,15 @@ public:
 	int GetWidth();
 	int GetHeight();
 	SDL_Texture* GenerateTexture();
+	SkinRenderObject* GetElementById(RString &id);
 
 	SkinUnknownObject* NewUnknownObject();
 	SkinGroupObject* NewGroupObject(bool clipping = false);
 	SkinImageObject* NewImageObject();
+	SkinSliderObject* NewSliderObject();
+	SkinGraphObject* NewGraphObject();
+	SkinTextObject* NewTextObject();
+	SkinNumberObject* NewNumberObject();
 	SkinPlayObject* NewPlayObject();
 	SkinBgaObject* NewBgaObject();
 	SkinScriptObject* NewScriptObject();
