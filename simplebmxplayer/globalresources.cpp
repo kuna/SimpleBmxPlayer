@@ -193,6 +193,20 @@ bool ImagePool::Release(Image *img) {
 	}
 }
 
+namespace {
+	// private
+	// if filename == '*', then get any file in that directory
+	void CheckFilenameValid(RString &_path) {
+		if (IO::substitute_extension(IO::get_filename(_path), "") == "*") {
+			RString _directory = IO::get_filedir(_path);
+			std::vector<RString> filelist;
+			FileHelper::GetFileList(_directory, filelist);
+			if (filelist.size() > 0)
+				_path = filelist[0];
+		}
+	}
+}
+
 bool ImagePool::IsExists(const RString &path) {
 	RString _path = path;
 	FileHelper::ConvertPathToAbsolute(_path);
@@ -205,14 +219,7 @@ Image* ImagePool::Load(const RString &path) {
 	FileHelper::ConvertPathToAbsolute(_path);
 	if (!IsExists(_path)) {
 		Image *img = new Image();
-		// if filename == '*', then get any file in that directory
-		if (IO::substitute_extension(IO::get_filename(_path), "") == "*") {
-			RString _directory = IO::get_filedir(_path);
-			std::vector<RString> filelist;
-			FileHelper::GetFileList(_directory, filelist);
-			if (filelist.size() > 0)
-				_path = filelist[0];
-		}
+		CheckFilenameValid(_path);
 		img->Load(_path.c_str());
 		if (img->IsLoaded()) {
 			_imagepool.insert(pair<RString, Image*>(_path, img));
@@ -296,20 +303,48 @@ Font* FontPool::LoadTTFFont(const RString &path,
 Font* FontPool::LoadTTFFont(const RString& id, const RString &path, 
 	int size, SDL_Color color, int border, SDL_Color bordercolor,
 	int style, int thickness, const char* texturepath) {
-	if (!IsExists(id)) {
+	if (!IsIDExists(id)) {
 		// first convert path in easy way
 		RString _path = path;
 		FileHelper::ConvertPathToAbsolute(_path);
+		CheckFilenameValid(_path);
 		Font *f = new Font();
-		// if filename == '*', then get any file in that directory
-		if (IO::substitute_extension(IO::get_filename(_path), "") == "*") {
-			RString _directory = IO::get_filedir(_path);
-			std::vector<RString> filelist;
-			FileHelper::GetFileList(_directory, filelist);
-			if (filelist.size() > 0)
-				_path = filelist[0];
-		}
 		f->LoadTTFFont(_path, size, color, border, bordercolor, style, thickness, texturepath);
+		if (f->IsLoaded()) {
+			_fontpool.insert(pair<RString, Font*>(id, f));
+			_loadcount.insert(pair<Font*, int>(f, 1));
+			return f;
+		}
+		else {
+			delete f;
+			return 0;
+		}
+	}
+	else {
+		Font *f = _fontpool[id];
+		_loadcount[f]++;
+		return f;
+	}
+}
+
+Font* FontPool::LoadTextureFont(const RString &path) {
+	// first convert path in easy way
+	RString _path = path;
+	FileHelper::ConvertPathToAbsolute(_path);
+	CheckFilenameValid(_path);
+	RString content;
+	if (GetFileContents(_path, content)) {
+		return LoadTextureFontFromTextData(_path, content);
+	}
+	else {
+		return 0;
+	}
+}
+
+Font* FontPool::LoadTextureFontFromTextData(const RString &id, const RString &textdata) {
+	if (!IsIDExists(id)) {
+		Font *f = new Font();
+		f->LoadTextureFontByText(textdata);
 		if (f->IsLoaded()) {
 			_fontpool.insert(pair<RString, Font*>(id, f));
 			_loadcount.insert(pair<Font*, int>(f, 1));

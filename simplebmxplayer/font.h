@@ -10,16 +10,18 @@
 class TextureFont {
 private:
 	SkinTextureFont stf;
+	int imgs_cnt;
 	Image* imgs[_MAX_TEXTUREFONT_IMAGES];
 	// scale
 	double sx, sy;
 public:
+	TextureFont();
 	~TextureFont();
 	void Release();
 
 	void SetFont(const RString& textdata);
 	void SetScale(double sx, double sy);
-	int GetSingleWidth(uint32_t code);
+	SkinTextureFont::Glyph* GetGlyph(uint32_t code);
 	int GetWidth(const RString& text);
 	void Render(const RString& text, int x, int y);
 };

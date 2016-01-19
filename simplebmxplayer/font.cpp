@@ -1,6 +1,7 @@
 #include "game.h"
 #include "font.h"
 #include "util.h"
+#include "file.h"
 
 /*
  * TEMP: let's use FC_Font now...
@@ -74,6 +75,9 @@ void Font::Render(const char* text, int x, int y, int width) {
 
 // -------------------------------------------------
 
+TextureFont::TextureFont()
+	: imgs_cnt(0), sx(1), sy(1) {}
+
 TextureFont::~TextureFont() { Release(); }
 
 void TextureFont::Release() {
@@ -81,10 +85,20 @@ void TextureFont::Release() {
 	// but reduce image texture count reference
 	// TODO
 	//for (int i = 0; i)
+	for (int i = 0; i < imgs_cnt; i++) {
+		IMAGEPOOL->Release(imgs[i]);
+	}
+	imgs_cnt = 0;
 }
 
 void TextureFont::SetFont(const RString& textdata) {
+	ASSERT(imgs_cnt == 0);
 	stf.LoadFromText(textdata);
+	// loads image
+	imgs_cnt = stf.GetImageCount();
+	for (int i = 0; i < imgs_cnt; i++) {
+		imgs[i] = IMAGEPOOL->Load(stf.GetImagePath(i));
+	}
 }
 
 void TextureFont::SetScale(double sx, double sy) {
@@ -136,15 +150,15 @@ namespace {
 	}
 }
 
-int TextureFont::GetSingleWidth(uint32_t code) {
+SkinTextureFont::Glyph* TextureFont::GetGlyph(uint32_t code) {
 	SkinTextureFont::Glyph *g = stf.GetGlyph(code);
 	if (!g) {
 		if (code == '?')
 			return 0;
 		else
-			return GetSingleWidth('?');
+			return GetGlyph('?');
 	}
-	else return g->w;
+	else return g;
 }
 
 int TextureFont::GetWidth(const RString& text) {
@@ -152,17 +166,22 @@ int TextureFont::GetWidth(const RString& text) {
 	const char *p = text.c_str();
 	uint32_t glyphcode;
 	while ((glyphcode = GetCodepointFromUTF8String(&p, 1)) > 0) {
-		r += GetSingleWidth(glyphcode);
+		SkinTextureFont::Glyph* g = GetGlyph(glyphcode);
+		if (g) r += g->w;
 	}
 	return r;
 }
 
 void TextureFont::Render(const RString& text, int x, int y) {
-	uint32_t leftpos = 0;
+	uint32_t leftpos = x;
 	const char *p = text.c_str();
 	uint32_t glyphcode;
 	while ((glyphcode = GetCodepointFromUTF8String(&p, 1)) > 0) {
-
-		leftpos += GetSingleWidth(glyphcode);
+		SkinTextureFont::Glyph* g = GetGlyph(glyphcode);
+		if (!g) continue;
+		SDL_Rect src = { g->x, g->y, g->w, g->h };
+		SDL_Rect dst = { x, y, x + g->w, y + g->h };
+		SDL_RenderCopy(Game::RENDERER, imgs[g->image]->GetPtr(), &src, &dst);
+		leftpos += g->w;
 	}
 }

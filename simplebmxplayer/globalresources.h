@@ -88,6 +88,8 @@ public:
 	Image* Get(const RString &path);
 };
 
+// TODO: namepool / pathpool is different. we should make them different.
+// don't make it confusing ...
 class FontPool {
 private:
 	std::map<RString, Font*> _fontpool;

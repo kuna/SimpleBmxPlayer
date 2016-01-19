@@ -330,7 +330,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		XMLElement *resource = s->skinlayout.FirstChildElement("Resource");
 		XMLElement *font = s->skinlayout.NewElement("Font");
 		font->SetAttribute("name", font_cnt++);
-		font->SetAttribute("ttfpath", args[4]);
+		font->SetAttribute("path", args[4]);
 		font->SetAttribute("texturepath", "");
 		font->SetAttribute("size", INT(args[1]));
 		switch (INT(args[3])) {

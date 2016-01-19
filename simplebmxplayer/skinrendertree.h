@@ -354,6 +354,8 @@ public:
 
 	/** @brief resources used in this game */
 	std::map<RString, Image*> _imagekey;
+	/** @brief resources used in this game */
+	std::map<RString, Font*> _fontkey;
 
 	/** @brief decide group object's texture size */
 	int _scr_w, _scr_h;
@@ -386,6 +388,12 @@ public:
 
 	/** @brief load image at globalresources. */
 	void RegisterImage(RString& id, RString& path);
+	/** @brief load font at globalresources. */
+	void RegisterTTFFont(RString& id, RString& path, int size);
+	/** @brief load font at globalresources. (using texturefont raw data) */
+	void RegisterTextureFont(RString& id, RString& path);
+	/** @brief load font at globalresources. (using texturefont raw data) */
+	void RegisterTextureFontByData(RString& id, RString& textdata);
 	/** @brief release all resources */
 	void ReleaseAllResources();
 };

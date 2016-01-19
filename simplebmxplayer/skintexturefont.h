@@ -37,6 +37,8 @@ public:
 	void AddImageSrc(const std::string& imagepath);
 	void AddGlyph(uint32_t unicode, uint8_t imageidx, uint16_t x, uint16_t y, uint16_t w, uint16_t h);
 	void SetCycle(int cycle);
+	std::string GetImagePath(int imgno);
+	int GetImageCount();
 
 	bool LoadFromFile(const char *filepath);
 	bool LoadFromLR2File(const char *filepath);		// for compatibility

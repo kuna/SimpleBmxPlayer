@@ -593,6 +593,15 @@ void SkinRenderTree::ReleaseAll() {
 	_idpool.clear();
 }
 
+void SkinRenderTree::ReleaseAllResources() {
+	for (auto it = _imagekey.begin(); it != _imagekey.end(); ++it)
+		IMAGEPOOL->Release(it->second);
+	for (auto it = _fontkey.begin(); it != _fontkey.end(); ++it)
+		FONTPOOL->Release(it->second);
+	_imagekey.clear();
+	_fontkey.clear();
+}
+
 void SkinRenderTree::RegisterImage(RString &id, RString &path) {
 	Image *img = IMAGEPOOL->Load(path);
 	if (img) {
@@ -600,10 +609,26 @@ void SkinRenderTree::RegisterImage(RString &id, RString &path) {
 	}
 }
 
-void SkinRenderTree::ReleaseAllResources() {
-	for (auto it = _imagekey.begin(); it != _imagekey.end(); ++it)
-		IMAGEPOOL->Release(it->second);
-	_imagekey.clear();
+void SkinRenderTree::RegisterTTFFont(RString &id, RString &path, int size) {
+	Font *f = FONTPOOL->LoadTTFFont(path, size, FC_MakeColor(255, 255, 255, 255));
+	if (f) {
+		_fontkey.insert(std::pair<RString, Font*>(id, f));
+	}
+}
+
+void SkinRenderTree::RegisterTextureFont(RString &id, RString &path) {
+	Font *f = FONTPOOL->LoadTextureFont(path);
+	if (f) {
+		_fontkey.insert(std::pair<RString, Font*>(id, f));
+	}
+}
+
+void SkinRenderTree::RegisterTextureFontByData(RString &id, RString &textdata) {
+	// TODO maybe I need to manipulate ID ...
+	Font *f = FONTPOOL->LoadTextureFontFromTextData(id, textdata);
+	if (f) {
+		_fontkey.insert(std::pair<RString, Font*>(id, f));
+	}
 }
 
 SDL_Texture* SkinRenderTree::GenerateTexture() {
@@ -878,6 +903,29 @@ bool SkinRenderHelper::LoadResourceFromSkin(SkinRenderTree &rtree, Skin &s) {
 			RString id = img->Attribute("name");
 			rtree.RegisterImage(id, path);
 			img = img->NextSiblingElement("Image");
+		}
+		XMLElement *font = res->FirstChildElement("Font");
+		while (font) {
+			RString path = font->Attribute("path");
+			RString id = font->Attribute("name");
+			rtree.RegisterTTFFont(id, path, font->IntAttribute("size"));
+			font = font->NextSiblingElement("Font");
+		}
+		XMLElement *tfont = res->FirstChildElement("TextureFont");
+		while (tfont) {
+			if (!tfont->Attribute("path"))
+			{
+				if (!tfont->GetText()) continue;
+				RString data = tfont->GetText();
+				RString id = tfont->Attribute("name");
+				rtree.RegisterTextureFontByData(id, data);
+			}
+			else {
+				RString path = tfont->Attribute("path");
+				RString id = tfont->Attribute("name");
+				rtree.RegisterTextureFont(id, path);
+			}
+			tfont = tfont->NextSiblingElement("TextureFont");
 		}
 	}
 	else {
