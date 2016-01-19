@@ -15,16 +15,16 @@
 #define _MAX_TEXTUREFONT_IMAGES 20
 
 class SkinTextureFont {
-private:
+public:
 	typedef struct {
 		uint8_t image;
 		uint16_t x, y, w, h;
 	} Glyph;
+private:
 	typedef struct {
 		Glyph glyphs[_MAX_TEXTUREFONT_CYCLE];
 		int glyphcnt;
 	} Glyphs;
-
 	std::string imagepath[_MAX_TEXTUREFONT_IMAGES];			// up to 100 images for glyph
 	int imgcnt;
 	int cycle;

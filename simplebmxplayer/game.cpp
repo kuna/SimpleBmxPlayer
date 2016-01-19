@@ -3,6 +3,7 @@
 #include "luamanager.h"
 #include "util.h"
 #include "globalresources.h"
+#include "font.h"
 
 
 namespace Game {
@@ -17,13 +18,12 @@ namespace Game {
 	SDL_Renderer* RENDERER = NULL;
 
 	// drawing texture/fonts
-	SDL_Texture* note_texture;
-	FC_Font* font = NULL;
+	// (it'll be automatically released, it's pool object - managed by pool)
+	Font *font;
 
 	// FPS
 	Timer fpstimer;
 	int fps = 0;
-
 
 	void Game::Parameter::help() {
 		wprintf(L"SimpleBmxPlayer\n================\n-- How to use -- \n\n"
@@ -231,11 +231,7 @@ namespace Game {
 		/*
 		 * prepare game basic resource
 		 */
-		font = FC_CreateFont();
-		if (!font)
-			return false;
-		printf("Loading font ...\n");
-		FC_LoadFont(font, RENDERER, "../skin/lazy.ttf", 28, FC_MakeColor(120, 120, 120, 255), TTF_STYLE_NORMAL);
+		font = FONTPOOL->LoadTTFFont("_system", "../skin/lazy.ttf", 28, FC_MakeColor(120, 120, 120, 255));
 
 		/*
 		 * prepare GamePlay
@@ -266,7 +262,7 @@ namespace Game {
 		float avgfps = fps / (fpstimer.GetTick() / 1000.0f);
 		fps++;
 		// print FPS
-		FC_Draw(font, RENDERER, 0, 0, "%.2f Frame", avgfps);
+		font->Render(ssprintf("%.2f Frame", avgfps), 0, 0);
 		if (fpstimer.GetTick() > 1000) {
 			wprintf(L"%.2f\n", avgfps);
 			fpstimer.Stop();
@@ -318,10 +314,6 @@ namespace Game {
 	void Game::Release() {
 		// other part release first
 		GamePlay::Release();
-
-		// game basic resource release
-		// - FPS font
-		FC_FreeFont(font);
 
 		// release basic instances
 		PoolHelper::ReleaseAll();

@@ -243,7 +243,91 @@ FontPool::~FontPool() {
 }
 
 void FontPool::ReleaseAll() {
-	// TODO
+	for (auto it = _fontpool.begin(); it != _fontpool.end(); ++it) {
+		delete it->second;
+	}
+	_fontpool.clear();
+	_loadcount.clear();
+}
+
+bool FontPool::Release(Font *f) {
+	// reduce loadcount
+	// if loadcount <= 0, then release object from memory
+	if (_loadcount.find(f) != _loadcount.end()) {
+		int loadcount = --_loadcount[f];
+		if (loadcount <= 0) {
+			for (auto it = _fontpool.begin(); it != _fontpool.end(); ++it) {
+				if (it->second == f) {
+					_fontpool.erase(it);
+					break;
+				}
+			}
+			_loadcount.erase(_loadcount.find(f));
+			delete f;
+		}
+		return true;
+	}
+	else {
+		// not exists
+		return false;
+	}
+}
+
+bool FontPool::IsExists(const RString &path) {
+	RString _path = path;
+	FileHelper::ConvertPathToAbsolute(_path);
+	return (_fontpool.find(_path) != _fontpool.end());
+}
+
+Font* FontPool::LoadTTFFont(const RString &path, 
+	int size, SDL_Color color, int border, SDL_Color bordercolor,
+	int style, int thickness, const char* texturepath) {
+	return LoadTTFFont(path, path, size, color, border, bordercolor, style, thickness, texturepath);
+}
+
+Font* FontPool::LoadTTFFont(const RString& id, const RString &path, 
+	int size, SDL_Color color, int border, SDL_Color bordercolor,
+	int style, int thickness, const char* texturepath) {
+	if (!IsExists(id)) {
+		// first convert path in easy way
+		RString _path = path;
+		FileHelper::ConvertPathToAbsolute(_path);
+		Font *f = new Font();
+		// if filename == '*', then get any file in that directory
+		if (IO::substitute_extension(IO::get_filename(_path), "") == "*") {
+			RString _directory = IO::get_filedir(_path);
+			std::vector<RString> filelist;
+			FileHelper::GetFileList(_directory, filelist);
+			if (filelist.size() > 0)
+				_path = filelist[0];
+		}
+		f->LoadTTFFont(_path, size, color, border, bordercolor, style, thickness, texturepath);
+		if (f->IsLoaded()) {
+			_fontpool.insert(pair<RString, Font*>(_path, f));
+			_loadcount.insert(pair<Font*, int>(f, 1));
+			return f;
+		}
+		else {
+			delete f;
+			return 0;
+		}
+	}
+	else {
+		Font *f = _fontpool[id];
+		_loadcount[f]++;
+		return f;
+	}
+}
+
+Font* FontPool::Get(const RString &path) {
+	RString _path = path;
+	FileHelper::ConvertPathToAbsolute(_path);
+	if (IsExists(_path)) {
+		return _fontpool[_path];
+	}
+	else {
+		return 0;
+	}
 }
 
 SoundPool::~SoundPool() {

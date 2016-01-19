@@ -69,6 +69,8 @@ namespace BmsHelper {
 
 	/** @brief Update time. BGA/BGM is automatically setted by progressed time. */
 	void Update(uint32_t time);
+	/***/
+	bool IsFinished(uint32_t time);
 	/** @brief Reset time. BGA/BGM is resetted to pointing time. */
 	void ResetTime(uint32_t time);
 

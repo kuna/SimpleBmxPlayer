@@ -8,15 +8,13 @@
 #include <vector>
 #include <map>
 
-using namespace tinyxml2;
-
 class Skin {
 public:
 	// very basic metadata
 	char filepath[256];
 
 	// skin layout data is here
-	XMLDocument skinlayout;
+	tinyxml2::XMLDocument skinlayout;
 
 	// render tree used for rendering
 	//SkinRenderTree skinbody;
@@ -39,7 +37,7 @@ public:
 class _LR2SkinParser {
 private:
 	Skin *s;
-	XMLElement *cur_e;							// current base element
+	tinyxml2::XMLElement *cur_e;				// current base element
 	char lines[MAX_LINE][MAX_LINE_CHARACTER];	// contain included lines
 	char *line_args[MAX_LINE][100];				// contain arguments for each lines
 	int line_position[MAX_LINE];				// line position per each included files
@@ -56,14 +54,14 @@ private:
 	/*
 	 * Should support nested condition, at least
 	 */
-	XMLElement *condition_element[100];
+	tinyxml2::XMLElement *condition_element[100];
 	int condition_level;
 
 	/*
 	 * OP/Timer/etc code translator
 	 */
-	int GenerateTexturefontString(XMLElement *srcelement, int startgidx, int endgidx, bool minus = false);	// for #XXX_NUMBER object
-	void ConvertToTextureFont(XMLElement *numele);
+	int GenerateTexturefontString(tinyxml2::XMLElement *srcelement);	// for #XXX_NUMBER object
+	void ConvertToTextureFont(tinyxml2::XMLElement *numele);
 
 	/*
 	 * Inner skin loaders
@@ -76,9 +74,9 @@ private:
 	/*
 	 * under are a little macros
 	 */
-	int ProcessLane(XMLElement *src, int line);			// process commands about lane
-	int ProcessCombo(XMLElement *obj, int line);		// process commands about combo
-	int ProcessSelectBar(XMLElement *obj, int line);	// process commands about select bar
+	int ProcessLane(tinyxml2::XMLElement *src, int line, int resid);			// process commands about lane
+	int ProcessCombo(tinyxml2::XMLElement *obj, int line);		// process commands about combo
+	int ProcessSelectBar(tinyxml2::XMLElement *obj, int line);	// process commands about select bar
 	int ProcessSelectBar_DST(int line);					// process commands about select bar
 	// pacemaker: use default XML
 public:

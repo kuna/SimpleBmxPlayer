@@ -21,12 +21,14 @@ namespace {
 }
 
 Grade::Grade() : Grade(0) {}
-Grade::Grade(int notecnt) : notecnt(notecnt) {}
+Grade::Grade(int notecnt) : notecnt(notecnt), combo(0), maxcombo(0) {
+	memset(grade, 0, sizeof(grade));
+}
 int Grade::CalculateScore() {
 	return grade[JUDGETYPE::JUDGE_PGREAT] * 2 + grade[JUDGETYPE::JUDGE_GREAT];
 }
 double Grade::CalculateRate() {
-	return (double)CalculateScore() / notecnt * 100;
+	return (double)CalculateScore() / notecnt / 2;
 }
 int Grade::CalculateGrade() {
 	double rate = CalculateRate();
@@ -86,6 +88,14 @@ Player::Player(int type) {
 		}
 		noteindex[i] = -1;
 	}
+
+	exscore_graph = DOUBLEPOOL->Get("ExScore");
+	highscore_graph = DOUBLEPOOL->Get("HighScore");
+	playscore = INTPOOL->Get("PlayScore");
+	playmaxcombo = INTPOOL->Get("PlayMaxCombo");
+	playtotalnotes = INTPOOL->Get("PlayTotalNotes");
+	playgrooveguage = INTPOOL->Get("PlayGrooveGuage");
+	playrivaldiff = INTPOOL->Get("PlayRivalDiff");
 }
 
 int Player::CheckJudgeByTiming(double delta) {
@@ -285,6 +295,9 @@ void Player::MakeJudge(int judgetype, int channel, bool silent) {
 	grade.AddGrade(judgetype);
 	if (judgetype >= JUDGETYPE::JUDGE_GREAT && lanejudgeokay[channel])
 		lanejudgeokay[channel]->Start();
+	// update graph/number
+	*exscore_graph = grade.CalculateRate();
+	*highscore_graph = grade.CalculateRate();
 	if (!silent) {
 		// TODO set timer
 		switch (judgetype) {

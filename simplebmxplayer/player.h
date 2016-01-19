@@ -113,7 +113,7 @@ protected:
 	double				speed_mul;			// absbeat * speed_mul = (real y pos)
 	int					speed_type;			// TODO
 
-	// some prefetch timers
+	// some prefetch timers/values
 	Timer*				bmstimer;			// elapsed time
 	Timer*				misstimer;			// timer used when miss occured
 	Timer*				lanepress[20];
@@ -121,6 +121,18 @@ protected:
 	Timer*				laneup[20];
 	Timer*				lanejudgeokay[20];
 	Image*				currentmissbga;		// when miss occurs, get current Miss BGA
+	double*				exscore_graph;
+	double*				highscore_graph;
+	int*				playscore;
+	int*				playmaxcombo;
+	int*				playtotalnotes;
+	int*				playgrooveguage;
+	int*				playrivaldiff;
+
+	// DON'T CHEAT! check for value malpulation.
+	// (TODO) processed by CryptManager
+#ifdef _CRYPTMANAGER
+#endif
 
 	// grade information
 	Grade				grade;

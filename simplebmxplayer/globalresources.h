@@ -12,6 +12,7 @@
 #include "audio.h"
 #include "timer.h"
 #include "global.h"
+#include "font.h"
 
 using namespace std;
 
@@ -87,12 +88,25 @@ public:
 	Image* Get(const RString &path);
 };
 
-/* NOT IMPLEMENTED */
 class FontPool {
 private:
+	std::map<RString, Font*> _fontpool;
+	std::map<Font*, int> _loadcount;
 public:
 	~FontPool();
 	void ReleaseAll();
+
+	bool IsExists(const RString &path);
+	Font* LoadTTFFont(const RString &path, int size, SDL_Color color, int thickness = 0,
+		SDL_Color bordercolor = FC_MakeColor(0, 0, 0, 255), int border = 1,
+		int style = TTF_STYLE_NORMAL, const char* texturepath = 0);
+	Font* LoadTTFFont(const RString &id, const RString &path, int size, SDL_Color color, int thickness = 0,
+		SDL_Color bordercolor = FC_MakeColor(0, 0, 0, 255), int border = 1,
+		int style = TTF_STYLE_NORMAL, const char* texturepath = 0);
+	Font* LoadTextureFont(const RString &path);
+	Font* LoadTextureFontFromTextData(const RString &id, const RString &textdata);
+	Font* Get(const RString &path);
+	bool Release(Font *f);
 };
 
 class SoundPool {

@@ -7,6 +7,7 @@
 
 #include "image.h"
 #include "timer.h"
+#include "font.h"
 #include "skin.h"
 #include <vector>
 #include "tinyxml2.h"
@@ -138,18 +139,22 @@ public:
 	virtual void Clear();
 	virtual void SetCondition(const RString &str);
 	virtual void AddDST(ImageDST &dst, const RString& condition = "", bool lua = false);
-	/* @brief must call before update object or do something */
-	virtual void Update();
-	/* @brief draw object to screen with it's own basic style */
-	virtual void Render();
 	bool EvaluateCondition();
 	/** @brief should we have to invert condition? maybe useful for IFNOT clause. */
 	void InvertCondition(bool b);
 
+	/* @brief must call before update object or do something */
+	virtual void Update();
+	/* @brief draw object to screen with it's own basic style */
+	virtual void Render();
 	/** @brief tests collsion and if true then do own work & return true. otherwise false. */
 	virtual bool Click(int x, int y);
 	/** @brief tests collsion and if true then do own work & return true. otherwise false. */
 	virtual bool Hover(int x, int y);
+	virtual int GetWidth();
+	virtual int GetHeight();
+	virtual int GetX();
+	virtual int GetY();
 
 	bool IsGroup();
 	bool IsGeneral();
@@ -197,12 +202,31 @@ public:
 	void ResetRenderTarget();
 };
 
-class SkinNumberObject : public SkinRenderObject {
+class SkinTextObject : public SkinRenderObject {
 private:
-	//Font *fnt;
+	/* elements needed for drawing */
+	int align;
+	bool editable;
+	Font *fnt;
+	RString *v;
+public:
+	SkinTextObject(SkinRenderTree* owner);
+	void SetFont(Font* f);
+	void SetEditable(bool editable);
+	void SetAlign(int align);
+	void SetValue(RString* s);
+	virtual void Render();
+	void RenderText(const char* s);
+};
+
+class SkinNumberObject : public SkinTextObject {
+private:
+	int *v;
 public:
 	SkinNumberObject(SkinRenderTree* owner);
-	//virtual void Render();
+	void SetValue(int *i);
+	virtual void Render();
+	void RenderInt(int n);
 };
 
 class SkinGraphObject : public SkinImageObject {
@@ -236,19 +260,6 @@ public:
 	virtual void Render();
 	// TODO
 	void EditValue(int dx, int dy);
-};
-
-class SkinTextObject : public SkinRenderObject {
-private:
-	/* elements needed for drawing */
-	char text[256];
-	int align;
-	bool editable;
-public:
-	SkinTextObject(SkinRenderTree* owner);
-	void SetEditable(bool editable);
-	void SetAlign(int align);
-	//virtual void Render();
 };
 
 class SkinButtonObject : public SkinImageObject {
@@ -367,9 +378,11 @@ public:
 	SkinGraphObject* NewGraphObject();
 	SkinTextObject* NewTextObject();
 	SkinNumberObject* NewNumberObject();
-	SkinPlayObject* NewPlayObject();
 	SkinBgaObject* NewBgaObject();
 	SkinScriptObject* NewScriptObject();
+
+	//SkinLifeGraphObject* NewLifeGraphObject();
+	SkinPlayObject* NewPlayObject();
 
 	/** @brief load image at globalresources. */
 	void RegisterImage(RString& id, RString& path);

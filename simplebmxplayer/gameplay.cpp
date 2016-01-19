@@ -139,8 +139,11 @@ namespace GamePlay {
 		SWITCH_ON("IsScoreGraph");
 		SWITCH_OFF("IsAutoPlay");
 		SWITCH_ON("IsBGA");
+		SWITCH_ON("IsExtraMode");
 		//SWITCH_ON("Is1PSuddenChange");
-		//SWITCH_ON("951");
+		//SWITCH_ON("981");
+		DOUBLEPOOL->Set("TargetExScore", 0.5);
+		DOUBLEPOOL->Set("TargetExScore", 0.5);
 		OnScene->Stop();
 		OnSongLoadingEnd->Stop();
 		OnReady->Stop();

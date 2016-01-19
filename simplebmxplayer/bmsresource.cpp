@@ -146,7 +146,9 @@ namespace BmsHelper {
 			if (BmsResource::BMS.GetRegistArraySet()["BMP"].IsExists(word)) {
 				BmsResource::IMAGE.Load(i, BmsResource::BMS.GetRegistArraySet()["BMP"][word]);
 			}
+			DOUBLEPOOL->Set("SongLoadProgress", (double)i / BmsConst::WORD_MAX_COUNT);
 		}
+		DOUBLEPOOL->Set("SongLoadProgress", 1);
 
 		FileHelper::PopBasePath();
 		TIMERPOOL->Set("OnSongLoadingEnd");
@@ -246,6 +248,10 @@ namespace BmsHelper {
 			}
 		}
 		currentbar = newbar;
+	}
+
+	bool IsFinished(uint32_t time) {
+		return (time > BmsResource::BMSTIME.GetEndTime() * 1000.0);
 	}
 
 	void ResetTime(uint32_t time) {

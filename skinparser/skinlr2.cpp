@@ -179,8 +179,20 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	if (!cur_e)
 		return line + 1;
 	if (CMD_IS("#ELSE")) {
-		// we tend to ignore #ELSE clause ... (nothing we can process about it)
-		cur_e = 0;
+		// #ELSE: find last #IF clause, and copy condition totally.
+		// not perfect, but maybe we can make a deal :)
+		XMLElement *prev_if = condition_element[condition_level - 1]->LastChildElement("If");
+		if (prev_if) {
+			XMLElement *group = s->skinlayout.NewElement("Ifnot");
+			group->SetAttribute("condition", prev_if->Attribute("condition"));
+			cur_e = condition_element[--condition_level];
+			cur_e->LinkEndChild(group);
+			condition_element[++condition_level] = cur_e = group;
+		}
+		else {
+			// we tend to ignore #ELSE clause ... it's wrong.
+			cur_e = 0;
+		}
 		return line + 1;
 	}
 	else if (CMD_IS("#IF") || CMD_IS("#ELSEIF")) {
@@ -361,23 +373,24 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		// process SRC
 		// SRC may have condition (attribute condition; normally not used)
 		XMLElement *obj;
-		XMLElement *src = s->skinlayout.NewElement("SRC");
-		src->SetAttribute("resid", INT(args[2]));
-		src->SetAttribute("x", INT(args[3]));
-		src->SetAttribute("y", INT(args[4]));
+		obj = s->skinlayout.NewElement("Image");
+		int resid = INT(args[2]);
+		obj->SetAttribute("resid", resid);
+		obj->SetAttribute("x", INT(args[3]));
+		obj->SetAttribute("y", INT(args[4]));
 		if (INT(args[5]) > 0) {
-			src->SetAttribute("w", INT(args[5]));
-			src->SetAttribute("h", INT(args[6]));
+			obj->SetAttribute("w", INT(args[5]));
+			obj->SetAttribute("h", INT(args[6]));
 		}
 		if (INT(args[7]) > 1 || INT(args[8]) > 1) {
-			src->SetAttribute("divx", INT(args[7]));
-			src->SetAttribute("divy", INT(args[8]));
+			obj->SetAttribute("divx", INT(args[7]));
+			obj->SetAttribute("divy", INT(args[8]));
 		}
 		if (INT(args[9]))
-			src->SetAttribute("cycle", INT(args[9]));
+			obj->SetAttribute("cycle", INT(args[9]));
 		int sop1 = 0, sop2 = 0, sop3 = 0;
 		if (INT(args[10]))
-			src->SetAttribute("timer", TranslateTimer(INT(args[10])));
+			obj->SetAttribute("timer", TranslateTimer(INT(args[10])));
 		if (args[11]) sop1 = INT(args[11]);
 		if (args[12]) sop2 = INT(args[12]);
 		if (args[13]) sop3 = INT(args[13]);
@@ -388,7 +401,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		 * (bad-syntax >:( )
 		 */
 		// check for play area
-		int isPlayElement = ProcessLane(src, line);
+		int isPlayElement = ProcessLane(obj, line, resid);
 		if (isPlayElement) {
 			return isPlayElement;
 		}
@@ -399,8 +412,6 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		 * we have to make object now to parse #DST
 		 * and, if unable to figure out what this element is, it'll be considered as Image object.
 		 */
-		obj = s->skinlayout.NewElement("Image");
-		obj->LinkEndChild(src);
 
 		int looptime = 0, blend = 0, timer = 0, rotatecenter = -1, acc = 0;
 		int op1 = 0, op2 = 0, op3 = 0;
@@ -527,28 +538,35 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		if (OBJTYPE_IS("IMAGE")) {
 			// nothing to do (general object)
 			// but it's not in some special OP/Timer code
-			if ((timer >= 50 && timer < 60) ||
-				(timer >= 70 && timer < 80) ||
-				(timer >= 100 && timer < 110) ||
-				(timer >= 120 && timer < 130)) {
-				// P1
-				XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", 0, &s->skinlayout);
-				MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
-				playarea->LinkEndChild(obj);
+			// - include BOMB/LANE effect into PLAYLANE object
+			// (we may want to include BOMB/OnBeat, but it's programs's limit. Can't do it now.)
+			// (do it yourself)
+			if (!(obj->IntAttribute("w") < 100 && obj->IntAttribute("h") < 100)) {
+				if (//(timer >= 50 && timer < 60) ||
+					(timer >= 70 && timer < 80) ||
+					(timer >= 100 && timer < 110) ||
+					(timer >= 120 && timer < 130)) {
+					// P1
+					XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", 0, &s->skinlayout);
+					MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
+					playarea->LinkEndChild(obj);
+				}
+				else if (//(timer >= 60 && timer < 70) ||
+					(timer >= 80 && timer < 90) ||
+					(timer >= 110 && timer < 120) ||
+					(timer >= 130 && timer < 140)) {
+					// P2
+					XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", 1, &s->skinlayout);
+					MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
+					playarea->LinkEndChild(obj);
+				}
 			}
-			else if ((timer >= 60 && timer < 70) ||
-				(timer >= 80 && timer < 90) ||
-				(timer >= 110 && timer < 120) ||
-				(timer >= 130 && timer < 140)) {
-				// P2
-				XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", 1, &s->skinlayout);
-				MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
-				playarea->LinkEndChild(obj);
-			}
+			// however, BOMB SRC effect(SRC loop) MUST TURN OFF
+			if ((timer >= 50 && timer < 60) || (timer >= 60 && timer < 70))
+				obj->SetAttribute("loop", 0);
 		}
 		else if (OBJTYPE_IS("BGA")) {
 			// change tag to BGA and remove SRC tag
-			s->skinlayout.DeleteNode(src);
 			obj->SetName("Bga");
 		}
 		else if (OBJTYPE_IS("NUMBER")) {
@@ -560,8 +578,8 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			* If no value, then it'll just show '0' value.
 			*/
 			if (TranslateNumber(sop1))
-				dst->SetAttribute("value", TranslateNumber(sop1));
-			dst->SetAttribute("align", sop2);
+				obj->SetAttribute("value", TranslateNumber(sop1));
+			obj->SetAttribute("align", sop2);
 			/*
 			* if type == 11 or 24, then set length
 			* if type == 24, then set '24mode' (only for LR2 - depreciated supportance)
@@ -581,17 +599,22 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			//obj->SetAttribute("range", sop2); - disable option is ignored
 		}
 		else if (OBJTYPE_IS("TEXT")) {
-			// delete src object and change to font/st/align/edit
-			s->skinlayout.DeleteNode(src);
+			// delete src attr and change to font/st/align/edit
+			obj->DeleteAttribute("x");
+			obj->DeleteAttribute("y");
+			obj->DeleteAttribute("w");
+			obj->DeleteAttribute("h");
+			obj->DeleteAttribute("cycle");
+			obj->DeleteAttribute("divx");
+			obj->DeleteAttribute("divy");
 			obj->SetName("Text");
-			obj->SetAttribute("font", args[2]);
 			if (TranslateText(INT(args[3])))
 				obj->SetAttribute("value", TranslateText(INT(args[3])));
 			obj->SetAttribute("align", args[4]);
 			obj->SetAttribute("edit", args[5]);
 		}
 		else if (OBJTYPE_IS("BARGRAPH")) {
-			obj->SetName("BarGraph");
+			obj->SetName("Graph");
 			if (TranslateGraph(sop1))
 				obj->SetAttribute("value", TranslateGraph(sop1));
 			obj->SetAttribute("direction", sop2);
@@ -652,14 +675,11 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		char **args = line_args[line];
 		int objectid = INT(args[1]);
 		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
-		XMLElement *dst = FindElement(lane, "DST", &s->skinlayout);
-		XMLElement *frame = FindElement(dst, "Frame", &s->skinlayout);
-		frame->SetAttribute("time", 0);
-		frame->SetAttribute("x", INT(args[3]));
-		frame->SetAttribute("y", INT(args[4]));
-		frame->SetAttribute("w", INT(args[5]));
-		frame->SetAttribute("h", INT(args[6]));
+		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
+		lane->SetAttribute("x", INT(args[3]) - playarea->IntAttribute("x"));
+		lane->SetAttribute("y", INT(args[4]) - playarea->IntAttribute("y"));
+		lane->SetAttribute("w", INT(args[5]));
+		lane->SetAttribute("h", INT(args[6]));
 	}
 	/*
 	 * etc
@@ -680,13 +700,14 @@ int _LR2SkinParser::ParseSkinLine(int line) {
  * if not lane, return 0
  * if lane, return next parsed line
  */
-int _LR2SkinParser::ProcessLane(XMLElement *src, int line) {
+int _LR2SkinParser::ProcessLane(XMLElement *src, int line, int resid) {
 	char **args = line_args[line];
 	int objectid = INT(args[1]);
 
 	if (OBJTYPE_IS("NOTE")) {
 		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
+		lane->SetAttribute("resid", resid);
 		// add src to here
 		src->SetName("SRC_NOTE");
 		lane->LinkEndChild(src);
@@ -694,7 +715,7 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line) {
 	}
 	else if (OBJTYPE_IS("LN_END")) {
 		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
 		// add src to here
 		src->SetName("SRC_LN_END");
 		lane->LinkEndChild(src);
@@ -702,7 +723,7 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line) {
 	}
 	else if (OBJTYPE_IS("LN_BODY")) {
 		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
 		// add src to here
 		src->SetName("SRC_LN_BODY");
 		lane->LinkEndChild(src);
@@ -710,15 +731,15 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line) {
 	}
 	else if (OBJTYPE_IS("LN_START")) {
 		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
 		// add src to here
-		src->SetName("SRC_LN_END");
+		src->SetName("SRC_LN_START");
 		lane->LinkEndChild(src);
 		return line + 1;
 	}
 	else if (OBJTYPE_IS("MINE")) {
 		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
 		// add src to here
 		src->SetName("SRC_MINE");
 		lane->LinkEndChild(src);
@@ -726,7 +747,7 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line) {
 	}
 	if (OBJTYPE_IS("AUTO_NOTE")) {
 		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
 		// add src to here
 		src->SetName("SRC_AUTO_NOTE");
 		lane->LinkEndChild(src);
@@ -734,7 +755,7 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line) {
 	}
 	else if (OBJTYPE_IS("AUTO_LN_END")) {
 		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
 		// add src to here
 		src->SetName("SRC_AUTO_LN_END");
 		lane->LinkEndChild(src);
@@ -742,7 +763,7 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line) {
 	}
 	else if (OBJTYPE_IS("AUTO_LN_BODY")) {
 		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
 		// add src to here
 		src->SetName("SRC_AUTO_LN_BODY");
 		lane->LinkEndChild(src);
@@ -750,7 +771,7 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line) {
 	}
 	else if (OBJTYPE_IS("AUTO_LN_START")) {
 		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
 		// add src to here
 		src->SetName("SRC_AUTO_LN_START");
 		lane->LinkEndChild(src);
@@ -758,7 +779,7 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line) {
 	}
 	else if (OBJTYPE_IS("AUTO_MINE")) {
 		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Lane", "index", objectid, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
 		// add src to here
 		src->SetName("SRC_AUTO_MINE");
 		lane->LinkEndChild(src);
@@ -836,7 +857,7 @@ int _LR2SkinParser::ProcessSelectBar(XMLElement *obj, int line) {
 	int objectid = INT(args[1]);
 
 	// select menu part
-	if (CMD_STARTSWITH("#SRC_BAR", 8)) {
+	if (!OBJTYPE_IS("BARGRAPH") && CMD_STARTSWITH("#SRC_BAR", 8)) {
 		XMLElement *selectmenu = FindElement(cur_e, "SelectMenu", &s->skinlayout);
 		if (OBJTYPE_IS("BAR_BODY")) {
 			// only register SRC object
@@ -928,9 +949,8 @@ int _LR2SkinParser::ProcessSelectBar_DST(int line) {
 	}
 }
 
-void _LR2SkinParser::ConvertToTextureFont(XMLElement *numele) {
-	XMLElement *src = numele->FirstChildElement("SRC");
-	XMLElement *dst = numele->FirstChildElement("DST");
+void _LR2SkinParser::ConvertToTextureFont(XMLElement *obj) {
+	XMLElement *dst = obj->FirstChildElement("DST");
 
 	/*
 	* Number uses Texturefont
@@ -946,105 +966,81 @@ void _LR2SkinParser::ConvertToTextureFont(XMLElement *numele) {
 	* if SRC is timer-dependent, then make multiple fonts and add condition
 	* (maybe somewhat sophisticated condition)
 	*/
-	int glyphcnt = src->IntAttribute("divx") * src->IntAttribute("divy");
+	int glyphcnt = obj->IntAttribute("divx") * obj->IntAttribute("divy");
 	int fonttype = 10;
 	if (glyphcnt % 11 == 0)
-		fonttype = 11;	// '*' glyph
+		fonttype = 11;	// '*' glyph for empty space
 	else if (glyphcnt % 24 == 0)
 		fonttype = 24;	// +/- font included (so, 2 fonts will be created)
-	/*
-	* if cycle exists, we have to make fonts as much as that
-	*/
-	int fontrep = 1;
-	int cycle = 0;
-	if (src->Attribute("cycle")) {
-		fontrep = glyphcnt / fonttype;
-		cycle = src->IntAttribute("cycle");
-	}
 
 	/*
-	* we may have multiple SRC objects (if cycle exists)
-	* so we remove previous SRC and make new SRC (also fonts)
-	* (24-type number won't work well...)
-	*/
+	 * Create font  set it
+	 */
 	int tfont_idx;
-	for (int fontidx = 0; fontidx < fontrep; fontidx++) {
-		if (fonttype == 24) {
-			char _temp[100];
-			XMLElement *newsrc;
-			tfont_idx = GenerateTexturefontString(src, fontidx * 24, fontidx * 24 + 12);
-			newsrc = s->skinlayout.NewElement("SRC");
-			newsrc->SetAttribute("name", tfont_idx);
-			sprintf_s(_temp, "Value >= 0");
-			newsrc->SetAttribute("condition", _temp);
-			numele->LinkEndChild(newsrc);
-
-			tfont_idx = GenerateTexturefontString(src, fontidx * 24, fontidx * 24 + 12);
-			newsrc = s->skinlayout.NewElement("SRC");
-			newsrc->SetAttribute("name", tfont_idx);
-			sprintf_s(_temp, "Value < 0");
-			newsrc->SetAttribute("condition", _temp);
-			numele->LinkEndChild(newsrc);
-		}
-		else {
-			tfont_idx = GenerateTexturefontString(src, fontidx*fonttype, (fontidx + 1)*fonttype);
-			XMLElement *newsrc = s->skinlayout.NewElement("SRC");
-			newsrc->SetAttribute("name", tfont_idx);
-			if (cycle) {
-				char _temp[100];
-				sprintf_s(_temp, "Time %% %d < %d", cycle, cycle * (fontidx + 1));
-				newsrc->SetAttribute("condition", _temp);
-			}
-			numele->LinkEndChild(newsrc);
-		}
-	}
-	/* should show sign when it's 24 mode */
+	tfont_idx = GenerateTexturefontString(obj);
+	obj->SetAttribute("resid", tfont_idx);
+	/*
+	 * Processed little differently if it's 24mode.
+	 * only for LR2, LEGACY attribute.
+	 * negative number will be matched with Alphabet.
+	 * Don't use this for general purpose, negative number will drawn incorrect.
+	 * if you want, use Lua condition. that'll be helpful.
+	 */
 	if (fonttype == 24)
-		numele->SetAttribute("sign", true);
-	/* remove original SRC */
-	s->skinlayout.DeleteNode(src);
+		obj->SetAttribute("24mode", true);
 }
 
 // returns new(or previous) number
-int _LR2SkinParser::GenerateTexturefontString(XMLElement *src, int startgidx, int endgidx, bool minus) {
+int _LR2SkinParser::GenerateTexturefontString(XMLElement *obj) {
 	char _temp[1024];
 	std::string out;
-	int w = src->IntAttribute("w");
-	int h = src->IntAttribute("h");
-	int divx = src->IntAttribute("divx");
-	int divy = src->IntAttribute("divy");
+	// get all attributes first
+	int x = obj->IntAttribute("x");
+	int y = obj->IntAttribute("y");
+	int w = obj->IntAttribute("w");
+	int h = obj->IntAttribute("h");
+	int divx = obj->IntAttribute("divx");
+	int divy = obj->IntAttribute("divy");
 	int dw = w / divx;
 	int dh = h / divy;
+	int glyphcnt = obj->IntAttribute("divx") * obj->IntAttribute("divy");
+	int fonttype = 10;
+	if (glyphcnt % 11 == 0)
+		fonttype = 11;
+	else if (glyphcnt % 24 == 0)
+		fonttype = 24;
+	int repcnt = glyphcnt / fonttype;
+
 	// oh we're too tired to make every new number
 	// so, we're going to reuse previous number if it exists
-	int id = w | h << 12 | src->IntAttribute("name") << 24;
+	int id = w | h << 12 | obj->IntAttribute("name") << 24;	//	kind of id
 	if (texturefont_id.find(id) != texturefont_id.end()) {
 		return texturefont_id[id];
 	}
-	texturefont_id.insert(std::pair<int, int>(id, font_cnt));
+	texturefont_id.insert(std::pair<int, int>(id, font_cnt++));
 
 	// get image file path from resource
 	XMLElement *resource = s->skinlayout.FirstChildElement("Resource");
-	XMLElement *img = FindElementWithAttribute(resource, "Image", "name", src->Attribute("name"));
+	XMLElement *img = FindElementWithAttribute(resource, "Image", "name", obj->Attribute("name"));
 	// create font data
 	SkinTextureFont tfont;
-	tfont.AddImageSrc(img->Attribute("path"),
-		src->IntAttribute("x"), src->IntAttribute("y"), src->IntAttribute("w"), src->IntAttribute("h"));
-	char glyphs[] = "0123456789*+";
-	if (minus)
-		glyphs[11] = '-';
-	for (int i = startgidx; i < endgidx; i++) {
-		int cx = i % divx;
-		int cy = i / divx;
-		tfont.AddGlyph(glyphs[i - startgidx], 0, dw * cx, cy, dw, dh);
+	tfont.AddImageSrc(img->Attribute("path"));
+	tfont.SetCycle(obj->IntAttribute("cycle"));
+	char glyphs[] = "0123456789*+ABCDEFGHIJ#-";
+	for (int r = 0; r < repcnt; r++) {
+		for (int i = 0; i < fonttype; i++) {
+			int cx = i % divx;
+			int cy = i / divx;
+			tfont.AddGlyph(glyphs[i], 0, x + dw * cx, y + dh * cy, dw, dh);
+		}
 	}
 	tfont.SaveToText(out);
 	out = "\n# Auto-generated texture font data by SkinParser\n" + out;
 
-	// register
+	// register to LR2 resource
 	XMLElement *res = s->skinlayout.FirstChildElement("Resource");
 	XMLElement *restfont = s->skinlayout.NewElement("TextureFont");
-	restfont->SetAttribute("name", font_cnt++);		// create new texture font
+	restfont->SetAttribute("name", font_cnt-1);		// create new texture font
 	restfont->SetAttribute("type", "1");			// for LR2 font type. (but not decided for other format, yet.)
 	restfont->SetText(out.c_str());
 	res->LinkEndChild(restfont);
@@ -1139,10 +1135,10 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 			strcat(translated, "IsBGA");
 		}
 		else if (op == 32) {
-			strcat(translated, "IsAutoPlay");
+			SETNEGATIVEOPTION("IsAutoPlay");
 		}
 		else if (op == 33) {
-			SETNEGATIVEOPTION("IsAutoPlay");
+			strcat(translated, "IsAutoPlay");
 		}
 		else if (op == 34) {
 			strcat(translated, "IsGhostOff");			// hmm ...
@@ -1193,7 +1189,7 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 			strcat(translated, "IsOnline");
 		}
 		else if (op == 52) {
-			strcat(translated, "not IsExtraMode");		// meaningless ...?
+			SETNEGATIVEOPTION("IsExtraMode");			// DEMO PLAY
 		}
 		else if (op == 53) {
 			strcat(translated, "IsExtraMode");
@@ -2139,6 +2135,9 @@ const char* _LR2SkinParser::TranslateSlider(int code) {
 	}
 	else if (code == 5) {
 		strcpy(translated, "Sudden2P");
+	}
+	else if (code == 6) {
+		strcpy(translated, "PlayProgress");
 	}
 	// Lift isn't supported in LR2
 	/* else (skin scroll, FX, etc ...) are all depreciated, so ignore. */

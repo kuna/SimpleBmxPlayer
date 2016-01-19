@@ -86,6 +86,7 @@
     <ClCompile Include="audio.cpp" />
     <ClCompile Include="bmsresource.cpp" />
     <ClCompile Include="file.cpp" />
+    <ClCompile Include="font.cpp" />
     <ClCompile Include="globalresources.cpp" />
     <ClCompile Include="logger.cpp" />
     <ClCompile Include="skin.cpp" />
@@ -109,6 +110,7 @@
     <ClInclude Include="bmsinfo.h" />
     <ClInclude Include="bmsplayer.h" />
     <ClInclude Include="bmsresource.h" />
+    <ClInclude Include="exception.h" />
     <ClInclude Include="file.h" />
     <ClInclude Include="globalresources.h" />
     <ClInclude Include="logger.h" />

@@ -29,7 +29,9 @@ namespace SkinRenderHelper {
 
 // ------ SkinRenderCondition ----------------------
 
-RenderCondition::RenderCondition() : condcnt(0), evaluate_count(0) {
+RenderCondition::RenderCondition()
+	: condcnt(0), evaluate_count(0)
+{
 	memset(not, 0, sizeof(not));
 	memset(cond, 0, sizeof(cond));
 }
@@ -53,6 +55,8 @@ void RenderCondition::Set(const RString &condition) {
 		 * This will be better then using Get() method.
 		 */
 		cond[condcnt] = TIMERPOOL->Get(key[condcnt]);
+		if (atoi(key[condcnt]) >= 900 && cond[condcnt]->IsUnknown())
+			cond[condcnt]->Stop();
 		condcnt++;
 	}
 }
@@ -90,8 +94,9 @@ bool RenderCondition::Evaluate() {
 
 // ------ Skin General rendering Objects -----------------
 
-SkinRenderObject::SkinRenderObject(SkinRenderTree* owner, int type):
-rtree(owner), dstcnt(0), tag(0), clickable(false), focusable(false), objtype(type) { }
+SkinRenderObject::SkinRenderObject(SkinRenderTree* owner, int type)
+	: rtree(owner), dstcnt(0), tag(0), 
+	clickable(false), focusable(false), invertcondition(false), objtype(type) { }
 
 void SkinRenderObject::Clear() {
 	dstcnt = 0;
@@ -109,7 +114,10 @@ void SkinRenderObject::AddDST(ImageDST &dst, const RString &condition, bool lua)
 void SkinRenderObject::InvertCondition(bool b) { invertcondition = b; }
 
 bool SkinRenderObject::EvaluateCondition() {
-	return !invertcondition ^ condition.Evaluate();
+	if (invertcondition)
+		return !condition.Evaluate();
+	else
+		return condition.Evaluate();
 }
 
 bool SkinRenderObject::IsGroup() {
@@ -169,6 +177,7 @@ SkinPlayObject* SkinRenderObject::ToPlayObject() {
 		return 0;
 }
 
+#pragma region SKINRENDEROBJECT
 // do nothing
 void SkinRenderObject::Render() {  }
 
@@ -209,7 +218,24 @@ bool SkinRenderObject::Hover(int x, int y) {
 	}
 }
 
+int SkinRenderObject::GetWidth() {
+	return dst_cached.frame.w;
+}
+
+int SkinRenderObject::GetHeight() {
+	return dst_cached.frame.h;
+}
+
+int SkinRenderObject::GetX() {
+	return dst_cached.frame.x;
+}
+
+int SkinRenderObject::GetY() {
+	return dst_cached.frame.y;
+}
+
 void SkinRenderObject::SetCondition(const RString &str) { condition.Set(str); }
+#pragma endregion SKINRENDEROBJECT
 
 SkinUnknownObject::SkinUnknownObject(SkinRenderTree* owner) : SkinRenderObject(owner, OBJTYPE::UNKNOWN) {}
 
@@ -318,9 +344,42 @@ void SkinImageObject::Render() {
 		dst_cached.dst->blend, dst_cached.dst->rotatecenter);
 }
 
-SkinNumberObject::SkinNumberObject(SkinRenderTree* owner) : SkinRenderObject(owner, OBJTYPE::NUMBER) {}
+SkinTextObject::SkinTextObject(SkinRenderTree* owner)
+	: SkinRenderObject(owner, OBJTYPE::TEXT), fnt(0), v(0), align(0), editable(false) {}
 
-SkinTextObject::SkinTextObject(SkinRenderTree* owner) : SkinRenderObject(owner, OBJTYPE::TEXT) {}
+void SkinTextObject::SetFont(Font* f) { fnt = f; }
+
+void SkinTextObject::SetValue(RString* s) { v = s; }
+
+void SkinTextObject::SetEditable(bool editable) { this->editable = editable; }
+
+void SkinTextObject::SetAlign(int align) { this->align = align; }
+
+void SkinTextObject::Render() { if (v) RenderText(*v); }
+
+void SkinTextObject::RenderText(const char* s) {
+	if (fnt) {
+		// TODO: make width stretch
+		fnt->Render(s, 
+			SkinRenderHelper::_offset_calculated.x + dst_cached.frame.x, 
+			SkinRenderHelper::_offset_calculated.y + dst_cached.frame.y);
+	}
+}
+
+SkinNumberObject::SkinNumberObject(SkinRenderTree* owner)
+	: SkinTextObject(owner) {
+	objtype  = OBJTYPE::NUMBER; 
+}
+
+void SkinNumberObject::SetValue(int *i) { v = i; }
+
+void SkinNumberObject::Render() { if (v) RenderInt(*v); }
+
+void SkinNumberObject::RenderInt(int n) {
+	char buf[20];
+	itoa(n, buf, 10);
+	RenderText(buf);
+}
 
 SkinGraphObject::SkinGraphObject(SkinRenderTree* owner) : SkinImageObject(owner, OBJTYPE::GRAPH) {}
 
@@ -735,9 +794,22 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 				obj = graph;
 			}
 		}
-		/*else if (ISNAME(e, "Number")) {
-
-		}*/
+		else if (ISNAME(e, "Text")) {
+			if (e->Attribute("value")) {
+				SkinTextObject *text = rtree.NewTextObject();
+				text->SetValue(STRPOOL->Get(e->Attribute("value")));
+				text->SetFont(FONTPOOL->Get("_system"));
+				obj = text;
+			}
+		}
+		else if (ISNAME(e, "Number")) {
+			if (e->Attribute("value")) {
+				SkinNumberObject *num = rtree.NewNumberObject();
+				num->SetValue(INTPOOL->Get(e->Attribute("value")));
+				num->SetFont(FONTPOOL->Get("_system"));
+				obj = num;
+			}
+		}
 		else if (ISNAME(e, "Lua")) {
 			SkinScriptObject *script = rtree.NewScriptObject();
 			if (e->Attribute("OnRender"))

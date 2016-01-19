@@ -181,12 +181,13 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	if (CMD_IS("#ELSE")) {
 		// #ELSE: find last #IF clause, and copy condition totally.
 		// not perfect, but maybe we can make a deal :)
-		XMLElement *prev_if = cur_e->LastChildElement("If");
+		XMLElement *prev_if = condition_element[condition_level - 1]->LastChildElement("If");
 		if (prev_if) {
 			XMLElement *group = s->skinlayout.NewElement("Ifnot");
 			group->SetAttribute("condition", prev_if->Attribute("condition"));
+			cur_e = condition_element[--condition_level];
 			cur_e->LinkEndChild(group);
-			cur_e = group;
+			condition_element[++condition_level] = cur_e = group;
 		}
 		else {
 			// we tend to ignore #ELSE clause ... it's wrong.
@@ -1134,10 +1135,10 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 			strcat(translated, "IsBGA");
 		}
 		else if (op == 32) {
-			strcat(translated, "IsAutoPlay");
+			SETNEGATIVEOPTION("IsAutoPlay");
 		}
 		else if (op == 33) {
-			SETNEGATIVEOPTION("IsAutoPlay");
+			strcat(translated, "IsAutoPlay");
 		}
 		else if (op == 34) {
 			strcat(translated, "IsGhostOff");			// hmm ...
@@ -1188,7 +1189,7 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 			strcat(translated, "IsOnline");
 		}
 		else if (op == 52) {
-			strcat(translated, "not IsExtraMode");		// meaningless ...?
+			SETNEGATIVEOPTION("IsExtraMode");			// DEMO PLAY
 		}
 		else if (op == 53) {
 			strcat(translated, "IsExtraMode");
@@ -2158,19 +2159,19 @@ const char* _LR2SkinParser::TranslateGraph(int code) {
 		strcpy(translated, "SongLoadProgress");
 	}
 	else if (code == 5) {
-		strcpy(translated, "BeginnerLevel_graph");	// graph only value
+		strcpy(translated, "BeginnerLevel");	// graph only value
 	}
 	else if (code == 6) {
-		strcpy(translated, "NormalLevel_graph");
+		strcpy(translated, "NormalLevel");
 	}
 	else if (code == 7) {
-		strcpy(translated, "HyperLevel_graph");
+		strcpy(translated, "HyperLevel");
 	}
 	else if (code == 8) {
-		strcpy(translated, "AnotherLevel_graph");
+		strcpy(translated, "AnotherLevel");
 	}
 	else if (code == 9) {
-		strcpy(translated, "InsaneLevel_graph");
+		strcpy(translated, "InsaneLevel");
 	}
 	else if (code == 10) {
 		strcpy(translated, "ExScore");
@@ -2423,10 +2424,10 @@ const char* _LR2SkinParser::TranslateNumber(int code) {
 		strcpy(translated, "PlayPoorCount");
 	}
 	else if (code == 115) {
-		strcpy(translated, "PlayTotalRate");	// estimated value
+		strcpy(translated, "PlayTotalRate");			// estimated value
 	}
 	else if (code == 116) {
-		strcpy(translated, "(PlayTotalRate * 100) / 100");
+		strcpy(translated, "PlayTotalRate_decimal");	// TODO: process with Lua code
 	}
 	/* ghost */
 	else if (code == 120) {
