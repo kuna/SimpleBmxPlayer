@@ -10,6 +10,7 @@
 class TextureFont {
 private:
 	SkinTextureFont stf;
+	Timer* t;
 	Image* imgs[_MAX_TEXTUREFONT_IMAGES];
 	int imgs_cnt;
 	// scale

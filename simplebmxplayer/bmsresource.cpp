@@ -272,6 +272,10 @@ namespace BmsHelper {
 		return currentbar;
 	}
 
+	uint32_t GetEndTime() {
+		return BmsResource::BMSTIME.GetEndTime() * 1000;
+	}
+
 	void PlaySound(int channel) {
 		BmsResource::SOUND.Stop(channel);
 		BmsResource::SOUND.Play(channel);

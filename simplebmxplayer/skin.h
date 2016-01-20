@@ -74,6 +74,7 @@ private:
 	/*
 	 * under are a little macros
 	 */
+	void ProcessNumber(tinyxml2::XMLElement* obj, int sop1, int sop2, int sop3);
 	int ProcessLane(tinyxml2::XMLElement *src, int line, int resid);			// process commands about lane
 	int ProcessCombo(tinyxml2::XMLElement *obj, int line);		// process commands about combo
 	int ProcessSelectBar(tinyxml2::XMLElement *obj, int line);	// process commands about select bar

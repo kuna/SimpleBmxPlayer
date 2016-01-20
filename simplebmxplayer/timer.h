@@ -36,6 +36,7 @@ public:
 
 	/** @brief return true when (!IsStarted() && condition). Doesn't effect if timer is already started. */
 	bool Trigger(bool condition = true);
+	bool OffTrigger(bool condition = true);
 	/** @brief toggle timer. */
 	void Toggle();
 };

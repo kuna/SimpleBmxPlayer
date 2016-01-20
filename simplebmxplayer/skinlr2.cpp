@@ -155,6 +155,7 @@ void MakeRelative(int x, int y, XMLElement *e) {
 	}
 }
 
+
 int _LR2SkinParser::ParseSkinLine(int line) {
 	// get current line's string & argument
 	char **args;			// contains linebuffer's address
@@ -572,42 +573,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		}
 		else if (OBJTYPE_IS("NUMBER")) {
 			obj->SetName("Number");
-			// just convert SRC to texturefont ...
-			ConvertToTextureFont(obj);
-			/*
-			* Number object will act just like a extended-string object.
-			* If no value, then it'll just show '0' value.
-			*/
-			if (TranslateNumber(sop1))
-				obj->SetAttribute("value", TranslateNumber(sop1));
-			/*
-			 * LR2's NUMBER alignment is a bit strange ...
-			 * why is it different from string's alignment ... fix it
-			 */
-			if (sop2 == 2)
-				sop2 = 1;
-			else if (sop2 == 1)
-				sop2 = 2;
-			else if (sop2 == 0)
-				sop2 = 0;
-			obj->SetAttribute("align", sop2);
-			/*
-			* if type == 11 or 24, then set length
-			* if type == 24, then set '24mode' (only for LR2 - depreciated supportance)
-			* (If you want to implement LR2-like font, then you may have to make 2 type of texturefont SRC -
-			* plus and minus - with proper condition.)
-			*/
-			if (sop3)
-				obj->SetAttribute("length", sop3);
-
-			// remove some attrs
-			obj->DeleteAttribute("x");
-			obj->DeleteAttribute("y");
-			obj->DeleteAttribute("w");
-			obj->DeleteAttribute("h");
-			obj->DeleteAttribute("divx");
-			obj->DeleteAttribute("divy");
-			obj->DeleteAttribute("cycle");
+			ProcessNumber(obj, sop1, sop2, sop3);
 		}
 		else if (OBJTYPE_IS("SLIDER")) {
 			// change tag to slider and add attr
@@ -713,6 +679,46 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 
 	// parse next line
 	return line + 1;
+}
+
+// comment: maybe I need to process it with namespace ...?
+void _LR2SkinParser::ProcessNumber(XMLElement *obj, int sop1, int sop2, int sop3) {
+	// just convert SRC to texturefont ...
+	ConvertToTextureFont(obj);
+	/*
+	* Number object will act just like a extended-string object.
+	* If no value, then it'll just show '0' value.
+	*/
+	if (TranslateNumber(sop1))
+		obj->SetAttribute("value", TranslateNumber(sop1));
+	/*
+	* LR2's NUMBER alignment is a bit strange ...
+	* why is it different from string's alignment ... fix it
+	*/
+	if (sop2 == 2)
+		sop2 = 1;
+	else if (sop2 == 1)
+		sop2 = 2;
+	else if (sop2 == 0)
+		sop2 = 0;
+	obj->SetAttribute("align", sop2);
+	/*
+	* if type == 11 or 24, then set length
+	* if type == 24, then set '24mode' (only for LR2 - depreciated supportance)
+	* (If you want to implement LR2-like font, then you may have to make 2 type of texturefont SRC -
+	* plus and minus - with proper condition.)
+	*/
+	if (sop3)
+		obj->SetAttribute("length", sop3);
+
+	// remove some attrs
+	obj->DeleteAttribute("x");
+	obj->DeleteAttribute("y");
+	obj->DeleteAttribute("w");
+	obj->DeleteAttribute("h");
+	obj->DeleteAttribute("divx");
+	obj->DeleteAttribute("divy");
+	obj->DeleteAttribute("cycle");
 }
 
 /*
@@ -835,35 +841,85 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line, int resid) {
 	return 0;
 }
 
+std::string _getcomboconditionstring(int player, int level) {
+	char buf[256];
+	sprintf(buf, "On%dPJudge", player);
+
+	switch (level) {
+	case 0:
+	case 1:
+		return std::string(buf) + "Poor";
+		break;
+	case 2:
+		return std::string(buf) + "Bad";
+		break;
+	case 3:
+		return std::string(buf) + "Good";
+		break;
+	case 4:
+		return std::string(buf) + "Great";
+		break;
+	case 5:
+		return std::string(buf) + "Perfect";
+		break;
+	}
+}
+int __comboy = 0;
+int __combox = 0;
 int _LR2SkinParser::ProcessCombo(XMLElement *obj, int line) {
 	char **args = line_args[line];
 	int objectid = INT(args[1]);
+	int sop1 = 0, sop2 = 0, sop3 = 0;
+	if (args[11]) sop1 = INT(args[11]);
+	if (args[12]) sop2 = INT(args[12]);
+	if (args[13]) sop3 = INT(args[13]);
 
 	if (OBJTYPE_IS("NOWJUDGE_1P")) {
-		XMLElement *playcombo = FindElementWithAttribute(cur_e, "PlayCombo", "side", 0, &s->skinlayout);
-		obj->SetName("NowJudge");
-		obj->SetAttribute("level", objectid);
+		std::string cond = _getcomboconditionstring(1, objectid);
+		XMLElement *playcombo = FindElementWithAttribute(cur_e, "Combo", "condition", cond.c_str(), &s->skinlayout);
+		obj->SetName("Image");
 		playcombo->LinkEndChild(obj);
+		__comboy = obj->FirstChildElement("DST")->FirstChildElement("Frame")->IntAttribute("y");
+		__combox = obj->FirstChildElement("DST")->FirstChildElement("Frame")->IntAttribute("x");
 		return line + 1;
 	}
 	else if (OBJTYPE_IS("NOWCOMBO_1P")) {
-		XMLElement *playcombo = FindElementWithAttribute(cur_e, "PlayCombo", "side", 0, &s->skinlayout);
-		obj->SetName("NowCombo");
-		obj->SetAttribute("level", objectid);
+		std::string cond = _getcomboconditionstring(1, objectid);
+		XMLElement *playcombo = FindElementWithAttribute(cur_e, "Combo", "condition", cond.c_str(), &s->skinlayout);
+		obj->SetName("Number");
+		obj->SetAttribute("value", "Play1PCombo");
+		ProcessNumber(obj, 0, 0, 0);
+		obj->SetAttribute("align", 1);
+		for (XMLElement *e = obj->FirstChildElement("DST")->FirstChildElement("Frame"); e;) {
+			e->SetAttribute("y", __comboy);
+			e->SetAttribute("x", e->IntAttribute("x") + __combox);
+			e->SetAttribute("w", 0);
+			e = e->NextSiblingElement("Frame");
+		}
 		playcombo->LinkEndChild(obj);
 		return line + 1;
 	}
 	else if (OBJTYPE_IS("NOWJUDGE_2P")) {
-		XMLElement *playcombo = FindElementWithAttribute(cur_e, "PlayCombo", "side", 1, &s->skinlayout);
-		obj->SetName("NowJudge");
-		obj->SetAttribute("level", objectid);
+		std::string cond = _getcomboconditionstring(2, objectid);
+		XMLElement *playcombo = FindElementWithAttribute(cur_e, "Combo", "condition", cond.c_str(), &s->skinlayout);
+		obj->SetName("Image");
 		playcombo->LinkEndChild(obj);
+		__comboy = obj->FirstChildElement("DST")->IntAttribute("y");
 		return line + 1;
 	}
 	else if (OBJTYPE_IS("NOWCOMBO_2P")) {
-		XMLElement *playcombo = FindElementWithAttribute(cur_e, "PlayCombo", "side", 1, &s->skinlayout);
-		obj->SetName("NowCombo");
-		obj->SetAttribute("level", objectid);
+		std::string cond = _getcomboconditionstring(2, objectid);
+		XMLElement *playcombo = FindElementWithAttribute(cur_e, "Combo", "condition", cond.c_str(), &s->skinlayout);
+		obj->SetName("Number");
+		obj->SetAttribute("value", "Play2PCombo");
+		ProcessNumber(obj, 0, 0, 0);
+		obj->SetAttribute("align", 1);
+		for (XMLElement *e = obj->FirstChildElement("DST")->FirstChildElement("Frame"); e;) {
+			e->SetAttribute("y", __comboy);
+			e->SetAttribute("x", e->IntAttribute("x") + __combox);
+			e->SetAttribute("w", 0);
+			e = e->NextSiblingElement("Frame");
+		}
 		playcombo->LinkEndChild(obj);
 		return line + 1;
 	}
@@ -1021,6 +1077,7 @@ int _LR2SkinParser::GenerateTexturefontString(XMLElement *obj) {
 	int h = obj->IntAttribute("h");
 	int divx = obj->IntAttribute("divx");
 	int divy = obj->IntAttribute("divy");
+	const char* timer = obj->Attribute("timer");
 	int dw = w / divx;
 	int dh = h / divy;
 	int glyphcnt = obj->IntAttribute("divx") * obj->IntAttribute("divy");
@@ -1046,6 +1103,7 @@ int _LR2SkinParser::GenerateTexturefontString(XMLElement *obj) {
 	SkinTextureFont tfont;
 	tfont.AddImageSrc(img->Attribute("path"));
 	tfont.SetCycle(obj->IntAttribute("cycle"));
+	if (timer) tfont.SetTimer(timer);
 	tfont.SetFallbackWidth(dw);
 	char glyphs[] = "0123456789*+ABCDEFGHIJ#-";
 	for (int r = 0; r < repcnt; r++) {
@@ -2403,101 +2461,101 @@ const char* _LR2SkinParser::TranslateNumber(int code) {
 	}
 	/* during play */
 	else if (code == 100) {
-		strcpy(translated, "PlayScore");
+		strcpy(translated, "Play1PScore");
 	}
 	else if (code == 101) {
-		strcpy(translated, "PlayExScore");
+		strcpy(translated, "Play1PExScore");
 	}
 	else if (code == 102) {
-		strcpy(translated, "PlayRate");
+		strcpy(translated, "Play1PRate");
 	}
 	else if (code == 103) {
-		strcpy(translated, "PlayRate_decimal");
+		strcpy(translated, "Play1PRate_decimal");
 	}
 	else if (code == 104) {
-		strcpy(translated, "PlayCombo");
+		strcpy(translated, "Play1PCombo");
 	}
 	else if (code == 105) {
-		strcpy(translated, "PlayMaxCombo");
+		strcpy(translated, "Play1PMaxCombo");
 	}
 	else if (code == 106) {
-		strcpy(translated, "PlayTotalNotes");
+		strcpy(translated, "Play1PTotalNotes");
 	}
 	else if (code == 107) {
-		strcpy(translated, "PlayGrooveGuage");
+		strcpy(translated, "Play1PGrooveGuage");
 	}
 	else if (code == 108) {
-		strcpy(translated, "PlayRivalDiff");
+		strcpy(translated, "Play1PRivalDiff");
 	}
 	else if (code == 110) {
-		strcpy(translated, "PlayPerfectCount");
+		strcpy(translated, "Play1PPerfectCount");
 	}
 	else if (code == 111) {
-		strcpy(translated, "PlayGreatCount");
+		strcpy(translated, "Play1PGreatCount");
 	}
 	else if (code == 112) {
-		strcpy(translated, "PlayGoodCount");
+		strcpy(translated, "Play1PGoodCount");
 	}
 	else if (code == 113) {
-		strcpy(translated, "PlayBadCount");
+		strcpy(translated, "Play1PBadCount");
 	}
 	else if (code == 114) {
-		strcpy(translated, "PlayPoorCount");
+		strcpy(translated, "Play1PPoorCount");
 	}
 	else if (code == 115) {
-		strcpy(translated, "PlayTotalRate");			// estimated value
+		strcpy(translated, "Play1PTotalRate");			// estimated value
 	}
 	else if (code == 116) {
-		strcpy(translated, "PlayTotalRate_decimal");	// TODO: process with Lua code
+		strcpy(translated, "Play1PTotalRate_decimal");	// TODO: process with Lua code
 	}
 	/* ghost */
 	else if (code == 120) {
-		strcpy(translated, "GhostScore");
+		strcpy(translated, "Play2PScore");
 	}
 	else if (code == 121) {
-		strcpy(translated, "GhostExScore");
+		strcpy(translated, "Play2PExScore");
 	}
 	else if (code == 122) {
-		strcpy(translated, "GhostRate");
+		strcpy(translated, "Play2PRate");
 	}
 	else if (code == 123) {
-		strcpy(translated, "(GhostRate * 100) % 100");
+		strcpy(translated, "Play2PRate_decimal");
 	}
 	else if (code == 124) {
-		strcpy(translated, "GhostCombo");
+		strcpy(translated, "Play2PCombo");
 	}
 	else if (code == 125) {
-		strcpy(translated, "GhostMaxCombo");
+		strcpy(translated, "Play2PMaxCombo");
 	}
 	else if (code == 126) {
-		strcpy(translated, "GhostTotalNotes");
+		strcpy(translated, "Play2PTotalNotes");
 	}
 	else if (code == 127) {
-		strcpy(translated, "GhostGrooveGuage");
+		strcpy(translated, "Play2PGrooveGuage");
 	}
 	else if (code == 128) {
-		strcpy(translated, "GhostRivalDiff");
+		strcpy(translated, "Play2PRivalDiff");
 	}
 	else if (code == 130) {
-		strcpy(translated, "GhostPerfectCount");
+		strcpy(translated, "Play2PPerfectCount");
 	}
 	else if (code == 131) {
-		strcpy(translated, "GhostGreatCount");
+		strcpy(translated, "Play2PGreatCount");
 	}
 	else if (code == 132) {
-		strcpy(translated, "GhostGoodCount");
+		strcpy(translated, "Play2PGoodCount");
 	}
 	else if (code == 133) {
-		strcpy(translated, "GhostBadCount");
+		strcpy(translated, "Play2PBadCount");
 	}
 	else if (code == 134) {
-		strcpy(translated, "GhostPoorCount");
+		strcpy(translated, "Play2PPoorCount");
 	}
 	else if (code == 135) {
-		strcpy(translated, "GhostTotalRate");	// estimated value
+		strcpy(translated, "Play2PTotalRate");	// estimated value
 	}
 	else if (code == 136) {
-		strcpy(translated, "GhostTotalRate_decimal");
+		strcpy(translated, "Play2PTotalRate_decimal");
 	}
 	/*
 	 * 150 ~ 158: TODO (useless?)

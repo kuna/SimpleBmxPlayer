@@ -99,6 +99,8 @@ SkinRenderObject::SkinRenderObject(SkinRenderTree* owner, int type)
 	: rtree(owner), dstcnt(0), tag(0), 
 	clickable(false), focusable(false), invertcondition(false), objtype(type) { }
 
+int SkinRenderObject::GetType() { return objtype; }
+
 void SkinRenderObject::Clear() {
 	dstcnt = 0;
 }
@@ -131,6 +133,7 @@ bool SkinRenderObject::IsGroup() {
 
 bool SkinRenderObject::IsGeneral() {
 	switch (objtype) {
+	case OBJTYPE::GENERAL:
 	case OBJTYPE::IMAGE:
 	case OBJTYPE::NUMBER:
 	case OBJTYPE::GRAPH:
@@ -363,6 +366,17 @@ void SkinTextObject::SetEditable(bool editable) { this->editable = editable; }
 
 void SkinTextObject::SetAlign(int align) { this->align = align; }
 
+int SkinTextObject::GetWidth() { if (v) GetTextWidth(*v); else return 0; }
+
+int SkinTextObject::GetTextWidth(const RString& s) {
+	if (fnt) {
+		fnt->GetWidth(s);
+	}
+	else {
+		return 0;
+	}
+}
+
 void SkinTextObject::Render() { if (v && drawable) RenderText(*v); }
 
 void SkinTextObject::RenderText(const char* s) {
@@ -392,12 +406,24 @@ void SkinNumberObject::SetValue(int *i) { v = i; }
 
 void SkinNumberObject::SetLength(int length) { this->length = length; }
 
+int SkinNumberObject::GetWidth() {
+	if (v && drawable) {
+		CacheInt(*v);
+		return GetTextWidth(buf);
+	}
+	else return 0;
+}
+
 void SkinNumberObject::Set24Mode(bool b) { mode24 = b; }
 
-void SkinNumberObject::Render() { if (v && drawable) RenderInt(*v); }
+void SkinNumberObject::Render() {
+	if (v && drawable) {
+		CacheInt(*v);
+		RenderText(buf);
+	}
+}
 
-void SkinNumberObject::RenderInt(int n) {
-	char buf[20];
+void SkinNumberObject::CacheInt(int n) {
 	if (!length) {
 		itoa(n, buf, 10);
 	}
@@ -437,7 +463,6 @@ void SkinNumberObject::RenderInt(int n) {
 			buf[0] = '+';
 		}
 	}
-	RenderText(buf);
 }
 
 SkinGraphObject::SkinGraphObject(SkinRenderTree* owner) : SkinImageObject(owner, OBJTYPE::GRAPH) {}
@@ -477,6 +502,36 @@ void SkinSliderObject::Render() {
 }
 
 SkinButtonObject::SkinButtonObject(SkinRenderTree* owner) : SkinImageObject(owner, OBJTYPE::BUTTON) {}
+
+SkinComboObject::SkinComboObject(SkinRenderTree *owner)
+	: SkinRenderObject(owner, OBJTYPE::GENERAL), makeoffset(true),
+	combo(0), judge(0) {}
+
+void SkinComboObject::Render() {
+	// same as image, but x position is little differnt
+	if (condition.Evaluate()) {
+		int offset_x = 0;
+		if (combo) {
+			combo->Update();
+			combo->Render();
+			if (makeoffset) offset_x = -combo->GetWidth() / 2;
+		}
+		if (judge) {
+			SkinRenderHelper::PushRenderOffset(offset_x, 0);
+			judge->Update();
+			judge->Render();
+			SkinRenderHelper::PopRenderOffset();
+		}
+	}
+}
+
+void SkinComboObject::SetOffset(bool offset) {
+	makeoffset = offset;
+}
+
+void SkinComboObject::SetComboObject(SkinNumberObject* obj) { combo = obj; }
+
+void SkinComboObject::SetJudgeObject(SkinImageObject* obj) { judge = obj; }
 
 #pragma region PLAYOBJECT
 SkinPlayObject::SkinPlayObject(SkinRenderTree* owner) : 
@@ -748,6 +803,12 @@ SkinPlayObject* SkinRenderTree::NewPlayObject() {
 	return obj;
 }
 
+SkinComboObject* SkinRenderTree::NewComboObject() {
+	SkinComboObject* obj = new SkinComboObject(this);
+	_objpool.push_back(obj);
+	return obj;
+}
+
 SkinBgaObject* SkinRenderTree::NewBgaObject() {
 	SkinBgaObject* obj = new SkinBgaObject(this);
 	_objpool.push_back(obj);
@@ -859,6 +920,30 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 			SkinImageObject *img = rtree.NewImageObject();
 			img->SetSRC(e);
 			obj = img;
+		}
+		else if (ISNAME(e, "Combo")) {
+			SkinComboObject *o = rtree.NewComboObject();
+			SkinImageObject *judge = 0;
+			SkinNumberObject *combo = 0;
+			XMLElement *e_judge = e->FirstChildElement("Image");
+			XMLElement *e_combo = e->FirstChildElement("Number");
+			if (e_judge) {
+				judge = rtree.NewImageObject();
+				SkinRenderHelper::ConstructBasicRenderObject(judge, e_judge);
+				judge->SetSRC(e_judge);
+				o->SetJudgeObject(judge);
+			}
+			if (e_combo) {
+				combo = rtree.NewNumberObject();
+				SkinRenderHelper::ConstructBasicRenderObject(combo, e_combo);
+				combo->SetValue(INTPOOL->Get(e_combo->Attribute("value")));
+				combo->SetAlign(e_combo->IntAttribute("align"));
+				combo->SetLength(e_combo->IntAttribute("length"));
+				combo->Set24Mode(e_combo->IntAttribute("24mode"));
+				combo->SetFont(e_combo->Attribute("resid"));
+				o->SetComboObject(combo);
+			}
+			obj = o;
 		}
 		else if (ISNAME(e, "Slider")) {
 			if (e->Attribute("value")) {
@@ -1082,9 +1167,10 @@ bool SkinRenderHelper::CalculateFrame(ImageDST &dst, ImageDSTFrame &frame) {
 }
 
 ImageDSTFrame SkinRenderHelper::Tween(ImageDSTFrame &a, ImageDSTFrame &b, double t, int acctype) {
+	/* 0.5: kinda of lightweight-round-function */
 	switch (acctype) {
 	case ACCTYPE::LINEAR:
-#define TWEEN(a, b) ((a)*(1-t) + (b)*t)
+#define TWEEN(a, b) ((a)*(1-t) + (b)*t + 0.5)
 		return{
 			TWEEN(a.time, b.time),
 			TWEEN(a.x, b.x),
@@ -1101,7 +1187,7 @@ ImageDSTFrame SkinRenderHelper::Tween(ImageDSTFrame &a, ImageDSTFrame &b, double
 		break;
 	case ACCTYPE::DECEL:
 #define T (sqrt(1-(t-1)*(t-1)))
-#define TWEEN(a, b) ((a)*(1-T) + (b)*T)
+#define TWEEN(a, b) ((a)*(1-T) + (b)*T + 0.5)
 		return{
 			TWEEN(a.time, b.time),
 			TWEEN(a.x, b.x),
@@ -1119,7 +1205,7 @@ ImageDSTFrame SkinRenderHelper::Tween(ImageDSTFrame &a, ImageDSTFrame &b, double
 		break;
 	case ACCTYPE::ACCEL:
 #define T (-sqrt(1-t*t)+1)
-#define TWEEN(a, b) ((a)*(1-T) + (b)*T)
+#define TWEEN(a, b) ((a)*(1-T) + (b)*T + 0.5)
 		return{
 			TWEEN(a.time, b.time),
 			TWEEN(a.x, b.x),

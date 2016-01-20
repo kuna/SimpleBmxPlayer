@@ -19,6 +19,11 @@ namespace GamePlay {
 	Timer*				OnSongLoading;
 	Timer*				OnSongLoadingEnd;
 	Timer*				OnReady;
+	Timer*				OnClose;
+	Timer*				On1PMiss;
+	Timer*				On2PMiss;
+	Timer*				On1PJudge;
+	Timer*				On2PJudge;
 	RString*			Bmspath;
 	RString*			PlaySkinpath;
 
@@ -48,6 +53,11 @@ namespace GamePlay {
 		OnSongLoading = TIMERPOOL->Set("OnSongLoading", false);
 		OnSongLoadingEnd = TIMERPOOL->Set("OnSongLoadingEnd", false);
 		OnReady = TIMERPOOL->Set("OnReady", false);
+		OnClose = SWITCH_OFF("OnClose");
+		On1PMiss = SWITCH_OFF("On1PMiss");
+		On2PMiss = SWITCH_OFF("On2PMiss");
+		On1PJudge = SWITCH_OFF("On1PJudge");
+		On2PJudge = SWITCH_OFF("On2PJudge");
 		Bmspath = STRPOOL->Set("Bmspath");
 		PlaySkinpath = STRPOOL->Set("PlaySkinpath");
 
@@ -225,6 +235,11 @@ namespace GamePlay {
 		if (OnReady->Trigger(OnSongLoadingEnd->IsStarted() && OnScene->GetTick() >= 3000))
 			OnSongLoading->Stop();
 		OnGameStart->Trigger(OnReady->GetTick() >= 2000);
+		On1PMiss->OffTrigger(On1PMiss->GetTick() > 2000);
+		On2PMiss->OffTrigger(On2PMiss->GetTick() > 2000);
+		On1PJudge->OffTrigger(On1PJudge->GetTick() > 2000);
+		On2PJudge->OffTrigger(On2PJudge->GetTick() > 2000);
+		OnClose->Trigger(OnGameStart->GetTick() + 2000 > BmsHelper::GetEndTime());
 
 		/*
 		 * BMS update

@@ -32,6 +32,7 @@ namespace OBJTYPE {
 		/* some renderer specific objects ... */
 		BGA = 20,
 		PLAYLANE = 21,
+		COMBO = 22,
 	};
 }
 namespace ROTATIONCENTER {
@@ -104,6 +105,7 @@ class SkinImageObject;
 class SkinSliderObject;
 class SkinGraphObject;
 class SkinTextObject;
+class SkinNumberObject;
 class SkinButtonObject;
 class SkinBgaObject;
 class SkinPlayObject;
@@ -136,6 +138,7 @@ protected:
 	SkinRenderTree* rtree;
 public:
 	SkinRenderObject(SkinRenderTree* owner, int type = OBJTYPE::NONE);
+	int GetType();
 	virtual void Clear();
 	virtual void SetCondition(const RString &str);
 	virtual void AddDST(ImageDST &dst, const RString& condition = "", bool lua = false);
@@ -183,6 +186,21 @@ public:
 	virtual void Render();
 };
 
+/*
+ * special object for playing
+ */
+class SkinComboObject : public SkinRenderObject {
+	SkinImageObject *judge;
+	SkinNumberObject *combo;
+	bool makeoffset;
+public:
+	SkinComboObject(SkinRenderTree *owner);
+	void SetOffset(bool offset);
+	void SetJudgeObject(SkinImageObject *);
+	void SetComboObject(SkinNumberObject *);
+	virtual void Render();
+};
+
 class SkinGroupObject : public SkinImageObject {
 private:
 	/** @brief base elements */
@@ -216,11 +234,14 @@ public:
 	void SetAlign(int align);
 	void SetValue(RString* s);
 	virtual void Render();
+	virtual int GetWidth();
+	int GetTextWidth(const RString& s);
 	void RenderText(const char* s);
 };
 
 class SkinNumberObject : public SkinTextObject {
 private:
+	char buf[20];
 	bool mode24;
 	int length;
 	int *v;
@@ -230,8 +251,9 @@ public:
 	void SetLength(int length);
 	void Set24Mode(bool b);
 	virtual void Render();
+	virtual int GetWidth();
 	/** @brief make string for rendering and call SkinTextObject::RenderText() */
-	void RenderInt(int n);
+	void CacheInt(int n);
 };
 
 class SkinGraphObject : public SkinImageObject {
@@ -390,6 +412,7 @@ public:
 
 	//SkinLifeGraphObject* NewLifeGraphObject();
 	SkinPlayObject* NewPlayObject();
+	SkinComboObject* NewComboObject();
 
 	/** @brief load image at globalresources. */
 	void RegisterImage(RString& id, RString& path);

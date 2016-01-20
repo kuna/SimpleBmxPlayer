@@ -76,7 +76,7 @@ void Font::Render(const char* text, int x, int y, int width) {
 // -------------------------------------------------
 
 TextureFont::TextureFont()
-	: imgs_cnt(0), sx(1), sy(1) {}
+	: imgs_cnt(0), sx(1), sy(1), t(0) {}
 
 TextureFont::~TextureFont() { Release(); }
 
@@ -87,6 +87,7 @@ void TextureFont::Release() {
 		IMAGEPOOL->Release(imgs[i]);
 	}
 	imgs_cnt = 0;
+	t = 0;
 }
 
 void TextureFont::SetFont(const RString& textdata) {
@@ -94,6 +95,8 @@ void TextureFont::SetFont(const RString& textdata) {
 	stf.LoadFromText(textdata);
 	// loads image
 	imgs_cnt = stf.GetImageCount();
+	if (stf.GetTimer())
+		t = TIMERPOOL->Get(stf.GetTimer());
 	for (int i = 0; i < imgs_cnt; i++) {
 		imgs[i] = IMAGEPOOL->Load(stf.GetImagePath(i));
 	}
@@ -149,7 +152,7 @@ namespace {
 }
 
 SkinTextureFont::Glyph* TextureFont::GetGlyph(uint32_t code) {
-	SkinTextureFont::Glyph *g = stf.GetGlyph(code);
+	SkinTextureFont::Glyph *g = stf.GetGlyph(code, t?t->GetTick():0);
 	if (!g) {
 		if (code == '?')
 			return 0;

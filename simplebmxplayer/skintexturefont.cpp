@@ -11,6 +11,7 @@ void SkinTextureFont::Clear() {
 	imgcnt = 0;
 	cycle = 0;
 	fallback_width = 0;
+	timer = "";
 }
 
 void SkinTextureFont::AddImageSrc(const std::string& imagepath) {
@@ -30,6 +31,10 @@ void SkinTextureFont::AddGlyph(uint32_t unicode, uint8_t image, uint16_t x, uint
 void SkinTextureFont::SetCycle(int cycle) {
 	cycle = 0;
 }
+void SkinTextureFont::SetTimer(const std::string& timername) {
+	timer = timername;
+}
+const char* SkinTextureFont::GetTimer() { return timer.c_str(); }
 bool SkinTextureFont::LoadFromFile(const char *filepath) {
 	FILE *f = fopen(filepath, "r");
 	if (!f)
@@ -76,6 +81,8 @@ void SkinTextureFont::LoadFromText(const char *text) {
 				cycle = args[0];
 			else if (sscanf(p, "fallback_width=%d", &args[0]) == 1)
 				fallback_width = args[0];
+			else if (sscanf(p, "timer=%s", _buffer) == 1)
+				timer = _buffer;
 		}
 		else if (mode == 1) {
 			if (sscanf(p, "%d=%s", &args[0], _buffer) == 2) {
@@ -125,6 +132,8 @@ void SkinTextureFont::SaveToText(std::string& out) {
 	ss << "imagecnt=" << imgcnt << "\n";
 	if (fallback_width > 0)
 		ss << "fallback_width=" << fallback_width << "\n";
+	if (timer != "")
+		ss << "timer=" << timer << "\n";
 
 	ss << "[glyphs]\n";
 	for (auto it = glyphs.begin(); it != glyphs.end(); ++it) {

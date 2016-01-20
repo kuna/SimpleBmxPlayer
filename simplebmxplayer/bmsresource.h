@@ -88,6 +88,7 @@ namespace BmsHelper {
 
 	/** @brief get current bar(not measure). not in general use; for Player object. */
 	uint32_t GetCurrentBar();
+	uint32_t GetEndTime();
 
 	double GetCurrentPosFromTime(double time_sec);
 

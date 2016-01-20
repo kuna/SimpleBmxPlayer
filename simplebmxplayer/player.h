@@ -120,7 +120,8 @@ protected:
 
 	// some prefetch timers/values
 	Timer*				bmstimer;			// elapsed time
-	Timer*				misstimer;			// timer used when miss occured
+	Timer*				on1pmiss;			// timer used when miss occured
+	Timer*				on2pmiss;			// timer used when miss occured
 	Timer*				lanepress[20];
 	Timer*				lanehold[20];
 	Timer*				laneup[20];
@@ -130,10 +131,13 @@ protected:
 	double*				highscore_graph;
 	int*				playscore;
 	int*				playexscore;
+	int*				playcombo;
 	int*				playmaxcombo;
 	int*				playtotalnotes;
 	int*				playgrooveguage;
 	int*				playrivaldiff;
+	Timer*				on1pjudge;
+	Timer*				on2pjudge;
 
 	// DON'T CHEAT! check for value malpulation.
 	// (TODO) processed by CryptManager

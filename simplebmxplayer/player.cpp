@@ -6,8 +6,6 @@
 #include "util.h"
 #include <time.h>
 
-// OnPoorBGA
-
 /* constant value - used for rendering & initalizing */
 namespace {
 	const int lane_to_channel[] = {
@@ -71,7 +69,8 @@ Player::Player(int type) {
 	this->playertype = type;
 	// initalize variables
 	bmstimer = TIMERPOOL->Get("OnGameStart");
-	misstimer = TIMERPOOL->Get("On1PMiss");
+	on1pmiss = TIMERPOOL->Get("On1PMiss");
+	on2pmiss = TIMERPOOL->Get("On1PMiss");
 	memset(lanepress, 0, sizeof(lanepress));
 	memset(laneup, 0, sizeof(laneup));
 	memset(lanehold, 0, sizeof(lanehold));
@@ -96,12 +95,15 @@ Player::Player(int type) {
 
 	exscore_graph = DOUBLEPOOL->Get("ExScore");
 	highscore_graph = DOUBLEPOOL->Get("HighScore");
-	playscore = INTPOOL->Get("PlayScore");
-	playexscore = INTPOOL->Get("PlayExScore");
-	playmaxcombo = INTPOOL->Get("PlayMaxCombo");
-	playtotalnotes = INTPOOL->Get("PlayTotalNotes");
-	playgrooveguage = INTPOOL->Get("PlayGrooveGuage");
-	playrivaldiff = INTPOOL->Get("PlayRivalDiff");
+	playscore = INTPOOL->Get("Play1PScore");
+	playexscore = INTPOOL->Get("Play1PExScore");
+	playcombo = INTPOOL->Get("Play1PCombo");
+	playmaxcombo = INTPOOL->Get("Play1PMaxCombo");
+	playtotalnotes = INTPOOL->Get("Play1PTotalNotes");
+	playgrooveguage = INTPOOL->Get("Play1PGrooveGuage");
+	playrivaldiff = INTPOOL->Get("Play1PRivalDiff");
+	on1pjudge = TIMERPOOL->Get("On1PJudge");
+	on2pjudge = TIMERPOOL->Get("On2PJudge");
 }
 
 int Player::CheckJudgeByTiming(double delta) {
@@ -120,6 +122,47 @@ int Player::CheckJudgeByTiming(double delta) {
 		return JUDGETYPE::JUDGE_LATE;
 	else
 		return JUDGETYPE::JUDGE_EARLY;
+}
+
+void Player::MakeJudge(int judgetype, int channel, bool silent) {
+	grade.AddGrade(judgetype);
+	if (judgetype >= JUDGETYPE::JUDGE_GREAT && lanejudgeokay[channel])
+		lanejudgeokay[channel]->Start();
+	// update graph/number
+	if (judgetype <= JUDGETYPE::JUDGE_BAD)
+		on1pmiss->Start();
+	switch (judgetype) {
+	case JUDGETYPE::JUDGE_POOR:
+		TIMERPOOL->Set("On1PJudgePoor");
+		break;
+	case JUDGETYPE::JUDGE_BAD:
+		TIMERPOOL->Set("On1PJudgeBad");
+		break;
+	case JUDGETYPE::JUDGE_GOOD:
+		TIMERPOOL->Set("On1PJudgeGood");
+		break;
+	case JUDGETYPE::JUDGE_GREAT:
+		TIMERPOOL->Set("On1PJudgeGreat");
+		break;
+	case JUDGETYPE::JUDGE_PGREAT:
+		TIMERPOOL->Set("On1PJudgePerfect");
+		break;
+	}
+	on1pjudge->Start();
+	*exscore_graph = grade.CalculateRate();
+	*highscore_graph = grade.CalculateRate();
+	*playscore = grade.CalculateScore();
+	*playexscore = grade.CalculateEXScore();
+	*playcombo = grade.GetCombo();
+	*playmaxcombo = grade.GetMaxCombo();
+	if (!silent) {
+		// TODO set timer
+		switch (judgetype) {
+
+		}
+		// TODO: make judge event
+		//Handler::CallHandler(OnGamePlayJudge, &judgearg);
+	}
 }
 
 bool Player::IsNoteAvailable(int notechannel) {
@@ -295,26 +338,6 @@ void Player::PressKey(int keychannel) {
 
 	// make sound
 	BmsHelper::PlaySound(keysound[keychannel][currentbar].ToInteger());
-}
-
-void Player::MakeJudge(int judgetype, int channel, bool silent) {
-	grade.AddGrade(judgetype);
-	if (judgetype >= JUDGETYPE::JUDGE_GREAT && lanejudgeokay[channel])
-		lanejudgeokay[channel]->Start();
-	// update graph/number
-	*exscore_graph = grade.CalculateRate();
-	*highscore_graph = grade.CalculateRate();
-	*playscore = grade.CalculateScore();
-	*playexscore = grade.CalculateEXScore();
-	*playmaxcombo = grade.GetMaxCombo();
-	if (!silent) {
-		// TODO set timer
-		switch (judgetype) {
-
-		}
-		// TODO: make judge event
-		//Handler::CallHandler(OnGamePlayJudge, &judgearg);
-	}
 }
 
 double Player::GetLastMissTime() {

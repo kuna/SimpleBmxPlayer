@@ -13,18 +13,19 @@ o 쓰레드 도입.
 o 그래프/슬라이더 도입.
 o 폰트
   - 비트맵폰트: 속성에 cycle 넣고 animate 가능하게 만듬.
-- 키 인풋, 마우스 collision 확인.
-- 리프트/서든 작업.
+- 키 인풋
+- 리프트/서든/배속설정 작업.
 o Lane에 DST 없애기 -> 직접 속성으로 바꿔서 처리 더 수월하게 하기.
-- Group object - Texture 생성의 경우 구현 (어차피 SRC도 있으니 상관없음. SRC/DST는 각각 언급 없을시 전체 draw로 기본값 하나 생성하도록 하기.)
 - ID attribute 도입
 o 기본 SRC 타이머는 loop -> 몇개만 loop=0 속성 추가해놓기.
 - Animated Value change(double/int) 도입하기.
+- Ghost
 - Autoplay 및 정상종료.
 <플레이 프로젝트 끝. 다음 프로젝트에서 계속 ...>
 
+- Group object - Texture 생성의 경우 구현 (어차피 SRC도 있으니 상관없음. SRC/DST는 각각 언급 없을시 전체 draw로 기본값 하나 생성하도록 하기.)
 - LIST 오브젝트 구현 & LR2SKINCONVERTER에서 LIST 오브젝트 만들도록 하기.
-- Onmouseover/click 직접 확인하기
+- Onmouseover/click 직접 확인하기 (마우스 collision 확인)
 - Button Handler 구현
 - select music 구현
 - result 구현
