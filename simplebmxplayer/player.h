@@ -138,6 +138,8 @@ protected:
 	int*				playrivaldiff;
 	Timer*				on1pjudge;
 	Timer*				on2pjudge;
+	double*				playerguage;
+	int*				playerguagetype;
 
 	// DON'T CHEAT! check for value malpulation.
 	// (TODO) processed by CryptManager

@@ -189,6 +189,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			cur_e = condition_element[--condition_level];
 			cur_e->LinkEndChild(group);
 			condition_element[++condition_level] = cur_e = group;
+			condition_status[condition_level] = 0;
 		}
 		else {
 			// we tend to ignore #ELSE clause ... it's wrong.
@@ -201,13 +202,15 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		XMLElement *group = s->skinlayout.NewElement("If");
 		if (CMD_IS("#IF")) condition_level++;
 		condition_element[condition_level] = group;
+		condition_status[condition_level] = CMD_IS("#IF");
 		ConditionAttribute cls;
 		for (int i = 1; i < 50 && args[i]; i++) {
 			const char *c = INT(args[i])?TranslateOPs(INT(args[i])):0;
 			if (c) cls.AddCondition(c);
 		}
 		group->SetAttribute("condition", cls.ToString());
-		cur_e = condition_element[condition_level - 1];		// get parent object
+		// get parent object and link new group to there
+		cur_e = condition_element[condition_level - 1];	
 		cur_e->LinkEndChild(group);
 		cur_e = group;
 		return line + 1;
@@ -305,6 +308,11 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	Parse(args[1]);
 	}*/
 	else if (CMD_IS("#IMAGE")) {
+		/*
+		 * Sometimes resource is added in IF form
+		 * then ONLY allow first one
+		 */
+		if (condition_level > 1 && condition_status[condition_level] == 0) return line + 1;
 		XMLElement *resource = s->skinlayout.FirstChildElement("Resource");
 		XMLElement *image = s->skinlayout.NewElement("Image");
 		image->SetAttribute("name", image_cnt++);
@@ -516,14 +524,6 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		args = line_args[line];
 		int objectid = INT(args[1]);
 
-		// groovegauge
-		if (OBJTYPE_IS("GROOVEGAUGE")) {
-			obj->SetName("LifeGraph");
-			obj->SetAttribute("player", objectid);
-			obj->SetAttribute("valueid", "Life");
-			return line + 1;
-		}
-
 		// combo (play)
 		int isComboElement = ProcessCombo(obj, line);
 		if (isComboElement)
@@ -612,6 +612,72 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		/* 
 		 * some special object (PLAY lane object) 
 		 */
+		else if (OBJTYPE_IS("GROOVEGAUGE")) {
+			int side = INT(args[1]);
+			int addx = sop1;
+			int addy = sop2;
+			obj->SetAttribute("side", side);
+			obj->SetAttribute("addx", addx);
+			obj->SetAttribute("addy", addy);
+			// process SRC and make new SRC elements
+			int x = obj->IntAttribute("x");
+			int y = obj->IntAttribute("y");
+			int w = obj->IntAttribute("w");
+			int h = obj->IntAttribute("h");
+			int divx = obj->IntAttribute("divx");
+			int divy = obj->IntAttribute("divy");
+			int c = divx * divy;
+			int dw = w / divx;
+			int dh = h / divy;
+			XMLElement *active, *inactive;
+			active = s->skinlayout.NewElement("SRC_GROOVE_ACTIVE");
+			inactive = s->skinlayout.NewElement("SRC_GROOVE_INACTIVE");
+			active->SetAttribute("x", x + dw * (1 % divx));
+			active->SetAttribute("y", y + dh * (1 / divx % divy));
+			active->SetAttribute("w", dw);
+			active->SetAttribute("h", dh);
+			inactive->SetAttribute("x", x + dw * (3 % divx));
+			inactive->SetAttribute("y", y + dh * (3 / divx % divy));
+			inactive->SetAttribute("w", dw);
+			inactive->SetAttribute("h", dh);
+			obj->LinkEndChild(active);
+			obj->LinkEndChild(inactive);
+
+			active = s->skinlayout.NewElement("SRC_HARD_ACTIVE");
+			inactive = s->skinlayout.NewElement("SRC_HARD_INACTIVE");
+			active->SetAttribute("x", x);
+			active->SetAttribute("y", y);
+			active->SetAttribute("w", dw);
+			active->SetAttribute("h", dh);
+			inactive->SetAttribute("x", x + dw * (2 % divx));
+			inactive->SetAttribute("y", y + dh * (2 / divx % divy));
+			inactive->SetAttribute("w", dw);
+			inactive->SetAttribute("h", dh);
+			obj->LinkEndChild(active);
+			obj->LinkEndChild(inactive);
+
+			active = s->skinlayout.NewElement("SRC_EX_ACTIVE");
+			inactive = s->skinlayout.NewElement("SRC_EX_INACTIVE");
+			active->SetAttribute("x", x);
+			active->SetAttribute("y", y);
+			active->SetAttribute("w", dw);
+			active->SetAttribute("h", dh);
+			inactive->SetAttribute("x", x + dw * (2 % divx));
+			inactive->SetAttribute("y", y + dh * (2 / divx % divy));
+			inactive->SetAttribute("w", dw);
+			inactive->SetAttribute("h", dh);
+			obj->LinkEndChild(active);
+			obj->LinkEndChild(inactive);
+
+			// remove obsolete SRC
+			obj->DeleteAttribute("x");
+			obj->DeleteAttribute("y");
+			obj->DeleteAttribute("w");
+			obj->DeleteAttribute("h");
+			obj->DeleteAttribute("divx");
+			obj->DeleteAttribute("divy");
+			obj->SetName("GrooveGauge");
+		}
 		else if (OBJTYPE_IS("JUDGELINE")) {
 			obj->SetName("JUDGELINE");
 			XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid, &s->skinlayout);

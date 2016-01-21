@@ -95,15 +95,21 @@ Player::Player(int type) {
 
 	exscore_graph = DOUBLEPOOL->Get("ExScore");
 	highscore_graph = DOUBLEPOOL->Get("HighScore");
+	playerguage = DOUBLEPOOL->Get("Player1Gauge");
+	playerguagetype = INTPOOL->Get("Player1GuageType");
+	playgrooveguage = INTPOOL->Get("Play1PGrooveGuage");
 	playscore = INTPOOL->Get("Play1PScore");
 	playexscore = INTPOOL->Get("Play1PExScore");
 	playcombo = INTPOOL->Get("Play1PCombo");
 	playmaxcombo = INTPOOL->Get("Play1PMaxCombo");
 	playtotalnotes = INTPOOL->Get("Play1PTotalNotes");
-	playgrooveguage = INTPOOL->Get("Play1PGrooveGuage");
 	playrivaldiff = INTPOOL->Get("Play1PRivalDiff");
 	on1pjudge = TIMERPOOL->Get("On1PJudge");
 	on2pjudge = TIMERPOOL->Get("On2PJudge");
+
+	// test
+	*playerguage = 0.8;
+	*playgrooveguage = 80;
 }
 
 int Player::CheckJudgeByTiming(double delta) {

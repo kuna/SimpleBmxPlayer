@@ -35,6 +35,9 @@ namespace GamePlay {
 	SkinOption			skinoption;
 
 	// bms play related
+	// first player = real player
+	// second player = network/ghost player
+	// third player = mybest
 	Player*				player[2];	// player available up to 2
 
 	double speed_multiply;
@@ -208,6 +211,7 @@ namespace GamePlay {
 			 * need special care! 
 			 */
 			else if (obj->ToBGA()) {
+				// TODO: check 1P / 2P
 				if (On1PMiss->IsStarted())
 					obj->ToBGA()->RenderBGA(BmsHelper::GetMissBGA());
 				obj->ToBGA()->RenderBGA(BmsHelper::GetLayer1BGA());
@@ -217,8 +221,6 @@ namespace GamePlay {
 			else if (obj->ToPlayObject()) {
 				SkinPlayObject* play = obj->ToPlayObject();
 				RenderGroup(play);								// draw other objects first
-				//play->RenderLane(1, 0.2, 0.4);
-
 				if (player[0]) player[0]->RenderNote(play);		// and draw note/judgeline/line ...
 				// TODO: judgeline is also drawed in RenderGroup
 				// TODD: method - SetJudgelineThickness()

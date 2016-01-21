@@ -55,6 +55,7 @@ private:
 	 * Should support nested condition, at least
 	 */
 	tinyxml2::XMLElement *condition_element[100];
+	int condition_status[100];		// true when #IF clause. only for #IMAGE parsing.
 	int condition_level;
 
 	/*

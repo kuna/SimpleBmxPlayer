@@ -533,6 +533,90 @@ void SkinComboObject::SetComboObject(SkinNumberObject* obj) { combo = obj; }
 
 void SkinComboObject::SetJudgeObject(SkinImageObject* obj) { judge = obj; }
 
+SkinGrooveGaugeObject::SkinGrooveGaugeObject(SkinRenderTree* owner) 
+	: SkinImageObject(owner), dotcnt(0), v(0), addx(0), addy(0) { }
+
+void SkinGrooveGaugeObject::SetObject(XMLElement *e) {
+	// set basic property
+	addx = e->IntAttribute("addx");
+	addy = e->IntAttribute("addy");
+	if (e->IntAttribute("side") == 0) {
+		v = DOUBLEPOOL->Get("Player1Gauge");
+		Gaugetype = INTPOOL->Get("Player1GaugeType");
+	}
+	else {
+		v = DOUBLEPOOL->Get("Player2Gauge");
+		Gaugetype = INTPOOL->Get("Player2GaugeType");
+	}
+	t = TIMERPOOL->Get("OnScene");
+	dotcnt = 50;
+	// set SRC
+	int w = e->IntAttribute("w");
+	int h = e->IntAttribute("h");
+	int dx = e->IntAttribute("divx");
+	int dy = e->IntAttribute("divy");
+	int dw = w / (dx ? dx : 1);
+	int dh = h / (dy ? dy : 1);
+	int dc = (dx ? dx : 1) * (dy ? dy : 1);
+	int x = e->IntAttribute("x");
+	int y = e->IntAttribute("y");
+	// TEMP; TODO
+	XMLElement *active, *inactive;
+	active = e->FirstChildElement("SRC_GROOVE_ACTIVE");
+	inactive = e->FirstChildElement("SRC_GROOVE_INACTIVE");
+	if (active) ConstructSRCFromElement(src_combo_active[0], active);
+	if (inactive) ConstructSRCFromElement(src_combo_inactive[0], inactive);
+	active = e->FirstChildElement("SRC_HARD_ACTIVE");
+	inactive = e->FirstChildElement("SRC_HARD_INACTIVE");
+	if (active) ConstructSRCFromElement(src_combo_active[1], active);
+	if (inactive) ConstructSRCFromElement(src_combo_inactive[1], inactive);
+	active = e->FirstChildElement("SRC_EX_ACTIVE");
+	inactive = e->FirstChildElement("SRC_EX_INACTIVE");
+	if (active) ConstructSRCFromElement(src_combo_active[2], active);
+	if (inactive) ConstructSRCFromElement(src_combo_inactive[2], inactive);
+}
+
+void SkinGrooveGaugeObject::Render() {
+	// work like a graph
+	if (drawable && v) {
+		ImageDSTFrame f = dst_cached.frame;
+		ImageSRC *currentsrc;
+		int inactive = 0;
+		int Gaugetype_now = *Gaugetype;
+		int activedot = *v * dotcnt;	// till when we should display guage as active cell
+		int groovedot = 0.8 * dotcnt;	// starting point of turning red when groove guage
+		int blink = t->GetTick() % 4;	// used when blinking guage
+		for (int i = 0; i < dotcnt; i++) {
+			// check for current status to decide SRC
+			inactive = (i > activedot) ? 1 : 0;
+			// grooveGauge => print as hard Gauge from 80%
+			if (Gaugetype_now == 0 && i >= groovedot)
+				Gaugetype_now = 1;
+			// now we can set currentSRC
+			if (inactive) 
+				currentsrc = &src_combo_inactive[Gaugetype_now];
+			else
+				currentsrc = &src_combo_active[Gaugetype_now];
+			// should I blink?
+			switch (activedot - i) {
+			case 1:
+				if (blink >= 1) break;
+			case 2:
+				if (blink >= 2) break;
+			case 3:
+				if (blink >= 3) break;
+			default:
+				// do render
+				SkinRenderHelper::Render(img, currentsrc, &f,
+					dst_cached.dst->blend, dst_cached.dst->rotatecenter);
+				break;
+			}
+			f.x += addx;
+			f.y += addy;
+		}
+	}
+}
+
 #pragma region PLAYOBJECT
 SkinPlayObject::SkinPlayObject(SkinRenderTree* owner) : 
 SkinGroupObject(owner), imgobj_judgeline(0), imgobj_line(0) {
@@ -779,6 +863,12 @@ SkinSliderObject* SkinRenderTree::NewSliderObject() {
 	return obj;
 }
 
+SkinGrooveGaugeObject* SkinRenderTree::NewGrooveGaugeObject() {
+	SkinGrooveGaugeObject* obj = new SkinGrooveGaugeObject(this);
+	_objpool.push_back(obj);
+	return obj;
+}
+
 SkinGraphObject* SkinRenderTree::NewGraphObject() {
 	SkinGraphObject* obj = new SkinGraphObject(this);
 	_objpool.push_back(obj);
@@ -1017,6 +1107,12 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 		else if (ISNAME(e, "Bga")) {
 			SkinBgaObject *bga = rtree.NewBgaObject();
 			obj = bga;
+		}
+		else if (ISNAME(e, "GrooveGauge")) {
+			SkinGrooveGaugeObject *g = rtree.NewGrooveGaugeObject();
+			g->SetSRC(e);
+			g->SetObject(e);
+			obj = g;
 		}
 		else {
 			// parsed as unknown object

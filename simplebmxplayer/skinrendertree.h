@@ -32,7 +32,8 @@ namespace OBJTYPE {
 		/* some renderer specific objects ... */
 		BGA = 20,
 		PLAYLANE = 21,
-		COMBO = 22,
+		COMBO = 22,				// unused; same as general
+		GROOVEGAUGE = 23,		// unused; same as general
 	};
 }
 namespace ROTATIONCENTER {
@@ -182,6 +183,7 @@ protected:
 public:
 	SkinImageObject(SkinRenderTree* owner, int type = OBJTYPE::IMAGE);
 	void SetSRC(XMLElement *e);
+	void SetSRC(const ImageSRC& imgsrc);
 	void SetImage(Image *img);
 	virtual void Render();
 };
@@ -198,6 +200,24 @@ public:
 	void SetOffset(bool offset);
 	void SetJudgeObject(SkinImageObject *);
 	void SetComboObject(SkinNumberObject *);
+	virtual void Render();
+};
+
+class SkinGrooveGaugeObject : public SkinImageObject {
+	SkinImageObject *obj;
+	/* 
+	 * 0: groove, 1: hard blank, 2: ex blank
+	 */
+	ImageSRC src_combo_active[5];
+	ImageSRC src_combo_inactive[5];
+	Timer *t;			// general-purpose timer for blink
+	int addx, addy;
+	int *Gaugetype;
+	double *v;
+	int dotcnt;
+public:
+	SkinGrooveGaugeObject(SkinRenderTree *owner);
+	void SetObject(XMLElement *e);
 	virtual void Render();
 };
 
@@ -405,6 +425,7 @@ public:
 	SkinImageObject* NewImageObject();
 	SkinSliderObject* NewSliderObject();
 	SkinGraphObject* NewGraphObject();
+	SkinGrooveGaugeObject* NewGrooveGaugeObject();
 	SkinTextObject* NewTextObject();
 	SkinNumberObject* NewNumberObject();
 	SkinBgaObject* NewBgaObject();
