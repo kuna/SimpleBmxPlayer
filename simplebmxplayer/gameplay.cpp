@@ -208,7 +208,8 @@ namespace GamePlay {
 			 * need special care! 
 			 */
 			else if (obj->ToBGA()) {
-				obj->ToBGA()->RenderBGA(BmsHelper::GetMissBGA());
+				if (On1PMiss->IsStarted())
+					obj->ToBGA()->RenderBGA(BmsHelper::GetMissBGA());
 				obj->ToBGA()->RenderBGA(BmsHelper::GetLayer1BGA());
 				obj->ToBGA()->RenderBGA(BmsHelper::GetLayer2BGA());
 				obj->ToBGA()->RenderBGA(BmsHelper::GetMainBGA());
@@ -236,8 +237,8 @@ namespace GamePlay {
 		if (OnReady->Trigger(OnSongLoadingEnd->IsStarted() && OnScene->GetTick() >= 3000))
 			OnSongLoading->Stop();
 		OnGameStart->Trigger(OnReady->GetTick() >= 2000);
-		On1PMiss->OffTrigger(On1PMiss->GetTick() > 2000);
-		On2PMiss->OffTrigger(On2PMiss->GetTick() > 2000);
+		On1PMiss->OffTrigger(On1PMiss->GetTick() > 1000);
+		On2PMiss->OffTrigger(On2PMiss->GetTick() > 1000);
 		On1PJudge->OffTrigger(On1PJudge->GetTick() > 500);
 		On2PJudge->OffTrigger(On2PJudge->GetTick() > 500);
 		OnClose->Trigger(OnGameStart->GetTick() + 2000 > BmsHelper::GetEndTime());

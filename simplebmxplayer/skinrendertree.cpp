@@ -370,7 +370,7 @@ int SkinTextObject::GetWidth() { if (v) GetTextWidth(*v); else return 0; }
 
 int SkinTextObject::GetTextWidth(const RString& s) {
 	if (fnt) {
-		fnt->GetWidth(s);
+		return fnt->GetWidth(s);
 	}
 	else {
 		return 0;
@@ -509,8 +509,8 @@ SkinComboObject::SkinComboObject(SkinRenderTree *owner)
 
 void SkinComboObject::Render() {
 	// same as image, but x position is little differnt
+	int offset_x = 0;
 	if (condition.Evaluate()) {
-		int offset_x = 0;
 		if (combo) {
 			combo->Update();
 			combo->Render();
