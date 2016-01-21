@@ -887,8 +887,8 @@ int _LR2SkinParser::ProcessCombo(XMLElement *obj, int line) {
 		std::string cond = _getcomboconditionstring(1, objectid);
 		XMLElement *playcombo = FindElementWithAttribute(cur_e, "Combo", "condition", cond.c_str(), &s->skinlayout);
 		obj->SetName("Number");
-		obj->SetAttribute("value", "Play1PCombo");
 		ProcessNumber(obj, 0, 0, 0);
+		obj->SetAttribute("value", "Play1PCombo");
 		obj->SetAttribute("align", 1);
 		for (XMLElement *e = obj->FirstChildElement("DST")->FirstChildElement("Frame"); e;) {
 			e->SetAttribute("y", __comboy);
@@ -911,8 +911,8 @@ int _LR2SkinParser::ProcessCombo(XMLElement *obj, int line) {
 		std::string cond = _getcomboconditionstring(2, objectid);
 		XMLElement *playcombo = FindElementWithAttribute(cur_e, "Combo", "condition", cond.c_str(), &s->skinlayout);
 		obj->SetName("Number");
-		obj->SetAttribute("value", "Play2PCombo");
 		ProcessNumber(obj, 0, 0, 0);
+		obj->SetAttribute("value", "Play2PCombo");
 		obj->SetAttribute("align", 1);
 		for (XMLElement *e = obj->FirstChildElement("DST")->FirstChildElement("Frame"); e;) {
 			e->SetAttribute("y", __comboy);
@@ -1108,8 +1108,9 @@ int _LR2SkinParser::GenerateTexturefontString(XMLElement *obj) {
 	char glyphs[] = "0123456789*+ABCDEFGHIJ#-";
 	for (int r = 0; r < repcnt; r++) {
 		for (int i = 0; i < fonttype; i++) {
-			int cx = i % divx;
-			int cy = i / divx;
+			int gi = i + r * fonttype;
+			int cx = gi % divx;
+			int cy = gi / divx;
 			tfont.AddGlyph(glyphs[i], 0, x + dw * cx, y + dh * cy, dw, dh);
 		}
 	}

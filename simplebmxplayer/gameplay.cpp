@@ -91,6 +91,7 @@ namespace GamePlay {
 			_LR2SkinParser *lr2skin = new _LR2SkinParser();
 			r = lr2skin->ParseLR2Skin(abspath, &playskin);
 			delete lr2skin;
+			playskin.Save("./test.xml");
 		}
 		if (!r)
 		{
@@ -237,8 +238,8 @@ namespace GamePlay {
 		OnGameStart->Trigger(OnReady->GetTick() >= 2000);
 		On1PMiss->OffTrigger(On1PMiss->GetTick() > 2000);
 		On2PMiss->OffTrigger(On2PMiss->GetTick() > 2000);
-		On1PJudge->OffTrigger(On1PJudge->GetTick() > 2000);
-		On2PJudge->OffTrigger(On2PJudge->GetTick() > 2000);
+		On1PJudge->OffTrigger(On1PJudge->GetTick() > 500);
+		On2PJudge->OffTrigger(On2PJudge->GetTick() > 500);
 		OnClose->Trigger(OnGameStart->GetTick() + 2000 > BmsHelper::GetEndTime());
 
 		/*
