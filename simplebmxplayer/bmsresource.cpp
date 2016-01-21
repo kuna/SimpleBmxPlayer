@@ -22,6 +22,7 @@ namespace BmsResource {
 
 	bool SoundPool::Play(BmsWord channel) {
 		if (wav_table[channel.ToInteger()]) {
+			wav_table[channel.ToInteger()]->Stop();
 			wav_table[channel.ToInteger()]->Play();
 			return true;
 		}
@@ -99,7 +100,8 @@ namespace BmsHelper {
 	pthread_t		t_bmsresource;
 
 	/* privates */
-	Uint32			currentbar;
+	Uint32			currentbar;		// current bar's position
+	Uint32			bgbar;			// bgm/bga bar position (private)
 	BGAInformation	currentbga;
 
 	bool LoadBms(const RString& path) {
@@ -112,6 +114,7 @@ namespace BmsHelper {
 		BmsResource::BMS.Clear();
 		BmsResource::BMSTIME.Clear();
 		BmsResource::bmspath = path;
+		currentbar = bgbar = 0;
 
 		// load bms file & create time table
 		try {
@@ -190,19 +193,17 @@ namespace BmsHelper {
 
 		/*
 		 * get new bar position
-		 * if bar has no update, then exit
 		 */
-		Uint32 newbar = BmsResource::BMSTIME.GetBarIndexFromTime(time / 1000.0);
+		currentbar = BmsResource::BMSTIME.GetBarIndexFromTime(time / 1000.0);
 
 		/*
 		 * check for background keysound & background image
 		 * If there's bar change, then it'll check for keysound
 		 */
-		if (currentbar == newbar) return;
-		for (; currentbar <= newbar; currentbar++)
+		for (; bgbar <= currentbar; bgbar++)
 		{
 			// OnBeat
-			if (BmsResource::BMSTIME[currentbar].measure)
+			if (BmsResource::BMSTIME[bgbar].measure)
 				TIMERPOOL->Set("OnBeat");
 
 			// call event handler for BGA/BGM
@@ -214,47 +215,46 @@ namespace BmsHelper {
 			for (auto it = bgmchannel.Begin(); it != bgmchannel.End(); ++it) {
 				// TODO: fix bmsbuffer structure
 				// only BGM can have multiple channel...?
-				if (currentbar > (**it).GetLength())
+				if (bgbar >= (**it).GetLength())
 					continue;
-				BmsWord current_word((**it)[currentbar]);
+				BmsWord current_word((**it)[bgbar]);
 				if (current_word == BmsWord::MIN)
 					continue;
 				BmsHelper::PlaySound(current_word.ToInteger());
 			}
 			for (auto it = bgachannel.Begin(); it != bgachannel.End(); it++) {
-				if (currentbar > (**it).GetLength())
+				if (bgbar >= (**it).GetLength())
 					continue;
-				BmsWord current_word((**it)[currentbar]);
+				BmsWord current_word((**it)[bgbar]);
 				if (current_word == BmsWord::MIN)
 					continue;
 				currentbga.mainbga = current_word;
 			}
 			for (auto it = bgachannel2.Begin(); it != bgachannel2.End(); it++) {
-				if (currentbar > (**it).GetLength())
+				if (bgbar > (**it).GetLength())
 					continue;
-				BmsWord current_word((**it)[currentbar]);
+				BmsWord current_word((**it)[bgbar]);
 				if (current_word == BmsWord::MIN)
 					continue;
 				currentbga.layer1bga = current_word;
 			}
 			for (auto it = bgachannel3.Begin(); it != bgachannel3.End(); it++) {
-				if (currentbar > (**it).GetLength())
+				if (bgbar > (**it).GetLength())
 					continue;
-				BmsWord current_word((**it)[currentbar]);
+				BmsWord current_word((**it)[bgbar]);
 				if (current_word == BmsWord::MIN)
 					continue;
 				currentbga.layer2bga = current_word;
 			}
 			for (auto it = missbgachannel.Begin(); it != missbgachannel.End(); it++) {
-				if (currentbar > (**it).GetLength())
+				if (bgbar > (**it).GetLength())
 					continue;
-				BmsWord current_word((**it)[currentbar]);
+				BmsWord current_word((**it)[bgbar]);
 				if (current_word == BmsWord::MIN)
 					continue;
 				currentbga.missbga = current_word;
 			}
 		}
-		currentbar = newbar;
 	}
 
 	bool IsFinished(uint32_t time) {
@@ -277,7 +277,6 @@ namespace BmsHelper {
 	}
 
 	void PlaySound(int channel) {
-		BmsResource::SOUND.Stop(channel);
 		BmsResource::SOUND.Play(channel);
 	}
 

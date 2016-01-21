@@ -505,6 +505,8 @@ void PlayerAuto::Update() {
 		 * pressing lane is automatically up-ped
 		 * about after 50ms.
 		 */
+		if (lanehold[i] && lanehold[i]->IsStarted())
+			lanepress[i]->Start();
 		if (lanepress[i] && laneup[i] && laneup[i]->Trigger(lanepress[i]->GetTick() > 50)) {
 			lanepress[i]->Stop();
 		}

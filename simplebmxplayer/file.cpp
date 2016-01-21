@@ -2,6 +2,7 @@
 #include "globalresources.h"
 #include <sys/stat.h>
 #include "util.h"
+#include "md5.h"
 
 #define READLINE_MAX 10240
 #define READALL_MAX 10240000	// about 10mib

@@ -57,7 +57,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>%(AdditionalDependencies);..\Debug\Lua.lib;..\Debug\tinyxml2.lib;..\Debug\bmsbel.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies);..\Debug\sqlite.lib;..\Debug\Lua.lib;..\Debug\tinyxml2.lib;..\Debug\bmsbel.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>
       </ImageHasSafeExceptionHandlers>
     </Link>
@@ -78,7 +78,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>%(AdditionalDependencies);..\Release\Lua.lib;..\Release\tinyxml2.lib;..\Release\bmsbel.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies);..\Release\sqlite.lib;..\Release\Lua.lib;..\Release\tinyxml2.lib;..\Release\bmsbel.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
@@ -89,6 +89,7 @@
     <ClCompile Include="font.cpp" />
     <ClCompile Include="globalresources.cpp" />
     <ClCompile Include="logger.cpp" />
+    <ClCompile Include="md5.c" />
     <ClCompile Include="skin.cpp" />
     <ClCompile Include="skinlr2.cpp" />
     <ClCompile Include="skinoption.cpp" />
@@ -114,6 +115,7 @@
     <ClInclude Include="file.h" />
     <ClInclude Include="globalresources.h" />
     <ClInclude Include="logger.h" />
+    <ClInclude Include="md5.h" />
     <ClInclude Include="skinoption.h" />
     <ClInclude Include="skintexturefont.h" />
     <ClInclude Include="skinutil.h" />
