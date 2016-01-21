@@ -25,9 +25,9 @@ namespace JUDGETYPE {
 	const int JUDGE_PGREAT	= 5;
 	const int JUDGE_GREAT	= 4;
 	const int JUDGE_GOOD	= 3;
-	const int JUDGE_POOR	= 2;
-	const int JUDGE_EMPTYPOOR	= 2;	// TODO
-	const int JUDGE_BAD		= 1;
+	const int JUDGE_BAD		= 2;
+	const int JUDGE_POOR	= 1;
+	const int JUDGE_NPOOR	= 0;
 	const int JUDGE_EARLY	= 10;	// it's too early, so it should have no effect
 	const int JUDGE_LATE	= 11;	// it's too late, so it should have no effect
 }
@@ -61,6 +61,7 @@ public:
 	// getter/setter
 	int GetMaxCombo();
 	int GetCombo();
+	int GetNoteCount();
 };
 
 /*
@@ -126,6 +127,8 @@ protected:
 	Timer*				lanehold[20];
 	Timer*				laneup[20];
 	Timer*				lanejudgeokay[20];
+	Timer*				onfullcombo;
+	Timer*				onlastnote;			// when last note ends
 	Image*				currentmissbga;		// when miss occurs, get current Miss BGA
 	double*				exscore_graph;
 	double*				highscore_graph;
@@ -140,6 +143,8 @@ protected:
 	Timer*				on2pjudge;
 	double*				playerguage;
 	int*				playerguagetype;
+
+	int					judgenotecnt;		// judged note count; used for OnLastNote
 
 	// DON'T CHEAT! check for value malpulation.
 	// (TODO) processed by CryptManager

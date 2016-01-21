@@ -65,6 +65,22 @@ namespace FileHelper {
 	RString& GetBasePath();
 	void GetFileList(const char *folderpath, std::vector<RString>& filelist, bool getfileonly = true);
 	void FilterFileList(const char *extfilters, std::vector<RString>& filelist);
+	/** @brief is path exists & file? */
+	bool IsFile(const RString& path);
+	/** @brief is path exists & folder? */
+	bool IsFolder(const RString& path);
+	/** @brief create folder (recursively), return false if failed. */
+	bool CreateFolder(const RString& path);
+	/** @brief just get parent directory path. no IO function. */
+	RString GetParentDirectory(const RString& path);
 	/** @brief converts path to absolute path */
 	void ConvertPathToAbsolute(RString& path);
+	/* @description
+	 * this method tries these paths:
+	 * 1. path itself
+	 * 2. converted absolute path
+	 * 3. any(random) file in that directory (with same extension)
+	 * if all of these are failed, return false.
+	 */
+	bool GetAnyAvailableFilePath(RString& path);
 }

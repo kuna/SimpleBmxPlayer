@@ -61,6 +61,7 @@ void Grade::AddGrade(const int type) {
 }
 int Grade::GetMaxCombo() { return maxcombo; }
 int Grade::GetCombo() { return combo; }
+int Grade::GetNoteCount() { return notecnt; }
 #pragma endregion GRADE
 
 // ------- Player ----------------------------------------
@@ -106,6 +107,10 @@ Player::Player(int type) {
 	playrivaldiff = INTPOOL->Get("Play1PRivalDiff");
 	on1pjudge = TIMERPOOL->Get("On1PJudge");
 	on2pjudge = TIMERPOOL->Get("On2PJudge");
+	onfullcombo = TIMERPOOL->Get("On1PFullCombo");
+	onlastnote = TIMERPOOL->Get("On1PLastNote");
+
+	judgenotecnt = 0;
 
 	// test
 	*playerguage = 0.8;
@@ -124,6 +129,8 @@ int Player::CheckJudgeByTiming(double delta) {
 		return JUDGETYPE::JUDGE_BAD;
 	else if (abs_delta <= BmsJudgeTiming::POOR)
 		return JUDGETYPE::JUDGE_POOR;
+	else if (abs_delta <= BmsJudgeTiming::NPOOR)
+		return JUDGETYPE::JUDGE_NPOOR;
 	else if (delta < 0)
 		return JUDGETYPE::JUDGE_LATE;
 	else
@@ -138,6 +145,7 @@ void Player::MakeJudge(int judgetype, int channel, bool silent) {
 	if (judgetype <= JUDGETYPE::JUDGE_BAD)
 		on1pmiss->Start();
 	switch (judgetype) {
+	case JUDGETYPE::JUDGE_NPOOR:
 	case JUDGETYPE::JUDGE_POOR:
 		TIMERPOOL->Set("On1PJudgePoor");
 		break;
@@ -154,13 +162,30 @@ void Player::MakeJudge(int judgetype, int channel, bool silent) {
 		TIMERPOOL->Set("On1PJudgePerfect");
 		break;
 	}
-	on1pjudge->Start();
+	// update judged note count
+	switch (judgetype) {
+	case JUDGETYPE::JUDGE_POOR:
+	case JUDGETYPE::JUDGE_BAD:
+	case JUDGETYPE::JUDGE_GOOD:
+	case JUDGETYPE::JUDGE_GREAT:
+	case JUDGETYPE::JUDGE_PGREAT:
+		judgenotecnt++;
+		break;
+	}
 	*exscore_graph = grade.CalculateRate();
 	*highscore_graph = grade.CalculateRate();
 	*playscore = grade.CalculateScore();
 	*playexscore = grade.CalculateEXScore();
 	*playcombo = grade.GetCombo();
 	*playmaxcombo = grade.GetMaxCombo();
+	// fullcombo/lastnote check
+	if (grade.GetCombo() == grade.GetNoteCount())
+		onfullcombo->Start();
+	if (judgenotecnt == grade.GetNoteCount())
+		onlastnote->Start();
+	// judge timer start
+	on1pjudge->Start();
+
 	if (!silent) {
 		// TODO set timer
 		switch (judgetype) {

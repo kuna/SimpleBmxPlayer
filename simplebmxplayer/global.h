@@ -30,6 +30,7 @@ namespace BmsJudgeTiming {
 		GOOD = 125,
 		BAD = 173,
 		POOR = 350,
+		NPOOR = 500,
 	};
 }
 

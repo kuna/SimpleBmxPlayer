@@ -216,7 +216,7 @@ bool ImagePool::IsExists(const RString &path) {
 Image* ImagePool::Load(const RString &path) {
 	// first convert path in easy way
 	RString _path = path;
-	FileHelper::ConvertPathToAbsolute(_path);
+	FileHelper::GetAnyAvailableFilePath(_path);
 	if (!IsExists(_path)) {
 		Image *img = new Image();
 		CheckFilenameValid(_path);
@@ -240,7 +240,8 @@ Image* ImagePool::Load(const RString &path) {
 
 Image* ImagePool::Get(const RString &path) {
 	RString _path = path;
-	FileHelper::ConvertPathToAbsolute(_path);
+	// TODO: this costs a lot. better to change it into ID attribute?
+	FileHelper::GetAnyAvailableFilePath(_path);
 	if (IsExists(_path)) {
 		return _imagepool[_path];
 	}
