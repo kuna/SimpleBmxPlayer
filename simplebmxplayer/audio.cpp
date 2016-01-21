@@ -1,9 +1,14 @@
 #include "audio.h"
+#include "util.h"
 
 Audio::Audio(std::wstring& filepath, int channel) : channel(channel) {
 	char path_utf8[1024];
 	ENCODING::wchar_to_utf8(filepath.c_str(), path_utf8, 1024);
 	sdlaudio = Mix_LoadWAV(path_utf8);
+}
+
+Audio::Audio(const char* filepath, int channel) : channel(channel) {
+	sdlaudio = Mix_LoadWAV(filepath);
 }
 
 Audio::~Audio() {

@@ -1,5 +1,6 @@
 #include "image.h"
 #include "game.h"
+#include "util.h"
 
 extern "C" {
 #include "ffmpeg/libavutil/avutil.h"
@@ -41,6 +42,10 @@ Image::Image(std::wstring& filepath, bool loop) : Image() {
 	Load(filepath.c_str(), loop);
 }
 
+Image::Image(std::string& filepath, bool loop) : Image() {
+	Load(filepath.c_str(), loop);
+}
+
 bool Image::Load(const std::wstring& filepath, bool loop) {
 	char path_utf8[1024];
 	ENCODING::wchar_to_utf8(filepath.c_str(), path_utf8, 1024);
@@ -61,7 +66,7 @@ bool Image::Load(const std::string& filepath, bool loop) {
 		}
 	}
 	else {
-		sdltex = IMG_LoadTexture(Game::GetRenderer(), filepath.c_str());
+		sdltex = IMG_LoadTexture(Game::RENDERER, filepath.c_str());
 		if (!sdltex)
 			return false;
 	}
@@ -116,7 +121,7 @@ bool Image::LoadMovie(const char *path) {
 	frame = av_frame_alloc();
 
 	// create basic texture
-	sdltex = SDL_CreateTexture(Game::GetRenderer(), SDL_PIXELFORMAT_YV12,
+	sdltex = SDL_CreateTexture(Game::RENDERER, SDL_PIXELFORMAT_YV12,
 		SDL_TEXTUREACCESS_STREAMING, codecctx->width, codecctx->height);
 	if (sdltex == 0) {
 		return false;
@@ -154,19 +159,20 @@ void Image::Sync(Uint32 t) {
 
 
 	int uvPitch = codecctx->width / 2;
-	AVPacket packet;
+	AVPacket *packet;
+	packet = av_packet_alloc();
 	int frameFinished;
-	while (av_read_frame(moviectx, &packet) >= 0) {
+	while (av_read_frame(moviectx, packet) >= 0) {
 		// Is this a packet from the video stream? (not audio stream!)
-		if (packet.stream_index == moviestream) {
+		if (packet->stream_index == moviestream) {
 			// Decode video frame
-			avcodec_decode_video2(codecctx, frame, &frameFinished, &packet);
+			avcodec_decode_video2(codecctx, frame, &frameFinished, packet);
 
 			/*
 			* we need to get pts; video clock from presentation clock.
 			*/
 			int64_t pts;
-			if (packet.dts != AV_NOPTS_VALUE) {
+			if (packet->dts != AV_NOPTS_VALUE) {
 				pts = av_frame_get_best_effort_timestamp(frame);
 			}
 			else {
@@ -189,7 +195,7 @@ void Image::Sync(Uint32 t) {
 				sws_scale(sws_ctx, (uint8_t const * const *)frame->data,
 					frame->linesize, 0, codecctx->height, pict.data,
 					pict.linesize);
-
+				
 				SDL_UpdateYUVTexture(
 					sdltex,
 					NULL,
@@ -201,9 +207,10 @@ void Image::Sync(Uint32 t) {
 					uvPitch
 					);
 			}
+			break;
 		}
-		break;
 	}
+	av_packet_free(&packet);
 }
 
 void Image::Reset() {
@@ -222,6 +229,22 @@ void Image::ReleaseMovie() {
 	if (codecctxorig) { avcodec_close(codecctxorig); codecctxorig = 0; }
 	if (codecctx) { avcodec_close(codecctx); codecctx = 0; }
 	if (moviectx) { avformat_close_input(&moviectx); moviectx = 0; }
+}
+
+int Image::GetWidth() {
+	if (!IsLoaded())
+		return 0;
+	int w;
+	SDL_QueryTexture(sdltex, 0, 0, &w, 0);
+	return w;
+}
+
+int Image::GetHeight() {
+	if (!IsLoaded())
+		return 0;
+	int h;
+	SDL_QueryTexture(sdltex, 0, 0, 0, &h);
+	return h;
 }
 
 Image::~Image() {

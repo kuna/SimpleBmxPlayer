@@ -1,135 +1,98 @@
+/*
+ * @description loads/manages Bms file & Bms resources. (only single object)
+ * Contains: Bms / Bms Resource / Bms Progress(Includes BGA/BGM)
+ * - we don't need to have multiple-bms-files-loaded states. only one file is enough.
+ *   so we have only one bms global object. if multi file is necessary, then we may have to refactor it ...
+ */
+
 #pragma once
 
+#include "audio.h"
+#include "image.h"
+
+#include "bmsbel\bms_bms.h"
 #include "bmsbel\bms_define.h"
 #include <vector>
 
-template <typename WAV, typename BMP>
-class BmsResource {
-public:
-	class BmsWav {
+namespace BmsResource {
+	typedef Audio BmsWav;
+	typedef Image BmsBmp;
+
+	class SoundPool {
 	private:
-		WAV *wav;
+		BmsWav *wav_table[BmsConst::WORD_MAX_COUNT];
 	public:
-		BmsWav();
-		~BmsWav();
-		bool IsLoaded();
-		WAV* GetWAV();
-		void SetWAV(WAV* wav);
+		SoundPool();
+		BmsWav* Get(BmsWord channel);
+		bool Play(BmsWord channel);
+		bool Stop(BmsWord channel);
+		bool Load(BmsWord channel, const RString &path);
+		void UnloadAll();
 	};
 
-	class BmsBmp {
+	class ImagePool {
 	private:
-		BMP *bmp;
+		BmsBmp *bmp_table[BmsConst::WORD_MAX_COUNT];
 	public:
-		BmsBmp();
-		~BmsBmp();
-		bool IsLoaded();
-		BMP* GetBMP();
-		void SetBMP(BMP* wav);
+		ImagePool();
+		BmsBmp* Get(BmsWord channel);
+		bool Load(BmsWord channel, const RString &path);
+		void UnloadAll();
 	};
 
-public:
-	BmsResource();
-	bool IsWAVLoaded(int channel);
-	WAV* GetWAV(int channel);
-	void SetWAV(int channel, WAV* wav);
-	bool IsBMPLoaded(int channel);
-	BMP* GetBMP(int channel);
-	void SetBMP(int channel, BMP* wav);
-	void Clear();
-private:
-	BmsWav wav_table[BmsConst::WORD_MAX_COUNT];
-	BmsBmp bmp_table[BmsConst::WORD_MAX_COUNT];
-};
+	bool IsBmsResourceLoaded();
+	double GetBmsResourceLoadingProgress();
 
-template <typename WAV, typename BMP>
-BmsResource<WAV, BMP>::BmsWav::BmsWav() { wav = 0; }
-
-template <typename WAV, typename BMP>
-BmsResource<WAV, BMP>::BmsWav::~BmsWav() { if (wav) delete wav; }
-
-template <typename WAV, typename BMP>
-bool BmsResource<WAV, BMP>::BmsWav::IsLoaded() { return wav; }
-
-template <typename WAV, typename BMP>
-WAV* BmsResource<WAV, BMP>::BmsWav::GetWAV() { return wav; }
-
-template <typename WAV, typename BMP>
-void BmsResource<WAV, BMP>::BmsWav::SetWAV(WAV *wav) { this->wav = wav; }
-
-// -------------------------------------------------
-
-template <typename WAV, typename BMP>
-BmsResource<WAV, BMP>::BmsBmp::BmsBmp() { bmp = 0; }
-
-template <typename WAV, typename BMP>
-BmsResource<WAV, BMP>::BmsBmp::~BmsBmp() { if (bmp) delete bmp; }
-
-template <typename WAV, typename BMP>
-bool BmsResource<WAV, BMP>::BmsBmp::IsLoaded() { return bmp; }
-
-template <typename WAV, typename BMP>
-BMP* BmsResource<WAV, BMP>::BmsBmp::GetBMP() { return bmp; }
-
-template <typename WAV, typename BMP>
-void BmsResource<WAV, BMP>::BmsBmp::SetBMP(BMP *bmp) { this->bmp = bmp; }
-
-// -------------------------------------------------
-
-template <typename WAV, typename BMP>
-BmsResource<WAV, BMP>::BmsResource() {  }
-
-// --------- WAV ---------
-
-template <typename WAV, typename BMP>
-WAV* BmsResource<WAV, BMP>::GetWAV(int channel) {
-	if (wav_table[channel].IsLoaded())
-		return wav_table[channel].GetWAV();
-	else
-		return 0;
+	extern SoundPool	SOUND;
+	extern ImagePool	IMAGE;
+	extern BmsBms		BMS;
 }
 
-template <typename WAV, typename BMP>
-void BmsResource<WAV, BMP>::SetWAV(int channel, WAV* wav) {
-	wav_table[channel].SetWAV(wav);
-}
+//
+// TODO:	BmsHelper isn't an independent module, but kind of a tool of BmsResource.
+//			maybe I need to refactor this.
+//
+namespace BmsHelper {
+	/** @brief only loads Bms data. call LoadBmsResource() to load related resources. */
+	bool LoadBms(const RString &bmspath);
+	/** @brief load Bms resource from loaded Bms. must call LoadBms first. */
+	bool LoadBmsResource();
+	/** @brief LoadBms() on multithread. callback by OnBmsLoadingEnd */
+	void LoadBmsOnThread(const RString &bmspath);
+	/** @brief LoadBmsResource() on multithread. callback by OnBmsLoadingEnd */
+	void LoadBmsResourceOnThread();
+	/** @brief Release all bms resources. include note data. */
+	void ReleaseAll();
 
-template <typename WAV, typename BMP>
-bool BmsResource<WAV, BMP>::IsWAVLoaded(int channel) {
-	return wav_table[channel].IsLoaded();
-}
+	/** @brief plays sound. pauses if that sound(channel) is already playing. */
+	void PlaySound(int channel);
 
-// -------- BMP ---------
+	/** @brief Update time. BGA/BGM is automatically setted by progressed time. */
+	void Update(uint32_t time);
+	/***/
+	bool IsFinished(uint32_t time);
+	/** @brief Reset time. BGA/BGM is resetted to pointing time. */
+	void ResetTime(uint32_t time);
 
-template <typename WAV, typename BMP>
-BMP* BmsResource<WAV, BMP>::GetBMP(int channel) {
-	if (bmp_table[channel].IsLoaded())
-		return bmp_table[channel].GetBMP();
-	else
-		return 0;
-}
+	struct BGAInformation {
+		BmsWord missbga;
+		BmsWord mainbga;
+		BmsWord layer1bga;
+		BmsWord layer2bga;
+	};
 
-template <typename WAV, typename BMP>
-void BmsResource<WAV, BMP>::SetBMP(int channel, BMP* bmp) {
-	bmp_table[channel].SetBMP(bmp);
-}
+	Image* GetMissBGA();
+	Image* GetMainBGA();
+	Image* GetLayer1BGA();
+	Image* GetLayer2BGA();
 
-template <typename WAV, typename BMP>
-bool BmsResource<WAV, BMP>::IsBMPLoaded(int channel) {
-	return bmp_table[channel].IsLoaded();
-}
+	/** @brief get current bar(not measure). not in general use; for Player object. */
+	uint32_t GetCurrentBar();
+	uint32_t GetEndTime();
 
-// -------- Common ---------
-template <typename WAV, typename BMP>
-void BmsResource<WAV, BMP>::Clear() {
-	for (int i = 0; i < BmsConst::WORD_MAX_COUNT; i++) {
-		if (wav_table[i].IsLoaded()) {
-			delete wav_table[i].GetWAV();
-			wav_table[i].SetWAV(0);
-		}
-		if (bmp_table[i].IsLoaded()) {
-			delete bmp_table[i].GetBMP();
-			bmp_table[i].SetBMP(0);
-		}
-	}
+	double GetCurrentPosFromTime(double time_sec);
+
+	double GetCurrentPosFromBar(int bar);
+
+	double GetCurrentTimeFromBar(int bar);
 }

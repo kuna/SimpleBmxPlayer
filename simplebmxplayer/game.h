@@ -22,6 +22,6 @@ namespace Game {
 	void Release();
 
 	// get/set
-	SDL_Renderer *GetRenderer();
-	SDL_Window *GetWindow();
+	extern SDL_Renderer* RENDERER;
+	extern SDL_Window* WINDOW;
 }

@@ -1,48 +1,66 @@
+/*
+ * @description processor for each player.
+ * player type: Normal(Basic) / CPU(Auto) / Replay
+ * player contains: BGA status / Combo / Score Rate / Health / Note / Lain Lift / Speed
+ */
+
 #pragma once
 
 #include "bmsbel/bms_bms.h"
 #include "bmsinfo.h"
 #include "playrecord.h"
-#include <stdint.h>		// for Uint32 definition
+#include "timer.h"
+#include "image.h"
+#include "global.h"
 
 typedef uint32_t Uint32;
+class SkinPlayObject;
 
 /*
  * class Grade
  * - stores current play's score and evaluate
  *
  */
+namespace JUDGETYPE {
+	const int JUDGE_PGREAT	= 5;
+	const int JUDGE_GREAT	= 4;
+	const int JUDGE_GOOD	= 3;
+	const int JUDGE_POOR	= 2;
+	const int JUDGE_EMPTYPOOR	= 2;	// TODO
+	const int JUDGE_BAD		= 1;
+	const int JUDGE_EARLY	= 10;	// it's too early, so it should have no effect
+	const int JUDGE_LATE	= 11;	// it's too late, so it should have no effect
+}
+
+namespace GRADETYPE {
+	const int GRADE_AAA	= 8;
+	const int GRADE_AA	= 7;
+	const int GRADE_A	= 6;
+	const int GRADE_B	= 5;
+	const int GRADE_C	= 4;
+	const int GRADE_D	= 3;
+	const int GRADE_E	= 2;
+	const int GRADE_F	= 1;
+}
+
 class Grade {
 private:
 	int grade[6];
 	int notecnt;
 	int combo;
 	int maxcombo;
-
-public:
-	static const int JUDGE_PGREAT;
-	static const int JUDGE_GREAT;
-	static const int JUDGE_GOOD;
-	static const int JUDGE_POOR;
-	static const int JUDGE_BAD;
-	static const int JUDGE_EARLY;	// it's too early, so it should have no effect
-	static const int JUDGE_LATE;	// it's too late, so it should have no effect
-
-	static const int GRADE_AAA;
-	static const int GRADE_AA;
-	static const int GRADE_A;
-	static const int GRADE_B;
-	static const int GRADE_C;
-	static const int GRADE_D;
-	static const int GRADE_E;
-	static const int GRADE_F;
 public:
 	Grade(int notecnt);
 	Grade();
+	int CalculateEXScore();
 	int CalculateScore();
 	double CalculateRate();
 	int CalculateGrade();
 	void AddGrade(const int type);
+
+	// getter/setter
+	int GetMaxCombo();
+	int GetCombo();
 };
 
 /*
@@ -75,70 +93,157 @@ public:
 	void SavePlaySetting(const char* path);
 };
 
+namespace PLAYERTYPE {
+	const int NORMAL = 0;
+	const int AUTO = 1;
+	const int REPLAY = 2;
+	const int NETWORK = 3;	// not implemented
+}
+
 /*
- * class Player
- * - stores current player(side)'s state
+ * @description
+ * Very basic form of Player
+ * Generally used for playing
  */
 class Player {
-private:
+protected:
 	// stored/storing settings
-	PlayerSetting setting;
-	int playside;
+	// COMMENT: we don't need laneheight.
+	// we just need to get relative position of lane(0 ~ 1). 
+	// skinelement will process it by itself.
+	PlayerSetting		setting;
+	int					playside;
+	int					playertype;
+	double				speed;				// for calculating speed_mul
+	double				speed_mul;			// absbeat * speed_mul = (real y pos)
+	int					speed_type;			// TODO
+
+	// some prefetch timers/values
+	Timer*				bmstimer;			// elapsed time
+	Timer*				on1pmiss;			// timer used when miss occured
+	Timer*				on2pmiss;			// timer used when miss occured
+	Timer*				lanepress[20];
+	Timer*				lanehold[20];
+	Timer*				laneup[20];
+	Timer*				lanejudgeokay[20];
+	Image*				currentmissbga;		// when miss occurs, get current Miss BGA
+	double*				exscore_graph;
+	double*				highscore_graph;
+	int*				playscore;
+	int*				playexscore;
+	int*				playcombo;
+	int*				playmaxcombo;
+	int*				playtotalnotes;
+	int*				playgrooveguage;
+	int*				playrivaldiff;
+	Timer*				on1pjudge;
+	Timer*				on2pjudge;
+	double*				playerguage;
+	int*				playerguagetype;
+
+	// DON'T CHEAT! check for value malpulation.
+	// (TODO) processed by CryptManager
+#ifdef _CRYPTMANAGER
+#endif
 
 	// grade information
-	Grade grade;
+	Grade				grade;
 
 	// current judge/bar/channel related information
-	int noteindex[20];					// currently processing note index(bar index)
-	int longnotestartpos[20];			// longnote start pos(bar index)
-	bool IsLongNote(int notechannel);	// are you pressing longnote currently?
-	std::vector<BmsWord> keysound[20];	// sounding key value (per bar index)
-	int currentbar;
-	double health;						// player's health
+	int					noteindex[20];					// currently processing note index(bar index)
+	int					longnotestartpos[20];			// longnote start pos(bar index)
+	std::vector<BmsWord> keysound[20];					// sounding key value (per bar index)
+	double				health;							// player's health
 
 	// note/time information
-	BmsBms *bms;
-	BmsTimeManager bmstime;
-	BmsNoteContainer bmsnote;
-	Uint32 currenttime;
-	int keys;
+	BmsNoteContainer	bmsnote;
+	int					keys;
+	Uint32				currenttime;
+	Uint32				currentbar;
 
-	// autoplay?
-	bool autoplay;
-	
+	bool				IsLongNote(int notechannel);	// are you pressing longnote currently?
+
 	// judge
 	int CheckJudgeByTiming(double delta);
 	// active note searcher
 	int GetNextAvailableNoteIndex(int notechannel);
 	BmsNote* GetCurrentNote(int notechannel);
+	/** @brief make judgement. silent = true will not set JUDGE timer. */
+	void MakeJudge(int judgetype, int channel, bool silent = false);
 public:
-	Player();
+	Player(int type = PLAYERTYPE::NORMAL);
 
-	// game flow
-	void Prepare(BmsBms *bms, int startpos, bool autoplay, int playside);
-	void SetTime(Uint32 tick);
-	void ResetTime(Uint32 tick);
+	/*
+	 * @brief 
+	 * Generate Note object / 
+	 * Must call before game play starts, or there'll be nothing(no note/play) during gameplay.
+	 */
+	void Prepare(int playside);
+	/*
+	 * @brief 
+	 * Update late note/note position
+	 * Uses Global Game(BmsResource) Timer
+	 */
+	virtual void Update();
+	/*
+	 * @brief
+	 * Hard-Reset player's note position
+	 * Not generally used, only used for starting from specific position.
+	 */
+	virtual void Reset();
 
-	// key input
-	void UpKey(int keychannel);
-	void PressKey(int keychannel);
+	/** @brief General key input for judgement */
+	virtual void UpKey(int keychannel);
+	/** @brief General key input for judgement */
+	virtual void PressKey(int keychannel);
 
-	// get/set status
-	BmsWord GetCurrentMissBga();
-	BmsTimeManager& GetBmsTimeManager();
-	BmsNoteContainer& GetBmsNotes();
+	/** @brief How much elapsed from last MISS? effects to MISS BGA. */
+	double GetLastMissTime();
+
+	/** @brief renders note */
+	void RenderNote(SkinPlayObject *);
+
+	/** @Get/Set */
 	double GetSpeed();
+	void SetSpeed(double speed);
 	Grade GetGrade();
-	double GetCurrentPos();
 	int GetCurrentBar();
 	int GetCurrentNoteBar(int channel);
 	bool IsNoteAvailable(int notechannel);
 	int GetAvailableNoteIndex(int notechannel, int start = 0);
+	bool IsDead();
 	bool IsFinished();	// TODO
 	void SetPlayerSetting(const PlayerSetting& setting);
-
-	// handler
-	void SetOnSound(void(*func)(BmsWord, int));
-	void SetOnBga(void(*func)(BmsWord, BmsChannelType::BMSCHANNEL));
-	void SetOnJudge(void(*func)(int ,int));
 };
+
+/*
+ * @description
+ * Played by CPU
+ * If this player activated, 'Autoplay' mark will show up.
+ */
+class PlayerAuto : public Player {
+	double targetrate;
+
+public:
+	PlayerAuto();
+
+	virtual void Update();
+	virtual void PressKey(int channel);
+	virtual void UpKey(int channel);
+
+	void SetGoal(double rate);
+};
+
+/*
+ * @description
+ * Played from Replay data.
+ * If this player activated, `Replay` mark will show up.
+ */
+class PlayerGhost : public Player {
+public:
+	PlayerGhost();
+};
+
+namespace PlayerHelper {
+
+}

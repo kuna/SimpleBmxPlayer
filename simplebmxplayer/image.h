@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common.h"
+#include "global.h"
 #include "SDL/SDL_image.h"
 #include "SDL/SDL_video.h"
 
@@ -40,12 +40,15 @@ private:
 	bool LoadMovie(const char *path);
 	void ReleaseMovie();
 public:
-	Image(std::wstring& filepath, bool loop=true);
+	Image(std::wstring& filepath, bool loop = true);
+	Image(std::string& filepath, bool loop = true);
 	Image();
 	~Image();
 	void Release();
 	bool Load(const std::wstring& filepath, bool loop = true);
 	bool Load(const std::string& filepath, bool loop = true);
+	int GetWidth();
+	int GetHeight();
 
 	bool IsLoaded();
 	void Reset();				// reset pos to first one
