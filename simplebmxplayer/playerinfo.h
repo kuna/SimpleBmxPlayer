@@ -20,6 +20,7 @@ struct PlayerPlayConfig {
 	// playing option
 	int op_1p, op_2p;
 	int lane, lift;
+	int showlane, showlift;
 	int speed;
 	int speedtype;		// off, float, max, min, medium, constant(assist)
 	int guagetype;		// off, assist, ...
@@ -32,17 +33,20 @@ struct PlayerPlayConfig {
 	int judge;			// off, extend, hard, vhard
 	int scratch;		// off, assist, all_sc
 	double freq;		// needless to say?
+	// judge offset
+	int judgeoffset;
+	int judgecalibration;
 };
 
-class PlayerGrade {
+class PlayerScore {
 public:
-	int grade[6];
+	int score[6];
 	int totalnote;
 	int combo;
 	int maxcombo;
 public:
-	PlayerGrade(int notecnt);
-	PlayerGrade();
+	PlayerScore(int notecnt);
+	PlayerScore();
 
 	// just a utils
 	int CalculateEXScore();
@@ -88,7 +92,7 @@ public:
 	int minbp;
 	int maxcombo;			// CAUTION: it's different fram grade.
 	// records used for game play
-	PlayerGrade grade;		// we only store high-score
+	PlayerScore score;		// we only store high-score
 	PlayerReplay replay;	//
 public:
 	// used for hashing
@@ -105,7 +109,7 @@ public:
 	int failcount;
 	int clearcount;
 	// select option
-	PlayerGrade grade;				// total record
+	PlayerScore score;				// total record
 	PlayerPlayConfig playconfig;	// last play option
 	PlayerKeyConfig keyconfig;		// key config
 public:
@@ -115,11 +119,13 @@ public:
 	/** @brief saves SongRecord object to sqlite db. */
 };
 
-namespace PlayerInfoHelper {
+namespace PlayerReplayHelper {
 	bool LoadPlayerRecord(PlayerSongRecord& record, const char* playername, const char* songhash);
 	bool SavePlayerRecord(const PlayerSongRecord& record, const char* playername);
 	bool DeletePlayerRecord(const char* playername, const char* songhash);
+}
 
+namespace PlayerInfoHelper {
 	/** @brief set playerinfo as default (COMMENT: don't care playername) */
 	void DefaultPlayerInfo(PlayerInfo& player);
 	bool LoadPlayerInfo(PlayerInfo& player, const char* playername);

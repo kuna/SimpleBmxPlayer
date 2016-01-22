@@ -7,6 +7,7 @@
 #pragma once
 #include "player.h"
 #include "SDL/SDL.h"
+#include "game.h"
 
 namespace {
 	enum PLAYTYPE {
@@ -20,14 +21,25 @@ namespace {
 }
 
 namespace GamePlay {
-	void Init();
-	void Start();
-	void Render();
-	void Release();
-	void KeyPress(int keycode);
-	void KeyUp(int keycode);
-	void MouseDown(int x, int y, int button);
-	void MouseMove(int x, int y, int button, bool isdragging);
-	void MouseUp(int x, int y, int button);
-	void MouseWheel(double delta);
+	class ScenePlay : public SceneBasic {
+		// basics
+		virtual void Initialize();
+		virtual void Start();
+		virtual void Update();
+		virtual void Render();
+		virtual void End();
+		virtual void Release();
+
+		// event handler
+		virtual void KeyUp(int code);
+		virtual void KeyDown(int code, bool repeating);
+		virtual void MouseUp(int x, int y);
+		virtual void MouseDown(int x, int y);
+		virtual void MouseMove(int x, int y);
+		virtual void MouseStartDrag(int x, int y);
+		virtual void MouseDrag(int x, int y);
+		virtual void MouseEndDrag(int x, int y);
+	};
+
+	extern ScenePlay*	SCENE;
 };

@@ -2,122 +2,141 @@
 #include "tinyxml2.h"
 #include "file.h"
 
+#define SETTINGFILEPATH	"../system/settings.xml"
 #define INT(s) (atoi(s))
 #define SAFE_STR(s) ((s)?(s):"")
 
 using namespace tinyxml2;
 
-bool GameSetting::DefaultSetting() {
-	return LoadSetting();
-}
-
-bool GameSetting::LoadSetting(const char *path) {
-	RString abspath = path;
-	FileHelper::ConvertPathToAbsolute(abspath);
-	XMLDocument doc;
-	if (doc.LoadFile(abspath) != XML_NO_ERROR)
-		return false;
-
-	XMLElement* ele_setting = doc.FirstChildElement("settings");
-	if (ele_setting) {
-		try {
-			XMLElement* ele_engine = ele_setting->FirstChildElement("engine");
-			XMLElement* ele_theme = ele_setting->FirstChildElement("theme");
-
-			mEngine.mWidth = INT(ele_engine->FirstChildElement("width")->GetText());
-			mEngine.mHeight = INT(ele_engine->FirstChildElement("height")->GetText());
-			mEngine.mFullScreen = INT(ele_engine->FirstChildElement("fullscreen")->GetText()) == 1;
-			
-			mTheme.main = SAFE_STR(ele_theme->FirstChildElement("main")->GetText());
-			mTheme.playerselect = SAFE_STR(ele_theme->FirstChildElement("playerselect")->GetText());
-			mTheme.select = SAFE_STR(ele_theme->FirstChildElement("select")->GetText());
-			mTheme.play5k = SAFE_STR(ele_theme->FirstChildElement("play5k")->GetText());
-			mTheme.play7k = SAFE_STR(ele_theme->FirstChildElement("play7k")->GetText());
-			mTheme.play9k = SAFE_STR(ele_theme->FirstChildElement("play9k")->GetText());
-			mTheme.play10k = SAFE_STR(ele_theme->FirstChildElement("play10k")->GetText());
-			mTheme.play14k = SAFE_STR(ele_theme->FirstChildElement("play14k")->GetText());
-
-			mRecentPlayer = INT(ele_setting->FirstChildElement("player")->FirstChildElement("recent")->GetText());
+namespace GameSettingHelper {
+	namespace {
+		int GetIntSafe(XMLNode *base, const char* name, int default = 0) {
+			if (!base) return default;
+			XMLElement *e = base->FirstChildElement(name);
+			if (!e) return default;
+			if (!e->GetText()) return default;
+			return atoi(e->GetText());
 		}
-		catch (...) {
+
+		bool GetStringSafe(XMLNode *base, const char* name, RString& out) {
+			if (!base) return false;
+			XMLElement *e = base->FirstChildElement(name);
+			if (!e) return false;
+			if (!e->GetText()) return false;
+			out = e->GetText();
+			return true;
+		}
+
+		void AddElement(XMLNode *base, const char *name, int value) {
+			base->GetDocument()->LinkEndChild(base->GetDocument()->NewElement(name))
+				->ToElement()->SetText(value);
+		}
+
+		void AddElement(XMLNode *base, const char *name, const char* value) {
+			base->GetDocument()->LinkEndChild(base->GetDocument()->NewElement(name))
+				->ToElement()->SetText(value);
+		}
+	}
+
+	bool LoadGameSetting(GameSetting& setting) {
+		RString file(SETTINGFILEPATH);
+		FileHelper::ConvertPathToAbsolute(file);
+
+		XMLDocument *doc = new XMLDocument();
+		if (doc->Parse(file) != 0) {
+			delete doc;
 			return false;
 		}
-	}
-	else {
-		return false;
-	}
 
-	return true;
-}
+		setting.width = GetIntSafe(doc, "width", 1280);
+		setting.height = GetIntSafe(doc, "height", 760);
+		setting.vsync = GetIntSafe(doc, "vsync", 0);
+		setting.fullscreen = GetIntSafe(doc, "fullscreen", 1);
+		setting.resizable = GetIntSafe(doc, "resizable", 0);
+		setting.allowaddon = GetIntSafe(doc, "allowaddon", 1);
+		setting.volume = GetIntSafe(doc, "volume", 100);
+		setting.tutorial = GetIntSafe(doc, "tutorial", 1);
 
-bool GameSetting::SaveSetting(const char *path) {
-	XMLDocument doc;
-
-	XMLElement *ele_setting = doc.NewElement("settings");
-	if (ele_setting) {
-		XMLElement *ele_engine = doc.NewElement("engine");
-		XMLElement *ele_theme = doc.NewElement("theme");
-		XMLElement *ele_player = doc.NewElement("player");
-
-		if (ele_engine) {
-			XMLElement *ele_width = doc.NewElement("width");
-			XMLElement *ele_height = doc.NewElement("height");
-			XMLElement *ele_fullscreen = doc.NewElement("fullscreen");
-
-			XMLText *width = doc.NewText(std::to_string(mEngine.mWidth).c_str());
-			XMLText *height = doc.NewText(std::to_string(mEngine.mHeight).c_str());
-			XMLText *fullscreen = doc.NewText(std::to_string(mEngine.mFullScreen ? 1 : 0).c_str());
-
-			ele_width->LinkEndChild(width);
-			ele_height->LinkEndChild(height);
-			ele_fullscreen->LinkEndChild(fullscreen);
-			ele_engine->LinkEndChild(ele_width);
-			ele_engine->LinkEndChild(ele_height);
-			ele_engine->LinkEndChild(ele_fullscreen);
+		XMLElement *skin = doc->FirstChildElement("Skin");
+		if (skin) {
+			GetStringSafe(skin, "main", setting.skin_main);
+			GetStringSafe(skin, "player", setting.skin_player);
+			GetStringSafe(skin, "select", setting.skin_select);
+			GetStringSafe(skin, "decide", setting.skin_decide);
+			GetStringSafe(skin, "5key", setting.skin_play_5key);
+			GetStringSafe(skin, "7key", setting.skin_play_7key);
+			GetStringSafe(skin, "9key", setting.skin_play_9key);
+			GetStringSafe(skin, "10key", setting.skin_play_10key);
+			GetStringSafe(skin, "14key", setting.skin_play_14key);
+			GetStringSafe(skin, "keyconfig", setting.skin_keyconfig);
+			GetStringSafe(skin, "skinconfig", setting.skin_skinconfig);
+			GetStringSafe(skin, "common", setting.skin_common);
 		}
 
-		if (ele_theme) {
-			XMLElement *main = doc.NewElement("main");
-			XMLElement *playerselect = doc.NewElement("playerselect");
-			XMLElement *select = doc.NewElement("select");
-			XMLElement *play5k = doc.NewElement("play5k");
-			XMLElement *play7k = doc.NewElement("play7k");
-			XMLElement *play9k = doc.NewElement("play9k");
-			XMLElement *play10k = doc.NewElement("play10k");
-			XMLElement *play14k = doc.NewElement("play14k");
-			XMLElement *result = doc.NewElement("result");
+		GetStringSafe(doc, "username", setting.username);
+		setting.keymode = GetIntSafe(doc, "keymode", 7);
 
-			main->LinkEndChild(doc.NewText(mTheme.main.c_str()));
-			playerselect->LinkEndChild(doc.NewText(mTheme.playerselect.c_str()));
-			select->LinkEndChild(doc.NewText(mTheme.select.c_str()));
-			play5k->LinkEndChild(doc.NewText(mTheme.play5k.c_str()));
-			play7k->LinkEndChild(doc.NewText(mTheme.play7k.c_str()));
-			play9k->LinkEndChild(doc.NewText(mTheme.play9k.c_str()));
-			play10k->LinkEndChild(doc.NewText(mTheme.play10k.c_str()));
-			play14k->LinkEndChild(doc.NewText(mTheme.play14k.c_str()));
-			result->LinkEndChild(doc.NewText(mTheme.result.c_str()));
-
-			ele_theme->LinkEndChild(main);
-			ele_theme->LinkEndChild(playerselect);
-			ele_theme->LinkEndChild(select);
-			ele_theme->LinkEndChild(play5k);
-			ele_theme->LinkEndChild(play7k);
-			ele_theme->LinkEndChild(play9k);
-			ele_theme->LinkEndChild(play10k);
-			ele_theme->LinkEndChild(play14k);
-			ele_theme->LinkEndChild(result);
-		}
-
-		if (ele_player) {
-			XMLElement *recent = doc.NewElement("recent");
-			recent->LinkEndChild(doc.NewText(std::to_string(mRecentPlayer).c_str()));
-			ele_player->LinkEndChild(recent);
-		}
-
-		ele_setting->LinkEndChild(ele_engine);
-		ele_setting->LinkEndChild(ele_theme);
-		ele_setting->LinkEndChild(ele_player);
+		delete doc;
+		return true;
 	}
-	doc.LinkEndChild(ele_setting);
-	return (doc.SaveFile(path) == XML_NO_ERROR);
+
+	bool SaveGameSetting(GameSetting& setting) {
+		RString file(SETTINGFILEPATH);
+		FileHelper::ConvertPathToAbsolute(file);
+		RString dir = FileHelper::GetParentDirectory(file);
+		if (!FileHelper::CreateFolder(dir))
+			return false;
+
+		XMLDocument *doc = new XMLDocument();
+
+		AddElement(doc, "width", setting.width);
+		AddElement(doc, "height", setting.height);
+		AddElement(doc, "vsync", setting.vsync);
+		AddElement(doc, "fullscreen", setting.fullscreen);
+		AddElement(doc, "resizable", setting.resizable);
+		AddElement(doc, "allowaddon", setting.allowaddon);
+		AddElement(doc, "volume", setting.volume);
+		AddElement(doc, "tutorial", setting.tutorial);
+
+		XMLElement *skin = doc->NewElement("Skin");
+		doc->LinkEndChild(skin);
+
+		AddElement(skin, "main", setting.skin_main);
+		AddElement(skin, "player", setting.skin_player);
+		AddElement(skin, "select", setting.skin_select);
+		AddElement(skin, "decide", setting.skin_decide);
+		AddElement(skin, "5key", setting.skin_play_5key);
+		AddElement(skin, "7key", setting.skin_play_7key);
+		AddElement(skin, "9key", setting.skin_play_9key);
+		AddElement(skin, "10key", setting.skin_play_10key);
+		AddElement(skin, "14key", setting.skin_play_14key);
+		AddElement(skin, "keyconfig", setting.skin_keyconfig);
+		AddElement(skin, "skinconfig", setting.skin_skinconfig);
+		AddElement(skin, "common", setting.skin_common);
+
+		AddElement(doc, "username", setting.username);
+		AddElement(doc, "keymode", setting.keymode);
+
+		bool r = doc->SaveFile(file);
+		delete doc;
+		return r;
+	}
+
+	void DefaultGameSetting(GameSetting& setting) {
+		setting.width = 1280;
+		setting.height = 760;
+		setting.vsync = 0;
+		setting.fullscreen = 1;
+		setting.resizable = 0;
+		setting.allowaddon = 1;
+		setting.volume = 100;
+		setting.tutorial = 1;
+
+		// TODO
+		setting.skin_play_7key = "../skin/Wisp_HD/play/HDPLAY_W.lr2skin";
+		setting.skin_play_14key = "../skin/Wisp_HD/play/HDPLAY_WDP.lr2skin";
+
+		setting.username = "NONAME";
+		setting.keymode = 7;
+	}
 }

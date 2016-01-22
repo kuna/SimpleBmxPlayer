@@ -13,8 +13,10 @@
 #include "logger.h"
 
 namespace GamePlay {
+	// scene
+	ScenePlay*			SCENE;
+	
 	// global resources
-	Timer*				OnScene;
 	Timer*				OnGameStart;
 	Timer*				OnSongLoading;
 	Timer*				OnSongLoadingEnd;
@@ -40,43 +42,7 @@ namespace GamePlay {
 	// third player = mybest
 	Player*				player[2];	// player available up to 2
 
-	double speed_multiply;
-
 	SDL_Texture* temptexture;	// only for test purpose
-
-	void Init() {
-		// initalize
-		rtree = new SkinRenderTree(1280, 760);
-
-		// initalize global resources
-		//HANDLERPOOL->Add("OnGamePlaySound", OnBmsSound);
-		//HANDLERPOOL->Add("OnGamePlayBga", OnBmsBga);
-		OnScene = TIMERPOOL->Set("OnScene", false);
-		OnGameStart = TIMERPOOL->Set("OnGameStart", false);
-		OnSongLoading = TIMERPOOL->Set("OnSongLoading", false);
-		OnSongLoadingEnd = TIMERPOOL->Set("OnSongLoadingEnd", false);
-		OnReady = TIMERPOOL->Set("OnReady", false);
-		OnClose = SWITCH_OFF("OnClose");
-		On1PMiss = SWITCH_OFF("On1PMiss");
-		On2PMiss = SWITCH_OFF("On2PMiss");
-		On1PJudge = SWITCH_OFF("On1PJudge");
-		On2PJudge = SWITCH_OFF("On2PJudge");
-		Bmspath = STRPOOL->Set("Bmspath");
-		PlaySkinpath = STRPOOL->Set("PlaySkinpath");
-
-		// make player & prepare
-		player[0] = new PlayerAuto();
-		player[1] = new Player();
-
-		// temp resource
-		int pitch;
-		Uint32 *p;
-		temptexture = SDL_CreateTexture(Game::RENDERER, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, 20, 10);
-		SDL_LockTexture(temptexture, 0, (void**)&p, &pitch);
-		for (int i = 0; i < 20 * 10; i++)
-			p[i] = (255 << 24 | 255 << 16 | 120 << 8 | 120);
-		SDL_UnlockTexture(temptexture);
-	}
 
 	bool LoadSkin(const char* path) {
 		//SkinDST::On(33);		// autoplay on
@@ -135,52 +101,6 @@ namespace GamePlay {
 		}
 	}
 
-	void Start() {
-		/*
-		 * Load skin & bms resource
-		 * (bms resource is loaded with thread)
-		 * (Timers must created before this called)
-		 */
-		LoadSkin(*PlaySkinpath);
-		LoadBms(*Bmspath);
-
-		/*
-		 * initalize timers
-		 * MUST DO after skin is loaded
-		 */
-		GameTimer::Tick();
-		SWITCH_ON("OnDiffAnother");
-		SWITCH_ON("IsScoreGraph");
-		SWITCH_OFF("IsAutoPlay");
-		SWITCH_ON("IsBGA");
-		SWITCH_ON("IsExtraMode");
-		SWITCH_ON("OnDiffInsane");
-		//SWITCH_ON("Is1PSuddenChange");
-		//SWITCH_ON("981");
-		DOUBLEPOOL->Set("TargetExScore", 0.5);
-		DOUBLEPOOL->Set("TargetExScore", 0.5);
-		OnScene->Stop();
-		OnSongLoadingEnd->Stop();
-		OnReady->Stop();
-		OnGameStart->Stop();
-		OnSongLoading->Stop();
-
-		/*
-		 * BMS load end, so set player
-		 */
-		PlayerSetting psetting;
-		psetting.speed = 310;
-		player[0]->SetPlayerSetting(psetting);		// TODO: is this have any meaning?
-		player[0]->SetSpeed(psetting.speed);
-		player[0]->Prepare(0);
-
-		/*
-		 * must call at the end of the scene preparation
-		 */
-		OnSongLoading->Start();
-		OnScene->Start();
-	}
-
 	namespace {
 		/* object rendering part */
 		void RenderObject(SkinRenderObject*);
@@ -232,10 +152,93 @@ namespace GamePlay {
 		}
 	}
 
-	void Render() {
+	// sceneplay part
+	void ScenePlay::Initialize() {
+		// initalize
+		rtree = new SkinRenderTree(1280, 760);
+
+		// initalize global resources
+		//HANDLERPOOL->Add("OnGamePlaySound", OnBmsSound);
+		//HANDLERPOOL->Add("OnGamePlayBga", OnBmsBga);
+		OnGameStart = TIMERPOOL->Set("OnGameStart", false);
+		OnSongLoading = TIMERPOOL->Set("OnSongLoading", false);
+		OnSongLoadingEnd = TIMERPOOL->Set("OnSongLoadingEnd", false);
+		OnReady = TIMERPOOL->Set("OnReady", false);
+		OnClose = SWITCH_OFF("OnClose");
+		On1PMiss = SWITCH_OFF("On1PMiss");
+		On2PMiss = SWITCH_OFF("On2PMiss");
+		On1PJudge = SWITCH_OFF("On1PJudge");
+		On2PJudge = SWITCH_OFF("On2PJudge");
+		Bmspath = STRPOOL->Set("Bmspath");
+		PlaySkinpath = STRPOOL->Set("PlaySkinpath");
+
+		// make player & prepare
+		player[0] = new PlayerAuto();
+		player[1] = new Player();
+
+		// temp resource
+		int pitch;
+		Uint32 *p;
+		temptexture = SDL_CreateTexture(Game::RENDERER, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, 20, 10);
+		SDL_LockTexture(temptexture, 0, (void**)&p, &pitch);
+		for (int i = 0; i < 20 * 10; i++)
+			p[i] = (255 << 24 | 255 << 16 | 120 << 8 | 120);
+		SDL_UnlockTexture(temptexture);
+	}
+
+	void ScenePlay::Start() {
 		/*
-		 * check timers
-		 */
+		* Load skin & bms resource
+		* (bms resource is loaded with thread)
+		* (Timers must created before this called)
+		*/
+		LoadSkin(*PlaySkinpath);
+		LoadBms(*Bmspath);
+
+		/*
+		* initalize timers
+		* MUST DO after skin is loaded
+		*/
+		GameTimer::Tick();
+		SWITCH_ON("OnDiffAnother");
+		SWITCH_ON("IsScoreGraph");
+		SWITCH_OFF("IsAutoPlay");
+		SWITCH_ON("IsBGA");
+		SWITCH_ON("IsExtraMode");
+		SWITCH_ON("OnDiffInsane");
+		//SWITCH_ON("Is1PSuddenChange");
+		//SWITCH_ON("981");
+		DOUBLEPOOL->Set("TargetExScore", 0.5);
+		DOUBLEPOOL->Set("TargetExScore", 0.5);
+		OnSongLoadingEnd->Stop();
+		OnReady->Stop();
+		OnGameStart->Stop();
+		OnSongLoading->Stop();
+
+		/*
+		* BMS load end, so set player
+		*/
+		PlayerSetting psetting;
+		psetting.speed = 310;
+		player[0]->SetPlayerSetting(psetting);		// TODO: is this have any meaning?
+		player[0]->SetSpeed(psetting.speed);
+		player[0]->Prepare(0);
+
+		/*
+		* must call at the end of the scene preparation
+		*/
+		OnSongLoading->Start();
+
+	}
+
+	void ScenePlay::Update() {
+
+	}
+
+	void ScenePlay::Render() {
+		/*
+		* check timers
+		*/
 		if (OnReady->Trigger(OnSongLoadingEnd->IsStarted() && OnScene->GetTick() >= 3000))
 			OnSongLoading->Stop();
 		OnGameStart->Trigger(OnReady->GetTick() >= 2000);
@@ -246,24 +249,24 @@ namespace GamePlay {
 		OnClose->Trigger(OnGameStart->GetTick() + 2000 > BmsHelper::GetEndTime());
 
 		/*
-		 * BMS update
-		 */
+		* BMS update
+		*/
 		if (OnGameStart->IsStarted())
 			BmsHelper::Update(OnGameStart->GetTick());
 
 		/*
-		 * Player update
-		 */
+		* Player update
+		*/
 		if (player[0]) player[0]->Update();
 		//if (player[1]) player[1]->Update();
 
 		/*
-		 * draw interface (make a render tree recursion)
-		 */
+		* draw interface (make a render tree recursion)
+		*/
 		RenderObject(rtree);
 	}
 
-	void Release() {
+	void ScenePlay::Render() {
 		// remove player
 		if (player[0]) delete player[0];
 		if (player[1]) delete player[1];

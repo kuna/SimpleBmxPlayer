@@ -68,7 +68,7 @@ protected:
 #endif
 
 	// grade information
-	PlayerGrade				grade;
+	PlayerScore			score;
 
 	// current judge/bar/channel related information
 	int					noteindex[20];					// currently processing note index(bar index)
@@ -127,7 +127,7 @@ public:
 	/** @Get/Set */
 	double GetSpeed();
 	void SetSpeed(double speed);
-	PlayerGrade GetGrade();
+	PlayerScore GetScore();
 	int GetCurrentBar();
 	int GetCurrentNoteBar(int channel);
 	bool IsNoteAvailable(int notechannel);

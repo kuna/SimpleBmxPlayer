@@ -1,59 +1,47 @@
 #include "game.h"
 #include "gameplay.h"
+
 #include "luamanager.h"
 #include "util.h"
 #include "globalresources.h"
 #include "font.h"
+#include "file.h"
+#include "version.h"
+#include "tinyxml2.h"
+#include "bmsresource.h"
 
+using namespace tinyxml2;
 
 namespace Game {
+	/*
+	 * variables
+	 */
 	// game status
-	GameSetting setting;
-	bool bRunning = true;		// is game running?
+	GameSetting		SETTING;
+	SceneBasic*		SCENE = NULL;
+	bool			bRunning = true;	// is game running?
 
-	// bms info
-	std::string bmspath;
+	// player
+	PlayerInfo		PLAYER1;
+	PlayerInfo		PLAYER2;
 
 	// SDL
-	SDL_Window* WINDOW = NULL;
-	SDL_Renderer* RENDERER = NULL;
-
-	// drawing texture/fonts
-	// (it'll be automatically released, it's pool object - managed by pool)
-	Font *font;
+	SDL_Window*		WINDOW = NULL;
+	SDL_Renderer*	RENDERER = NULL;
 
 	// FPS
-	Timer fpstimer;
-	int fps = 0;
+	Timer			fpstimer;
+	int				fps = 0;
+	Font			*font;				// system font
+	bool			showfps = true;
 
-	void Game::Parameter::help() {
-		wprintf(L"SimpleBmxPlayer\n================\n-- How to use -- \n\n"
-			L"argument: (bmx file) (options ...)\n"
-			L"options:"
-			L"-noimage: don't load image files\n"
-			L"-ms: start from n-th measure\n"
-			L"-repeat: repeat bms for n-times\n"
-			L"keys:\n"
-			L"default key config is -\n(1P) LS Z S X D C F V (2P) M K , L . ; / RS\nyou can change it by changing preset files.\n"
-			L"Press F5 to reload BMS file only.\n"
-			L"Press F6 to reload BMS Resource file only.\n"
-			L"Press - to move -5 measures.\n"
-			L"Press + to move +5 measures.\n"
-			L"Press Up/Down to change speed.\n"
-			L"Press Right/Left to change lane.\n"
-			L"Press Shift+Right/Left to change lift.\n");
-	}
+	// basic
+	Timer			*oninputstart;
+	Timer			*onscene;
 
-	bool Game::Parameter::parse(int argc, _TCHAR **argv) {
-		char *buf = new char[10240];
-		if (argc <= 1)
-			return false;
-
-		ENCODING::wchar_to_utf8(argv[1], buf, 10240);	bmspath = buf;
-
-		delete buf;
-		return true;
-	}
+	// some macros about scene
+	void InitalizeScene(SceneBasic* s) { s->Initialize(); }
+	void ReleaseScene(SceneBasic* s) { s->Release(); }
 
 	/* 
 	 * registering basic lua function start 
@@ -179,25 +167,27 @@ namespace Game {
 		}
 	}
 
-	bool Init() {
+	bool Initialize() {
+		/*
+		 * Load basic setting file ...
+		 */
+		if (!GameSettingHelper::LoadSetting(SETTING)) {
+			wprintf(L"Cannot load settings files... Use Default settings...\n");
+			GameSettingHelper::DefaultSetting(SETTING);
+		}
+
+		/*
+		 * Load Player information ...
+		 */
+		if (!PlayerInfoHelper::LoadPlayerInfo(PLAYER1, SETTING.username))
+			PlayerInfoHelper::DefaultPlayerInfo(PLAYER1);
+
 		/*
 		 * Basic instances initalization
 		 */
 		GameTimer::Tick();
-		PoolHelper::InitalizeAll();
 		LUA = new LuaManager();
 		RegisterBasicLuaFunction();
-
-		/*
-		 * Load basic setting file ...
-		 */
-		if (!setting.LoadSetting("../setting.xml")) {
-			wprintf(L"Cannot load settings files... Use Default settings...\n");
-			if (!setting.DefaultSetting()) {
-				wprintf(L"CANNOT load default settings. program exit.\n");
-				return -1;
-			}
-		}
 
 		/*
 		 * Game engine initalize
@@ -211,8 +201,14 @@ namespace Game {
 			return -1;
 		}
 		Mix_AllocateChannels(1296);
-		WINDOW = SDL_CreateWindow("SimpleBmxPlayer", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-			setting.mEngine.mWidth, setting.mEngine.mHeight, SDL_WINDOW_SHOWN);
+		int flag = SDL_WINDOW_SHOWN;
+		if (SETTING.resizable)
+			flag |= SDL_WINDOW_RESIZABLE;
+		if (SETTING.vsync)
+			flag |= SDL_RENDERER_PRESENTVSYNC;
+		WINDOW = SDL_CreateWindow(PROGRAMNAME " - " PROGRAMDATE "(" PROGRAMCOMMIT ")", 
+			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+			SETTING.width, SETTING.height, SDL_WINDOW_SHOWN);
 		if (!WINDOW) {
 			wprintf(L"Failed to create window\n");
 			return -1;
@@ -227,23 +223,14 @@ namespace Game {
 		 * Scene instance initalization
 		 * (MUST after graphic initalization finished)
 		 */
-		GamePlay::Init();
+		InitalizeScene(GamePlay::SCENE);
 
 		/*
 		 * prepare game basic resource
 		 */
-		font = FONTPOOL->LoadTTFFont("_system", "../skin/lazy.ttf", 28, FC_MakeColor(120, 120, 120, 255));
-
-		/*
-		 * prepare GamePlay
-		 */
-		STRPOOL->Set("PlaySkinpath", "../skin/Wisp_HD/play/HDPLAY_W.lr2skin");
-		STRPOOL->Set("Bmspath", bmspath);
-
-		return true;
-	}
-
-	void Start() {
+		oninputstart = TIMERPOOL->Get("OnInputStart");
+		onscene = TIMERPOOL->Get("OnScene");
+		font = FONTPOOL->LoadTTFFont("_system", "../system/resource/NanumGothic.ttf", 28, FC_MakeColor(120, 120, 120, 255));
 
 		/*
 		 * FPS timer start & initalize
@@ -251,13 +238,10 @@ namespace Game {
 		fpstimer.Start();
 		fps = 0;
 
-		/*
-		 * GamePlay Start
-		 * - We don't need select screen, only play screen.
-		 */
-		GamePlay::Start();
+		return true;
 	}
 
+	// private?
 	void Render_FPS() {
 		// calculate FPS per 1 sec
 		float avgfps = fps / (fpstimer.GetTick() / 1000.0f);
@@ -272,13 +256,10 @@ namespace Game {
 		}
 	}
 
-	void Render() {
-		// nothing to do just render GamePlay ...
-		GamePlay::Render();
-	}
-
 	void MainLoop() {
 		while (bRunning) {
+			if (!SCENE) continue;
+
 			/*
 			 * Ticking
 			 */
@@ -286,70 +267,106 @@ namespace Game {
 
 			/*
 			 * Keybd, mouse event
-			 * TODO: support event handler
 			 */
 			SDL_Event e;
-			if (SDL_PollEvent(&e)) {
+			if (oninputstart->GetTick() > 1000 && SDL_PollEvent(&e)) {
 				if (e.type == SDL_QUIT) {
-					bRunning = false;
+					End();
 				}
 				else if (e.type == SDL_KEYDOWN) {
 					switch (e.key.keysym.sym) {
 					case SDLK_ESCAPE:
-						bRunning = false;
+						End();
+						break;
+					case SDLK_F7:
+						showfps = !showfps;
+						break;
+					case SDLK_UP:
+						// speed - up
+						// TODO: 1p or 2p? -> give player as argument
+						// TODO: what class sets POOL data? playerinfo helper?
+						// TODO: if start button pressed? -> lane change
+						// TODO: if doubleclick then lane/lift toggle -> how can set ?
+						// TODO: F11 lane F12 lift, in easy way.
+						// if lane on, float speed on
+						// if lane off & lift on
+						PlayOptionHelper::SpeedUp();
+						break;
+					case SDLK_DOWN:
+						// speed - down
+						PlayOptionHelper::SpeedDown();
 						break;
 					default:
-						GamePlay::KeyPress(e.key.keysym.sym);
+						SCENE->KeyDown(e.key.keysym.sym, e.key.repeat);
 					}
 				}
 				else if (e.type == SDL_KEYUP) {
 					switch (e.key.keysym.sym) {
 					default:
-						GamePlay::KeyUp(e.key.keysym.sym);
+						SCENE->KeyUp(e.key.keysym.sym);
 					}
-					//TIMERPOOL->Reset("OnScene");
 				}
 				else if (e.type == SDL_MOUSEBUTTONDOWN) {
-
+					// TODO
 				}
 				else if (e.type == SDL_MOUSEBUTTONUP) {
-
+					// TODO
 				}
 				else if (e.type == SDL_MOUSEMOTION) {
-
+					// TODO
 				}
 				else if (e.type == SDL_MOUSEWHEEL) {
-
+					// TODO
 				}
 			}
 
 			/*
 			 * Graphic rendering
-			 * - skin and movie(Image::Refresh) part are departed from main thread
+			 * - skin and movie(Image::Refresh) part are detached from main thread
 			 *   so keypress will be out of lag
 			 *   (TODO)
 			 */
 			SDL_RenderClear(RENDERER);
-			Render();
-			Render_FPS();
+			SCENE->Update();
+			SCENE->Render();
+			if (showfps) Render_FPS();
 			SDL_RenderPresent(RENDERER);
 		}
 	}
 
-	void Game::Release() {
+	void End() {
+		/* simple :D */
+		bRunning = false;
+	}
+
+	void Release() {
 		// stop Bms loading && release Bms
 		BmsHelper::ReleaseAll();
 
 		// other scenes
-		GamePlay::Release();
+		ReleaseScene(GamePlay::SCENE);
 
 		// release basic instances
-		PoolHelper::ReleaseAll();
 		delete LUA;
 
 		// finally, game engine (audio/renderer) release
 		Mix_CloseAudio();
 		SDL_DestroyRenderer(RENDERER);
 		SDL_DestroyWindow(WINDOW);
+	}
+
+	void StartScene() {
+		/*
+		 * inputstart/scene timer is a little different;
+		 * sometimes input blocking is necessary during scene rendering.
+		 */
+		oninputstart->Start();
+		onscene->Start();
+	}
+
+	void ChangeScene(SceneBasic *s) {
+		if (SCENE != s)
+			StartScene();
+		SCENE = s;
 	}
 }

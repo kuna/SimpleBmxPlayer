@@ -18,52 +18,6 @@ namespace {
 	};
 }
 
-#pragma region GRADE
-Grade::Grade() : Grade(0) {}
-Grade::Grade(int notecnt) : notecnt(notecnt), combo(0), maxcombo(0) {
-	memset(grade, 0, sizeof(grade));
-}
-int Grade::CalculateEXScore() {
-	return grade[JUDGETYPE::JUDGE_PGREAT] * 2 + grade[JUDGETYPE::JUDGE_GREAT];
-}
-int Grade::CalculateScore() { return CalculateRate() * 200000; }
-double Grade::CalculateRate() {
-	return (double)CalculateEXScore() / notecnt / 2;
-}
-int Grade::CalculateGrade() {
-	double rate = CalculateRate();
-	if (rate >= 8.0 / 9)
-		return GRADETYPE::GRADE_AAA;
-	else if (rate >= 7.0 / 9)
-		return GRADETYPE::GRADE_AA;
-	else if (rate >= 6.0 / 9)
-		return GRADETYPE::GRADE_A;
-	else if (rate >= 5.0 / 9)
-		return GRADETYPE::GRADE_B;
-	else if (rate >= 4.0 / 9)
-		return GRADETYPE::GRADE_C;
-	else if (rate >= 3.0 / 9)
-		return GRADETYPE::GRADE_D;
-	else if (rate >= 2.0 / 9)
-		return GRADETYPE::GRADE_E;
-	else
-		return GRADETYPE::GRADE_F;
-}
-void Grade::AddGrade(const int type) {
-	grade[type]++;
-	if (type >= JUDGETYPE::JUDGE_GOOD) {
-		combo++;
-		if (maxcombo < combo) maxcombo = combo;
-	}
-	else {
-		combo = 0;
-	}
-}
-int Grade::GetMaxCombo() { return maxcombo; }
-int Grade::GetCombo() { return combo; }
-int Grade::GetNoteCount() { return notecnt; }
-#pragma endregion GRADE
-
 // ------- Player ----------------------------------------
 
 Player::Player(int type) {

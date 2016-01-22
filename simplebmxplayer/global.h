@@ -130,6 +130,10 @@ namespace PACEMAKERTYPE {
 	const int PACERIVAL5 = 13;
 }
 
+namespace SCENETYPE {
+
+}
+
 
 #ifdef _WIN32
 #define USE_MBCS	// uses wchar_t/wstring - for windows

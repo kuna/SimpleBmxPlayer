@@ -2,6 +2,7 @@
 #include "util.h"
 #include "file.h"
 #include "sqlite3.h"
+#include "SDL\SDL.h"
 
 using namespace tinyxml2;
 
@@ -33,6 +34,49 @@ namespace {
 		}
 	}
 }
+
+#pragma region PLAYERSCORE
+PlayerScore::PlayerScore() : PlayerScore(0) {}
+PlayerScore::PlayerScore(int notecnt) : totalnote(notecnt), combo(0), maxcombo(0) {
+	memset(score, 0, sizeof(score));
+}
+int PlayerScore::CalculateEXScore() {
+	return score[JUDGETYPE::JUDGE_PGREAT] * 2 + score[JUDGETYPE::JUDGE_GREAT];
+}
+int PlayerScore::CalculateScore() { return CalculateRate() * 200000; }
+double PlayerScore::CalculateRate() {
+	return (double)CalculateEXScore() / totalnote / 2;
+}
+int PlayerScore::CalculateGrade() {
+	double rate = CalculateRate();
+	if (rate >= 8.0 / 9)
+		return GRADETYPE::GRADE_AAA;
+	else if (rate >= 7.0 / 9)
+		return GRADETYPE::GRADE_AA;
+	else if (rate >= 6.0 / 9)
+		return GRADETYPE::GRADE_A;
+	else if (rate >= 5.0 / 9)
+		return GRADETYPE::GRADE_B;
+	else if (rate >= 4.0 / 9)
+		return GRADETYPE::GRADE_C;
+	else if (rate >= 3.0 / 9)
+		return GRADETYPE::GRADE_D;
+	else if (rate >= 2.0 / 9)
+		return GRADETYPE::GRADE_E;
+	else
+		return GRADETYPE::GRADE_F;
+}
+void PlayerScore::AddGrade(const int type) {
+	score[type]++;
+	if (type >= JUDGETYPE::JUDGE_GOOD) {
+		combo++;
+		if (maxcombo < combo) maxcombo = combo;
+	}
+	else {
+		combo = 0;
+	}
+}
+#pragma endregion
 
 /*
 * text - songhash
@@ -97,7 +141,7 @@ namespace {
 #define GETINT(col, v)\
 	CHECKTYPE(col, SQLITE_INTEGER), v = sqlite3_column_int(stmt, col)
 
-namespace PlayerInfoHelper {
+namespace PlayerReplayHelper {
 	/** [private] sqlite3 for querying player record */
 	namespace {
 		// private; used for load/save PlayerRecord
@@ -179,11 +223,12 @@ namespace PlayerInfoHelper {
 				GETINT(5, record.status);
 				GETINT(6, record.minbp);
 				GETINT(7, record.maxcombo);
-				GETINT(8, record.grade.grade[5]);
-				GETINT(9, record.grade.grade[4]);
-				GETINT(10, record.grade.grade[5]);
-				GETINT(11, record.grade.grade[2]);
-				GETINT(12, record.grade.grade[1]);
+				GETINT(8, record.score.score[5]);
+				GETINT(9, record.score.score[4]);
+				GETINT(10, record.score.score[5]);
+				GETINT(11, record.score.score[2]);
+				GETINT(12, record.score.score[1]);
+				// COMMENT: ÍöPOOR?
 				GETTEXT(13, replay);					// replay
 				record.replay.Parse(replay);
 				r = true;
@@ -225,13 +270,17 @@ namespace PlayerInfoHelper {
 	}
 
 	bool SavePlayerRecord(const PlayerSongRecord& record, const char* name) {
-
+		// TODO
+		return false;
 	}
 
 	bool DeletePlayerRecord(const char* name, const char* songhash) {
-
+		// TODO
+		return false;
 	}
+}
 
+namespace PlayerInfoHelper {
 	namespace {
 		void LoadBasicConfig(PlayerInfo& player, XMLNode *base) {
 			player.name = base->FirstChildElement("Name")->GetText();
@@ -242,26 +291,57 @@ namespace PlayerInfoHelper {
 			player.clearcount = atoi(base->FirstChildElement("Clearcount")->GetText());
 		}
 
-		void SaveBasicConfig(PlayerInfo& player, XMLDocument *doc) {
+		void SaveBasicConfig(const PlayerInfo& player, XMLDocument *doc) {
 			CreateElement(doc, "Name")->SetText(player.name);
-			CreateElement(doc, "SPGrade")->SetText(player.name);
-			CreateElement(doc, "DPGrade")->SetText(player.name);
-			CreateElement(doc, "Playcount")->SetText(player.name);
-			CreateElement(doc, "Failcount")->SetText(player.name);
-			CreateElement(doc, "Clearcount")->SetText(player.name);
+			CreateElement(doc, "SPGrade")->SetText(player.spgrade);
+			CreateElement(doc, "DPGrade")->SetText(player.dpgrade);
+			CreateElement(doc, "Playcount")->SetText(player.playcount);
+			CreateElement(doc, "Failcount")->SetText(player.failcount);
+			CreateElement(doc, "Clearcount")->SetText(player.clearcount);
 		}
 
-		void LoadScoreInfo(const PlayerGrade &grade, XMLNode *base) {
-			
+		void LoadScoreInfo(PlayerScore &score, XMLNode *base) {
+			XMLElement *s = base->FirstChildElement("Score");
+			if (!s) return;
+			score.score[5] = s->IntAttribute("perfect");
+			score.score[4] = s->IntAttribute("great");
+			score.score[3] = s->IntAttribute("good");
+			score.score[2] = s->IntAttribute("bad");
+			score.score[1] = s->IntAttribute("poor");
 		}
 
-		void SaveScoreInfo(const PlayerGrade &grade, XMLNode *base) {
+		void SaveScoreInfo(const PlayerScore &score, XMLNode *base) {
+			XMLElement *s = CreateElement(base, "Score");
+			s->SetAttribute("perfect", score.score[5]);
+			s->SetAttribute("great", score.score[4]);
+			s->SetAttribute("good", score.score[3]);
+			s->SetAttribute("bad", score.score[2]);
+			s->SetAttribute("poor", score.score[1]);
+		}
 
+		// defaults
+		// (don't touch name)
+		void DefaultBasicConfig(PlayerInfo& player) {
+			player.spgrade = 0;
+			player.dpgrade = 0;
+			player.playcount = 0;
+			player.failcount = 0;
+			player.failcount = 0;
+		}
+
+		void DefaultScoreInfo(PlayerScore &score) {
+			score = PlayerScore();
 		}
 	}
 
 	void DefaultPlayerInfo(PlayerInfo& player) {
-		// TODO
+		DefaultBasicConfig(player);
+
+		DefaultScoreInfo(player.score);
+
+		PlayerKeyHelper::DefaultKeyConfig(player.keyconfig);
+
+		PlayOptionHelper::DefaultPlayConfig(player.playconfig);
 	}
 
 	bool LoadPlayerInfo(PlayerInfo& player, const char* name) {
@@ -282,7 +362,7 @@ namespace PlayerInfoHelper {
 		LoadBasicConfig(player, doc);
 
 		// parsing (grade)
-		LoadScoreInfo(player.grade, doc);
+		LoadScoreInfo(player.score, doc);
 
 		// parsing (keyconfig)
 		PlayerKeyHelper::LoadKeyConfig(player.keyconfig, doc);
@@ -309,7 +389,7 @@ namespace PlayerInfoHelper {
 		SaveBasicConfig(player, doc);
 
 		// serialize (grade)
-		SaveScoreInfo(player.grade, doc);
+		SaveScoreInfo(player.score, doc);
 
 		// serialize (keyconfig)
 		PlayerKeyHelper::SaveKeyConfig(player.keyconfig, doc);
@@ -371,6 +451,28 @@ namespace PlayerKeyHelper {
 			}
 			keyconfig->LinkEndChild(e);
 		}
+	}
+
+	void DefaultKeyConfig(PlayerKeyConfig &config) {
+		config.keycode[PlayerKeyIndex::P1_BUTTON1][0] = SDLK_z;
+		config.keycode[PlayerKeyIndex::P1_BUTTON2][0] = SDLK_s;
+		config.keycode[PlayerKeyIndex::P1_BUTTON3][0] = SDLK_x;
+		config.keycode[PlayerKeyIndex::P1_BUTTON4][0] = SDLK_d;
+		config.keycode[PlayerKeyIndex::P1_BUTTON5][0] = SDLK_c;
+		config.keycode[PlayerKeyIndex::P1_BUTTON6][0] = SDLK_f;
+		config.keycode[PlayerKeyIndex::P1_BUTTON7][0] = SDLK_v;
+		config.keycode[PlayerKeyIndex::P1_BUTTONSC][0] = SDLK_LSHIFT;
+		config.keycode[PlayerKeyIndex::P1_BUTTONSC][1] = SDLK_LCTRL;
+
+		config.keycode[PlayerKeyIndex::P2_BUTTON1][0] = SDLK_m;
+		config.keycode[PlayerKeyIndex::P2_BUTTON2][0] = SDLK_k;
+		config.keycode[PlayerKeyIndex::P2_BUTTON3][0] = SDLK_COMMA;
+		config.keycode[PlayerKeyIndex::P2_BUTTON4][0] = SDLK_l;
+		config.keycode[PlayerKeyIndex::P2_BUTTON5][0] = SDLK_PERIOD;
+		config.keycode[PlayerKeyIndex::P2_BUTTON6][0] = SDLK_SEMICOLON;
+		config.keycode[PlayerKeyIndex::P2_BUTTON7][0] = SDLK_SLASH;
+		config.keycode[PlayerKeyIndex::P2_BUTTONSC][0] = SDLK_RSHIFT;
+		config.keycode[PlayerKeyIndex::P2_BUTTONSC][1] = SDLK_RCTRL;
 	}
 }
 
