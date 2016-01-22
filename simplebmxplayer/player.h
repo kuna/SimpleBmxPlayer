@@ -12,99 +12,15 @@
 #include "timer.h"
 #include "image.h"
 #include "global.h"
+#include "playerinfo.h"
 
-typedef uint32_t Uint32;
 class SkinPlayObject;
-
-/*
- * class Grade
- * - stores current play's score and evaluate
- *
- */
-namespace JUDGETYPE {
-	const int JUDGE_PGREAT	= 5;
-	const int JUDGE_GREAT	= 4;
-	const int JUDGE_GOOD	= 3;
-	const int JUDGE_BAD		= 2;
-	const int JUDGE_POOR	= 1;
-	const int JUDGE_NPOOR	= 0;
-	const int JUDGE_EARLY	= 10;	// it's too early, so it should have no effect
-	const int JUDGE_LATE	= 11;	// it's too late, so it should have no effect
-}
-
-namespace GRADETYPE {
-	const int GRADE_AAA	= 8;
-	const int GRADE_AA	= 7;
-	const int GRADE_A	= 6;
-	const int GRADE_B	= 5;
-	const int GRADE_C	= 4;
-	const int GRADE_D	= 3;
-	const int GRADE_E	= 2;
-	const int GRADE_F	= 1;
-}
-
-class Grade {
-private:
-	int grade[6];
-	int notecnt;
-	int combo;
-	int maxcombo;
-public:
-	Grade(int notecnt);
-	Grade();
-	int CalculateEXScore();
-	int CalculateScore();
-	double CalculateRate();
-	int CalculateGrade();
-	void AddGrade(const int type);
-
-	// getter/setter
-	int GetMaxCombo();
-	int GetCombo();
-	int GetNoteCount();
-};
-
-/*
- * class PlayerRecord
- * have data about player's song play records with sqlite
- * (TODO)
- */
-class PlayerRecord {
-private:
-	std::map<BmsInfo, PlayRecord> playrecord;
-public:
-	void LoadPlayRecord(std::wstring& playerid);
-};
-
-// each key/play setting is different!
-class PlayerSetting {
-public:
-	// note/guage/keysetting
-	int keysetting[20][4];
-	int guageoption;
-	int noteoption;
-
-	// speed information
-	double speed;
-	double lane;
-	double lift;
-public:
-	// type0: SP, type1: DP, type3: 5Key, type4: 10key, type5: PMS
-	void LoadPlaySetting(const char* path);
-	void SavePlaySetting(const char* path);
-};
-
-namespace PLAYERTYPE {
-	const int NORMAL = 0;
-	const int AUTO = 1;
-	const int REPLAY = 2;
-	const int NETWORK = 3;	// not implemented
-}
 
 /*
  * @description
  * Very basic form of Player
- * Generally used for playing
+ * only stores data for real game play
+ * (don't store data for each player; refer PlayerInfo/PlayerSongRecord)
  */
 class Player {
 protected:
@@ -112,7 +28,7 @@ protected:
 	// COMMENT: we don't need laneheight.
 	// we just need to get relative position of lane(0 ~ 1). 
 	// skinelement will process it by itself.
-	PlayerSetting		setting;
+	PlayerInfo			playerinfo;
 	int					playside;
 	int					playertype;
 	double				speed;				// for calculating speed_mul
@@ -152,7 +68,7 @@ protected:
 #endif
 
 	// grade information
-	Grade				grade;
+	PlayerGrade				grade;
 
 	// current judge/bar/channel related information
 	int					noteindex[20];					// currently processing note index(bar index)
@@ -211,14 +127,14 @@ public:
 	/** @Get/Set */
 	double GetSpeed();
 	void SetSpeed(double speed);
-	Grade GetGrade();
+	PlayerGrade GetGrade();
 	int GetCurrentBar();
 	int GetCurrentNoteBar(int channel);
 	bool IsNoteAvailable(int notechannel);
 	int GetAvailableNoteIndex(int notechannel, int start = 0);
 	bool IsDead();
 	bool IsFinished();	// TODO
-	void SetPlayerSetting(const PlayerSetting& setting);
+	void SetPlayerConfig(const PlayerPlayConfig& config);
 };
 
 /*
@@ -250,5 +166,7 @@ public:
 };
 
 namespace PlayerHelper {
-
+	/** @brief get key function from config. returns -1 if no key function attributes to that player. */
+	int GetKeyFunction(const PlayerKeyConfig& keyconfig, int keycode);
+	/** @brief load player info from player's name */
 }

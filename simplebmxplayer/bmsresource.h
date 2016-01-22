@@ -61,15 +61,12 @@ namespace BmsHelper {
 	void LoadBmsOnThread(const RString &bmspath);
 	/** @brief LoadBmsResource() on multithread. callback by OnBmsLoadingEnd */
 	void LoadBmsResourceOnThread();
-	/** @brief Release all bms resources. include note data. */
+	/** @brief Release all bms resources & automatically stops bms loading. include note data. */
 	void ReleaseAll();
-
-	/** @brief plays sound. pauses if that sound(channel) is already playing. */
-	void PlaySound(int channel);
 
 	/** @brief Update time. BGA/BGM is automatically setted by progressed time. */
 	void Update(uint32_t time);
-	/***/
+	/** @brief Is song finished? */
 	bool IsFinished(uint32_t time);
 	/** @brief Reset time. BGA/BGM is resetted to pointing time. */
 	void ResetTime(uint32_t time);

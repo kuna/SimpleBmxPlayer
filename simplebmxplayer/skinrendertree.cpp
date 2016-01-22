@@ -385,10 +385,10 @@ void SkinTextObject::RenderText(const char* s) {
 		int left_offset = 0;
 		switch (align) {
 		case 1:		// center
-			left_offset = (dst_cached.frame.w - fnt->GetWidth(s)) / 2;
+			left_offset = -(fnt->GetWidth(s)) / 2;
 			break;
 		case 2:		// right
-			left_offset = dst_cached.frame.w - fnt->GetWidth(s);
+			left_offset = -fnt->GetWidth(s);
 			break;
 		}
 		fnt->Render(s, 

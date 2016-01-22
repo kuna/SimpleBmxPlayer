@@ -104,6 +104,14 @@ namespace BmsHelper {
 	Uint32			bgbar;			// bgm/bga bar position (private)
 	BGAInformation	currentbga;
 
+	/*
+	 * Loading thread should not interrupted but joined.
+	 * If this value is false, loading thread will be stopped by exiting loading loop.
+	 * So, to stop BMS loading, make this value false and join loading thread.
+	 * (or call ReleaseAll() method)
+	 */
+	bool isbmsloading = false;
+
 	bool LoadBms(const RString& path) {
 		bool succeed = false;
 		// lock first, so LoadBmsResource() can wait 
@@ -139,9 +147,10 @@ namespace BmsHelper {
 		*/
 		mutex_bmsresource.lock();
 		FileHelper::PushBasePath(IO::get_filedir(BmsResource::bmspath).c_str());
+		isbmsloading = true;
 
 		// load WAV/BMP
-		for (unsigned int i = 0; i < BmsConst::WORD_MAX_COUNT; ++i) {
+		for (unsigned int i = 0; i < BmsConst::WORD_MAX_COUNT && isbmsloading; i++) {
 			BmsWord word(i);
 			if (BmsResource::BMS.GetRegistArraySet()["WAV"].IsExists(word)) {
 				BmsResource::SOUND.Load(i, BmsResource::BMS.GetRegistArraySet()["WAV"][word]);
@@ -155,6 +164,7 @@ namespace BmsHelper {
 
 		FileHelper::PopBasePath();
 		TIMERPOOL->Set("OnSongLoadingEnd");
+		isbmsloading = false;
 		mutex_bmsresource.unlock();
 		return true;
 	}
@@ -167,6 +177,17 @@ namespace BmsHelper {
 	void* _LoadBmsResource(void*) { int r = LoadBmsResource() ? 1 : 0; return (void*)r; }
 	void LoadBmsResourceOnThread() {
 		pthread_create(&t_bmsresource, 0, _LoadBmsResource, 0);
+	}
+
+	void ReleaseAll() {
+		// first check is bms loading
+		if (isbmsloading) {
+			isbmsloading = false;
+			pthread_join(t_bmsresource, 0);
+		}
+		// and release all resources
+		BmsResource::SOUND.UnloadAll();
+		BmsResource::IMAGE.UnloadAll();
 	}
 
 #define FOREACH_CHANNEL
@@ -220,7 +241,7 @@ namespace BmsHelper {
 				BmsWord current_word((**it)[bgbar]);
 				if (current_word == BmsWord::MIN)
 					continue;
-				BmsHelper::PlaySound(current_word.ToInteger());
+				BmsResource::SOUND.Play(current_word.ToInteger());
 			}
 			for (auto it = bgachannel.Begin(); it != bgachannel.End(); it++) {
 				if (bgbar >= (**it).GetLength())
@@ -274,10 +295,6 @@ namespace BmsHelper {
 
 	uint32_t GetEndTime() {
 		return BmsResource::BMSTIME.GetEndTime() * 1000;
-	}
-
-	void PlaySound(int channel) {
-		BmsResource::SOUND.Play(channel);
 	}
 
 	double GetCurrentPosFromTime(double time_sec) {

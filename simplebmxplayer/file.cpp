@@ -7,6 +7,30 @@
 #define READLINE_MAX 10240
 #define READALL_MAX 10240000	// about 10mib
 
+#define MD5HASH_BLOCKSIZE 1024
+RString FileBasic::GetMD5Hash() {
+	// md5
+	MD5_CTX mdContext;
+	char* data = new char[MD5HASH_BLOCKSIZE];
+	MD5Init(&mdContext);
+	int bytes;
+	while ((bytes = Read(data, MD5HASH_BLOCKSIZE)) != 0) {
+		MD5Update(&mdContext, (unsigned char*)data, bytes);
+	}
+	MD5Final(&mdContext);
+	// digest
+	char digest[40];
+	digest[32] = 0;
+	char *digest_p = digest;
+	for (int i = 0; i < 16; i++) {
+		sprintf(digest_p, "%02x", mdContext.digest[i]);
+		digest_p += 2;
+	}
+	// release & return
+	delete data;
+	return digest;
+}
+
 File::File() : fp(0) {}
 File::~File() {
 	Close();

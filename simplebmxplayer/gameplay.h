@@ -24,4 +24,10 @@ namespace GamePlay {
 	void Start();
 	void Render();
 	void Release();
+	void KeyPress(int keycode);
+	void KeyUp(int keycode);
+	void MouseDown(int x, int y, int button);
+	void MouseMove(int x, int y, int button, bool isdragging);
+	void MouseUp(int x, int y, int button);
+	void MouseWheel(double delta);
 };

@@ -24,6 +24,7 @@ public:
 	virtual int ReadAll(RString &str) = 0;
 	virtual int ReadAll(char *p) = 0;
 	virtual int Read(RString &str, size_t size) = 0;
+	virtual int Read(char *p, size_t size) = 0;
 	virtual size_t GetFileSize() = 0;
 	virtual bool IsEOF() = 0;
 	virtual void Reset() = 0;

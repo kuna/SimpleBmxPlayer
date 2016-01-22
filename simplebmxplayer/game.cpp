@@ -9,6 +9,7 @@
 namespace Game {
 	// game status
 	GameSetting setting;
+	bool bRunning = true;		// is game running?
 
 	// bms info
 	std::string bmspath;
@@ -277,7 +278,7 @@ namespace Game {
 	}
 
 	void MainLoop() {
-		while (1) {
+		while (bRunning) {
 			/*
 			 * Ticking
 			 */
@@ -285,16 +286,40 @@ namespace Game {
 
 			/*
 			 * Keybd, mouse event
+			 * TODO: support event handler
 			 */
 			SDL_Event e;
 			if (SDL_PollEvent(&e)) {
 				if (e.type == SDL_QUIT) {
-					break;
+					bRunning = false;
 				}
-				if (e.type == SDL_KEYUP) {
-					// GamePlay::KeyPress(e.value);
-					// COMMENT: on test purpose. reset scene timer.
-					TIMERPOOL->Reset("OnScene");
+				else if (e.type == SDL_KEYDOWN) {
+					switch (e.key.keysym.sym) {
+					case SDLK_ESCAPE:
+						bRunning = false;
+						break;
+					default:
+						GamePlay::KeyPress(e.key.keysym.sym);
+					}
+				}
+				else if (e.type == SDL_KEYUP) {
+					switch (e.key.keysym.sym) {
+					default:
+						GamePlay::KeyUp(e.key.keysym.sym);
+					}
+					//TIMERPOOL->Reset("OnScene");
+				}
+				else if (e.type == SDL_MOUSEBUTTONDOWN) {
+
+				}
+				else if (e.type == SDL_MOUSEBUTTONUP) {
+
+				}
+				else if (e.type == SDL_MOUSEMOTION) {
+
+				}
+				else if (e.type == SDL_MOUSEWHEEL) {
+
 				}
 			}
 
@@ -312,14 +337,17 @@ namespace Game {
 	}
 
 	void Game::Release() {
-		// other part release first
+		// stop Bms loading && release Bms
+		BmsHelper::ReleaseAll();
+
+		// other scenes
 		GamePlay::Release();
 
 		// release basic instances
 		PoolHelper::ReleaseAll();
 		delete LUA;
 
-		// finally, audio/renderer close
+		// finally, game engine (audio/renderer) release
 		Mix_CloseAudio();
 		SDL_DestroyRenderer(RENDERER);
 		SDL_DestroyWindow(WINDOW);

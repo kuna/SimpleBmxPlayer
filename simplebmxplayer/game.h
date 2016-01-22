@@ -11,6 +11,39 @@
 #include <tchar.h>
 
 namespace Game {
+	struct GameSetting {
+		// basic information
+		int width, height;
+		bool vsync;
+		bool allowaddon;
+		int volume;
+		bool tutorial;
+
+		// skin (not skin option)
+		RString skin_main;
+		RString skin_user;
+		RString skin_select;
+		RString skin_decide;
+		RString skin_play_5key;
+		RString skin_play_7key;
+		RString skin_play_9key;
+		RString skin_play_10key;
+		RString skin_play_14key;
+		RString skin_result;
+
+		// user select
+		RString username;
+
+		// song select
+		int keymode;
+
+		// game play
+		// - NOPE
+
+		// result screen
+		// - NOPE
+	};
+
 	namespace Parameter {
 		void help();
 		bool parse(int argc, _TCHAR **argv);
