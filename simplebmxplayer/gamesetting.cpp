@@ -56,6 +56,8 @@ namespace GameSettingHelper {
 		setting.allowaddon = GetIntSafe(doc, "allowaddon", 1);
 		setting.volume = GetIntSafe(doc, "volume", 100);
 		setting.tutorial = GetIntSafe(doc, "tutorial", 1);
+		setting.soundlatency = GetIntSafe(doc, "soundlatency", 1024);
+		setting.useIR = GetIntSafe(doc, "useIR", 0);
 
 		XMLElement *skin = doc->FirstChildElement("Skin");
 		if (skin) {
@@ -75,6 +77,14 @@ namespace GameSettingHelper {
 
 		GetStringSafe(doc, "username", setting.username);
 		setting.keymode = GetIntSafe(doc, "keymode", 7);
+		setting.usepreview = GetIntSafe(doc, "usepreview", 1);
+
+		XMLElement *bmsdirs = doc->FirstChildElement("BmsDirs");
+		for (XMLElement *dir = bmsdirs->FirstChildElement("dir"); dir; dir = dir->NextSiblingElement("dir")) {
+			setting.bmsdirs.push_back(dir->GetText());
+		}
+
+		setting.deltaspeed = GetIntSafe(doc, "deltaspeed", 50);
 
 		delete doc;
 		return true;
@@ -97,6 +107,8 @@ namespace GameSettingHelper {
 		AddElement(doc, "allowaddon", setting.allowaddon);
 		AddElement(doc, "volume", setting.volume);
 		AddElement(doc, "tutorial", setting.tutorial);
+		AddElement(doc, "soundlatency", setting.soundlatency);
+		AddElement(doc, "useIR", setting.useIR);
 
 		XMLElement *skin = doc->NewElement("Skin");
 		doc->LinkEndChild(skin);
@@ -116,6 +128,15 @@ namespace GameSettingHelper {
 
 		AddElement(doc, "username", setting.username);
 		AddElement(doc, "keymode", setting.keymode);
+		AddElement(doc, "usepreview", setting.usepreview);
+
+		XMLElement *bmsdirs = doc->NewElement("BmsDirs");
+		doc->LinkEndChild(skin);
+		for (auto it = setting.bmsdirs.begin(); it != setting.bmsdirs.end(); ++it) {
+			AddElement(bmsdirs, "dir", *it);
+		}
+
+		AddElement(doc, "deltaspeed", setting.deltaspeed);
 
 		bool r = doc->SaveFile(file);
 		delete doc;
@@ -131,6 +152,8 @@ namespace GameSettingHelper {
 		setting.allowaddon = 1;
 		setting.volume = 100;
 		setting.tutorial = 1;
+		setting.soundlatency = 1024;
+		setting.useIR = 0;
 
 		// TODO
 		setting.skin_play_7key = "../skin/Wisp_HD/play/HDPLAY_W.lr2skin";
@@ -138,5 +161,9 @@ namespace GameSettingHelper {
 
 		setting.username = "NONAME";
 		setting.keymode = 7;
+		setting.usepreview = 1;
+		setting.bmsdirs.clear();
+
+		setting.deltaspeed = 50;
 	}
 }

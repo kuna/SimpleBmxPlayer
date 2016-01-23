@@ -10,6 +10,7 @@ struct GameSetting {
 	int volume;
 	int soundlatency;
 	int tutorial;
+	int useIR;
 
 	// skin (not skin option)
 	RString skin_main;
@@ -31,9 +32,11 @@ struct GameSetting {
 
 	// song select
 	int keymode;
+	int usepreview;
+	std::vector<RString> bmsdirs;
 
 	// game play
-	int speed
+	int deltaspeed;
 
 	// result screen
 	// - NOPE

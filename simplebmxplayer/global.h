@@ -100,17 +100,28 @@ namespace PlayerKeyIndex {
 	const int P2_BUTTON9 = 19;
 	const int P1_BUTTONSTART = 20;
 	const int P1_BUTTONVEFX = 21;
+	const int P1_BUTTONEFFECT = 22;
 	const int P2_BUTTONSTART = 30;
 	const int P2_BUTTONVEFX = 31;
+	const int P2_BUTTONEFFECT = 32;
 }
 
 namespace SPEEDTYPE {
 	const int NONE = 0;
-	const int FLOATING = 1;
-	const int MEDIUM = 2;
-	const int MAXBPM = 3;
-	const int MINBPM = 4;
-	const int CONSTANT = 5;
+	const int MEDIUM = 1;
+	const int MAXBPM = 2;
+	const int MINBPM = 3;
+	const int CONSTANT = 4;
+}
+
+namespace GAUGETYPE {
+	const int GROOVE = 0;
+	const int EASY = 1;
+	const int HARD = 2;
+	const int EXHARD = 3;
+	const int HAZARD = 4;
+	const int PATTACK = 5;
+	const int ASSISTEASY = 6;
 }
 
 namespace PACEMAKERTYPE {
@@ -128,6 +139,15 @@ namespace PACEMAKERTYPE {
 	const int PACERIVAL3 = 11;
 	const int PACERIVAL4 = 12;
 	const int PACERIVAL5 = 13;
+}
+
+namespace PLAYTYPE {
+	const int KEY5 = 5;
+	const int KEY7 = 7;
+	const int KEY9 = 9;
+	const int KEY10 = 10;
+	const int KEY14 = 14;
+	const int KEY18 = 18;
 }
 
 namespace SCENETYPE {

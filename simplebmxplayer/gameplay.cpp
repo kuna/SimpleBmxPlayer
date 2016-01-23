@@ -11,6 +11,8 @@
 #include "util.h"
 #include "file.h"
 #include "logger.h"
+#include "player.h"
+#include "game.h"
 
 namespace GamePlay {
 	// scene
@@ -21,13 +23,14 @@ namespace GamePlay {
 	Timer*				OnSongLoading;
 	Timer*				OnSongLoadingEnd;
 	Timer*				OnReady;
-	Timer*				OnClose;
-	Timer*				On1PMiss;
-	Timer*				On2PMiss;
-	Timer*				On1PJudge;
-	Timer*				On2PJudge;
+	Timer*				OnScene;
+	Timer*				OnClose;			// when 1p & 2p dead
+	Timer*				OnFadeIn;			// when game start
+	Timer*				OnFadeOut;			// when game end
+	Timer*				On1PMiss;			// just for missing image
+	Timer*				On2PMiss;			// just for missing image
+
 	RString*			Bmspath;
-	RString*			PlaySkinpath;
 
 	// bms skin resource
 	// skin resource will be loaded in GlobalResource, 
@@ -36,11 +39,9 @@ namespace GamePlay {
 	SkinRenderTree*		rtree;
 	SkinOption			skinoption;
 
-	// bms play related
-	// first player = real player
-	// second player = network/ghost player
-	// third player = mybest
-	Player*				player[2];	// player available up to 2
+	// note
+	BmsNoteContainer*	bmsnote;
+	int					playmode;	// PLAYTYPE
 
 	SDL_Texture* temptexture;	// only for test purpose
 
@@ -83,10 +84,6 @@ namespace GamePlay {
 		FileHelper::PopBasePath();
 
 		printf("Loaded Bms Skin Successfully\n");
-
-		// prefetch note render information
-		// COMMENT: setplayer should removed, move it to here
-		// TODO
 
 		return true;
 	}
@@ -141,10 +138,10 @@ namespace GamePlay {
 			else if (obj->ToPlayObject()) {
 				SkinPlayObject* play = obj->ToPlayObject();
 				RenderGroup(play);								// draw other objects first
-				if (player[0]) player[0]->RenderNote(play);		// and draw note/judgeline/line ...
+				if (PLAYER[0]) PLAYER[0]->RenderNote(play);		// and draw note/judgeline/line ...
+				if (PLAYER[1]) PLAYER[1]->RenderNote(play);
 				// TODO: judgeline is also drawed in RenderGroup
 				// TODD: method - SetJudgelineThickness()
-				// if player[1] ~~
 			}
 			else {
 				// ignore unknown object
@@ -154,7 +151,7 @@ namespace GamePlay {
 
 	// sceneplay part
 	void ScenePlay::Initialize() {
-		// initalize
+		// initalize skin tree
 		rtree = new SkinRenderTree(1280, 760);
 
 		// initalize global resources
@@ -167,14 +164,7 @@ namespace GamePlay {
 		OnClose = SWITCH_OFF("OnClose");
 		On1PMiss = SWITCH_OFF("On1PMiss");
 		On2PMiss = SWITCH_OFF("On2PMiss");
-		On1PJudge = SWITCH_OFF("On1PJudge");
-		On2PJudge = SWITCH_OFF("On2PJudge");
 		Bmspath = STRPOOL->Set("Bmspath");
-		PlaySkinpath = STRPOOL->Set("PlaySkinpath");
-
-		// make player & prepare
-		player[0] = new PlayerAuto();
-		player[1] = new Player();
 
 		// temp resource
 		int pitch;
@@ -188,17 +178,31 @@ namespace GamePlay {
 
 	void ScenePlay::Start() {
 		/*
-		* Load skin & bms resource
-		* (bms resource is loaded with thread)
-		* (Timers must created before this called)
-		*/
-		LoadSkin(*PlaySkinpath);
+		 * Load skin & bms resource
+		 * (bms resource is loaded with thread)
+		 * (Timers must created before this called)
+		 * (load bms first to find out what key skin is proper)
+		 */
 		LoadBms(*Bmspath);
+		RString PlayskinPath = "";
+		playmode = BmsResource::BMS.GetKey();
+		if (playmode > 10)
+			PlayskinPath = Game::SETTING.skin_play_7key;
+		else
+			PlayskinPath = Game::SETTING.skin_play_14key;
+		LoadSkin(PlayskinPath);
+		BmsResource::BMS.GetNotes(*bmsnote);
 
 		/*
-		* initalize timers
-		* MUST DO after skin is loaded
-		*/
+		 * Create player object for playing
+		 */
+		PLAYER[0] = new PlayerAuto(&PLAYERINFO[0].playconfig, bmsnote, 0, playmode);
+		PLAYER[1] = NULL;
+
+		/*
+		 * initalize timers
+		 * MUST DO after skin is loaded
+		 */
 		GameTimer::Tick();
 		SWITCH_ON("OnDiffAnother");
 		SWITCH_ON("IsScoreGraph");
@@ -216,60 +220,57 @@ namespace GamePlay {
 		OnSongLoading->Stop();
 
 		/*
-		* BMS load end, so set player
-		*/
-		PlayerSetting psetting;
-		psetting.speed = 310;
-		player[0]->SetPlayerSetting(psetting);		// TODO: is this have any meaning?
-		player[0]->SetSpeed(psetting.speed);
-		player[0]->Prepare(0);
-
-		/*
-		* must call at the end of the scene preparation
-		*/
+		 * must call at the end of the scene preparation
+		 */
 		OnSongLoading->Start();
 
 	}
 
 	void ScenePlay::Update() {
-
-	}
-
-	void ScenePlay::Render() {
 		/*
-		* check timers
-		*/
+		 * check timers (game flow related)
+		 */
 		if (OnReady->Trigger(OnSongLoadingEnd->IsStarted() && OnScene->GetTick() >= 3000))
 			OnSongLoading->Stop();
 		OnGameStart->Trigger(OnReady->GetTick() >= 2000);
-		On1PMiss->OffTrigger(On1PMiss->GetTick() > 1000);
-		On2PMiss->OffTrigger(On2PMiss->GetTick() > 1000);
-		On1PJudge->OffTrigger(On1PJudge->GetTick() > 500);
-		On2PJudge->OffTrigger(On2PJudge->GetTick() > 500);
-		OnClose->Trigger(OnGameStart->GetTick() + 2000 > BmsHelper::GetEndTime());
+		// OnClose is called when all player is dead
+		bool close = true;
+		if (close && PLAYER[0]) close = close && PLAYER[0]->IsDead();
+		if (close && PLAYER[1]) close = close && PLAYER[1]->IsDead();
+		OnClose->Trigger(close);
+		// OnFadeout is called when endtime is over
+		OnFadeOut->Trigger(BmsHelper::GetEndTime() + 2000 < OnGameStart->GetTick());
+		// If OnClose/OnFadeout has enough time, then go to next scene (End here)
+		if (OnClose->GetTick() > 3000 || OnFadeOut->GetTick() > 3000)
+			Game::End();
 
 		/*
-		* BMS update
-		*/
+		 * BMS update
+		 */
 		if (OnGameStart->IsStarted())
 			BmsHelper::Update(OnGameStart->GetTick());
 
 		/*
-		* Player update
-		*/
-		if (player[0]) player[0]->Update();
-		//if (player[1]) player[1]->Update();
+		 * Player update
+		 */
+		if (PLAYER[0]) PLAYER[0]->Update();
+		if (PLAYER[1]) PLAYER[1]->Update();
+	}
 
+	void ScenePlay::Render() {
 		/*
 		* draw interface (make a render tree recursion)
 		*/
 		RenderObject(rtree);
 	}
 
-	void ScenePlay::Render() {
+	void ScenePlay::Release() {
 		// remove player
-		if (player[0]) delete player[0];
-		if (player[1]) delete player[1];
+		if (PLAYER[0]) delete PLAYER[0];
+		if (PLAYER[1]) delete PLAYER[1];
+
+		// note clear
+		delete bmsnote;
 
 		// skin clear (COMMENT: we don't need to release skin in real. just in beta version.)
 		// we don't need to clear BMS data until next BMS is loaded
@@ -280,5 +281,139 @@ namespace GamePlay {
 
 		// temp resource
 		if (temptexture) SDL_DestroyTexture(temptexture);
+	}
+
+	/** private */
+	int GetChannelFromFunction(int func) {
+		int channel = 0;
+		switch (func) {
+		case PlayerKeyIndex::P1_BUTTON1:
+			channel = 1;
+			break;
+		case PlayerKeyIndex::P1_BUTTON2:
+			channel = 2;
+			break;
+		case PlayerKeyIndex::P1_BUTTON3:
+			channel = 3;
+			break;
+		case PlayerKeyIndex::P1_BUTTON4:
+			channel = 4;
+			break;
+		case PlayerKeyIndex::P1_BUTTON5:
+			channel = 5;
+			break;
+		case PlayerKeyIndex::P1_BUTTON6:
+			channel = 8;
+			break;
+		case PlayerKeyIndex::P1_BUTTON7:
+			channel = 9;
+			break;
+		case PlayerKeyIndex::P1_BUTTON8:
+			channel = 6;
+			break;
+		case PlayerKeyIndex::P1_BUTTON9:
+			channel = 7;
+			break;
+		case PlayerKeyIndex::P2_BUTTON1:
+			channel = 11;
+			break;
+		case PlayerKeyIndex::P2_BUTTON2:
+			channel = 12;
+			break;
+		case PlayerKeyIndex::P2_BUTTON3:
+			channel = 13;
+			break;
+		case PlayerKeyIndex::P2_BUTTON4:
+			channel = 14;
+			break;
+		case PlayerKeyIndex::P2_BUTTON5:
+			channel = 15;
+			break;
+		case PlayerKeyIndex::P2_BUTTON6:
+			channel = 18;
+			break;
+		case PlayerKeyIndex::P2_BUTTON7:
+			channel = 19;
+			break;
+		case PlayerKeyIndex::P2_BUTTON8:
+			channel = 16;
+			break;
+		case PlayerKeyIndex::P2_BUTTON9:
+			channel = 17;
+			break;
+		}
+		return channel;
+	}
+
+	// lane is changed instead of sudden if you press CTRL key
+	bool pressedCtrl = false;
+	void ScenePlay::KeyDown(int code, bool repeating) {
+		/*
+		 * -- some presets --
+		 *
+		 * F11/F12 (start+VEFX) press
+		 * - if float -> OFF, reset speed (check SETTING::SpeedDelta)
+		 * - if float -> ON, reset speed(refresh floatspeed) & just turn on float value.
+		 *
+		 * -- basic actions --
+		 *
+		 * start key press
+		 * - if float == on, reset speed from floating
+		 * speed change (arrow key / WKEY+START)
+		 * - SETTING::Speeddelta
+		 */
+		int func = PlayerKeyIndex::NONE;
+		switch (code) {
+		case SDLK_F12:
+			// refresh delta speed and toggle floating mode
+			PLAYER[0]->DeltaSpeed(0);
+			PLAYERINFO[0].playconfig.usefloatspeed
+				= !PLAYERINFO[0].playconfig.usefloatspeed;
+			break;
+		case SDLK_UP:
+			// ONLY 1P. may need to PRS+WKEY if you need to control 2P.
+			if (PLAYERINFO[0].playconfig.usefloatspeed)
+				PLAYER[0]->DeltaFloatSpeed(0.01);
+			else
+				PLAYER[0]->DeltaSpeed(0.05);
+			break;
+		case SDLK_DOWN:
+			if (PLAYERINFO[0].playconfig.usefloatspeed)
+				PLAYER[0]->DeltaFloatSpeed(-0.01);
+			else
+				PLAYER[0]->DeltaSpeed(-0.05);
+			break;
+		case SDLK_RIGHT:
+			if (pressedCtrl) PLAYER[0]->DeltaSudden(0.05);
+			else PLAYER[0]->DeltaLift(0.05);
+			break;
+		case SDLK_LEFT:
+			if (pressedCtrl) PLAYER[0]->DeltaSudden(-0.05);
+			else PLAYER[0]->DeltaLift(-0.05);
+			break;
+		case SDLK_LCTRL:
+			pressedCtrl = true;
+			break;
+		default:
+			func = PlayerKeyHelper::GetKeyCodeFunction(PLAYERINFO[0].keyconfig, code);
+			// change it to key channel ...
+			int channel = GetChannelFromFunction(func);
+			if (PLAYER[0]) PLAYER[0]->PressKey(channel);
+			if (PLAYER[1]) PLAYER[1]->PressKey(channel);
+		}
+	}
+
+	void ScenePlay::KeyUp(int code) {
+		int func = PlayerKeyIndex::NONE;
+		switch (code) {
+		case SDLK_LCTRL:
+			pressedCtrl = false;
+			break;
+		default:
+			func = PlayerKeyHelper::GetKeyCodeFunction(PLAYERINFO[0].keyconfig, code);
+			int channel = GetChannelFromFunction(func);
+			if (PLAYER[0]) PLAYER[0]->UpKey(channel);
+			if (PLAYER[1]) PLAYER[1]->UpKey(channel);
+		}
 	}
 }

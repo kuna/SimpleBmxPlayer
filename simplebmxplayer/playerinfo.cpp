@@ -24,12 +24,22 @@ namespace {
 		return e;
 	}
 
-	int GetIntValue(XMLElement *e, const char *childname) {
-		XMLElement *i = e->FirstChildElement(childname);
+	int GetIntValue(XMLNode *base, const char *childname) {
+		XMLElement *i = base->FirstChildElement(childname);
 		if (!i) return 0;
 		else {
 			if (i->GetText())
 				return atoi(i->GetText());
+			else return 0;
+		}
+	}
+
+	double GetDoubleValue(XMLNode *base, const char *childname) {
+		XMLElement *i = base->FirstChildElement(childname);
+		if (!i) return 0;
+		else {
+			if (i->GetText())
+				return atof(i->GetText());
 			else return 0;
 		}
 	}
@@ -478,11 +488,12 @@ namespace PlayerKeyHelper {
 
 namespace PlayOptionHelper {
 	void DefaultPlayConfig(PlayerPlayConfig &config) {
-		config.speed = 100;		// 1x
-		config.speedtype = SPEEDTYPE::NONE;
-		config.lane = config.lift = 0;
+		config.speed = 100;					// 1x
+		config.speedtype = SPEEDTYPE::NONE;	//
+		config.floatspeed = 1.0;			// 1 sec ...? well it'll automatically resetted.
+		config.sudden = config.lift = 0;
 		config.op_1p = config.op_2p = 0;
-		config.guagetype = 0;
+		config.gaugetype = 0;
 
 		config.pacemaker_type = PACEMAKERTYPE::PACEA;
 		config.pacemaker_goal = 90;
@@ -495,10 +506,52 @@ namespace PlayOptionHelper {
 	}
 
 	void LoadPlayConfig(PlayerPlayConfig &config, XMLNode *base) {
+		XMLElement *playconfig = base->FirstChildElement("PlayConfig");
 
+		config.speed = GetIntValue(playconfig, "speed");
+		config.speedtype = GetIntValue(playconfig, "speedtype");
+		config.floatspeed = GetIntValue(playconfig, "floatspeed") / 1000.0;
+		config.sudden = GetIntValue(playconfig, "sudden") / 1000.0;
+		config.lift = GetIntValue(playconfig, "lift") / 1000.0;
+		config.op_1p = GetIntValue(playconfig, "op_1p");
+		config.op_2p = GetIntValue(playconfig, "op_2p");
+		config.gaugetype = GetIntValue(playconfig, "gaugetype");
+
+		config.pacemaker_type = GetIntValue(playconfig, "pacemaker_type");
+		config.pacemaker_goal = GetIntValue(playconfig, "pacemaker_goal");
+
+		config.longnote = GetIntValue(playconfig, "longnote");
+		config.morenote = GetIntValue(playconfig, "morenote");
+		config.judge = GetIntValue(playconfig, "judge");
+		config.scratch = GetIntValue(playconfig, "scratch");
+		config.freq = GetIntValue(playconfig, "freq") / 100.0;
 	}
 
 	void SavePlayConfig(const PlayerPlayConfig &config, XMLNode *base) {
+		XMLDocument *doc = base->GetDocument();
+		XMLElement *playconfig = doc->NewElement("PlayConfig");
+		doc->LinkEndChild(playconfig);
 
+		CreateElement(playconfig, "speed")->SetText(config.speed);
+		CreateElement(playconfig, "speedtype")->SetText(config.speedtype);
+		CreateElement(playconfig, "floatspeed")->SetText(config.floatspeed * 1000);
+		CreateElement(playconfig, "sudden")->SetText(config.sudden * 1000);
+		CreateElement(playconfig, "lift")->SetText(config.lift * 1000);
+		CreateElement(playconfig, "op_1p")->SetText(config.op_1p);
+		CreateElement(playconfig, "op_2p")->SetText(config.op_2p);
+		CreateElement(playconfig, "gaugetype")->SetText(config.gaugetype);
+
+		CreateElement(playconfig, "pacemaker_type")->SetText(config.pacemaker_type);
+		CreateElement(playconfig, "pacemaker_goal")->SetText(config.pacemaker_goal);
+
+		CreateElement(playconfig, "longnote")->SetText(config.longnote);
+		CreateElement(playconfig, "morenote")->SetText(config.morenote);
+		CreateElement(playconfig, "judge")->SetText(config.judge);
+		CreateElement(playconfig, "scratch")->SetText(config.scratch);
+		CreateElement(playconfig, "freq")->SetText(config.freq * 100);
 	}
 }
+
+// global
+// accessible from everywhere
+PlayerInfo				PLAYERINFO[2];

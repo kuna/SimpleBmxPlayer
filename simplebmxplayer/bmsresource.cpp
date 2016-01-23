@@ -309,6 +309,28 @@ namespace BmsHelper {
 		return BmsResource::BMSTIME[bar].time;
 	}
 
+	double GetCurrentBPM() {
+		return BmsResource::BMSTIME[currentbar].bpm;
+	}
+
+	double GetMaxBPM() {
+		return BmsResource::BMSTIME.GetMaxBPM();
+	}
+
+	double GetMinBPM() {
+		return BmsResource::BMSTIME.GetMinBPM();
+	}
+
+	double GetMediumBPM() {
+		// costs a little
+		std::vector<double> bpms;
+		for (int i = 0; i < BmsResource::BMSTIME.GetSize(); i++) {
+			bpms.push_back(BmsResource::BMSTIME[i].bpm);
+		}
+		sort(bpms.begin(), bpms.end());
+		return bpms[bpms.size() / 2];
+	}
+
 	Image* GetMainBGA() {
 		return currentbga.mainbga != 0 ? BmsResource::IMAGE.Get(currentbga.mainbga) : 0;
 	}

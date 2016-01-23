@@ -19,11 +19,13 @@ struct PlayerKeyConfig {
 struct PlayerPlayConfig {
 	// playing option
 	int op_1p, op_2p;
-	int lane, lift;
-	int showlane, showlift;
+	double sudden, lift;
+	int showsudden, showlift;
 	int speed;
 	int speedtype;		// off, float, max, min, medium, constant(assist)
-	int guagetype;		// off, assist, ...
+	double floatspeed;	// float speed itself
+	int usefloatspeed;	// should we use float speed?
+	int gaugetype;		// off, assist, ...
 	// pacemaker
 	int pacemaker_type;	// 0%, 90%, 100%, rival, mybest, A, AA, AAA, custom
 	int pacemaker_goal;	// custom goal
@@ -148,3 +150,8 @@ namespace PlayOptionHelper {
 	void LoadPlayConfig(PlayerPlayConfig &config, tinyxml2::XMLNode *base);
 	void SavePlayConfig(const PlayerPlayConfig &config, tinyxml2::XMLNode *base);
 }
+
+// global variables game player
+// Beatmania only could have 2 players, 
+// so we don't need to take care of more players.
+extern PlayerInfo		PLAYERINFO[2];

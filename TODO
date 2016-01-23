@@ -8,8 +8,9 @@ o lua 작동여부 대충 파악하고 확인
 o globalpool 대충 완성하고, 
 o lua와 연동 확인
 o filemanager 만들어서 쉽게 파일 읽기 가능한지 확인하기
-  - zlib 도입
+  - zlib 도입, archive로부터 파일 읽기
 o 쓰레드 도입.
+  - 쓰레드 버그 확인 (brain analysis)
 o 그래프/슬라이더 도입.
 o 폰트
   - 비트맵폰트: 속성에 cycle 넣고 animate 가능하게 만듬.
@@ -18,11 +19,24 @@ o 폰트
 o Lane에 DST 없애기 -> 직접 속성으로 바꿔서 처리 더 수월하게 하기.
 - ID attribute 도입
 o 기본 SRC 타이머는 loop -> 몇개만 loop=0 속성 추가해놓기.
-- Animated Value change(double/int) 도입하기.
-- Ghost
+- support controller
 - Autoplay 및 정상종료.
+- 플레이어 오브젝트
+  - 플레이어가 실제로 키입력을 받고 처리하게 할 것
+  - DP 플레이 가능하도록 하기
+  - PlayerPacemaker 오브젝트 만들기
+  - Flip option 테스트
+- freq
+- skin include (DeepCopy or XMLNode - append)
+- 채보 옵션
+  - random(op1/2)
+  - s random
+  - flip
+- 레인에 LINE 객체 그리기
+- play/program setting, playrecord save/load
 <플레이 프로젝트 끝. 다음 프로젝트에서 계속 ...>
 
+- Animated Value change(double/int) 도입하기.
 - Group object - Texture 생성의 경우 구현 (어차피 SRC도 있으니 상관없음. SRC/DST는 각각 언급 없을시 전체 draw로 기본값 하나 생성하도록 하기.)
 - LIST 오브젝트 구현 & LR2SKINCONVERTER에서 LIST 오브젝트 만들도록 하기.
 - Onmouseover/click 직접 확인하기 (마우스 collision 확인)

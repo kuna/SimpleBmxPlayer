@@ -9,6 +9,8 @@
 #include "version.h"
 #include "tinyxml2.h"
 #include "bmsresource.h"
+#include "playerinfo.h"
+#include "player.h"
 
 using namespace tinyxml2;
 
@@ -20,10 +22,6 @@ namespace Game {
 	GameSetting		SETTING;
 	SceneBasic*		SCENE = NULL;
 	bool			bRunning = true;	// is game running?
-
-	// player
-	PlayerInfo		PLAYER1;
-	PlayerInfo		PLAYER2;
 
 	// SDL
 	SDL_Window*		WINDOW = NULL;
@@ -179,8 +177,8 @@ namespace Game {
 		/*
 		 * Load Player information ...
 		 */
-		if (!PlayerInfoHelper::LoadPlayerInfo(PLAYER1, SETTING.username))
-			PlayerInfoHelper::DefaultPlayerInfo(PLAYER1);
+		if (!PlayerInfoHelper::LoadPlayerInfo(PLAYERINFO[0], SETTING.username))
+			PlayerInfoHelper::DefaultPlayerInfo(PLAYERINFO[0]);
 
 		/*
 		 * Basic instances initalization
@@ -280,21 +278,6 @@ namespace Game {
 						break;
 					case SDLK_F7:
 						showfps = !showfps;
-						break;
-					case SDLK_UP:
-						// speed - up
-						// TODO: 1p or 2p? -> give player as argument
-						// TODO: what class sets POOL data? playerinfo helper?
-						// TODO: if start button pressed? -> lane change
-						// TODO: if doubleclick then lane/lift toggle -> how can set ?
-						// TODO: F11 lane F12 lift, in easy way.
-						// if lane on, float speed on
-						// if lane off & lift on
-						PlayOptionHelper::SpeedUp();
-						break;
-					case SDLK_DOWN:
-						// speed - down
-						PlayOptionHelper::SpeedDown();
 						break;
 					default:
 						SCENE->KeyDown(e.key.keysym.sym, e.key.repeat);

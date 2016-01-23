@@ -46,10 +46,4 @@ namespace Game {
 	extern SDL_Renderer*	RENDERER;
 	extern SDL_Window*		WINDOW;
 	extern GameSetting		SETTING;
-
-	// global variables about game resource.
-	// Beatmania only could have 2 players, 
-	// so we don't need to take care of more players.
-	extern PlayerInfo		PLAYER1;
-	extern PlayerInfo		PLAYER2;
 }
