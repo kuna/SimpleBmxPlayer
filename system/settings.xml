@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<setting>
+    <width>1280</width>
+    <height>760</height>
+    <vsync>0</vsync>
+    <fullscreen>1</fullscreen>
+    <resizable>0</resizable>
+    <allowaddon>1</allowaddon>
+    <volume>100</volume>
+    <tutorial>1</tutorial>
+    <soundlatency>1024</soundlatency>
+    <useIR>0</useIR>
+    <skin>
+        <main></main>
+        <player></player>
+        <select></select>
+        <decide></decide>
+        <play5key></play5key>
+        <play7key>../skin/Wisp_HD/play/HDPLAY_W.lr2skin</play7key>
+        <play9key></play9key>
+        <play10key></play10key>
+        <play14key>../skin/Wisp_HD/play/HDPLAY_WDP.lr2skin</play14key>
+        <keyconfig></keyconfig>
+        <skinconfig></skinconfig>
+        <common></common>
+    </skin>
+    <username>NONAME</username>
+    <keymode>7</keymode>
+    <usepreview>1</usepreview>
+    <bmsdirs/>
+    <deltaspeed>50</deltaspeed>
+</setting>

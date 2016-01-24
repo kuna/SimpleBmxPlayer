@@ -29,7 +29,7 @@ bool Font::LoadTTFFont(const RString& path, int size, SDL_Color color, int thick
 	if (!ttffont)
 		return false;
 	// TODO: we're going to effect these font styles 
-	FC_LoadFont(ttffont, Game::RENDERER, "../skin/lazy.ttf", 28, FC_MakeColor(120, 120, 120, 255), style);
+	FC_LoadFont(ttffont, Game::RENDERER, path, 28, FC_MakeColor(120, 120, 120, 255), style);
 	return true;
 }
 

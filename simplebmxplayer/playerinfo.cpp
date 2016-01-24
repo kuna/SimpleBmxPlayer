@@ -309,21 +309,23 @@ namespace PlayerReplayHelper {
 namespace PlayerInfoHelper {
 	namespace {
 		void LoadBasicConfig(PlayerInfo& player, XMLNode *base) {
-			player.name = base->FirstChildElement("Name")->GetText();
-			player.spgrade = atoi(base->FirstChildElement("SPGrade")->GetText());
-			player.spgrade = atoi(base->FirstChildElement("DPGrade")->GetText());
-			player.playcount = atoi(base->FirstChildElement("Playcount")->GetText());
-			player.failcount = atoi(base->FirstChildElement("Failcount")->GetText());
-			player.clearcount = atoi(base->FirstChildElement("Clearcount")->GetText());
+			XMLElement *conf = base->FirstChildElement("BasicConfig");
+			player.name = conf->FirstChildElement("Name")->GetText();
+			player.spgrade = GetIntValue(conf, "SPGrade");
+			player.dpgrade = GetIntValue(conf, "DPGrade");
+			player.playcount = GetIntValue(conf, "Playcount");
+			player.failcount = GetIntValue(conf, "Failcount");
+			player.clearcount = GetIntValue(conf, "Clearcount");
 		}
 
-		void SaveBasicConfig(const PlayerInfo& player, XMLDocument *doc) {
-			CreateElement(doc, "Name")->SetText(player.name);
-			CreateElement(doc, "SPGrade")->SetText(player.spgrade);
-			CreateElement(doc, "DPGrade")->SetText(player.dpgrade);
-			CreateElement(doc, "Playcount")->SetText(player.playcount);
-			CreateElement(doc, "Failcount")->SetText(player.failcount);
-			CreateElement(doc, "Clearcount")->SetText(player.clearcount);
+		void SaveBasicConfig(const PlayerInfo& player, XMLNode *base) {
+			XMLElement *conf = CreateElement(base, "BasicConfig");
+			CreateElement(conf, "Name")->SetText(player.name);
+			CreateElement(conf, "SPGrade")->SetText(player.spgrade);
+			CreateElement(conf, "DPGrade")->SetText(player.dpgrade);
+			CreateElement(conf, "Playcount")->SetText(player.playcount);
+			CreateElement(conf, "Failcount")->SetText(player.failcount);
+			CreateElement(conf, "Clearcount")->SetText(player.clearcount);
 		}
 
 		void LoadScoreInfo(PlayerScore &score, XMLNode *base) {
@@ -384,6 +386,8 @@ namespace PlayerInfoHelper {
 			return false;
 		}
 
+		player.name = name;
+
 		// parsing (basic)
 		LoadBasicConfig(player, doc);
 
@@ -403,7 +407,7 @@ namespace PlayerInfoHelper {
 
 	bool SavePlayerInfo(PlayerInfo& player) {
 		// create & convert db path to absolute
-		RString absolute_db_path = ssprintf("../player/%s.xml", player.name);
+		RString absolute_db_path = ssprintf("../player/%s.xml", player.name.c_str());
 		FileHelper::ConvertPathToAbsolute(absolute_db_path);
 		RString absolute_db_dir = FileHelper::GetParentDirectory(absolute_db_path);
 		FileHelper::CreateFolder(absolute_db_dir);
@@ -504,7 +508,7 @@ namespace PlayerKeyHelper {
 
 namespace PlayOptionHelper {
 	void DefaultPlayConfig(PlayerPlayConfig &config) {
-		config.speed = 100;					// 1x
+		config.speed = 1;					// 1x
 		config.speedtype = SPEEDTYPE::NONE;	//
 		config.floatspeed = 1.0;			// 1 sec ...? well it'll automatically resetted.
 		config.sudden = config.lift = 0;
@@ -524,7 +528,7 @@ namespace PlayOptionHelper {
 	void LoadPlayConfig(PlayerPlayConfig &config, XMLNode *base) {
 		XMLElement *playconfig = base->FirstChildElement("PlayConfig");
 
-		config.speed = GetIntValue(playconfig, "speed");
+		config.speed = GetIntValue(playconfig, "speed") / 100.0;
 		config.speedtype = GetIntValue(playconfig, "speedtype");
 		config.floatspeed = GetIntValue(playconfig, "floatspeed") / 1000.0;
 		config.sudden = GetIntValue(playconfig, "sudden") / 1000.0;
@@ -548,7 +552,7 @@ namespace PlayOptionHelper {
 		XMLElement *playconfig = doc->NewElement("PlayConfig");
 		doc->LinkEndChild(playconfig);
 
-		CreateElement(playconfig, "speed")->SetText(config.speed);
+		CreateElement(playconfig, "speed")->SetText(config.speed * 100);
 		CreateElement(playconfig, "speedtype")->SetText(config.speedtype);
 		CreateElement(playconfig, "floatspeed")->SetText(config.floatspeed * 1000);
 		CreateElement(playconfig, "sudden")->SetText(config.sudden * 1000);

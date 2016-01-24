@@ -28,12 +28,12 @@ namespace GameSettingHelper {
 		}
 
 		void AddElement(XMLNode *base, const char *name, int value) {
-			base->GetDocument()->LinkEndChild(base->GetDocument()->NewElement(name))
+			base->LinkEndChild(base->GetDocument()->NewElement(name))
 				->ToElement()->SetText(value);
 		}
 
 		void AddElement(XMLNode *base, const char *name, const char* value) {
-			base->GetDocument()->LinkEndChild(base->GetDocument()->NewElement(name))
+			base->LinkEndChild(base->GetDocument()->NewElement(name))
 				->ToElement()->SetText(value);
 		}
 	}
@@ -43,48 +43,53 @@ namespace GameSettingHelper {
 		FileHelper::ConvertPathToAbsolute(file);
 
 		XMLDocument *doc = new XMLDocument();
-		if (doc->Parse(file) != 0) {
+		if (doc->LoadFile(file) != 0) {
+			delete doc;
+			return false;
+		}
+		XMLElement *settings = doc->FirstChildElement("setting");
+		if (!settings) {
 			delete doc;
 			return false;
 		}
 
-		setting.width = GetIntSafe(doc, "width", 1280);
-		setting.height = GetIntSafe(doc, "height", 760);
-		setting.vsync = GetIntSafe(doc, "vsync", 0);
-		setting.fullscreen = GetIntSafe(doc, "fullscreen", 1);
-		setting.resizable = GetIntSafe(doc, "resizable", 0);
-		setting.allowaddon = GetIntSafe(doc, "allowaddon", 1);
-		setting.volume = GetIntSafe(doc, "volume", 100);
-		setting.tutorial = GetIntSafe(doc, "tutorial", 1);
-		setting.soundlatency = GetIntSafe(doc, "soundlatency", 1024);
-		setting.useIR = GetIntSafe(doc, "useIR", 0);
+		setting.width = GetIntSafe(settings, "width", 1280);
+		setting.height = GetIntSafe(settings, "height", 760);
+		setting.vsync = GetIntSafe(settings, "vsync", 0);
+		setting.fullscreen = GetIntSafe(settings, "fullscreen", 1);
+		setting.resizable = GetIntSafe(settings, "resizable", 0);
+		setting.allowaddon = GetIntSafe(settings, "allowaddon", 1);
+		setting.volume = GetIntSafe(settings, "volume", 100);
+		setting.tutorial = GetIntSafe(settings, "tutorial", 1);
+		setting.soundlatency = GetIntSafe(settings, "soundlatency", 1024);
+		setting.useIR = GetIntSafe(settings, "useIR", 0);
 
-		XMLElement *skin = doc->FirstChildElement("Skin");
+		XMLElement *skin = settings->FirstChildElement("skin");
 		if (skin) {
 			GetStringSafe(skin, "main", setting.skin_main);
 			GetStringSafe(skin, "player", setting.skin_player);
 			GetStringSafe(skin, "select", setting.skin_select);
 			GetStringSafe(skin, "decide", setting.skin_decide);
-			GetStringSafe(skin, "5key", setting.skin_play_5key);
-			GetStringSafe(skin, "7key", setting.skin_play_7key);
-			GetStringSafe(skin, "9key", setting.skin_play_9key);
-			GetStringSafe(skin, "10key", setting.skin_play_10key);
-			GetStringSafe(skin, "14key", setting.skin_play_14key);
+			GetStringSafe(skin, "play5key", setting.skin_play_5key);
+			GetStringSafe(skin, "play7key", setting.skin_play_7key);
+			GetStringSafe(skin, "play9key", setting.skin_play_9key);
+			GetStringSafe(skin, "play10key", setting.skin_play_10key);
+			GetStringSafe(skin, "play14key", setting.skin_play_14key);
 			GetStringSafe(skin, "keyconfig", setting.skin_keyconfig);
 			GetStringSafe(skin, "skinconfig", setting.skin_skinconfig);
 			GetStringSafe(skin, "common", setting.skin_common);
 		}
 
-		GetStringSafe(doc, "username", setting.username);
-		setting.keymode = GetIntSafe(doc, "keymode", 7);
-		setting.usepreview = GetIntSafe(doc, "usepreview", 1);
+		GetStringSafe(settings, "username", setting.username);
+		setting.keymode = GetIntSafe(settings, "keymode", 7);
+		setting.usepreview = GetIntSafe(settings, "usepreview", 1);
 
-		XMLElement *bmsdirs = doc->FirstChildElement("BmsDirs");
+		XMLElement *bmsdirs = settings->FirstChildElement("bmsdirs");
 		for (XMLElement *dir = bmsdirs->FirstChildElement("dir"); dir; dir = dir->NextSiblingElement("dir")) {
 			setting.bmsdirs.push_back(dir->GetText());
 		}
 
-		setting.deltaspeed = GetIntSafe(doc, "deltaspeed", 50);
+		setting.deltaspeed = GetIntSafe(settings, "deltaspeed", 50);
 
 		delete doc;
 		return true;
@@ -98,45 +103,48 @@ namespace GameSettingHelper {
 			return false;
 
 		XMLDocument *doc = new XMLDocument();
+		doc->LinkEndChild(doc->NewDeclaration());
+		XMLElement *settings = doc->NewElement("setting");
+		doc->LinkEndChild(settings);
 
-		AddElement(doc, "width", setting.width);
-		AddElement(doc, "height", setting.height);
-		AddElement(doc, "vsync", setting.vsync);
-		AddElement(doc, "fullscreen", setting.fullscreen);
-		AddElement(doc, "resizable", setting.resizable);
-		AddElement(doc, "allowaddon", setting.allowaddon);
-		AddElement(doc, "volume", setting.volume);
-		AddElement(doc, "tutorial", setting.tutorial);
-		AddElement(doc, "soundlatency", setting.soundlatency);
-		AddElement(doc, "useIR", setting.useIR);
+		AddElement(settings, "width", setting.width);
+		AddElement(settings, "height", setting.height);
+		AddElement(settings, "vsync", setting.vsync);
+		AddElement(settings, "fullscreen", setting.fullscreen);
+		AddElement(settings, "resizable", setting.resizable);
+		AddElement(settings, "allowaddon", setting.allowaddon);
+		AddElement(settings, "volume", setting.volume);
+		AddElement(settings, "tutorial", setting.tutorial);
+		AddElement(settings, "soundlatency", setting.soundlatency);
+		AddElement(settings, "useIR", setting.useIR);
 
-		XMLElement *skin = doc->NewElement("Skin");
-		doc->LinkEndChild(skin);
+		XMLElement *skin = doc->NewElement("skin");
+		settings->LinkEndChild(skin);
 
 		AddElement(skin, "main", setting.skin_main);
 		AddElement(skin, "player", setting.skin_player);
 		AddElement(skin, "select", setting.skin_select);
 		AddElement(skin, "decide", setting.skin_decide);
-		AddElement(skin, "5key", setting.skin_play_5key);
-		AddElement(skin, "7key", setting.skin_play_7key);
-		AddElement(skin, "9key", setting.skin_play_9key);
-		AddElement(skin, "10key", setting.skin_play_10key);
-		AddElement(skin, "14key", setting.skin_play_14key);
+		AddElement(skin, "play5key", setting.skin_play_5key);
+		AddElement(skin, "play7key", setting.skin_play_7key);
+		AddElement(skin, "play9key", setting.skin_play_9key);
+		AddElement(skin, "play10key", setting.skin_play_10key);
+		AddElement(skin, "play14key", setting.skin_play_14key);
 		AddElement(skin, "keyconfig", setting.skin_keyconfig);
 		AddElement(skin, "skinconfig", setting.skin_skinconfig);
 		AddElement(skin, "common", setting.skin_common);
 
-		AddElement(doc, "username", setting.username);
-		AddElement(doc, "keymode", setting.keymode);
-		AddElement(doc, "usepreview", setting.usepreview);
+		AddElement(settings, "username", setting.username);
+		AddElement(settings, "keymode", setting.keymode);
+		AddElement(settings, "usepreview", setting.usepreview);
 
-		XMLElement *bmsdirs = doc->NewElement("BmsDirs");
-		doc->LinkEndChild(skin);
+		XMLElement *bmsdirs = doc->NewElement("bmsdirs");
+		settings->LinkEndChild(bmsdirs);
 		for (auto it = setting.bmsdirs.begin(); it != setting.bmsdirs.end(); ++it) {
 			AddElement(bmsdirs, "dir", *it);
 		}
 
-		AddElement(doc, "deltaspeed", setting.deltaspeed);
+		AddElement(settings, "deltaspeed", setting.deltaspeed);
 
 		bool r = doc->SaveFile(file);
 		delete doc;

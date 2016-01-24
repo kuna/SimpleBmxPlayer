@@ -23,7 +23,6 @@ namespace GamePlay {
 	Timer*				OnSongLoading;
 	Timer*				OnSongLoadingEnd;
 	Timer*				OnReady;
-	Timer*				OnScene;
 	Timer*				OnClose;			// when 1p & 2p dead
 	Timer*				OnFadeIn;			// when game start
 	Timer*				OnFadeOut;			// when game end
@@ -61,11 +60,11 @@ namespace GamePlay {
 			_LR2SkinParser *lr2skin = new _LR2SkinParser();
 			r = lr2skin->ParseLR2Skin(abspath, &playskin);
 			delete lr2skin;
-			playskin.Save("./test.xml");
+			//playskin.Save("./test.xml");
 		}
 		if (!r)
 		{
-			printf("Failed to load skin %s\n", abspath);
+			LOG->Critical("Failed to load skin %s\n", abspath);
 			return false;
 		}
 
@@ -83,7 +82,7 @@ namespace GamePlay {
 		SkinRenderHelper::ConstructTreeFromSkin(*rtree, playskin);
 		FileHelper::PopBasePath();
 
-		printf("Loaded Bms Skin Successfully\n");
+		LOG->Info("Loaded Bms Skin Successfully\n");
 
 		return true;
 	}
@@ -157,14 +156,16 @@ namespace GamePlay {
 		// initalize global resources
 		//HANDLERPOOL->Add("OnGamePlaySound", OnBmsSound);
 		//HANDLERPOOL->Add("OnGamePlayBga", OnBmsBga);
-		OnGameStart = TIMERPOOL->Set("OnGameStart", false);
-		OnSongLoading = TIMERPOOL->Set("OnSongLoading", false);
-		OnSongLoadingEnd = TIMERPOOL->Set("OnSongLoadingEnd", false);
-		OnReady = TIMERPOOL->Set("OnReady", false);
+		OnGameStart = SWITCH_OFF("OnGameStart");
+		OnSongLoading = SWITCH_OFF("OnSongLoading");
+		OnSongLoadingEnd = SWITCH_OFF("OnSongLoadingEnd");
+		OnReady = SWITCH_OFF("OnReady");
 		OnClose = SWITCH_OFF("OnClose");
+		OnFadeIn = SWITCH_OFF("OnFadeIn");
+		OnFadeOut = SWITCH_OFF("OnFadeOut");
 		On1PMiss = SWITCH_OFF("On1PMiss");
 		On2PMiss = SWITCH_OFF("On2PMiss");
-		Bmspath = STRPOOL->Set("Bmspath");
+		Bmspath = STRPOOL->Get("Bmspath");
 
 		// temp resource
 		int pitch;
@@ -178,20 +179,24 @@ namespace GamePlay {
 
 	void ScenePlay::Start() {
 		/*
-		 * Load skin & bms resource
+		 * Load bms resource first
 		 * (bms resource is loaded with thread)
-		 * (Timers must created before this called)
 		 * (load bms first to find out what key skin is proper)
 		 */
 		LoadBms(*Bmspath);
 		RString PlayskinPath = "";
 		playmode = BmsResource::BMS.GetKey();
-		if (playmode > 10)
+		bmsnote = new BmsNoteContainer();
+		BmsResource::BMS.GetNotes(*bmsnote);
+
+		/*
+		 * Load skin
+		 */
+		if (playmode < 10)
 			PlayskinPath = Game::SETTING.skin_play_7key;
 		else
 			PlayskinPath = Game::SETTING.skin_play_14key;
 		LoadSkin(PlayskinPath);
-		BmsResource::BMS.GetNotes(*bmsnote);
 
 		/*
 		 * Create player object for playing
@@ -230,7 +235,7 @@ namespace GamePlay {
 		/*
 		 * check timers (game flow related)
 		 */
-		if (OnReady->Trigger(OnSongLoadingEnd->IsStarted() && OnScene->GetTick() >= 3000))
+		if (OnReady->Trigger(OnSongLoadingEnd->IsStarted() && OnSongLoading->GetTick() >= 3000))
 			OnSongLoading->Stop();
 		OnGameStart->Trigger(OnReady->GetTick() >= 2000);
 		// OnClose is called when all player is dead
@@ -264,13 +269,18 @@ namespace GamePlay {
 		RenderObject(rtree);
 	}
 
-	void ScenePlay::Release() {
-		// remove player
-		if (PLAYER[0]) delete PLAYER[0];
-		if (PLAYER[1]) delete PLAYER[1];
+	void ScenePlay::End() {
+		/*
+		 * just save player properties when game goes end
+		 */
+		PlayerInfoHelper::SavePlayerInfo(PLAYERINFO[0]);
+	}
 
-		// note clear
-		delete bmsnote;
+	void ScenePlay::Release() {
+		// remove player & note
+		SAFE_DELETE(bmsnote);
+		SAFE_DELETE(PLAYER[0]);
+		SAFE_DELETE(PLAYER[1]);
 
 		// skin clear (COMMENT: we don't need to release skin in real. just in beta version.)
 		// we don't need to clear BMS data until next BMS is loaded

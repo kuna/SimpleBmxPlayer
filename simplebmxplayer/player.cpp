@@ -61,6 +61,10 @@ Player::Player(PlayerPlayConfig* config, BmsNoteContainer *note,
 		pOnJudge[2] = TIMERPOOL->Set("On1PJudgeBad");
 		pOnJudge[1] = TIMERPOOL->Set("On1PJudgePoor");
 		pOnJudge[0] = TIMERPOOL->Set("On1PJudgePoor");
+		pNoteSpeed = INTPOOL->Get("1PSpeed");
+		pFloatSpeed = INTPOOL->Get("1PFloatSpeed");
+		pSuddenHeight = INTPOOL->Get("1PSudden");
+		pLiftHeight = INTPOOL->Get("1PLift");
 	}
 	else {
 		pPlayergauge = DOUBLEPOOL->Get("Player2Gauge");
@@ -82,6 +86,10 @@ Player::Player(PlayerPlayConfig* config, BmsNoteContainer *note,
 		pOnJudge[2] = TIMERPOOL->Set("On2PJudgeBad");
 		pOnJudge[1] = TIMERPOOL->Set("On2PJudgePoor");
 		pOnJudge[0] = TIMERPOOL->Set("On2PJudgePoor");
+		pNoteSpeed = INTPOOL->Get("2PSpeed");
+		pFloatSpeed = INTPOOL->Get("2PFloatSpeed");
+		pSuddenHeight = INTPOOL->Get("2PSudden");
+		pLiftHeight = INTPOOL->Get("2PLift");
 	}
 
 	memset(pLanepress, 0, sizeof(pLanepress));

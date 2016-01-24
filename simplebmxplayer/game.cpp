@@ -21,7 +21,7 @@ namespace Game {
 	// game status
 	GameSetting		SETTING;
 	SceneBasic*		SCENE = NULL;
-	bool			bRunning = true;	// is game running?
+	bool			bRunning = false;	// is game running?
 
 	// SDL
 	SDL_Window*		WINDOW = NULL;
@@ -40,6 +40,23 @@ namespace Game {
 	// some macros about scene
 	void InitalizeScene(SceneBasic* s) { s->Initialize(); }
 	void ReleaseScene(SceneBasic* s) { s->Release(); }
+	void EndScene(SceneBasic *s) { s->End(); }
+
+	void StartScene(SceneBasic *s) {
+		/*
+		* inputstart/scene timer is a little different;
+		* sometimes input blocking is necessary during scene rendering.
+		*/
+		oninputstart->Start();
+		onscene->Start();
+		s->Start();
+	}
+
+	void ChangeScene(SceneBasic *s) {
+		if (SCENE != s)
+			StartScene(s);
+		SCENE = s;
+	}
 
 	/* 
 	 * registering basic lua function start 
@@ -221,6 +238,7 @@ namespace Game {
 		 * Scene instance initalization
 		 * (MUST after graphic initalization finished)
 		 */
+		GamePlay::SCENE = new GamePlay::ScenePlay();
 		InitalizeScene(GamePlay::SCENE);
 
 		/*
@@ -231,11 +249,12 @@ namespace Game {
 		font = FONTPOOL->LoadTTFFont("_system", "../system/resource/NanumGothic.ttf", 28, FC_MakeColor(120, 120, 120, 255));
 
 		/*
-		 * FPS timer start & initalize
+		 * FPS timer start
 		 */
 		fpstimer.Start();
 		fps = 0;
 
+		bRunning = true;
 		return true;
 	}
 
@@ -245,7 +264,7 @@ namespace Game {
 		float avgfps = fps / (fpstimer.GetTick() / 1000.0f);
 		fps++;
 		// print FPS
-		font->Render(ssprintf("%.2f Frame", avgfps), 0, 0);
+		font->Render(ssprintf("%.2f Frame", avgfps), 10, 10);
 		if (fpstimer.GetTick() > 1000) {
 			wprintf(L"%.2f\n", avgfps);
 			fpstimer.Stop();
@@ -319,6 +338,7 @@ namespace Game {
 
 	void End() {
 		/* simple :D */
+		EndScene(SCENE);
 		bRunning = false;
 	}
 
@@ -326,9 +346,8 @@ namespace Game {
 		// stop Bms loading && release Bms
 		BmsHelper::ReleaseAll();
 
-		// save settings ...
+		// save game settings ...
 		GameSettingHelper::SaveSetting(SETTING);
-		PlayerInfoHelper::SavePlayerInfo(PLAYERINFO[0]);
 
 		// other scenes
 		ReleaseScene(GamePlay::SCENE);
@@ -340,20 +359,5 @@ namespace Game {
 		Mix_CloseAudio();
 		SDL_DestroyRenderer(RENDERER);
 		SDL_DestroyWindow(WINDOW);
-	}
-
-	void StartScene() {
-		/*
-		 * inputstart/scene timer is a little different;
-		 * sometimes input blocking is necessary during scene rendering.
-		 */
-		oninputstart->Start();
-		onscene->Start();
-	}
-
-	void ChangeScene(SceneBasic *s) {
-		if (SCENE != s)
-			StartScene();
-		SCENE = s;
 	}
 }

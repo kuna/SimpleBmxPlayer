@@ -7,6 +7,7 @@
 #include "globalresources.h"
 #include "game.h"
 #include "gameplay.h"
+#include "logger.h"
 
 namespace Parameter {
 	void help();
@@ -68,6 +69,7 @@ int _tmain(int argc, _TCHAR **argv) {
 	 * if failed, exit.
 	 */
 	if (!Parameter::parse(argc, argv)) {
+		LOG->Critical("Failed to parse parameter properly.");
 		Parameter::help();
 		PoolHelper::ReleaseAll();
 		return -1;
@@ -78,6 +80,20 @@ int _tmain(int argc, _TCHAR **argv) {
 	 * (our start scene is playing, cause it's simple bmx player..?)
 	 */
 	Game::Initialize();
+
+	/*
+	 * This process should be made in SCENE::PLAYER, but there isn't that scene here.
+	 * so, load player information in here.
+	 */
+	if (!PlayerInfoHelper::LoadPlayerInfo(PLAYERINFO[0], Game::SETTING.username)) {
+		LOG->Warn("Cannot find userdata %s. Set default.", Game::SETTING.username.c_str());
+		PLAYERINFO[0].name = Game::SETTING.username;
+		PlayerInfoHelper::DefaultPlayerInfo(PLAYERINFO[0]);
+	}
+
+	/*
+	 * Start main scene
+	 */
 	Game::ChangeScene(GamePlay::SCENE);
 	
 	/* 
