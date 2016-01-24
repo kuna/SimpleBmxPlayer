@@ -78,7 +78,10 @@
     <ClCompile Include="font.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="md5.c">
+    <ClCompile Include="playerinfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="md5.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -89,13 +92,7 @@
     <ClInclude Include="bmsresource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="bmsinfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="playrecord.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="bmsplayer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="image.h">
@@ -165,6 +162,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="md5.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="playerinfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

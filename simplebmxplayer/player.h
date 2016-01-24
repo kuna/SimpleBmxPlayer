@@ -7,7 +7,6 @@
 #pragma once
 
 #include "bmsbel/bms_bms.h"
-#include "bmsinfo.h"
 #include "playrecord.h"
 #include "timer.h"
 #include "image.h"
@@ -58,7 +57,6 @@ protected:
 	int*				pPlaycombo;
 	int*				pPlaymaxcombo;
 	int*				pPlaytotalnotes;
-	int*				pPlaygroovegauge;
 	int*				pPlayrivaldiff;
 	double*				pPlayergauge;
 	int*				pPlayergaugetype;

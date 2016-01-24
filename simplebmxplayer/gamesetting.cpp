@@ -38,7 +38,7 @@ namespace GameSettingHelper {
 		}
 	}
 
-	bool LoadGameSetting(GameSetting& setting) {
+	bool LoadSetting(GameSetting& setting) {
 		RString file(SETTINGFILEPATH);
 		FileHelper::ConvertPathToAbsolute(file);
 
@@ -90,7 +90,7 @@ namespace GameSettingHelper {
 		return true;
 	}
 
-	bool SaveGameSetting(GameSetting& setting) {
+	bool SaveSetting(const GameSetting& setting) {
 		RString file(SETTINGFILEPATH);
 		FileHelper::ConvertPathToAbsolute(file);
 		RString dir = FileHelper::GetParentDirectory(file);
@@ -143,7 +143,7 @@ namespace GameSettingHelper {
 		return r;
 	}
 
-	void DefaultGameSetting(GameSetting& setting) {
+	void DefaultSetting(GameSetting& setting) {
 		setting.width = 1280;
 		setting.height = 760;
 		setting.vsync = 0;

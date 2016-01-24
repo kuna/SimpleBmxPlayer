@@ -1,3 +1,5 @@
+#pragma once
+
 #include "SDL/SDL.h"
 #include "gamesetting.h"
 #include "playerinfo.h"

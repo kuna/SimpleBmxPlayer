@@ -8,7 +8,8 @@ o lua 작동여부 대충 파악하고 확인
 o globalpool 대충 완성하고, 
 o lua와 연동 확인
 o filemanager 만들어서 쉽게 파일 읽기 가능한지 확인하기
-  - zlib 도입, archive로부터 파일 읽기
+  - zlib 도입, 
+  - archive로부터 파일 읽기
 o 쓰레드 도입.
   - 쓰레드 버그 확인 (brain analysis)
 o 그래프/슬라이더 도입.

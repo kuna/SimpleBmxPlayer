@@ -89,7 +89,8 @@
     <ClCompile Include="font.cpp" />
     <ClCompile Include="globalresources.cpp" />
     <ClCompile Include="logger.cpp" />
-    <ClCompile Include="md5.c" />
+    <ClCompile Include="md5.cpp" />
+    <ClCompile Include="playerinfo.cpp" />
     <ClCompile Include="skin.cpp" />
     <ClCompile Include="skinlr2.cpp" />
     <ClCompile Include="skinoption.cpp" />
@@ -108,14 +109,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio.h" />
-    <ClInclude Include="bmsinfo.h" />
-    <ClInclude Include="bmsplayer.h" />
     <ClInclude Include="bmsresource.h" />
     <ClInclude Include="exception.h" />
     <ClInclude Include="file.h" />
     <ClInclude Include="globalresources.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="md5.h" />
+    <ClInclude Include="playerinfo.h" />
     <ClInclude Include="skinoption.h" />
     <ClInclude Include="skintexturefont.h" />
     <ClInclude Include="skinutil.h" />
@@ -135,6 +135,7 @@
     <ClInclude Include="skinrendertree.h" />
     <ClInclude Include="StdString.h" />
     <ClInclude Include="timer.h" />
+    <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\lib\ffmpeg\avcodec.lib" />

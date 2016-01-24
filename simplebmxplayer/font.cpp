@@ -2,6 +2,7 @@
 #include "font.h"
 #include "util.h"
 #include "file.h"
+#include "globalresources.h"
 
 /*
  * TEMP: let's use FC_Font now...

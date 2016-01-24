@@ -84,6 +84,11 @@ int File::Read(RString &str, size_t size) {
 	return r;
 }
 
+int File::Read(char *p, size_t size) {
+	size_t r = fread(p, 1, size, fp);
+	return r;
+}
+
 int File::ReadAll(char *p) {
 	return fread(p, 1, READALL_MAX, fp);
 }

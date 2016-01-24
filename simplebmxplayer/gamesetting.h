@@ -1,6 +1,7 @@
 #pragma once
 
 #include "global.h"
+#include <vector>
 
 struct GameSetting {
 	// basic information

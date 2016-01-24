@@ -37,6 +37,11 @@ namespace BmsResource {
 		return false;
 	}
 
+	void SoundPool::UnloadAll() {
+		for (int i = 0; i < BmsConst::WORD_MAX_COUNT; i++)
+			SAFE_DELETE(wav_table[i]);
+	}
+
 	bool SoundPool::Load(BmsWord channel, const RString &path) {
 		if (BMS.GetRegistArraySet()["WAV"].IsNotExists(channel))
 			return false;
@@ -84,6 +89,11 @@ namespace BmsResource {
 			return false;
 		}
 		return true;
+	}
+
+	void ImagePool::UnloadAll() {
+		for (int i = 0; i < BmsConst::WORD_MAX_COUNT; i++)
+			SAFE_DELETE(bmp_table[i]);
 	}
 
 	SoundPool			SOUND;
@@ -314,11 +324,25 @@ namespace BmsHelper {
 	}
 
 	double GetMaxBPM() {
-		return BmsResource::BMSTIME.GetMaxBPM();
+		// TODO
+		//return BmsResource::BMSTIME.GetMaxBPM();
+		ASSERT(BmsResource::BMSTIME.GetSize());
+		int bpm = BmsResource::BMSTIME[0].bpm;
+		for (int i = 1; i < BmsResource::BMSTIME.GetSize(); i++) {
+			if (bpm < BmsResource::BMSTIME[i].bpm) bpm = BmsResource::BMSTIME[i].bpm;
+		}
+		return bpm;
 	}
 
 	double GetMinBPM() {
-		return BmsResource::BMSTIME.GetMinBPM();
+		// TODO
+		//return BmsResource::BMSTIME.GetMinBPM();
+		ASSERT(BmsResource::BMSTIME.GetSize());
+		int bpm = BmsResource::BMSTIME[0].bpm;
+		for (int i = 1; i < BmsResource::BMSTIME.GetSize(); i++) {
+			if (bpm > BmsResource::BMSTIME[i].bpm) bpm = BmsResource::BMSTIME[i].bpm;
+		}
+		return bpm;
 	}
 
 	double GetMediumBPM() {

@@ -6,6 +6,7 @@
 #include "skintexturefont.h"
 #include "image.h"
 #include "global.h"
+#include "timer.h"
 
 class TextureFont {
 private:

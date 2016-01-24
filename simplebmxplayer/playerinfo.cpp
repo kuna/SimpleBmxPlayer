@@ -151,6 +151,22 @@ void PlayerScore::AddGrade(const int type) {
 #define GETINT(col, v)\
 	CHECKTYPE(col, SQLITE_INTEGER), v = sqlite3_column_int(stmt, col)
 
+void PlayerReplay::AddJudge(int judge) {
+	// TODO
+}
+
+void PlayerReplay::Clear() {
+	// TODO
+}
+
+void PlayerReplay::Serialize(RString &out) {
+	// TODO
+}
+
+void PlayerReplay::Parse(const RString& in) {
+	// TODO
+}
+
 namespace PlayerReplayHelper {
 	/** [private] sqlite3 for querying player record */
 	namespace {

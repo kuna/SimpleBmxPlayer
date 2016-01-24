@@ -6,6 +6,7 @@
  * - song clear status
  */
 
+#pragma once
 #include "global.h"
 #include "tinyxml2.h"
 #include <vector>
@@ -81,6 +82,7 @@ public:
  */
 class PlayerSongRecord {
 public:
+	// TODO: add date
 	// used for identifying song
 	RString hash;
 	// used for preventing data corruption
@@ -143,6 +145,8 @@ namespace PlayerKeyHelper {
 	void LoadKeyConfig(PlayerKeyConfig &config, tinyxml2::XMLNode *base);
 	/** @brief make key config to a file. use ShallowClone() if you need to include it as element. */
 	void SaveKeyConfig(const PlayerKeyConfig &config, tinyxml2::XMLNode *base);
+
+	void DefaultKeyConfig(PlayerKeyConfig &config);
 }
 
 namespace PlayOptionHelper {

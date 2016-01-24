@@ -326,6 +326,10 @@ namespace Game {
 		// stop Bms loading && release Bms
 		BmsHelper::ReleaseAll();
 
+		// save settings ...
+		GameSettingHelper::SaveSetting(SETTING);
+		PlayerInfoHelper::SavePlayerInfo(PLAYERINFO[0]);
+
 		// other scenes
 		ReleaseScene(GamePlay::SCENE);
 
