@@ -174,7 +174,10 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	if (CMD_IS("#ENDIF")) {
 		// we just ignore this statement, so only 1st-level parsing is enabled.
 		// but if previous #IF clause exists, then close it
-		cur_e = condition_element[--condition_level];
+		if (condition_level > 0)
+			cur_e = condition_element[--condition_level];
+		else
+			printf("Invalid #ENDIF (%d)\n", line_position[line]);
 		return line + 1;
 	}
 	if (!cur_e)
@@ -1931,277 +1934,277 @@ const char* _LR2SkinParser::TranslateTimer(int timer) {
 		strcpy(translated, "OnGameStart");
 	}
 	else if (timer == 42) {
-		strcpy(translated, "On1PGuageUp");
+		strcpy(translated, "OnP1GuageUp");
 	}
 	else if (timer == 43) {
-		strcpy(translated, "On2PGuageUp");
+		strcpy(translated, "OnP2GuageUp");
 	}
 	else if (timer == 44) {
-		strcpy(translated, "On1PGuageMax");
+		strcpy(translated, "OnP1GuageMax");
 	}
 	else if (timer == 45) {
-		strcpy(translated, "On2PGuageMax");
+		strcpy(translated, "OnP2GuageMax");
 	}
 	else if (timer == 46) {
-		strcpy(translated, "On1PJudge");
+		strcpy(translated, "OnP1Combo");
 	}
 	else if (timer == 47) {
-		strcpy(translated, "On2PJudge");
+		strcpy(translated, "OnP2Combo");
 	}
 	else if (timer == 48) {
-		strcpy(translated, "On1PFullCombo");
+		strcpy(translated, "OnP1FullCombo");
 	}
 	else if (timer == 49) {
-		strcpy(translated, "On2PFullCombo");
+		strcpy(translated, "OnP2FullCombo");
 	}
 	else if (timer == 50) {
-		strcpy(translated, "On1PJudgeSCOkay");
+		strcpy(translated, "OnP1JudgeSCOkay");
 	}
 	else if (timer == 51) {
-		strcpy(translated, "On1PJudge1Okay");
+		strcpy(translated, "OnP1Judge1Okay");
 	}
 	else if (timer == 52) {
-		strcpy(translated, "On1PJudge2Okay");
+		strcpy(translated, "OnP1Judge2Okay");
 	}
 	else if (timer == 53) {
-		strcpy(translated, "On1PJudge3Okay");
+		strcpy(translated, "OnP1Judge3Okay");
 	}
 	else if (timer == 54) {
-		strcpy(translated, "On1PJudge4Okay");
+		strcpy(translated, "OnP1Judge4Okay");
 	}
 	else if (timer == 55) {
-		strcpy(translated, "On1PJudge5Okay");
+		strcpy(translated, "OnP1Judge5Okay");
 	}
 	else if (timer == 56) {
-		strcpy(translated, "On1PJudge6Okay");
+		strcpy(translated, "OnP1Judge6Okay");
 	}
 	else if (timer == 57) {
-		strcpy(translated, "On1PJudge7Okay");
+		strcpy(translated, "OnP1Judge7Okay");
 	}
 	else if (timer == 58) {
-		strcpy(translated, "On1PJudge8Okay");
+		strcpy(translated, "OnP1Judge8Okay");
 	}
 	else if (timer == 59) {
-		strcpy(translated, "On1PJudge9Okay");
+		strcpy(translated, "OnP1Judge9Okay");
 	}
 	else if (timer == 60) {
-		strcpy(translated, "On2PJudgeSCOkay");
+		strcpy(translated, "OnP2JudgeSCOkay");
 	}
 	else if (timer == 61) {
-		strcpy(translated, "On2PJudge1Okay");
+		strcpy(translated, "OnP2Judge1Okay");
 	}
 	else if (timer == 62) {
-		strcpy(translated, "On2PJudge2Okay");
+		strcpy(translated, "OnP2Judge2Okay");
 	}
 	else if (timer == 63) {
-		strcpy(translated, "On2PJudge3Okay");
+		strcpy(translated, "OnP2Judge3Okay");
 	}
 	else if (timer == 64) {
-		strcpy(translated, "On2PJudge4Okay");
+		strcpy(translated, "OnP2Judge4Okay");
 	}
 	else if (timer == 65) {
-		strcpy(translated, "On2PJudge5Okay");
+		strcpy(translated, "OnP2Judge5Okay");
 	}
 	else if (timer == 66) {
-		strcpy(translated, "On2PJudge6Okay");
+		strcpy(translated, "OnP2Judge6Okay");
 	}
 	else if (timer == 67) {
-		strcpy(translated, "On2PJudge7Okay");
+		strcpy(translated, "OnP2Judge7Okay");
 	}
 	else if (timer == 68) {
-		strcpy(translated, "On2PJudge8Okay");
+		strcpy(translated, "OnP2Judge8Okay");
 	}
 	else if (timer == 69) {
-		strcpy(translated, "On2PJudge9Okay");
+		strcpy(translated, "OnP2Judge9Okay");
 	}
 	else if (timer == 70) {
-		strcpy(translated, "On1PJudgeSCHold");
+		strcpy(translated, "OnP1JudgeSCHold");
 	}
 	else if (timer == 71) {
-		strcpy(translated, "On1PJudge1Hold");
+		strcpy(translated, "OnP1Judge1Hold");
 	}
 	else if (timer == 72) {
-		strcpy(translated, "On1PJudge2Hold");
+		strcpy(translated, "OnP1Judge2Hold");
 	}
 	else if (timer == 73) {
-		strcpy(translated, "On1PJudge3Hold");
+		strcpy(translated, "OnP1Judge3Hold");
 	}
 	else if (timer == 74) {
-		strcpy(translated, "On1PJudge4Hold");
+		strcpy(translated, "OnP1Judge4Hold");
 	}
 	else if (timer == 75) {
-		strcpy(translated, "On1PJudge5Hold");
+		strcpy(translated, "OnP1Judge5Hold");
 	}
 	else if (timer == 76) {
-		strcpy(translated, "On1PJudge6Hold");
+		strcpy(translated, "OnP1Judge6Hold");
 	}
 	else if (timer == 77) {
-		strcpy(translated, "On1PJudge7Hold");
+		strcpy(translated, "OnP1Judge7Hold");
 	}
 	else if (timer == 78) {
-		strcpy(translated, "On1PJudge8Hold");
+		strcpy(translated, "OnP1Judge8Hold");
 	}
 	else if (timer == 79) {
-		strcpy(translated, "On1PJudge9Hold");
+		strcpy(translated, "OnP1Judge9Hold");
 	}
 	else if (timer == 80) {
-		strcpy(translated, "On2PJudgeSCHold");
+		strcpy(translated, "OnP2JudgeSCHold");
 	}
 	else if (timer == 81) {
-		strcpy(translated, "On2PJudge1Hold");
+		strcpy(translated, "OnP2Judge1Hold");
 	}
 	else if (timer == 82) {
-		strcpy(translated, "On2PJudge2Hold");
+		strcpy(translated, "OnP2Judge2Hold");
 	}
 	else if (timer == 83) {
-		strcpy(translated, "On2PJudge3Hold");
+		strcpy(translated, "OnP2Judge3Hold");
 	}
 	else if (timer == 84) {
-		strcpy(translated, "On2PJudge4Hold");
+		strcpy(translated, "OnP2Judge4Hold");
 	}
 	else if (timer == 85) {
-		strcpy(translated, "On2PJudge5Hold");
+		strcpy(translated, "OnP2Judge5Hold");
 	}
 	else if (timer == 86) {
-		strcpy(translated, "On2PJudge6Hold");
+		strcpy(translated, "OnP2Judge6Hold");
 	}
 	else if (timer == 87) {
-		strcpy(translated, "On2PJudge7Hold");
+		strcpy(translated, "OnP2Judge7Hold");
 	}
 	else if (timer == 88) {
-		strcpy(translated, "On2PJudge8Hold");
+		strcpy(translated, "OnP2Judge8Hold");
 	}
 	else if (timer == 89) {
-		strcpy(translated, "On2PJudge9Hold");
+		strcpy(translated, "OnP2Judge9Hold");
 	}
 	else if (timer == 100) {
-		strcpy(translated, "On1PKeySCPress");
+		strcpy(translated, "OnP1KeySCPress");
 	}
 	else if (timer == 101) {
-		strcpy(translated, "On1PKey1Press");
+		strcpy(translated, "OnP1Key1Press");
 	}
 	else if (timer == 102) {
-		strcpy(translated, "On1PKey2Press");
+		strcpy(translated, "OnP1Key2Press");
 	}
 	else if (timer == 103) {
-		strcpy(translated, "On1PKey3Press");
+		strcpy(translated, "OnP1Key3Press");
 	}
 	else if (timer == 104) {
-		strcpy(translated, "On1PKey4Press");
+		strcpy(translated, "OnP1Key4Press");
 	}
 	else if (timer == 105) {
-		strcpy(translated, "On1PKey5Press");
+		strcpy(translated, "OnP1Key5Press");
 	}
 	else if (timer == 106) {
-		strcpy(translated, "On1PKey6Press");
+		strcpy(translated, "OnP1Key6Press");
 	}
 	else if (timer == 107) {
-		strcpy(translated, "On1PKey7Press");
+		strcpy(translated, "OnP1Key7Press");
 	}
 	else if (timer == 108) {
-		strcpy(translated, "On1PKey8Press");
+		strcpy(translated, "OnP1Key8Press");
 	}
 	else if (timer == 109) {
-		strcpy(translated, "On1PKey9Press");
+		strcpy(translated, "OnP1Key9Press");
 	}
 	else if (timer == 110) {
-		strcpy(translated, "On2PKeySCPress");
+		strcpy(translated, "OnP2KeySCPress");
 	}
 	else if (timer == 111) {
-		strcpy(translated, "On2PKey1Press");
+		strcpy(translated, "OnP2Key1Press");
 	}
 	else if (timer == 112) {
-		strcpy(translated, "On2PKey2Press");
+		strcpy(translated, "OnP2Key2Press");
 	}
 	else if (timer == 113) {
-		strcpy(translated, "On2PKey3Press");
+		strcpy(translated, "OnP2Key3Press");
 	}
 	else if (timer == 114) {
-		strcpy(translated, "On2PKey4Press");
+		strcpy(translated, "OnP2Key4Press");
 	}
 	else if (timer == 115) {
-		strcpy(translated, "On2PKey5Press");
+		strcpy(translated, "OnP2Key5Press");
 	}
 	else if (timer == 116) {
-		strcpy(translated, "On2PKey6Press");
+		strcpy(translated, "OnP2Key6Press");
 	}
 	else if (timer == 117) {
-		strcpy(translated, "On2PKey7Press");
+		strcpy(translated, "OnP2Key7Press");
 	}
 	else if (timer == 118) {
-		strcpy(translated, "On2PKey8Press");
+		strcpy(translated, "OnP2Key8Press");
 	}
 	else if (timer == 119) {
-		strcpy(translated, "On2PKey9Press");
+		strcpy(translated, "OnP2Key9Press");
 	}
 	else if (timer == 120) {
-		strcpy(translated, "On1PKeySCUp");
+		strcpy(translated, "OnP1KeySCUp");
 	}
 	else if (timer == 121) {
-		strcpy(translated, "On1PKey1Up");
+		strcpy(translated, "OnP1Key1Up");
 	}
 	else if (timer == 122) {
-		strcpy(translated, "On1PKey2Up");
+		strcpy(translated, "OnP1Key2Up");
 	}
 	else if (timer == 123) {
-		strcpy(translated, "On1PKey3Up");
+		strcpy(translated, "OnP1Key3Up");
 	}
 	else if (timer == 124) {
-		strcpy(translated, "On1PKey4Up");
+		strcpy(translated, "OnP1Key4Up");
 	}
 	else if (timer == 125) {
-		strcpy(translated, "On1PKey5Up");
+		strcpy(translated, "OnP1Key5Up");
 	}
 	else if (timer == 126) {
-		strcpy(translated, "On1PKey6Up");
+		strcpy(translated, "OnP1Key6Up");
 	}
 	else if (timer == 127) {
-		strcpy(translated, "On1PKey7Up");
+		strcpy(translated, "OnP1Key7Up");
 	}
 	else if (timer == 128) {
-		strcpy(translated, "On1PKey8Up");
+		strcpy(translated, "OnP1Key8Up");
 	}
 	else if (timer == 129) {
-		strcpy(translated, "On1PKey9Up");
+		strcpy(translated, "OnP1Key9Up");
 	}
 	else if (timer == 130) {
-		strcpy(translated, "On2PKeySCUp");
+		strcpy(translated, "OnP2KeySCUp");
 	}
 	else if (timer == 131) {
-		strcpy(translated, "On2PKey1Up");
+		strcpy(translated, "OnP2Key1Up");
 	}
 	else if (timer == 132) {
-		strcpy(translated, "On2PKey2Up");
+		strcpy(translated, "OnP2Key2Up");
 	}
 	else if (timer == 133) {
-		strcpy(translated, "On2PKey3Up");
+		strcpy(translated, "OnP2Key3Up");
 	}
 	else if (timer == 134) {
-		strcpy(translated, "On2PKey4Up");
+		strcpy(translated, "OnP2Key4Up");
 	}
 	else if (timer == 135) {
-		strcpy(translated, "On2PKey5Up");
+		strcpy(translated, "OnP2Key5Up");
 	}
 	else if (timer == 136) {
-		strcpy(translated, "On2PKey6Up");
+		strcpy(translated, "OnP2Key6Up");
 	}
 	else if (timer == 137) {
-		strcpy(translated, "On2PKey7Up");
+		strcpy(translated, "OnP2Key7Up");
 	}
 	else if (timer == 138) {
-		strcpy(translated, "On2PKey8Up");
+		strcpy(translated, "OnP2Key8Up");
 	}
 	else if (timer == 139) {
-		strcpy(translated, "On2PKey9Up");
+		strcpy(translated, "OnP2Key9Up");
 	}
 	else if (timer == 140) {
 		strcpy(translated, "OnBeat");
 	}
 	else if (timer == 143) {
-		strcpy(translated, "On1PLastNote");
+		strcpy(translated, "OnP1LastNote");
 	}
 	else if (timer == 144) {
-		strcpy(translated, "On2PLastNote");
+		strcpy(translated, "OnP2LastNote");
 	}
 	else if (timer == 150) {
 		strcpy(translated, "OnResult");
@@ -2271,16 +2274,16 @@ const char* _LR2SkinParser::TranslateSlider(int code) {
 		strcpy(translated, "SelectBar");
 	}
 	else if (code == 2) {
-		strcpy(translated, "HighSpeed1P");
+		strcpy(translated, "P1HighSpeed");
 	}
 	else if (code == 3) {
-		strcpy(translated, "HighSpeed2P");
+		strcpy(translated, "P2HighSpeed");
 	}
 	else if (code == 4) {
-		strcpy(translated, "Sudden1P");
+		strcpy(translated, "P1Sudden");
 	}
 	else if (code == 5) {
-		strcpy(translated, "Sudden2P");
+		strcpy(translated, "P2Sudden");
 	}
 	else if (code == 6) {
 		strcpy(translated, "PlayProgress");
@@ -2320,22 +2323,22 @@ const char* _LR2SkinParser::TranslateGraph(int code) {
 		strcpy(translated, "InsaneLevel");
 	}
 	else if (code == 10) {
-		strcpy(translated, "ExScore");
+		strcpy(translated, "P1ExScore");
 	}
 	else if (code == 11) {
-		strcpy(translated, "ExScoreEstimated");
+		strcpy(translated, "P1ExScoreEsti");
 	}
 	else if (code == 12) {
-		strcpy(translated, "HighScoreGhost");
+		strcpy(translated, "P1HighScore");
 	}
 	else if (code == 13) {
-		strcpy(translated, "HighScore");
+		strcpy(translated, "P1HighScoreEsti");
 	}
 	else if (code == 14) {
-		strcpy(translated, "TargetExScoreGhost");
+		strcpy(translated, "P2ExScore");
 	}
 	else if (code == 15) {
-		strcpy(translated, "TargetExScore");
+		strcpy(translated, "P2ExScoreEsti");
 	}
 	else if (code == 20) {
 		strcpy(translated, "ResultPerfectPercent");
@@ -2395,10 +2398,10 @@ const char* _LR2SkinParser::TranslateGraph(int code) {
 
 const char* _LR2SkinParser::TranslateNumber(int code) {
 	if (code == 10) {
-		strcpy(translated, "1PSpeed");
+		strcpy(translated, "P1Speed");
 	}
 	else if (code == 11) {
-		strcpy(translated, "2PSpeed");
+		strcpy(translated, "P2Speed");
 	}
 	else if (code == 12) {
 		strcpy(translated, "JudgeTiming");
@@ -2407,10 +2410,10 @@ const char* _LR2SkinParser::TranslateNumber(int code) {
 		strcpy(translated, "TargetRate");
 	}
 	else if (code == 14) {
-		strcpy(translated, "1PSudden");
+		strcpy(translated, "P1Sudden");
 	}
 	else if (code == 15) {
-		strcpy(translated, "2PSudden");
+		strcpy(translated, "P2Sudden");
 	}/* LR2 doesn't support lift option
 	else if (code == 14) {
 		strcpy(translated, "1PLift");
@@ -2528,101 +2531,101 @@ const char* _LR2SkinParser::TranslateNumber(int code) {
 	}
 	/* during play */
 	else if (code == 100) {
-		strcpy(translated, "Play1PScore");
+		strcpy(translated, "P1Score");
 	}
 	else if (code == 101) {
-		strcpy(translated, "Play1PExScore");
+		strcpy(translated, "P1ExScore");
 	}
 	else if (code == 102) {
-		strcpy(translated, "Play1PRate");
+		strcpy(translated, "P1Rate");
 	}
 	else if (code == 103) {
-		strcpy(translated, "Play1PRate_decimal");
+		strcpy(translated, "P1Rate_decimal");
 	}
 	else if (code == 104) {
-		strcpy(translated, "Play1PCombo");
+		strcpy(translated, "P1Combo");
 	}
 	else if (code == 105) {
-		strcpy(translated, "Play1PMaxCombo");
+		strcpy(translated, "P1MaxCombo");
 	}
 	else if (code == 106) {
-		strcpy(translated, "Play1PTotalNotes");
+		strcpy(translated, "P1TotalNotes");
 	}
 	else if (code == 107) {
-		strcpy(translated, "Play1PGrooveGuage");
+		strcpy(translated, "P1GrooveGauge");
 	}
 	else if (code == 108) {
-		strcpy(translated, "Play1PRivalDiff");
+		strcpy(translated, "P1RivalDiff");
 	}
 	else if (code == 110) {
-		strcpy(translated, "Play1PPerfectCount");
+		strcpy(translated, "P1PerfectCount");
 	}
 	else if (code == 111) {
-		strcpy(translated, "Play1PGreatCount");
+		strcpy(translated, "P1GreatCount");
 	}
 	else if (code == 112) {
-		strcpy(translated, "Play1PGoodCount");
+		strcpy(translated, "P1GoodCount");
 	}
 	else if (code == 113) {
-		strcpy(translated, "Play1PBadCount");
+		strcpy(translated, "P1BadCount");
 	}
 	else if (code == 114) {
-		strcpy(translated, "Play1PPoorCount");
+		strcpy(translated, "P1PoorCount");
 	}
 	else if (code == 115) {
-		strcpy(translated, "Play1PTotalRate");			// estimated value
+		strcpy(translated, "P1TotalRate");			// estimated value
 	}
 	else if (code == 116) {
-		strcpy(translated, "Play1PTotalRate_decimal");	// TODO: process with Lua code
+		strcpy(translated, "P1TotalRate_decimal");	// TODO: process with Lua code
 	}
 	/* ghost */
 	else if (code == 120) {
-		strcpy(translated, "Play2PScore");
+		strcpy(translated, "P2Score");
 	}
 	else if (code == 121) {
-		strcpy(translated, "Play2PExScore");
+		strcpy(translated, "P2ExScore");
 	}
 	else if (code == 122) {
-		strcpy(translated, "Play2PRate");
+		strcpy(translated, "P2Rate");
 	}
 	else if (code == 123) {
-		strcpy(translated, "Play2PRate_decimal");
+		strcpy(translated, "P2Rate_decimal");
 	}
 	else if (code == 124) {
-		strcpy(translated, "Play2PCombo");
+		strcpy(translated, "P2Combo");
 	}
 	else if (code == 125) {
-		strcpy(translated, "Play2PMaxCombo");
+		strcpy(translated, "P2MaxCombo");
 	}
 	else if (code == 126) {
-		strcpy(translated, "Play2PTotalNotes");
+		strcpy(translated, "P2TotalNotes");
 	}
 	else if (code == 127) {
-		strcpy(translated, "Play2PGrooveGuage");
+		strcpy(translated, "P2GrooveGauge");
 	}
 	else if (code == 128) {
-		strcpy(translated, "Play2PRivalDiff");
+		strcpy(translated, "P2RivalDiff");
 	}
 	else if (code == 130) {
-		strcpy(translated, "Play2PPerfectCount");
+		strcpy(translated, "P2PerfectCount");
 	}
 	else if (code == 131) {
-		strcpy(translated, "Play2PGreatCount");
+		strcpy(translated, "P2GreatCount");
 	}
 	else if (code == 132) {
-		strcpy(translated, "Play2PGoodCount");
+		strcpy(translated, "P2GoodCount");
 	}
 	else if (code == 133) {
-		strcpy(translated, "Play2PBadCount");
+		strcpy(translated, "P2BadCount");
 	}
 	else if (code == 134) {
-		strcpy(translated, "Play2PPoorCount");
+		strcpy(translated, "P2PoorCount");
 	}
 	else if (code == 135) {
-		strcpy(translated, "Play2PTotalRate");	// estimated value
+		strcpy(translated, "P2TotalRate");	// estimated value
 	}
 	else if (code == 136) {
-		strcpy(translated, "Play2PTotalRate_decimal");
+		strcpy(translated, "P2TotalRate_decimal");
 	}
 	/*
 	 * 150 ~ 158: TODO (useless?)

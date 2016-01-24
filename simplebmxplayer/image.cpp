@@ -57,7 +57,8 @@ bool Image::Load(const std::string& filepath, bool loop) {
 
 	// check is it movie or image
 	std::string ext = IO::get_fileext(filepath);	COMMON::lower(ext);
-	if (ext == ".mpg" || ext == ".avi" || ext == ".mpeg") {
+	if (ext == ".mpg" || ext == ".avi" || ext == ".mpeg"
+		|| ext == ".m1v") {
 		if (_movie_available) {
 			if (!LoadMovie(filepath.c_str())) {
 				ReleaseMovie();

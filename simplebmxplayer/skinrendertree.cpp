@@ -621,6 +621,7 @@ void SkinGrooveGaugeObject::Render() {
 SkinPlayObject::SkinPlayObject(SkinRenderTree* owner) : 
 SkinGroupObject(owner), imgobj_judgeline(0), imgobj_line(0) {
 	objtype = OBJTYPE::PLAYLANE;
+	memset(Note, 0, sizeof(Note));
 }
 
 void SkinPlayObject::ConstructLane(XMLElement *lane) {

@@ -15,7 +15,7 @@ o 쓰레드 도입.
 o 그래프/슬라이더 도입.
 o 폰트
   - 비트맵폰트: 속성에 cycle 넣고 animate 가능하게 만듬.
-- 키 인풋
+o 키 인풋
 - 리프트/서든/배속설정 작업.
 o Lane에 DST 없애기 -> 직접 속성으로 바꿔서 처리 더 수월하게 하기.
 - ID attribute 도입
@@ -35,6 +35,7 @@ o 기본 SRC 타이머는 loop -> 몇개만 loop=0 속성 추가해놓기.
   - flip
 - 레인에 LINE 객체 그리기
 - play/program setting, playrecord save/load
+- 타이틀폰트 fallback으로 그려지게 만들기.
 <플레이 프로젝트 끝. 다음 프로젝트에서 계속 ...>
 
 - Animated Value change(double/int) 도입하기.

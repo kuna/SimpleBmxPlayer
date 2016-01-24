@@ -12,6 +12,7 @@
 #include "image.h"
 #include "global.h"
 #include "playerinfo.h"
+#include "gameplay.h"
 
 class SkinPlayObject;
 
@@ -35,42 +36,15 @@ protected:
 	double				liftheight;			// 0 ~ 1
 
 	// some prefetched(pointer) timers/values
-	Timer*				pBmstimer;			// elapsed time
-	Timer*				pOn1pmiss;			// timer used when miss occured
-	Timer*				pOn2pmiss;			// timer used when miss occured (DP)
-	Timer*				pOn1pjudge;
-	Timer*				pOn2pjudge;			// (DP)
-	Timer*				pLanepress[20];
-	Timer*				pLanehold[20];
-	Timer*				pLaneup[20];
-	Timer*				pLanejudgeokay[20];
-	Timer*				pOnJudge[6];		// pf/gr/gd/bd/pr
-	Timer*				pOnfullcombo;		// needless to say?
-	Timer*				pOnlastnote;		// when last note ends
-	Timer*				pOnGameover;		// game is over! (different from OnClose)
-	Timer*				pOnGaugeMax;		// guage max?
-	Image*				pCurrentmissbga;	// activates when miss occurs
-	double*				pExscore_graph;
-	double*				pHighscore_graph;
-	int*				pPlayscore;
-	int*				pPlayexscore;
-	int*				pPlaycombo;
-	int*				pPlaymaxcombo;
-	int*				pPlaytotalnotes;
-	int*				pPlayrivaldiff;
-	double*				pPlayergauge;
-	int*				pPlayergaugetype;
-	int*				pPlaygroovegauge;
-	int*				pNoteSpeed;
-	int*				pFloatSpeed;
-	int*				pSuddenHeight;
-	int*				pLiftHeight;
-	int*				pMaxBPM;
-	int*				pMinBPM;
+	Timer*				pBmstimer;
+	PlayerRenderValue*	pv;					// general current player
+	PlayerRenderValue*	pv_dp;				// in case of DP
 
 	// guage
 	double				playergauge;
 	int					playergaugetype;
+	bool				dieonnohealth;		// should I die when there's no health?
+	double				notehealth[6];		// health up/down per note (good, great, pgreat)
 
 	// DON'T CHEAT! check for value malpulation.
 	// (TODO) processed by CryptManager
@@ -85,7 +59,7 @@ protected:
 
 	// note/time information
 	PlayerScore			score;
-	BmsNoteContainer*	bmsnote;
+	BmsNoteManager*		bmsnote;
 	int					judgenotecnt;		// judged note count; used for OnLastNote
 	Uint32				currenttime;
 	Uint32				currentbar;
@@ -111,7 +85,7 @@ public:
 	 * playmode: SINGLE or DOUBLE or BATTLE? (check PLAYTYPE)
 	 * playertype: NORMAL or AUTO or what? (check PLAYERTYPE)
 	 */
-	Player(PlayerPlayConfig* config, BmsNoteContainer *note, int playside = 0,
+	Player(PlayerPlayConfig* config, BmsNoteManager *note, int playside = 0,
 		int playmode = PLAYTYPE::KEY7, 
 		int playertype = PLAYERTYPE::NORMAL);
 
@@ -167,7 +141,7 @@ class PlayerAuto : public Player {
 	double targetrate;
 
 public:
-	PlayerAuto(PlayerPlayConfig *config, BmsNoteContainer *note,
+	PlayerAuto(PlayerPlayConfig *config, BmsNoteManager *note,
 		int playside = 0, int playmode = PLAYTYPE::KEY7);
 
 	virtual void Update();
@@ -184,7 +158,7 @@ public:
  */
 class PlayerGhost : public Player {
 public:
-	PlayerGhost(PlayerPlayConfig *config, BmsNoteContainer *note,
+	PlayerGhost(PlayerPlayConfig *config, BmsNoteManager *note,
 		int playside = 0, int playmode = PLAYTYPE::KEY7);
 };
 

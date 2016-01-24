@@ -26,7 +26,7 @@ namespace {
 
 // ------- Player ----------------------------------------
 
-Player::Player(PlayerPlayConfig* config, BmsNoteContainer *note, 
+Player::Player(PlayerPlayConfig* config, BmsNoteManager *note, 
 	int playside, int playmode, int playertype) {
 	this->playconfig = config;
 	this->playside = playside;
@@ -34,106 +34,109 @@ Player::Player(PlayerPlayConfig* config, BmsNoteContainer *note,
 	this->playertype = playertype;
 
 	// initalize basic variables/timers
+	pv = &PLAYERVALUE[playside];
+	if (playmode > 10) pv_dp = &PLAYERVALUE[playside + 1];
+	else pv_dp = 0;
 	pBmstimer = TIMERPOOL->Get("OnGameStart");
-	pExscore_graph = DOUBLEPOOL->Get("ExScore");
-	pHighscore_graph = DOUBLEPOOL->Get("HighScore");
-	pOn1pmiss = TIMERPOOL->Get("On1PMiss");
-	pOn2pmiss = TIMERPOOL->Get("On2PMiss");
-	pOn1pjudge = TIMERPOOL->Get("On1PJudge");
-	pOn2pjudge = TIMERPOOL->Get("On2PJudge");
-	if (playside == 0) {
-		pPlayergauge = DOUBLEPOOL->Get("Player1Gauge");
-		pPlayergaugetype = INTPOOL->Get("Player1GaugeType");
-		pPlaygroovegauge = INTPOOL->Get("Play1PGrooveGuage");
-		pPlayscore = INTPOOL->Get("Play1PScore");
-		pPlayexscore = INTPOOL->Get("Play1PExScore");
-		pPlaycombo = INTPOOL->Get("Play1PCombo");
-		pPlaymaxcombo = INTPOOL->Get("Play1PMaxCombo");
-		pPlaytotalnotes = INTPOOL->Get("Play1PTotalNotes");
-		pPlayrivaldiff = INTPOOL->Get("Play1PRivalDiff");
-		pOnfullcombo = TIMERPOOL->Get("On1PFullCombo");
-		pOnlastnote = TIMERPOOL->Get("On1PLastNote");
-		pOnGameover = TIMERPOOL->Get("On1PGameOver");
-		pOnGaugeMax = TIMERPOOL->Get("On1PGaugeMax");
-		pOnJudge[5] = TIMERPOOL->Set("On1PJudgePerfect");
-		pOnJudge[4] = TIMERPOOL->Set("On1PJudgeGreat");
-		pOnJudge[3] = TIMERPOOL->Set("On1PJudgeGood");
-		pOnJudge[2] = TIMERPOOL->Set("On1PJudgeBad");
-		pOnJudge[1] = TIMERPOOL->Set("On1PJudgePoor");
-		pOnJudge[0] = TIMERPOOL->Set("On1PJudgePoor");
-		pNoteSpeed = INTPOOL->Get("1PSpeed");
-		pFloatSpeed = INTPOOL->Get("1PFloatSpeed");
-		pSuddenHeight = INTPOOL->Get("1PSudden");
-		pLiftHeight = INTPOOL->Get("1PLift");
-	}
-	else {
-		pPlayergauge = DOUBLEPOOL->Get("Player2Gauge");
-		pPlayergaugetype = INTPOOL->Get("Player2GaugeType");
-		pPlaygroovegauge = INTPOOL->Get("Play2PGrooveGuage");
-		pPlayscore = INTPOOL->Get("Play2PScore");
-		pPlayexscore = INTPOOL->Get("Play2PExScore");
-		pPlaycombo = INTPOOL->Get("Play2PCombo");
-		pPlaymaxcombo = INTPOOL->Get("Play2PMaxCombo");
-		pPlaytotalnotes = INTPOOL->Get("Play2PTotalNotes");
-		pPlayrivaldiff = INTPOOL->Get("Play2PRivalDiff");
-		pOnfullcombo = TIMERPOOL->Get("On2PFullCombo");
-		pOnlastnote = TIMERPOOL->Get("On2PLastNote");
-		pOnGameover = TIMERPOOL->Get("On2PGameOver");
-		pOnGaugeMax = TIMERPOOL->Get("On2PGaugeMax");
-		pOnJudge[5] = TIMERPOOL->Set("On2PJudgePerfect");
-		pOnJudge[4] = TIMERPOOL->Set("On2PJudgeGreat");
-		pOnJudge[3] = TIMERPOOL->Set("On2PJudgeGood");
-		pOnJudge[2] = TIMERPOOL->Set("On2PJudgeBad");
-		pOnJudge[1] = TIMERPOOL->Set("On2PJudgePoor");
-		pOnJudge[0] = TIMERPOOL->Set("On2PJudgePoor");
-		pNoteSpeed = INTPOOL->Get("2PSpeed");
-		pFloatSpeed = INTPOOL->Get("2PFloatSpeed");
-		pSuddenHeight = INTPOOL->Get("2PSudden");
-		pLiftHeight = INTPOOL->Get("2PLift");
-	}
-
-	memset(pLanepress, 0, sizeof(pLanepress));
-	memset(pLaneup, 0, sizeof(pLaneup));
-	memset(pLanehold, 0, sizeof(pLanehold));
-	memset(pLanejudgeokay, 0, sizeof(pLanejudgeokay));
-	for (int i = 0; i < 20; i++) {
-		int player = i / 10 + 1;
-		if (i == 6) {
-			pLanepress[i] = TIMERPOOL->Set(ssprintf("On%dPKeySCPress", player), false);
-			pLaneup[i] = TIMERPOOL->Set(ssprintf("On%dPKeySCUp", player), false);
-			pLanehold[i] = TIMERPOOL->Set(ssprintf("On%dPJudgeSCHold", player), false);
-			pLanejudgeokay[i] = TIMERPOOL->Set(ssprintf("On%dPJudgeSCOkay", player), false);
-		}
-		else {
-			pLanepress[i] = TIMERPOOL->Set(ssprintf("On%dPKey%dPress", player, channel_to_lane[i]), false);
-			pLaneup[i] = TIMERPOOL->Set(ssprintf("On%dPKey%dUp", player, channel_to_lane[i]), false);
-			pLanehold[i] = TIMERPOOL->Set(ssprintf("On%dPJudge%dHold", player, channel_to_lane[i]), false);
-			pLanejudgeokay[i] = TIMERPOOL->Set(ssprintf("On%dPJudge%dOkay", player, channel_to_lane[i]), false);
-		}
-		noteindex[i] = -1;
-	}
-
-	// initialize gauge
-	playergaugetype = config->gaugetype;
-	switch (playergaugetype) {
-	case GAUGETYPE::GROOVE:
-	case GAUGETYPE::EASY:
-	case GAUGETYPE::ASSISTEASY:
-		SetGauge(0.2);
-	default:
-		SetGauge(1.0);
-	}
 
 	// initalize note/score
 	bmsnote = note;
 	memset(&score, 0, sizeof(score));
-	score.totalnote = bmsnote->GetNoteCount();
+	int notecnt
+		= score.totalnote
+		= bmsnote->GetNoteCount();
 	judgenotecnt = 0;
 	for (int i = 0; i < 20; i++) {
 		noteindex[i] = GetAvailableNoteIndex(i);
 	}
 
-	// initalize note speed
+	// initialize gauge
+	playergaugetype
+		= *pv->pGaugeType
+		= playconfig->gaugetype;
+	switch (playergaugetype) {
+	case GAUGETYPE::GROOVE:
+	case GAUGETYPE::EASY:
+	case GAUGETYPE::ASSISTEASY:
+		SetGauge(0.2);
+		dieonnohealth = false;
+		break;
+	default:
+		SetGauge(1.0);
+		dieonnohealth = true;
+		break;
+	}
+	memset(notehealth, 0, sizeof(notehealth));
+	double total = 400;		// TODO: calculate TOTAL from BmsHelper. // TODO: sum all if in grade mode.
+	switch (playergaugetype) {
+	case GAUGETYPE::GROOVE:
+		notehealth[5] = total / notecnt;
+		notehealth[4] = total / notecnt;
+		notehealth[3] = total / notecnt / 2;
+		notehealth[2] = -2.0 / 100;
+		notehealth[1] = -6.0 / 100;
+		notehealth[0] = -2.0 / 100;
+		break;
+	case GAUGETYPE::EASY:
+	case GAUGETYPE::ASSISTEASY:
+		notehealth[5] = total / notecnt;
+		notehealth[4] = total / notecnt;
+		notehealth[3] = total / notecnt / 2;
+		notehealth[2] = -1.6 / 100;
+		notehealth[1] = -4.8 / 100;
+		notehealth[0] = -1.6 / 100;
+		break;
+	case GAUGETYPE::HARD:
+		notehealth[5] = 0.16 / 100;
+		notehealth[4] = 0.16 / 100;
+		notehealth[3] = 0;
+		notehealth[2] = -5.0 / 100;
+		notehealth[1] = -9.0 / 100;
+		notehealth[0] = -5.0 / 100;
+		break;
+	case GAUGETYPE::EXHARD:
+		notehealth[5] = 0.16 / 100;
+		notehealth[4] = 0.16 / 100;
+		notehealth[3] = 0;
+		notehealth[2] = -10.0 / 100;
+		notehealth[1] = -18.0 / 100;
+		notehealth[0] = -10.0 / 100;
+		break;
+	case GAUGETYPE::GRADE:
+		notehealth[5] = 0.16 / 100;
+		notehealth[4] = 0.16 / 100;
+		notehealth[3] = 0.04 / 100;
+		notehealth[2] = -1.5 / 100;
+		notehealth[1] = -2.5 / 100;
+		notehealth[0] = -1.5 / 100;
+		break;
+	case GAUGETYPE::EXGRADE:
+		notehealth[5] = 0.16 / 100;
+		notehealth[4] = 0.16 / 100;
+		notehealth[3] = 0.04 / 100;
+		notehealth[2] = -3.0 / 100;
+		notehealth[1] = -5.0 / 100;
+		notehealth[0] = -3.0 / 100;
+		break;
+	case GAUGETYPE::PATTACK:
+		notehealth[5] = 0;
+		notehealth[4] = 0;
+		notehealth[3] = -1;
+		notehealth[2] = -1;
+		notehealth[1] = -1;
+		notehealth[0] = -1;
+		break;
+	case GAUGETYPE::HAZARD:
+		notehealth[5] = 0;
+		notehealth[4] = 0;
+		notehealth[3] = 0;
+		notehealth[2] = -1;
+		notehealth[1] = -1;
+		notehealth[0] = 0;
+		break;
+	}
+
+	// initialize play speed
 	speed_mul = 1;
 	switch (playconfig->speedtype) {
 	case SPEEDTYPE::MAXBPM:
@@ -152,22 +155,23 @@ Player::Player(PlayerPlayConfig* config, BmsNoteContainer *note,
 	else {
 		SetSpeed(playconfig->speed);
 	}
+	// TODO: set OP switch... no, in main?
 }
 
 void Player::SetGauge(double v) {
 	if (v >= 1) {
-		pOnGaugeMax->Trigger();
+		pv->pOnGaugeMax->Trigger();
 		v = 1;
 	}
 	else {
-		pOnGaugeMax->Stop();
+		pv->pOnGaugeMax->Stop();
 	}
 	if (v < 0) {
-		pOnGameover->Trigger();
 		v = 0;
+		pv->pOnGameover->Trigger(dieonnohealth);
 	}
-	*pPlayergauge = playergauge = v;
-	*pPlaygroovegauge = (int)(v * 50) * 2;
+	*pv->pGauge_d = playergauge = v;
+	*pv->pGauge = (int)(v * 50) * 2;
 }
 
 namespace {
@@ -192,7 +196,6 @@ void Player::SetSpeed(double speed) {
 	/*
 	 * set basic value
 	 */
-	*pNoteSpeed = speed * 100;
 	playconfig->speed
 		= notespeed
 		= speed;
@@ -203,10 +206,10 @@ void Player::SetSpeed(double speed) {
 	/*
 	 * set the pointer values
 	 */
-	*pNoteSpeed = notespeed * 100;
-	*pFloatSpeed = notefloat * (1 - suddenheight - liftheight);
-	*pSuddenHeight = notefloat * suddenheight;
-	*pLiftHeight = notefloat * liftheight;
+	*pv->pNoteSpeed = notespeed * 100;
+	*pv->pFloatSpeed = notefloat * (1 - suddenheight - liftheight);
+	*pv->pSuddenHeight = notefloat * suddenheight;
+	*pv->pLiftHeight = notefloat * liftheight;
 }
 void Player::DeltaSpeed(double speed) { SetSpeed(notespeed + speed); }
 
@@ -222,10 +225,10 @@ void Player::SetFloatSpeed(double speed) {
 	/*
 	 * set the pointer values
 	 */
-	*pNoteSpeed = notespeed * 100;
-	*pFloatSpeed = notefloat * (1 - suddenheight - liftheight);
-	*pSuddenHeight = notefloat * suddenheight;
-	*pLiftHeight = notefloat * liftheight;
+	*pv->pNoteSpeed = notespeed * 100;
+	*pv->pFloatSpeed = notefloat * (1 - suddenheight - liftheight);
+	*pv->pSuddenHeight = notefloat * suddenheight;
+	*pv->pLiftHeight = notefloat * liftheight;
 }
 void Player::DeltaFloatSpeed(double speed) { SetFloatSpeed(notefloat + speed); }
 
@@ -237,9 +240,9 @@ void Player::SetSudden(double height) {
 	/*
 	 * set the pointer values
 	 */
-	*pFloatSpeed = notefloat * (1 - suddenheight - liftheight);
-	*pSuddenHeight = notefloat * suddenheight;
-	*pLiftHeight = notefloat * liftheight;
+	*pv->pFloatSpeed = notefloat * (1 - suddenheight - liftheight);
+	*pv->pSuddenHeight = notefloat * suddenheight;
+	*pv->pLiftHeight = notefloat * liftheight;
 }
 void Player::DeltaSudden(double height) { SetSudden(suddenheight + height); }
 
@@ -251,9 +254,9 @@ void Player::SetLift(double height) {
 	/*
 	 * set the pointer values
 	 */
-	*pFloatSpeed = notefloat * (1 - suddenheight - liftheight);
-	*pSuddenHeight = notefloat * suddenheight;
-	*pLiftHeight = notefloat * liftheight;
+	*pv->pFloatSpeed = notefloat * (1 - suddenheight - liftheight);
+	*pv->pSuddenHeight = notefloat * suddenheight;
+	*pv->pLiftHeight = notefloat * liftheight;
 }
 void Player::DeltaLift(double height) { SetLift(liftheight + height); }
 
@@ -279,11 +282,11 @@ int Player::CheckJudgeByTiming(double delta) {
 
 void Player::MakeJudge(int judgetype, int channel, bool silent) {
 	score.AddGrade(judgetype);
-	if (judgetype >= JUDGETYPE::JUDGE_GREAT && pLanejudgeokay[channel])
-		pLanejudgeokay[channel]->Start();
+	if (judgetype >= JUDGETYPE::JUDGE_GREAT)
+		pv->pLanejudgeokay[channel]->Start();
 	// update graph/number
 	if (judgetype <= JUDGETYPE::JUDGE_BAD)
-		pOn1pmiss->Start();
+		pv->pOnMiss->Start();
 	// update judged note count
 	switch (judgetype) {
 	case JUDGETYPE::JUDGE_POOR:
@@ -295,39 +298,62 @@ void Player::MakeJudge(int judgetype, int channel, bool silent) {
 		break;
 	}
 	// update gauge
-	SetGauge(playergauge + 0.01);
+	SetGauge(playergauge + notehealth[judgetype]);
 	// update exscore/combo/etc ...
-	*pExscore_graph = score.CalculateRate();
-	*pHighscore_graph = score.CalculateRate();
-	*pPlayscore = score.CalculateScore();
-	*pPlayexscore = score.CalculateEXScore();
-	*pPlaycombo = score.combo;
-	*pPlaymaxcombo = score.maxcombo;
+	*pv->pExscore_d = score.CalculateRate();
+	*pv->pHighscore_d = score.CalculateRate();
+	*pv->pScore = score.CalculateScore();
+	*pv->pExscore = score.CalculateEXScore();
+	*pv->pMaxCombo = score.maxcombo;
 	// fullcombo/lastnote check
 	if (score.combo == score.totalnote)
-		pOnfullcombo->Start();
+		pv->pOnfullcombo->Start();
 	if (judgenotecnt == score.totalnote)
-		pOnlastnote->Start();
+		pv->pOnlastnote->Start();
 
 	if (!silent) {
+		// get current judgeside
+		int judgeside = 0;
+		if (playmode >= 10) {
+			// DP
+			if (channel < 10) judgeside = 1;
+			else judgeside = 2;
+		}
+		else {
+			// SP
+			if (playside == 0) judgeside = 1;
+			else judgeside = 2;
+		}
+
+		switch (judgeside) {
+		case 1:
+			break;
+		case 2:
+			break;
+		}
 		// show judge(combo) element
 		for (int i = 0; i < 6; i++) {
 			if (i == judgetype)
-				pOnJudge[i]->Start();
+				pv->pOnJudge[i]->Start();
 			else
-				pOnJudge[i]->Stop();
+				pv->pOnJudge[i]->Stop();
 		}
 		// judge timer start
 		// consider DP also.
 		if (playmode >= 10) {
 			// DP
-			if (channel < 10) pOn1pjudge->Start();
-			else pOn2pjudge->Start();
+			if (channel < 10) {
+				pv->pOnCombo->Start();
+				*pv->pCombo = score.combo;
+			}
+			else {
+				pv_dp->pOnCombo->Start();
+				*pv_dp->pCombo = score.combo;
+			}
 		}
 		else {
-			// SP
-			if (playside == 0) pOn1pjudge->Start();
-			else pOn2pjudge->Start();
+			pv->pOnCombo->Start();
+			*pv->pCombo = score.combo;
 		}
 		
 		// TODO: make judge event
@@ -379,10 +405,12 @@ void Player::Reset() {
 
 void Player::Update() {
 	// timer/value update
-	pOn1pjudge->OffTrigger(pOn1pjudge->GetTick() > 500);
-	pOn2pjudge->OffTrigger(pOn2pjudge->GetTick() > 500);
-	pOn1pmiss->OffTrigger(pOn1pmiss->GetTick() > 1000);
-	pOn2pmiss->OffTrigger(pOn2pmiss->GetTick() > 1000);
+	pv->pOnCombo->OffTrigger(pv->pOnCombo->GetTick() > 500);
+	pv->pOnMiss->OffTrigger(pv->pOnMiss->GetTick() > 1000);
+	if (pv_dp) {
+		pv_dp->pOnCombo->OffTrigger(pv_dp->pOnCombo->GetTick() > 500);
+		pv_dp->pOnMiss->OffTrigger(pv_dp->pOnMiss->GetTick() > 1000);
+	}
 
 	// if gameover then ignore
 	if (IsDead()) return;
@@ -395,6 +423,7 @@ void Player::Update() {
 	currentbar = BmsHelper::GetCurrentBar();
 
 	// check for note judgement
+	// COMMENT: `int i` means lane index, NOT channel number.
 	for (int i = 0; i < 20; i++) {
 		/*
 		 * If (next note exists && note is at the bottom; hit timing)
@@ -487,7 +516,7 @@ int Player::GetCurrentNoteBar(int channel) {
 }
 
 bool Player::IsDead() {
-	return pOnGameover->IsStarted();
+	return pv->pOnGameover->IsStarted();
 }
 
 void Player::RenderNote(SkinPlayObject *playobj) {
@@ -499,7 +528,7 @@ void Player::RenderNote(SkinPlayObject *playobj) {
 	// COMMENT: maybe we have to convert lane number into channel number?
 	double lnpos[20] = { 0, };
 	bool lnstart[20] = { false, };
-	for (int lane = 0; lane <= 7; lane++) {
+	for (int lane = 0; lane <= 20; lane++) {
 		int channel = lane_to_channel[lane];
 		int currentnotebar = GetCurrentNoteBar(channel);
 		while (currentnotebar >= 0) {
@@ -533,7 +562,7 @@ void Player::RenderNote(SkinPlayObject *playobj) {
 
 // ------ PlayerAuto -----------------------------------
 
-PlayerAuto::PlayerAuto(PlayerPlayConfig *config, BmsNoteContainer *note, int playside, int playmode)
+PlayerAuto::PlayerAuto(PlayerPlayConfig *config, BmsNoteManager *note, int playside, int playmode)
 	: Player(config, note, playside, playmode, PLAYERTYPE::AUTO) {}
 
 void PlayerAuto::Update() {
@@ -545,7 +574,15 @@ void PlayerAuto::Update() {
 	currentbar = BmsHelper::GetCurrentBar();
 
 	// check for note judgement
+	PlayerRenderValue *pv_ = pv;
 	for (int i = 0; i < 20; i++) {
+		/*
+		 * watch out for DP
+		 */
+		if (i >= 10) pv_ = pv_dp;
+		if (!pv_) continue;
+		int ni = i % 10;
+
 		/*
 		 * If (next note exists && note is at the bottom; hit timing)
 		 */
@@ -562,41 +599,35 @@ void PlayerAuto::Update() {
 					MakeJudge(JUDGETYPE::JUDGE_PGREAT, i, true);
 					// we won't judge on LNSTART
 					longnotestartpos[i] = noteindex[i];
-					if (pLanehold[i]) pLanehold[i]->Start();
-					if (pLanepress[i]) {
-						pLaneup[i]->Stop();
-						pLanepress[i]->Start();
-					}
+					pv_->pLanehold[ni]->Start();
+					pv_->pLaneup[ni]->Stop();
+					pv_->pLanepress[ni]->Start();
 				}
 				else if (GetCurrentNote(i)->type == BmsNote::NOTE_LNEND) {
 					// TODO we won't play sound(turn off) on LNEND
 					MakeJudge(JUDGETYPE::JUDGE_PGREAT, i);
 					longnotestartpos[i] = -1;
-					if (pLanehold[i]) pLanehold[i]->Stop();
+					pv_->pLanehold[ni]->Stop();
 				}
 				else if (GetCurrentNote(i)->type == BmsNote::NOTE_NORMAL) {
 					PLAYSOUND(note.value.ToInteger());
 					MakeJudge(JUDGETYPE::JUDGE_PGREAT, i);
-					if (pLanepress[i]) {
-						pLaneup[i]->Stop();
-						pLanepress[i]->Start();
-					}
+					pv_->pLaneup[ni]->Stop();
+					pv_->pLanepress[ni]->Start();
 				}
 			}
-
-			// fetch next note
-			noteindex[i] = GetNextAvailableNoteIndex(i);
 		}
 
+		// fetch next note
+		noteindex[i] = GetNextAvailableNoteIndex(i);
 		/*
 		 * pressing lane is automatically up-ped
 		 * about after 50ms.
 		 */
-		if (pLanehold[i] && pLanehold[i]->IsStarted())
-			pLanepress[i]->Start();
-		if (pLanepress[i] && pLaneup[i] && pLaneup[i]->Trigger(pLanepress[i]->GetTick() > 50)) {
-			pLanepress[i]->Stop();
-		}
+		if (pv_->pLanehold[ni]->IsStarted())
+			pv_->pLanepress[ni]->Start();
+		if (pv_->pLaneup[ni]->Trigger(pv_->pLanepress[ni]->GetTick() > 50))
+			pv_->pLanepress[ni]->Stop();
 	}
 }
 
@@ -614,5 +645,5 @@ void PlayerAuto::SetGoal(double rate) {
 
 // ------ PlayerGhost ----------------------------
 
-PlayerGhost::PlayerGhost(PlayerPlayConfig *config, BmsNoteContainer *note, int playside, int playmode)
+PlayerGhost::PlayerGhost(PlayerPlayConfig *config, BmsNoteManager *note, int playside, int playmode)
 	: Player(config, note, playside, playmode, PLAYERTYPE::AUTO) {}

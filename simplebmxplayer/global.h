@@ -122,6 +122,8 @@ namespace GAUGETYPE {
 	const int HAZARD = 4;
 	const int PATTACK = 5;
 	const int ASSISTEASY = 6;
+	const int GRADE = 10;
+	const int EXGRADE = 11;
 }
 
 namespace PACEMAKERTYPE {

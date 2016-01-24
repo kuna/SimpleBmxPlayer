@@ -14,6 +14,8 @@
 #include "player.h"
 #include "game.h"
 
+PlayerRenderValue		PLAYERVALUE[4];
+
 namespace GamePlay {
 	// scene
 	ScenePlay*			SCENE;
@@ -90,7 +92,6 @@ namespace GamePlay {
 	void LoadBms(const char *path) {
 		if (BmsHelper::LoadBms(path)) {
 			LOG->Info("BMS loading finished successfully (%s)\n", path);
-			BmsHelper::LoadBmsResourceOnThread();
 		}
 		else {
 			LOG->Critical("BMS loading failed (%s)\n", path);
@@ -148,6 +149,109 @@ namespace GamePlay {
 		}
 	}
 
+	namespace {
+		void Initalize_P1_RenderValue() {
+			PLAYERVALUE[0].pNoteSpeed = INTPOOL->Get("P1Speed");
+			PLAYERVALUE[0].pFloatSpeed = INTPOOL->Get("P1FloatSpeed");
+			PLAYERVALUE[0].pSuddenHeight = INTPOOL->Get("P1Sudden");
+			PLAYERVALUE[0].pLiftHeight = INTPOOL->Get("P1Lift");
+
+			PLAYERVALUE[0].pGauge_d = DOUBLEPOOL->Get("P1Gauge");
+			PLAYERVALUE[0].pGaugeType = INTPOOL->Get("P1GaugeType");
+			PLAYERVALUE[0].pGauge = INTPOOL->Get("P1GrooveGuage");
+			PLAYERVALUE[0].pExscore = INTPOOL->Get("P1ExScore");
+			PLAYERVALUE[0].pScore = INTPOOL->Get("P1Score");
+			PLAYERVALUE[0].pExscore_d = DOUBLEPOOL->Get("P1ExScore");
+			PLAYERVALUE[0].pHighscore_d = DOUBLEPOOL->Get("P1HighScore");
+			PLAYERVALUE[0].pScore = INTPOOL->Get("P1Score");
+			PLAYERVALUE[0].pCombo = INTPOOL->Get("P1Combo");
+			PLAYERVALUE[0].pMaxCombo = INTPOOL->Get("P1MaxCombo");
+			PLAYERVALUE[0].pTotalnotes = INTPOOL->Get("P1TotalNotes");
+			PLAYERVALUE[0].pRivaldiff = INTPOOL->Get("P1RivalDiff");
+			PLAYERVALUE[0].pRate = INTPOOL->Get("P1Rate");
+			PLAYERVALUE[0].pTotalRate = INTPOOL->Get("P1TotalRate");
+			PLAYERVALUE[0].pRate_d = DOUBLEPOOL->Get("P1Rate");
+			PLAYERVALUE[0].pTotalRate_d = DOUBLEPOOL->Get("P1TotalRate");
+
+			PLAYERVALUE[0].pOnJudge[5] = TIMERPOOL->Set("OnP1JudgePerfect");
+			PLAYERVALUE[0].pOnJudge[4] = TIMERPOOL->Set("OnP1JudgeGreat");
+			PLAYERVALUE[0].pOnJudge[3] = TIMERPOOL->Set("OnP1JudgeGood");
+			PLAYERVALUE[0].pOnJudge[2] = TIMERPOOL->Set("OnP1JudgeBad");
+			PLAYERVALUE[0].pOnJudge[1] = TIMERPOOL->Set("OnP1JudgePoor");
+			PLAYERVALUE[0].pOnJudge[0] = TIMERPOOL->Set("OnP1JudgePoor");
+
+			PLAYERVALUE[0].pOnMiss = TIMERPOOL->Get("OnP1Miss");
+			PLAYERVALUE[0].pOnCombo = TIMERPOOL->Get("OnP1Combo");
+			PLAYERVALUE[0].pOnfullcombo = TIMERPOOL->Get("OnP1FullCombo");
+			PLAYERVALUE[0].pOnlastnote = TIMERPOOL->Get("OnP1LastNote");
+			PLAYERVALUE[0].pOnGameover = TIMERPOOL->Get("OnP1GameOver");
+			PLAYERVALUE[0].pOnGaugeMax = TIMERPOOL->Get("OnP1GaugeMax");
+
+			/*
+			 * SC : note-index 0
+			 */
+			PLAYERVALUE[0].pLanepress[0] = TIMERPOOL->Get("OnP1KeySCPress");
+			PLAYERVALUE[0].pLaneup[0] = TIMERPOOL->Get("OnP1KeySCUp");
+			PLAYERVALUE[0].pLanehold[0] = TIMERPOOL->Get("OnP1JudgeSCHold");
+			PLAYERVALUE[0].pLanejudgeokay[0] = TIMERPOOL->Get("OnP1JudgeSCOkay");
+			for (int i = 1; i < 10; i++) {
+				PLAYERVALUE[0].pLanepress[i] = TIMERPOOL->Get(ssprintf("OnP1Key%dPress", i));
+				PLAYERVALUE[0].pLaneup[i] = TIMERPOOL->Get(ssprintf("OnP1Key%dUp", i));
+				PLAYERVALUE[0].pLanehold[i] = TIMERPOOL->Get(ssprintf("OnP1Judge%dHold", i));
+				PLAYERVALUE[0].pLanejudgeokay[i] = TIMERPOOL->Get(ssprintf("OnP1Judge%dOkay", i));
+			}
+		}
+
+		void Initalize_P2_RenderValue() {
+			PLAYERVALUE[1].pNoteSpeed = INTPOOL->Get("P2Speed");
+			PLAYERVALUE[1].pFloatSpeed = INTPOOL->Get("P2FloatSpeed");
+			PLAYERVALUE[1].pSuddenHeight = INTPOOL->Get("P2Sudden");
+			PLAYERVALUE[1].pLiftHeight = INTPOOL->Get("P2Lift");
+
+			PLAYERVALUE[1].pGauge_d = DOUBLEPOOL->Get("P2Gauge");
+			PLAYERVALUE[1].pGaugeType = INTPOOL->Get("P2GaugeType");
+			PLAYERVALUE[1].pGauge = INTPOOL->Get("P2GrooveGuage");
+			PLAYERVALUE[1].pExscore = INTPOOL->Get("P2ExScore");
+			PLAYERVALUE[1].pScore = INTPOOL->Get("P2Score");
+			PLAYERVALUE[1].pExscore_d = DOUBLEPOOL->Get("P2ExScore");
+			PLAYERVALUE[1].pHighscore_d = DOUBLEPOOL->Get("P2HighScore");
+			PLAYERVALUE[1].pScore = INTPOOL->Get("P2Score");
+			PLAYERVALUE[1].pCombo = INTPOOL->Get("P2Combo");
+			PLAYERVALUE[1].pMaxCombo = INTPOOL->Get("P2MaxCombo");
+			PLAYERVALUE[1].pTotalnotes = INTPOOL->Get("P2TotalNotes");
+			PLAYERVALUE[1].pRivaldiff = INTPOOL->Get("P2RivalDiff");
+			PLAYERVALUE[1].pRate = INTPOOL->Get("P2Rate");
+			PLAYERVALUE[1].pTotalRate = INTPOOL->Get("P2TotalRate");
+			PLAYERVALUE[1].pRate_d = DOUBLEPOOL->Get("P2Rate");
+			PLAYERVALUE[1].pTotalRate_d = DOUBLEPOOL->Get("P2TotalRate");
+
+			PLAYERVALUE[1].pOnJudge[5] = TIMERPOOL->Set("OnP2JudgePerfect");
+			PLAYERVALUE[1].pOnJudge[4] = TIMERPOOL->Set("OnP2JudgeGreat");
+			PLAYERVALUE[1].pOnJudge[3] = TIMERPOOL->Set("OnP2JudgeGood");
+			PLAYERVALUE[1].pOnJudge[2] = TIMERPOOL->Set("OnP2JudgeBad");
+			PLAYERVALUE[1].pOnJudge[1] = TIMERPOOL->Set("OnP2JudgePoor");
+			PLAYERVALUE[1].pOnJudge[1] = TIMERPOOL->Set("OnP2JudgePoor");
+
+			PLAYERVALUE[1].pOnMiss = TIMERPOOL->Get("OnP2Miss");
+			PLAYERVALUE[1].pOnCombo = TIMERPOOL->Get("OnP2Combo");
+			PLAYERVALUE[1].pOnfullcombo = TIMERPOOL->Get("OnP2FullCombo");
+			PLAYERVALUE[1].pOnlastnote = TIMERPOOL->Get("OnP2LastNote");
+			PLAYERVALUE[1].pOnGameover = TIMERPOOL->Get("OnP2GameOver");
+			PLAYERVALUE[1].pOnGaugeMax = TIMERPOOL->Get("OnP2GaugeMax");
+
+			PLAYERVALUE[1].pLanepress[0] = TIMERPOOL->Get("OnP2KeySCPress");
+			PLAYERVALUE[1].pLaneup[0] = TIMERPOOL->Get("OnP2KeySCUp");
+			PLAYERVALUE[1].pLanehold[0] = TIMERPOOL->Get("OnP2JudgeSCHold");
+			PLAYERVALUE[1].pLanejudgeokay[0] = TIMERPOOL->Get("OnP2JudgeSCOkay");
+			for (int i = 1; i < 10; i++) {
+				PLAYERVALUE[1].pLanepress[i] = TIMERPOOL->Get(ssprintf("OnP2Key%dPress", i));
+				PLAYERVALUE[1].pLaneup[i] = TIMERPOOL->Get(ssprintf("OnP2Key%dUp", i));
+				PLAYERVALUE[1].pLanehold[i] = TIMERPOOL->Get(ssprintf("OnP2Judge%dHold", i));
+				PLAYERVALUE[1].pLanejudgeokay[i] = TIMERPOOL->Get(ssprintf("OnP2Judge%dOkay", i));
+			}
+		}
+	}
+
 	// sceneplay part
 	void ScenePlay::Initialize() {
 		// initalize skin tree
@@ -167,6 +271,10 @@ namespace GamePlay {
 		On2PMiss = SWITCH_OFF("On2PMiss");
 		Bmspath = STRPOOL->Get("Bmspath");
 
+		// initalize player rendering values
+		Initalize_P1_RenderValue();
+		Initalize_P2_RenderValue();
+
 		// temp resource
 		int pitch;
 		Uint32 *p;
@@ -179,7 +287,26 @@ namespace GamePlay {
 
 	void ScenePlay::Start() {
 		/*
-		 * Load bms resource first
+		 * initalize timers
+		 */
+		GameTimer::Tick();
+		SWITCH_ON("OnDiffAnother");
+		SWITCH_ON("IsScoreGraph");
+		SWITCH_OFF("IsAutoPlay");
+		SWITCH_ON("IsBGA");
+		SWITCH_ON("IsExtraMode");
+		SWITCH_ON("OnDiffInsane");
+		//SWITCH_ON("Is1PSuddenChange");
+		//SWITCH_ON("981");
+		DOUBLEPOOL->Set("TargetExScore", 0.5);
+		DOUBLEPOOL->Set("TargetExScore", 0.5);
+		OnSongLoadingEnd->Stop();
+		OnReady->Stop();
+		OnGameStart->Stop();
+		OnSongLoading->Stop();
+
+		/*
+		 * Load bms first
 		 * (bms resource is loaded with thread)
 		 * (load bms first to find out what key skin is proper)
 		 */
@@ -199,30 +326,15 @@ namespace GamePlay {
 		LoadSkin(PlayskinPath);
 
 		/*
+		 * Load bms resource
+		 */
+		BmsHelper::LoadBmsResourceOnThread();
+
+		/*
 		 * Create player object for playing
 		 */
 		PLAYER[0] = new PlayerAuto(&PLAYERINFO[0].playconfig, bmsnote, 0, playmode);
 		PLAYER[1] = NULL;
-
-		/*
-		 * initalize timers
-		 * MUST DO after skin is loaded
-		 */
-		GameTimer::Tick();
-		SWITCH_ON("OnDiffAnother");
-		SWITCH_ON("IsScoreGraph");
-		SWITCH_OFF("IsAutoPlay");
-		SWITCH_ON("IsBGA");
-		SWITCH_ON("IsExtraMode");
-		SWITCH_ON("OnDiffInsane");
-		//SWITCH_ON("Is1PSuddenChange");
-		//SWITCH_ON("981");
-		DOUBLEPOOL->Set("TargetExScore", 0.5);
-		DOUBLEPOOL->Set("TargetExScore", 0.5);
-		OnSongLoadingEnd->Stop();
-		OnReady->Stop();
-		OnGameStart->Stop();
-		OnSongLoading->Stop();
 
 		/*
 		 * must call at the end of the scene preparation
