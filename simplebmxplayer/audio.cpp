@@ -26,3 +26,10 @@ void Audio::Play() {
 void Audio::Stop() {
 	Mix_HaltChannel(channel);
 }
+
+Uint32 Audio::GetLength() {
+	if (!IsLoaded()) 
+		return 0;
+	else 
+		return sdlaudio->alen / 4 * 1000 / 44100;
+}

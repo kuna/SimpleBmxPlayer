@@ -19,7 +19,7 @@ private:
 	static bool _movie_available;
 	static void _init();
 
-private:
+protected:
 	// also includes movie!
 	SDL_Texture *sdltex;
 	AVFormatContext *moviectx;			// movie context (handle)
@@ -54,4 +54,13 @@ public:
 	void Reset();				// reset pos to first one
 	void Sync(Uint32 t);		// refreshes texture in case of movie (loop forever if it's longer then movie)
 	SDL_Texture* GetPtr();
+};
+
+/*
+ * @description
+ * makes a simple texture(1x1) with specificed color
+ */
+class ImageColor : public Image {
+public:
+	ImageColor(uint32_t color, int w = 1, int h = 1);
 };

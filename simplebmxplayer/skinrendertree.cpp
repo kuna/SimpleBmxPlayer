@@ -337,8 +337,11 @@ void SkinImageObject::SetImage(Image *img) {
 
 void SkinImageObject::SetSRC(XMLElement *e) {
 	ConstructSRCFromElement(imgsrc, e);
-	if (e->Attribute("resid"))
-		SetImage(rtree->_imagekey[e->Attribute("resid")]);
+	if (e->Attribute("resid")) {
+		Image *img = IMAGEPOOL->GetById(e->Attribute("resid"));
+		if (!img) img = rtree->_imagekey[e->Attribute("resid")];
+		SetImage(img);
+	}
 }
 
 void SkinImageObject::Render() {
@@ -541,12 +544,12 @@ void SkinGrooveGaugeObject::SetObject(XMLElement *e) {
 	addx = e->IntAttribute("addx");
 	addy = e->IntAttribute("addy");
 	if (e->IntAttribute("side") == 0) {
-		v = DOUBLEPOOL->Get("Player1Gauge");
-		Gaugetype = INTPOOL->Get("Player1GaugeType");
+		v = DOUBLEPOOL->Get("P1Gauge");
+		Gaugetype = INTPOOL->Get("P1GaugeType");
 	}
 	else {
-		v = DOUBLEPOOL->Get("Player2Gauge");
-		Gaugetype = INTPOOL->Get("Player2GaugeType");
+		v = DOUBLEPOOL->Get("P2Gauge");
+		Gaugetype = INTPOOL->Get("P2GaugeType");
 	}
 	t = TIMERPOOL->Get("OnScene");
 	dotcnt = 50;
@@ -578,7 +581,7 @@ void SkinGrooveGaugeObject::SetObject(XMLElement *e) {
 
 void SkinGrooveGaugeObject::Render() {
 	// work like a graph
-	if (drawable && v) {
+	if (drawable && v && img) {
 		ImageDSTFrame f = dst_cached.frame;
 		ImageSRC *currentsrc;
 		int inactive = 0;
@@ -592,25 +595,26 @@ void SkinGrooveGaugeObject::Render() {
 			// grooveGauge => print as hard Gauge from 80%
 			if (Gaugetype_now == 0 && i >= groovedot)
 				Gaugetype_now = 1;
+			// should I blink?
+			switch (activedot - i) {
+			case 1:
+				if (blink >= 1)
+					inactive = true;
+					break;
+			case 2:
+				if (blink >= 2)
+					inactive = true;
+					break;
+			}
 			// now we can set currentSRC
 			if (inactive) 
 				currentsrc = &src_combo_inactive[Gaugetype_now];
 			else
 				currentsrc = &src_combo_active[Gaugetype_now];
-			// should I blink?
-			switch (activedot - i) {
-			case 1:
-				if (blink >= 1) break;
-			case 2:
-				if (blink >= 2) break;
-			case 3:
-				if (blink >= 3) break;
-			default:
-				// do render
-				SkinRenderHelper::Render(img, currentsrc, &f,
-					dst_cached.dst->blend, dst_cached.dst->rotatecenter);
-				break;
-			}
+			// do render
+			SkinRenderHelper::Render(img, currentsrc, &f,
+				dst_cached.dst->blend, dst_cached.dst->rotatecenter);
+
 			f.x += addx;
 			f.y += addy;
 		}
@@ -775,7 +779,10 @@ void SkinScriptObject::Render() {
 // ----- SkinRenderTree -------------------------------------
 
 #pragma region SKINRENDERTREE
-SkinRenderTree::SkinRenderTree(int w, int h) : SkinGroupObject(this) { SetSkinSize(w, h); }
+SkinRenderTree::SkinRenderTree(int w, int h) : SkinGroupObject(this) { 
+	// set skin size
+	SetSkinSize(w, h); 
+}
 
 void SkinRenderTree::SetSkinSize(int w, int h) { _scr_w = w, _scr_h = h; }
 
@@ -979,6 +986,7 @@ void ConstructDSTFromElement(ImageDST &dst, XMLElement *e) {
 }
 
 /* private */
+/* TODO: change object creating by matching name to `Registered objects` */
 void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XMLElement *e) {
 	while (e) {
 		SkinRenderObject *obj = 0;

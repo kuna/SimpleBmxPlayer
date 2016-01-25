@@ -9,6 +9,7 @@
 
 #include "audio.h"
 #include "image.h"
+#include "timer.h"
 
 #include "bmsbel\bms_bms.h"
 #include "bmsbel\bms_define.h"
@@ -78,7 +79,7 @@ namespace BmsHelper {
 		BmsWord layer2bga;
 	};
 
-	Image* GetMissBGA();
+	Image* GetMissBGA(int player = 0);
 	Image* GetMainBGA();
 	Image* GetLayer1BGA();
 	Image* GetLayer2BGA();
@@ -102,3 +103,23 @@ namespace BmsHelper {
 
 	double GetMediumBPM();
 }
+
+typedef struct {
+	double*			songloadprogress;
+	Timer*			OnSongLoading;
+	Timer*			OnSongLoadingEnd;
+
+	double*			PlayProgress;
+	int*			PlayBPM;
+	int*			PlayMin;
+	int*			PlaySec;
+	int*			PlayRemainMin;
+	int*			PlayRemainSec;
+
+	Timer*			OnBeat;
+	Timer*			OnBgaMain;
+	Timer*			OnBgaLayer1;
+	Timer*			OnBgaLayer2;
+} BmsValue;
+
+extern BmsValue BMSVALUE;

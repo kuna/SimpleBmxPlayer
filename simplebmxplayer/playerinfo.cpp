@@ -380,7 +380,7 @@ namespace PlayerInfoHelper {
 		FileHelper::CreateFolder(absolute_db_dir);
 		// start to parse XML file
 		XMLDocument *doc = new XMLDocument();
-		if (doc->Parse(absolute_db_path) != 0) {
+		if (doc->LoadFile(absolute_db_path) != 0) {
 			/* failed to load XML. you may have to initalize Player yourself. */
 			delete doc;
 			return false;

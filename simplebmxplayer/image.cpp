@@ -268,3 +268,15 @@ bool Image::IsLoaded() {
 SDL_Texture* Image::GetPtr() {
 	return sdltex;
 }
+
+#define COLOR_ARGB(a, r, g, b) ((a) << 24 | (r) << 16 | (g) << 8 | (b))
+
+ImageColor::ImageColor(uint32_t color, int w, int h) {
+	int pitch;
+	Uint32 *p;
+	sdltex = SDL_CreateTexture(Game::RENDERER, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, w, h);
+	SDL_LockTexture(sdltex, 0, (void**)&p, &pitch);
+	for (int i = 0; i < w * h; i++)
+		p[i] = color;
+	SDL_UnlockTexture(sdltex);
+}

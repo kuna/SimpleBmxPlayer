@@ -44,8 +44,6 @@ namespace GamePlay {
 	BmsNoteManager*		bmsnote;
 	int					playmode;	// PLAYTYPE
 
-	SDL_Texture* temptexture;	// only for test purpose
-
 	bool LoadSkin(const char* path) {
 		//SkinDST::On(33);		// autoplay on
 		//SkinDST::On(41);		// BGA on
@@ -150,6 +148,24 @@ namespace GamePlay {
 	}
 
 	namespace {
+		void Initalize_BmsValue() {
+			BMSVALUE.songloadprogress = DOUBLEPOOL->Get("SongLoadProgress");
+			BMSVALUE.OnSongLoading = TIMERPOOL->Get("OnSongLoading");
+			BMSVALUE.OnSongLoadingEnd = TIMERPOOL->Get("OnSongLoadingEnd");
+
+			BMSVALUE.PlayProgress = DOUBLEPOOL->Get("PlayProgress");
+			BMSVALUE.PlayBPM = INTPOOL->Get("PlayBPM");
+			BMSVALUE.PlayMin = INTPOOL->Get("PlayMinute");
+			BMSVALUE.PlaySec = INTPOOL->Get("PlaySecond");
+			BMSVALUE.PlayRemainSec = INTPOOL->Get("PlayRemainSecond");
+			BMSVALUE.PlayRemainMin = INTPOOL->Get("PlayRemainMinute");
+
+			BMSVALUE.OnBeat = TIMERPOOL->Get("OnBeat");
+			BMSVALUE.OnBgaMain = TIMERPOOL->Get("OnBgaMain");
+			BMSVALUE.OnBgaLayer1 = TIMERPOOL->Get("OnBgaLayer1");
+			BMSVALUE.OnBgaLayer2 = TIMERPOOL->Get("OnBgaLayer2");
+		}
+
 		void Initalize_P1_RenderValue() {
 			PLAYERVALUE[0].pNoteSpeed = INTPOOL->Get("P1Speed");
 			PLAYERVALUE[0].pFloatSpeed = INTPOOL->Get("P1FloatSpeed");
@@ -158,7 +174,7 @@ namespace GamePlay {
 
 			PLAYERVALUE[0].pGauge_d = DOUBLEPOOL->Get("P1Gauge");
 			PLAYERVALUE[0].pGaugeType = INTPOOL->Get("P1GaugeType");
-			PLAYERVALUE[0].pGauge = INTPOOL->Get("P1GrooveGuage");
+			PLAYERVALUE[0].pGauge = INTPOOL->Get("P1Gauge");
 			PLAYERVALUE[0].pExscore = INTPOOL->Get("P1ExScore");
 			PLAYERVALUE[0].pScore = INTPOOL->Get("P1Score");
 			PLAYERVALUE[0].pExscore_d = DOUBLEPOOL->Get("P1ExScore");
@@ -210,7 +226,7 @@ namespace GamePlay {
 
 			PLAYERVALUE[1].pGauge_d = DOUBLEPOOL->Get("P2Gauge");
 			PLAYERVALUE[1].pGaugeType = INTPOOL->Get("P2GaugeType");
-			PLAYERVALUE[1].pGauge = INTPOOL->Get("P2GrooveGuage");
+			PLAYERVALUE[1].pGauge = INTPOOL->Get("P2Gauge");
 			PLAYERVALUE[1].pExscore = INTPOOL->Get("P2ExScore");
 			PLAYERVALUE[1].pScore = INTPOOL->Get("P2Score");
 			PLAYERVALUE[1].pExscore_d = DOUBLEPOOL->Get("P2ExScore");
@@ -230,7 +246,7 @@ namespace GamePlay {
 			PLAYERVALUE[1].pOnJudge[3] = TIMERPOOL->Set("OnP2JudgeGood");
 			PLAYERVALUE[1].pOnJudge[2] = TIMERPOOL->Set("OnP2JudgeBad");
 			PLAYERVALUE[1].pOnJudge[1] = TIMERPOOL->Set("OnP2JudgePoor");
-			PLAYERVALUE[1].pOnJudge[1] = TIMERPOOL->Set("OnP2JudgePoor");
+			PLAYERVALUE[1].pOnJudge[0] = TIMERPOOL->Set("OnP2JudgePoor");
 
 			PLAYERVALUE[1].pOnMiss = TIMERPOOL->Get("OnP2Miss");
 			PLAYERVALUE[1].pOnCombo = TIMERPOOL->Get("OnP2Combo");
@@ -272,17 +288,9 @@ namespace GamePlay {
 		Bmspath = STRPOOL->Get("Bmspath");
 
 		// initalize player rendering values
+		Initalize_BmsValue();
 		Initalize_P1_RenderValue();
 		Initalize_P2_RenderValue();
-
-		// temp resource
-		int pitch;
-		Uint32 *p;
-		temptexture = SDL_CreateTexture(Game::RENDERER, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, 20, 10);
-		SDL_LockTexture(temptexture, 0, (void**)&p, &pitch);
-		for (int i = 0; i < 20 * 10; i++)
-			p[i] = (255 << 24 | 255 << 16 | 120 << 8 | 120);
-		SDL_UnlockTexture(temptexture);
 	}
 
 	void ScenePlay::Start() {
@@ -400,9 +408,6 @@ namespace GamePlay {
 		playskin.Release();
 		//bmsresource.Clear();
 		//bms.Clear();
-
-		// temp resource
-		if (temptexture) SDL_DestroyTexture(temptexture);
 	}
 
 	/** private */

@@ -9,6 +9,8 @@
 #include "pthread\pthread.h"
 #include "bmsbel\bms_parser.h"
 
+BmsValue			BMSVALUE;
+
 // TODO: call handler? if soundcall is required.
 
 namespace BmsResource {
@@ -113,6 +115,7 @@ namespace BmsHelper {
 	Uint32			currentbar;		// current bar's position
 	Uint32			bgbar;			// bgm/bga bar position (private)
 	BGAInformation	currentbga;
+	Uint32			bmslength;		// bms length in msec
 
 	/*
 	 * Loading thread should not interrupted but joined.
@@ -156,10 +159,10 @@ namespace BmsHelper {
 		* and Get Bms base directory
 		*/
 		mutex_bmsresource.lock();
-		FileHelper::PushBasePath(IO::get_filedir(BmsResource::bmspath).c_str());
 		isbmsloading = true;
 
 		// load WAV/BMP
+		FileHelper::PushBasePath(IO::get_filedir(BmsResource::bmspath).c_str());
 		for (unsigned int i = 0; i < BmsConst::WORD_MAX_COUNT && isbmsloading; i++) {
 			BmsWord word(i);
 			if (BmsResource::BMS.GetRegistArraySet()["WAV"].IsExists(word)) {
@@ -168,12 +171,36 @@ namespace BmsHelper {
 			if (BmsResource::BMS.GetRegistArraySet()["BMP"].IsExists(word)) {
 				BmsResource::IMAGE.Load(i, BmsResource::BMS.GetRegistArraySet()["BMP"][word]);
 			}
-			DOUBLEPOOL->Set("SongLoadProgress", (double)i / BmsConst::WORD_MAX_COUNT);
+			*BMSVALUE.songloadprogress = (double)i / BmsConst::WORD_MAX_COUNT;
 		}
-		DOUBLEPOOL->Set("SongLoadProgress", 1);
-
+		*BMSVALUE.songloadprogress = 1;
 		FileHelper::PopBasePath();
-		TIMERPOOL->Set("OnSongLoadingEnd");
+
+		// get bms duration (only for note)
+		BmsNoteManager *note = new BmsNoteManager();
+		BmsResource::BMS.GetNotes(*note);
+		bmslength = 0;
+		Audio *audio;
+		int audiolen = 0;
+		for (int i = 0; i < BmsResource::BMSTIME.GetSize(); i++) {
+			Uint32 t = BmsResource::BMSTIME[i].time * 1000;
+			for (int c = 0; c < 20; c++) {
+				switch ((*note)[c][i].type) {
+				case BmsNote::NOTE_LNSTART:
+				case BmsNote::NOTE_NORMAL:
+					audio = BmsResource::SOUND.Get((*note)[c][i].value);
+					if (audio)
+						audiolen = audio->GetLength();
+					else
+						audiolen = 0;
+					bmslength = max(bmslength, t + audiolen);
+					break;
+				}
+			}
+		}
+
+		// end
+		BMSVALUE.OnSongLoadingEnd->Start();
 		isbmsloading = false;
 		mutex_bmsresource.unlock();
 		return true;
@@ -205,22 +232,15 @@ namespace BmsHelper {
 		/*
 		* BMS related timer/value update
 		*/
-		int remaintime = BmsResource::BMSTIME.GetEndTime() * 1000 - time;
+		int remaintime = GetEndTime() * 1000 - time;
 		if (remaintime < 0) remaintime = 0;
-		DOUBLEPOOL->Set("PlayProgress", time / 1000.0 / BmsResource::BMSTIME.GetEndTime());
-		INTPOOL->Set("PlayBPM", BmsResource::BMSTIME[currentbar].bpm);
-		INTPOOL->Set("PlayMinute", time / 1000 / 60);
-		INTPOOL->Set("PlaySecond", time / 1000 % 60);
-		INTPOOL->Set("PlayRemainMinute", remaintime / 1000 / 60);
-		INTPOOL->Set("PlayRemainSecond", remaintime / 1000 % 60);
-
-		/*
-		* sync bms texture (movie)
-		*/
-		for (int i = 0; i < BmsConst::WORD_MAX_VALUE; i++) {
-			if (BmsResource::IMAGE.Get(i))
-				BmsResource::IMAGE.Get(i)->Sync(time);
-		}
+		*BMSVALUE.PlayProgress
+			= time / 1000.0 / BmsResource::BMSTIME.GetEndTime();
+		*BMSVALUE.PlayBPM = BmsResource::BMSTIME[currentbar].bpm;
+		*BMSVALUE.PlayMin = time / 1000 / 60;
+		*BMSVALUE.PlaySec = time / 1000 % 60;
+		*BMSVALUE.PlayRemainMin = remaintime / 1000 / 60;
+		*BMSVALUE.PlayRemainSec = remaintime / 1000 % 60;
 
 		/*
 		 * get new bar position
@@ -235,7 +255,7 @@ namespace BmsHelper {
 		{
 			// OnBeat
 			if (BmsResource::BMSTIME[bgbar].measure)
-				TIMERPOOL->Set("OnBeat");
+				BMSVALUE.OnBeat->Start();
 
 			// call event handler for BGA/BGM
 			BmsChannel& bgmchannel		= BmsResource::BMS.GetChannelManager()[BmsWord(1)];
@@ -259,6 +279,7 @@ namespace BmsHelper {
 				BmsWord current_word((**it)[bgbar]);
 				if (current_word == BmsWord::MIN)
 					continue;
+				BMSVALUE.OnBgaMain->Start();
 				currentbga.mainbga = current_word;
 			}
 			for (auto it = bgachannel2.Begin(); it != bgachannel2.End(); it++) {
@@ -267,6 +288,7 @@ namespace BmsHelper {
 				BmsWord current_word((**it)[bgbar]);
 				if (current_word == BmsWord::MIN)
 					continue;
+				BMSVALUE.OnBgaLayer1->Start();
 				currentbga.layer1bga = current_word;
 			}
 			for (auto it = bgachannel3.Begin(); it != bgachannel3.End(); it++) {
@@ -275,6 +297,7 @@ namespace BmsHelper {
 				BmsWord current_word((**it)[bgbar]);
 				if (current_word == BmsWord::MIN)
 					continue;
+				BMSVALUE.OnBgaLayer2->Start();
 				currentbga.layer2bga = current_word;
 			}
 			for (auto it = missbgachannel.Begin(); it != missbgachannel.End(); it++) {
@@ -304,7 +327,7 @@ namespace BmsHelper {
 	}
 
 	uint32_t GetEndTime() {
-		return BmsResource::BMSTIME.GetEndTime() * 1000;
+		return bmslength;
 	}
 
 	double GetCurrentPosFromTime(double time_sec) {
@@ -356,18 +379,48 @@ namespace BmsHelper {
 	}
 
 	Image* GetMainBGA() {
-		return currentbga.mainbga != 0 ? BmsResource::IMAGE.Get(currentbga.mainbga) : 0;
+		/*
+		 * Only sync when requires
+		 */
+		if (currentbga.mainbga != 0) {
+			Image* img = BmsResource::IMAGE.Get(currentbga.mainbga);
+			img->Sync(BMSVALUE.OnBgaMain->GetTick());
+			return img;
+		}
+		else {
+			return 0;
+		}
 	}
 
-	Image *GetMissBGA() {
+	Image *GetMissBGA(int player) {
 		return BmsResource::IMAGE.Get(currentbga.missbga);
 	}
 
 	Image *GetLayer1BGA() {
-		return currentbga.layer1bga != 0 ? BmsResource::IMAGE.Get(currentbga.layer1bga) : 0;
+		/*
+		* Only sync when requires
+		*/
+		if (currentbga.layer1bga != 0) {
+			Image* img = BmsResource::IMAGE.Get(currentbga.layer1bga);
+			img->Sync(BMSVALUE.OnBgaLayer1->GetTick());
+			return img;
+		}
+		else {
+			return 0;
+		}
 	}
 
 	Image *GetLayer2BGA() {
-		return currentbga.layer2bga != 0 ? BmsResource::IMAGE.Get(currentbga.layer2bga) : 0;
+		/*
+		* Only sync when requires
+		*/
+		if (currentbga.layer2bga != 0) {
+			Image* img = BmsResource::IMAGE.Get(currentbga.layer2bga);
+			img->Sync(BMSVALUE.OnBgaLayer2->GetTick());
+			return img;
+		}
+		else {
+			return 0;
+		}
 	}
 }

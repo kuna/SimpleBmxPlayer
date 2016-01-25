@@ -192,7 +192,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			cur_e = condition_element[--condition_level];
 			cur_e->LinkEndChild(group);
 			condition_element[++condition_level] = cur_e = group;
-			condition_status[condition_level] = 0;
+			condition_status[condition_level]++;
 		}
 		else {
 			// we tend to ignore #ELSE clause ... it's wrong.
@@ -203,9 +203,12 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	else if (CMD_IS("#IF") || CMD_IS("#ELSEIF")) {
 		// #ELSEIF: think as new #IF clause
 		XMLElement *group = s->skinlayout.NewElement("If");
-		if (CMD_IS("#IF")) condition_level++;
+		if (CMD_IS("#IF")) {
+			condition_level++;
+			condition_status[condition_level] = 0;
+		}
 		condition_element[condition_level] = group;
-		condition_status[condition_level] = CMD_IS("#IF");
+		condition_status[condition_level]++;
 		ConditionAttribute cls;
 		for (int i = 1; i < 50 && args[i]; i++) {
 			const char *c = INT(args[i])?TranslateOPs(INT(args[i])):0;
@@ -315,7 +318,8 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		 * Sometimes resource is added in IF form
 		 * then ONLY allow first one
 		 */
-		if (condition_level > 1 && condition_status[condition_level] == 0) return line + 1;
+		if (condition_level > 0 && condition_status[condition_level] > 1)
+			return line + 1;
 		XMLElement *resource = s->skinlayout.FirstChildElement("Resource");
 		XMLElement *image = s->skinlayout.NewElement("Image");
 		image->SetAttribute("name", image_cnt++);
@@ -386,8 +390,27 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		// SRC may have condition (attribute condition; normally not used)
 		XMLElement *obj;
 		obj = s->skinlayout.NewElement("Image");
-		int resid = INT(args[2]);
-		obj->SetAttribute("resid", resid);
+		int resid = INT(args[2]);	// COMMENT: check out for pre-occupied resid
+		switch (resid) {
+		case 100:
+			obj->SetAttribute("resid", "_stagefile");
+			break;
+		case 101:
+			obj->SetAttribute("resid", "_backbmp");
+			break;
+		case 102:
+			obj->SetAttribute("resid", "_banner");
+			break;
+		case 110:
+			obj->SetAttribute("resid", "_black");
+			break;
+		case 111:
+			obj->SetAttribute("resid", "_white");
+			break;
+		default:
+			obj->SetAttribute("resid", resid);
+			break;
+		}
 		obj->SetAttribute("x", INT(args[3]));
 		obj->SetAttribute("y", INT(args[4]));
 		if (INT(args[5]) > 0) {
@@ -912,7 +935,7 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line, int resid) {
 
 std::string _getcomboconditionstring(int player, int level) {
 	char buf[256];
-	sprintf(buf, "On%dPJudge", player);
+	sprintf(buf, "OnP%dJudge", player);
 
 	switch (level) {
 	case 0:
@@ -957,7 +980,7 @@ int _LR2SkinParser::ProcessCombo(XMLElement *obj, int line) {
 		XMLElement *playcombo = FindElementWithAttribute(cur_e, "Combo", "condition", cond.c_str(), &s->skinlayout);
 		obj->SetName("Number");
 		ProcessNumber(obj, 0, 0, 0);
-		obj->SetAttribute("value", "Play1PCombo");
+		obj->SetAttribute("value", "P1Combo");
 		obj->SetAttribute("align", 1);
 		for (XMLElement *e = obj->FirstChildElement("DST")->FirstChildElement("Frame"); e;) {
 			e->SetAttribute("y", __comboy);
@@ -973,7 +996,8 @@ int _LR2SkinParser::ProcessCombo(XMLElement *obj, int line) {
 		XMLElement *playcombo = FindElementWithAttribute(cur_e, "Combo", "condition", cond.c_str(), &s->skinlayout);
 		obj->SetName("Image");
 		playcombo->LinkEndChild(obj);
-		__comboy = obj->FirstChildElement("DST")->IntAttribute("y");
+		__comboy = obj->FirstChildElement("DST")->FirstChildElement("Frame")->IntAttribute("y");
+		__combox = obj->FirstChildElement("DST")->FirstChildElement("Frame")->IntAttribute("x");
 		return line + 1;
 	}
 	else if (OBJTYPE_IS("NOWCOMBO_2P")) {
@@ -981,7 +1005,7 @@ int _LR2SkinParser::ProcessCombo(XMLElement *obj, int line) {
 		XMLElement *playcombo = FindElementWithAttribute(cur_e, "Combo", "condition", cond.c_str(), &s->skinlayout);
 		obj->SetName("Number");
 		ProcessNumber(obj, 0, 0, 0);
-		obj->SetAttribute("value", "Play2PCombo");
+		obj->SetAttribute("value", "P2Combo");
 		obj->SetAttribute("align", 1);
 		for (XMLElement *e = obj->FirstChildElement("DST")->FirstChildElement("Frame"); e;) {
 			e->SetAttribute("y", __comboy);
@@ -1314,16 +1338,16 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 			strcat(translated, "IsBGA");
 		}
 		else if (op == 42) {
-			strcat(translated, "Is1PGrooveGuage");
+			strcat(translated, "IsP1GrooveGauge");
 		}
 		else if (op == 43) {
-			strcat(translated, "Is1PHardGuage");
+			strcat(translated, "IsP1HardGauge");
 		}
 		else if (op == 44) {
-			strcat(translated, "Is2PGrooveGuage");
+			strcat(translated, "IsP2GrooveGauge");
 		}
 		else if (op == 45) {
-			strcat(translated, "Is2PHardGuage");
+			strcat(translated, "IsP2HardGauge");
 		}
 		else if (op == 46) {
 			strcat(translated, "IsDiffFiltered");		// on select menu; but depreciated?
@@ -1344,18 +1368,18 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 			strcat(translated, "IsExtraMode");
 		}
 		else if (op == 54) {
-			SETNEGATIVEOPTION("Is1PAutoSC");
+			SETNEGATIVEOPTION("IsP1AutoSC");
 		}
 		else if (op == 55) {
-			strcat(translated, "Is1PAutoSC");
+			strcat(translated, "IsP1AutoSC");
 		}
 		else if (op == 56) {
 			if (translated[0] == '!') translated[0] = 0;
 			else strcpy(translated, "!");
-			strcat(translated, "Is2PAutoSC");
+			strcat(translated, "IsP2AutoSC");
 		}
 		else if (op == 57) {
-			strcat(translated, "Is2PAutoSC");
+			strcat(translated, "IsP2AutoSC");
 		}
 		else if (op == 60) {
 			if (translated[0] == '!') translated[0] = 0;
@@ -1543,157 +1567,157 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 	/* during play */
 	else if (op >= 200 && op < 300) {
 		if (op == 200) {
-			SETOPTION("Is1PAAA");
+			SETOPTION("IsP1AAA");
 		}
 		else if (op == 201) {
-			SETOPTION("Is1PAA");
+			SETOPTION("IsP1AA");
 		}
 		else if (op == 202) {
-			SETOPTION("Is1PA");
+			SETOPTION("IsP1A");
 		}
 		else if (op == 203) {
-			SETOPTION("Is1PB");
+			SETOPTION("IsP1B");
 		}
 		else if (op == 204) {
-			SETOPTION("Is1PC");
+			SETOPTION("IsP1C");
 		}
 		else if (op == 205) {
-			SETOPTION("Is1PD");
+			SETOPTION("IsP1D");
 		}
 		else if (op == 206) {
-			SETOPTION("Is1PE");
+			SETOPTION("IsP1E");
 		}
 		else if (op == 207) {
-			SETOPTION("Is1PF");
+			SETOPTION("IsP1F");
 		}
 		else if (op == 210) {
-			SETOPTION("Is2PAAA");
+			SETOPTION("IsP2AAA");
 		}
 		else if (op == 211) {
-			SETOPTION("Is2PAA");
+			SETOPTION("IsP2AA");
 		}
 		else if (op == 212) {
-			SETOPTION("Is2PA");
+			SETOPTION("IsP2A");
 		}
 		else if (op == 213) {
-			SETOPTION("Is2PB");
+			SETOPTION("IsP2B");
 		}
 		else if (op == 214) {
-			SETOPTION("Is2PC");
+			SETOPTION("IsP2C");
 		}
 		else if (op == 215) {
-			SETOPTION("Is2PD");
+			SETOPTION("IsP2D");
 		}
 		else if (op == 216) {
-			SETOPTION("Is2PE");
+			SETOPTION("IsP2E");
 		}
 		else if (op == 217) {
-			SETOPTION("Is2PF");
+			SETOPTION("IsP2F");
 		}
 		else if (op == 220) {
-			SETOPTION("Is1PReachAAA");
+			SETOPTION("IsP1ReachAAA");
 		}
 		else if (op == 221) {
-			SETOPTION("Is1PReachAA");
+			SETOPTION("IsP1ReachAA");
 		}
 		else if (op == 222) {
-			SETOPTION("Is1PReachA");
+			SETOPTION("IsP1ReachA");
 		}
 		else if (op == 223) {
-			SETOPTION("Is1PReachB");
+			SETOPTION("IsP1ReachB");
 		}
 		else if (op == 224) {
-			SETOPTION("Is1PReachC");
+			SETOPTION("IsP1ReachC");
 		}
 		else if (op == 225) {
-			SETOPTION("Is1PReachD");
+			SETOPTION("IsP1ReachD");
 		}
 		else if (op == 226) {
-			SETOPTION("Is1PReachE");
+			SETOPTION("IsP1ReachE");
 		}
 		else if (op == 227) {
-			SETOPTION("Is1PReachF");
+			SETOPTION("IsP1ReachF");
 		}
 		/* 23X : I dont want to implement these useless one ... hmm... don't want ... .... */
 		else if (op == 241) {
-			SETOPTION("On1PJudgePerfect");
+			SETOPTION("OnP1JudgePerfect");
 		}
 		else if (op == 242) {
-			SETOPTION("On1PJudgeGreat");
+			SETOPTION("OnP1JudgeGreat");
 		}
 		else if (op == 243) {
-			SETOPTION("On1PJudgeGood");
+			SETOPTION("OnP1JudgeGood");
 		}
 		else if (op == 244) {
-			SETOPTION("On1PJudgeBad");
+			SETOPTION("OnP1JudgeBad");
 		}
 		else if (op == 245) {
-			SETOPTION("On1PJudgePoor");
+			SETOPTION("OnP1JudgePoor");
 		}
 		else if (op == 246) {
-			SETOPTION("On1PJudgePoor");		// ÍöPOOR
+			SETOPTION("OnP1JudgePoor");		// ÍöPOOR
 		}
 		else if (op == 247) {
-			SETOPTION("On1PPoorBGA");
+			SETOPTION("OnP1Miss");
 		}
 		else if (op == 248) {
-			SETNEGATIVEOPTION("On1PPoorBGA");
+			SETNEGATIVEOPTION("OnP1Miss");
 		}/*
 		else if (op == 220) {
-		SETOPTION("Is1PReachAAA");
+		SETOPTION("IsP1ReachAAA");
 		}
 		else if (op == 221) {
-		SETOPTION("Is1PReachAA");
+		SETOPTION("IsP1ReachAA");
 		}
 		else if (op == 222) {
-		SETOPTION("Is1PReachA");
+		SETOPTION("IsP1ReachA");
 		}
 		else if (op == 223) {
-		SETOPTION("Is1PReachB");
+		SETOPTION("IsP1ReachB");
 		}
 		else if (op == 224) {
-		SETOPTION("Is1PReachC");
+		SETOPTION("IsP1ReachC");
 		}
 		else if (op == 225) {
-		SETOPTION("Is1PReachD");
+		SETOPTION("IsP1ReachD");
 		}
 		else if (op == 226) {
-		SETOPTION("Is1PReachE");
+		SETOPTION("IsP1ReachE");
 		}
 		else if (op == 227) {
-		SETOPTION("Is1PReachF");
+		SETOPTION("IsP1ReachF");
 		}*/
 		/* 23X : I dont want to implement these useless one ... hmm... don't want ... .... */
 		else if (op == 261) {
-			SETOPTION("On2PJudgePerfect");
+			SETOPTION("OnP2JudgePerfect");
 		}
 		else if (op == 262) {
-			SETOPTION("On2PJudgeGreat");
+			SETOPTION("OnP2JudgeGreat");
 		}
 		else if (op == 263) {
-			SETOPTION("On2PJudgeGood");
+			SETOPTION("OnP2JudgeGood");
 		}
 		else if (op == 264) {
-			SETOPTION("On2PJudgeBad");
+			SETOPTION("OnP2JudgeBad");
 		}
 		else if (op == 265) {
-			SETOPTION("On2PJudgePoor");
+			SETOPTION("OnP2JudgePoor");
 		}
 		else if (op == 266) {
-			SETOPTION("On2PJudgePoor");		// ÍöPOOR
+			SETOPTION("OnP2JudgePoor");		// ÍöPOOR
 		}
 		else if (op == 267) {
-			SETOPTION("On2PPoorBGA");
+			SETOPTION("OnP2Miss");
 		}
 		else if (op == 268) {
-			SETNEGATIVEOPTION("On2PPoorBGA");
+			SETNEGATIVEOPTION("OnP2Miss");
 		}
 		/* SUD/LIFT */
 		else if (op == 270) {
-			strcat(translated, "On1PSuddenChange");
+			strcat(translated, "OnP1SuddenChange");
 		}
 		else if (op == 271) {
-			strcat(translated, "On2PSuddenChange");
+			strcat(translated, "OnP2SuddenChange");
 		}
 		/* Course related */
 		else if (op == 280) {
@@ -1727,52 +1751,52 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 	/* result screen */
 	else if (op >= 300 && op < 400) {
 		if (op == 300) {
-			SETOPTION("Is1PAAA");
+			SETOPTION("IsP1AAA");
 		}
 		else if (op == 301) {
-			SETOPTION("Is1PAA");
+			SETOPTION("IsP1AA");
 		}
 		else if (op == 302) {
-			SETOPTION("Is1PA");
+			SETOPTION("IsP1A");
 		}
 		else if (op == 303) {
-			SETOPTION("Is1PB");
+			SETOPTION("IsP1B");
 		}
 		else if (op == 304) {
-			SETOPTION("Is1PC");
+			SETOPTION("IsP1C");
 		}
 		else if (op == 305) {
-			SETOPTION("Is1PD");
+			SETOPTION("IsP1D");
 		}
 		else if (op == 306) {
-			SETOPTION("Is1PE");
+			SETOPTION("IsP1E");
 		}
 		else if (op == 307) {
-			SETOPTION("Is1PF");
+			SETOPTION("IsP1F");
 		}
 		else if (op == 310) {
-			SETOPTION("Is2PAAA");
+			SETOPTION("IsP2AAA");
 		}
 		else if (op == 311) {
-			SETOPTION("Is2PAA");
+			SETOPTION("IsP2AA");
 		}
 		else if (op == 312) {
-			SETOPTION("Is2PA");
+			SETOPTION("IsP2A");
 		}
 		else if (op == 313) {
-			SETOPTION("Is2PB");
+			SETOPTION("IsP2B");
 		}
 		else if (op == 314) {
-			SETOPTION("Is2PC");
+			SETOPTION("IsP2C");
 		}
 		else if (op == 315) {
-			SETOPTION("Is2PD");
+			SETOPTION("IsP2D");
 		}
 		else if (op == 316) {
-			SETOPTION("Is2PE");
+			SETOPTION("IsP2E");
 		}
 		else if (op == 317) {
-			SETOPTION("Is2PF");
+			SETOPTION("IsP2F");
 		}
 		else if (op == 320) {
 			SETOPTION("IsBeforeAAA");
@@ -1934,16 +1958,16 @@ const char* _LR2SkinParser::TranslateTimer(int timer) {
 		strcpy(translated, "OnGameStart");
 	}
 	else if (timer == 42) {
-		strcpy(translated, "OnP1GuageUp");
+		strcpy(translated, "OnP1GaugeUp");
 	}
 	else if (timer == 43) {
-		strcpy(translated, "OnP2GuageUp");
+		strcpy(translated, "OnP2GaugeUp");
 	}
 	else if (timer == 44) {
-		strcpy(translated, "OnP1GuageMax");
+		strcpy(translated, "OnP1GaugeMax");
 	}
 	else if (timer == 45) {
-		strcpy(translated, "OnP2GuageMax");
+		strcpy(translated, "OnP2GaugeMax");
 	}
 	else if (timer == 46) {
 		strcpy(translated, "OnP1Combo");
@@ -2416,10 +2440,10 @@ const char* _LR2SkinParser::TranslateNumber(int code) {
 		strcpy(translated, "P2Sudden");
 	}/* LR2 doesn't support lift option
 	else if (code == 14) {
-		strcpy(translated, "1PLift");
+		strcpy(translated, "P2Lift");
 	}
 	else if (code == 15) {
-		strcpy(translated, "2PLift");
+		strcpy(translated, "P2Lift");
 	}*/
 	else if (code == 20) {
 		strcpy(translated, "FPS");
@@ -2552,7 +2576,7 @@ const char* _LR2SkinParser::TranslateNumber(int code) {
 		strcpy(translated, "P1TotalNotes");
 	}
 	else if (code == 107) {
-		strcpy(translated, "P1GrooveGauge");
+		strcpy(translated, "P1Gauge");
 	}
 	else if (code == 108) {
 		strcpy(translated, "P1RivalDiff");
@@ -2601,7 +2625,7 @@ const char* _LR2SkinParser::TranslateNumber(int code) {
 		strcpy(translated, "P2TotalNotes");
 	}
 	else if (code == 127) {
-		strcpy(translated, "P2GrooveGauge");
+		strcpy(translated, "P2Gauge");
 	}
 	else if (code == 128) {
 		strcpy(translated, "P2RivalDiff");
@@ -2717,7 +2741,7 @@ const char* _LR2SkinParser::TranslateNumber(int code) {
 		strcpy(translated, "RivalTotalNotes");
 	}
 	else if (code == 277) {
-		strcpy(translated, "RivalGrooveGuage");
+		strcpy(translated, "RivalGrooveGauge");
 	}
 	else if (code == 278) {
 		strcpy(translated, "RivalRivalDiff");
@@ -2827,22 +2851,22 @@ const char* _LR2SkinParser::TranslateText(int code) {
 		strcpy(translated, "PlayDiff");
 	}
 	else if (code == 63) {
-		strcpy(translated, "Random1P");
+		strcpy(translated, "RandomP1");
 	}
 	else if (code == 64) {
-		strcpy(translated, "Random2P");
+		strcpy(translated, "RandomP2");
 	}
 	else if (code == 65) {
-		strcpy(translated, "Guage1P");
+		strcpy(translated, "GaugeP1");
 	}
 	else if (code == 66) {
-		strcpy(translated, "Guage2P");
+		strcpy(translated, "GaugeP2");
 	}
 	else if (code == 67) {
-		strcpy(translated, "Assist1P");
+		strcpy(translated, "AssistP1");
 	}
 	else if (code == 68) {
-		strcpy(translated, "Assist2P");
+		strcpy(translated, "AssistP2");
 	}
 	else if (code == 69) {
 		strcpy(translated, "Battle");		// depreciated?
@@ -2903,6 +2927,7 @@ void _LR2SkinParser::Clear() {
 	filter_to_optionname.clear();
 	texturefont_id.clear();
 	memset(line_args, 0, sizeof(line_args));
+	memset(condition_status, 0, sizeof(condition_status));
 }
 
 // ----------------------- LR2Skin part end ------------------------

@@ -192,12 +192,6 @@ namespace Game {
 		}
 
 		/*
-		 * Load Player information ...
-		 */
-		if (!PlayerInfoHelper::LoadPlayerInfo(PLAYERINFO[0], SETTING.username))
-			PlayerInfoHelper::DefaultPlayerInfo(PLAYERINFO[0]);
-
-		/*
 		 * Basic instances initalization
 		 */
 		GameTimer::Tick();
@@ -217,6 +211,8 @@ namespace Game {
 		}
 		Mix_AllocateChannels(1296);
 		int flag = SDL_WINDOW_SHOWN;
+		if (SETTING.fullscreen)
+			flag |= SDL_WINDOW_FULLSCREEN;
 		if (SETTING.resizable)
 			flag |= SDL_WINDOW_RESIZABLE;
 		if (SETTING.vsync)
@@ -244,6 +240,8 @@ namespace Game {
 		/*
 		 * prepare game basic resource
 		 */
+		IMAGEPOOL->Register("_black", new ImageColor(0xFF000000));
+		IMAGEPOOL->Register("_white", new ImageColor(0xFFFFFFFF));
 		oninputstart = TIMERPOOL->Get("OnInputStart");
 		onscene = TIMERPOOL->Get("OnScene");
 		font = FONTPOOL->LoadTTFFont("_system", "../system/resource/NanumGothic.ttf", 28, FC_MakeColor(120, 120, 120, 255));

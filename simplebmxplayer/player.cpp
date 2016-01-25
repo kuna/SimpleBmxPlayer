@@ -12,18 +12,6 @@ Player*		PLAYER[4];
 // macro
 #define PLAYSOUND(k)	BmsResource::SOUND.Play(k)
 
-/* constant value - used for rendering & initalizing */
-namespace {
-	const int lane_to_channel[] = {
-		6, 1, 2, 3, 4, 5, 8, 9, 6, 7,
-		16, 11, 12, 13, 14, 15, 16, 18, 19, 17,
-	};
-	const int channel_to_lane[] = {
-		0, 1, 2, 3, 4, 5, 0, 9, 6, 7,
-		0, 1, 2, 3, 4, 5, 0, 9, 6, 7,
-	};
-}
-
 // ------- Player ----------------------------------------
 
 Player::Player(PlayerPlayConfig* config, BmsNoteManager *note, 
@@ -35,7 +23,7 @@ Player::Player(PlayerPlayConfig* config, BmsNoteManager *note,
 
 	// initalize basic variables/timers
 	pv = &PLAYERVALUE[playside];
-	if (playmode > 10) pv_dp = &PLAYERVALUE[playside + 1];
+	if (playmode >= 10) pv_dp = &PLAYERVALUE[playside + 1];
 	else pv_dp = 0;
 	pBmstimer = TIMERPOOL->Get("OnGameStart");
 
@@ -70,18 +58,18 @@ Player::Player(PlayerPlayConfig* config, BmsNoteManager *note,
 	double total = 400;		// TODO: calculate TOTAL from BmsHelper. // TODO: sum all if in grade mode.
 	switch (playergaugetype) {
 	case GAUGETYPE::GROOVE:
-		notehealth[5] = total / notecnt;
-		notehealth[4] = total / notecnt;
-		notehealth[3] = total / notecnt / 2;
+		notehealth[5] = total / notecnt / 100;
+		notehealth[4] = total / notecnt / 100;
+		notehealth[3] = total / notecnt / 2 / 100;
 		notehealth[2] = -2.0 / 100;
 		notehealth[1] = -6.0 / 100;
 		notehealth[0] = -2.0 / 100;
 		break;
 	case GAUGETYPE::EASY:
 	case GAUGETYPE::ASSISTEASY:
-		notehealth[5] = total / notecnt;
-		notehealth[4] = total / notecnt;
-		notehealth[3] = total / notecnt / 2;
+		notehealth[5] = total / notecnt / 100;
+		notehealth[4] = total / notecnt / 100;
+		notehealth[3] = total / notecnt / 2 / 100;
 		notehealth[2] = -1.6 / 100;
 		notehealth[1] = -4.8 / 100;
 		notehealth[0] = -1.6 / 100;
@@ -281,12 +269,38 @@ int Player::CheckJudgeByTiming(double delta) {
 }
 
 void Player::MakeJudge(int judgetype, int channel, bool silent) {
+	// get current judgeside
+	int judgeside = 0;
+	if (playmode >= 10) {
+		// DP
+		if (channel < 10) judgeside = 1;
+		else judgeside = 2;
+	}
+	else {
+		// SP
+		if (playside == 0) judgeside = 1;
+		else judgeside = 2;
+	}
+	int channel_p = channel % 10;
+
+	switch (judgeside) {
+	case 1:
+		if (judgetype >= JUDGETYPE::JUDGE_GREAT)
+			pv->pLanejudgeokay[channel_p]->Start();
+		// update graph/number
+		if (judgetype <= JUDGETYPE::JUDGE_BAD)
+			pv->pOnMiss->Start();
+		break;
+	case 2:
+		if (judgetype >= JUDGETYPE::JUDGE_GREAT)
+			pv_dp->pLanejudgeokay[channel_p]->Start();
+		// update graph/number
+		if (judgetype <= JUDGETYPE::JUDGE_BAD)
+			pv_dp->pOnMiss->Start();
+		break;
+	}
+
 	score.AddGrade(judgetype);
-	if (judgetype >= JUDGETYPE::JUDGE_GREAT)
-		pv->pLanejudgeokay[channel]->Start();
-	// update graph/number
-	if (judgetype <= JUDGETYPE::JUDGE_BAD)
-		pv->pOnMiss->Start();
 	// update judged note count
 	switch (judgetype) {
 	case JUDGETYPE::JUDGE_POOR:
@@ -312,48 +326,29 @@ void Player::MakeJudge(int judgetype, int channel, bool silent) {
 		pv->pOnlastnote->Start();
 
 	if (!silent) {
-		// get current judgeside
-		int judgeside = 0;
-		if (playmode >= 10) {
-			// DP
-			if (channel < 10) judgeside = 1;
-			else judgeside = 2;
-		}
-		else {
-			// SP
-			if (playside == 0) judgeside = 1;
-			else judgeside = 2;
-		}
-
 		switch (judgeside) {
 		case 1:
-			break;
-		case 2:
-			break;
-		}
-		// show judge(combo) element
-		for (int i = 0; i < 6; i++) {
-			if (i == judgetype)
-				pv->pOnJudge[i]->Start();
-			else
-				pv->pOnJudge[i]->Stop();
-		}
-		// judge timer start
-		// consider DP also.
-		if (playmode >= 10) {
-			// DP
-			if (channel < 10) {
-				pv->pOnCombo->Start();
-				*pv->pCombo = score.combo;
+			// show judge(combo) element
+			for (int i = 0; i < 6; i++) {
+				if (i == judgetype)
+					pv->pOnJudge[i]->Start();
+				else
+					pv->pOnJudge[i]->Stop();
 			}
-			else {
-				pv_dp->pOnCombo->Start();
-				*pv_dp->pCombo = score.combo;
-			}
-		}
-		else {
 			pv->pOnCombo->Start();
 			*pv->pCombo = score.combo;
+			break;
+		case 2:
+			// show judge(combo) element
+			for (int i = 0; i < 6; i++) {
+				if (i == judgetype)
+					pv_dp->pOnJudge[i]->Start();
+				else
+					pv_dp->pOnJudge[i]->Stop();
+			}
+			pv_dp->pOnCombo->Start();
+			*pv_dp->pCombo = score.combo;
+			break;
 		}
 		
 		// TODO: make judge event
@@ -461,49 +456,49 @@ void Player::Update() {
 }
 
 // key input
-void Player::UpKey(int keychannel) {
+void Player::UpKey(int lane) {
 	// if gameover then ignore
 	if (IsDead()) return;
 	// make judge (if you're pressing longnote)
-	if (IsLongNote(keychannel)) {
-		if (IsNoteAvailable(keychannel) && GetCurrentNote(keychannel)->type == BmsNote::NOTE_LNEND) {
+	if (IsLongNote(lane)) {
+		if (IsNoteAvailable(lane) && GetCurrentNote(lane)->type == BmsNote::NOTE_LNEND) {
 			double t = currenttime / 1000.0;
 			// make judge
-			int judge = CheckJudgeByTiming(t - BmsHelper::GetCurrentTimeFromBar(noteindex[keychannel]));
-			MakeJudge(judge, keychannel);
+			int judge = CheckJudgeByTiming(t - BmsHelper::GetCurrentTimeFromBar(noteindex[lane]));
+			MakeJudge(judge, lane);
 			// get next note and remove current longnote
-			(*bmsnote)[keychannel][longnotestartpos[keychannel]].type = BmsNote::NOTE_NONE;
-			(*bmsnote)[keychannel][noteindex[keychannel]].type = BmsNote::NOTE_NONE;
-			noteindex[keychannel] = GetNextAvailableNoteIndex(keychannel);
+			(*bmsnote)[lane][longnotestartpos[lane]].type = BmsNote::NOTE_NONE;
+			(*bmsnote)[lane][noteindex[lane]].type = BmsNote::NOTE_NONE;
+			noteindex[lane] = GetNextAvailableNoteIndex(lane);
 		}
-		longnotestartpos[keychannel] = -1;
+		longnotestartpos[lane] = -1;
 	}
 }
 
-void Player::PressKey(int keychannel) {
+void Player::PressKey(int lane) {
 	// if gameover then ignore
 	if (IsDead()) return;
 	// make judge
-	if (IsNoteAvailable(keychannel)) {
+	if (IsNoteAvailable(lane)) {
 		double t = currenttime / 1000.0;
-		int judge = CheckJudgeByTiming(t - BmsHelper::GetCurrentTimeFromBar(noteindex[keychannel]));
-		if (GetCurrentNote(keychannel)->type == BmsNote::NOTE_LNSTART) {
+		int judge = CheckJudgeByTiming(t - BmsHelper::GetCurrentTimeFromBar(noteindex[lane]));
+		if (GetCurrentNote(lane)->type == BmsNote::NOTE_LNSTART) {
 			// store longnote start pos & set longnote status
-			MakeJudge(judge, keychannel, true);
-			longnotestartpos[keychannel] = noteindex[keychannel];
+			MakeJudge(judge, lane, true);
+			longnotestartpos[lane] = noteindex[lane];
 		}
-		else if (GetCurrentNote(keychannel)->type == BmsNote::NOTE_MINE) {
+		else if (GetCurrentNote(lane)->type == BmsNote::NOTE_MINE) {
 			// damage, ouch
-			if (GetCurrentNote(keychannel)->value == BmsWord::MAX)
+			if (GetCurrentNote(lane)->value == BmsWord::MAX)
 				health = 0;
 			else
-				health -= GetCurrentNote(keychannel)->value.ToInteger();
+				health -= GetCurrentNote(lane)->value.ToInteger();
 		}
-		else if (GetCurrentNote(keychannel)->type == BmsNote::NOTE_NORMAL) {
-			MakeJudge(judge, keychannel);
+		else if (GetCurrentNote(lane)->type == BmsNote::NOTE_NORMAL) {
+			MakeJudge(judge, lane);
 		}
 	}
-	PLAYSOUND(keysound[keychannel][currentbar].ToInteger());
+	PLAYSOUND(keysound[lane][currentbar].ToInteger());
 }
 
 double Player::GetLastMissTime() {
@@ -565,6 +560,14 @@ PlayerAuto::PlayerAuto(PlayerPlayConfig *config, BmsNoteManager *note, int plays
 	: Player(config, note, playside, playmode, PLAYERTYPE::AUTO) {}
 
 void PlayerAuto::Update() {
+	// timer/value update
+	pv->pOnCombo->OffTrigger(pv->pOnCombo->GetTick() > 500);
+	pv->pOnMiss->OffTrigger(pv->pOnMiss->GetTick() > 1000);
+	if (pv_dp) {
+		pv_dp->pOnCombo->OffTrigger(pv_dp->pOnCombo->GetTick() > 500);
+		pv_dp->pOnMiss->OffTrigger(pv_dp->pOnMiss->GetTick() > 1000);
+	}
+
 	// get time
 	currenttime = pBmstimer->GetTick();
 	double time_sec = currenttime / 1000.0;
@@ -615,10 +618,11 @@ void PlayerAuto::Update() {
 					pv_->pLanepress[ni]->Start();
 				}
 			}
+
+			// fetch next note
+			noteindex[i] = GetNextAvailableNoteIndex(i);
 		}
 
-		// fetch next note
-		noteindex[i] = GetNextAvailableNoteIndex(i);
 		/*
 		 * pressing lane is automatically up-ped
 		 * about after 50ms.

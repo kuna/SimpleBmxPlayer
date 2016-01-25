@@ -16,22 +16,28 @@ o 그래프/슬라이더 도입.
 o 폰트
   o 비트맵폰트: 속성에 cycle 넣고 animate 가능하게 만듬.
 o 키 인풋
-- 리프트/서든/배속설정 작업.
 o Lane에 DST 없애기 -> 직접 속성으로 바꿔서 처리 더 수월하게 하기.
-- ID attribute 도입
 o 기본 SRC 타이머는 loop -> 몇개만 loop=0 속성 추가해놓기.
-- support controller
+- 리프트/서든/배속설정 작업.
 o Autoplay 및 정상종료.
+  - 끝나는 시간: max(노트시간 + 키음길이) 으로 계산하기.
+  o BGA별 타이머 생성 & position reset
+- black/white object 만들어주기
+- 레인에 LINE/JUDGELINE 객체 그리기
+- 타이틀폰트 fallback으로 그려지게 만들기.
+- target vs
+
+- support controller
+- 채보 옵션
 - 플레이어 오브젝트
   - 플레이어가 실제로 키입력을 받고 처리하게 할 것
   - DP 플레이 가능하도록 하기
   - PlayerPacemaker 오브젝트 만들기
 - freq
 - skin include (DeepCopy or XMLNode - append)
-- 채보 옵션
-- 레인에 LINE 객체 그리기
-- play/program setting, playrecord save/load
-- 타이틀폰트 fallback으로 그려지게 만들기.
+o play/program setting
+- playrecord save/load
+- ID attribute 도입
 <플레이 프로젝트 끝. 다음 프로젝트에서 계속 ...>
 
 - Animated Value change(double/int) 도입하기.
@@ -44,7 +50,8 @@ o Autoplay 및 정상종료.
 - select music 구현
 - result 구현
 - select -> decide -> play -> result -> select 루틴 확인.
-- DP 테스트.
+- player select 구현
+- option screen 구현
 <Alpha01 version>
 - sqlite3 도입
 - song loader(dialog) 구현

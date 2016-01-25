@@ -222,8 +222,7 @@ Image* ImagePool::Load(const RString &path) {
 		CheckFilenameValid(_path);
 		img->Load(_path.c_str());
 		if (img->IsLoaded()) {
-			_imagepool.insert(pair<RString, Image*>(_path, img));
-			_loadcount.insert(pair<Image*, int>(img, 1));
+			Register(_path, img);
 			return img;
 		}
 		else {
@@ -242,8 +241,28 @@ Image* ImagePool::Get(const RString &path) {
 	RString _path = path;
 	// TODO: this costs a lot. better to change it into ID attribute?
 	FileHelper::GetAnyAvailableFilePath(_path);
-	if (IsExists(_path)) {
-		return _imagepool[_path];
+	return GetById(_path);
+}
+
+void ImagePool::Register(const char* id, Image* img) {
+	_imagepool.insert(pair<RString, Image*>(id, img));
+	_loadcount.insert(pair<Image*, int>(img, 1));
+}
+
+Image* ImagePool::GetById(const char* id) {
+	if (IsExists(id)) {
+		return _imagepool[id];
+	}
+	else {
+		return 0;
+	}
+}
+
+Image* ImagePool::LoadById(const char* id) {
+	if (IsExists(id)) {
+		Image *img = _imagepool[id];
+		_loadcount[img]++;
+		return img;
 	}
 	else {
 		return 0;
@@ -467,12 +486,12 @@ void PoolHelper::InitalizeAll() {
 }
 
 void PoolHelper::ReleaseAll() {
-	delete STRPOOL;
-	delete DOUBLEPOOL;
-	delete INTPOOL;
-	delete TIMERPOOL;
-	delete HANDLERPOOL;
-	delete IMAGEPOOL;
-	delete FONTPOOL;
-	delete SOUNDPOOL;
+	SAFE_DELETE(STRPOOL);
+	SAFE_DELETE(DOUBLEPOOL);
+	SAFE_DELETE(INTPOOL);
+	SAFE_DELETE(TIMERPOOL);
+	SAFE_DELETE(HANDLERPOOL);
+	SAFE_DELETE(IMAGEPOOL);
+	SAFE_DELETE(FONTPOOL);
+	SAFE_DELETE(SOUNDPOOL);
 }

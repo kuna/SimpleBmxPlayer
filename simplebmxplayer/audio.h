@@ -14,4 +14,5 @@ public:
 	bool IsLoaded();
 	void Play();
 	void Stop();
+	Uint32 GetLength();
 };
