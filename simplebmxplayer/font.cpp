@@ -74,10 +74,29 @@ void Font::Render(const char* text, int x, int y, int width) {
 	// TODO
 }
 
+void Font::SetAlphaMod(uint8_t a) {
+	if (ttffont) {
+		// TODO
+		//SDL_SetTextureAlphaMod(FC_s)
+	}
+	else if (texturefont) {
+		texturefont->SetAlphaMod(a);
+	}
+}
+
+void Font::SetColorMod(uint8_t r, uint8_t g, uint8_t b) {
+	if (ttffont) {
+		// TODO
+	}
+	else if (texturefont) {
+		texturefont->SetColorMod(r, g, b);
+	}
+}
+
 // -------------------------------------------------
 
 TextureFont::TextureFont()
-	: imgs_cnt(0), sx(1), sy(1), t(0) {}
+	: imgs_cnt(0), sx(1), sy(1), t(0), a(255), r(255), g(255), b(255) {}
 
 TextureFont::~TextureFont() { Release(); }
 
@@ -181,14 +200,24 @@ void TextureFont::Render(const RString& text, int x, int y) {
 	const char *p = text.c_str();
 	uint32_t glyphcode;
 	while ((glyphcode = GetCodepointFromUTF8String(&p, 1)) > 0) {
-		SkinTextureFont::Glyph* g = GetGlyph(glyphcode);
-		if (g) {
-			SDL_Rect src = { g->x, g->y, g->w, g->h };
-			SDL_Rect dst = { leftpos, y, g->w, g->h };
-			SDL_Texture *t = imgs[g->image]->GetPtr();
+		SkinTextureFont::Glyph* gl = GetGlyph(glyphcode);
+		if (gl) {
+			SDL_Rect src = { gl->x, gl->y, gl->w, gl->h };
+			SDL_Rect dst = { leftpos, y, gl->w, gl->h };
+			SDL_Texture *t = imgs[gl->image]->GetPtr();
+			SDL_SetTextureAlphaMod(t, a);
+			SDL_SetTextureColorMod(t, r, g, b);
 			SDL_RenderCopy(Game::RENDERER, t, &src, &dst);
-			leftpos += g->w;
+			leftpos += gl->w;
 		} else leftpos += stf.GetFallbackWidth();
 		p++;
 	}
+}
+
+void TextureFont::SetAlphaMod(uint8_t a) { this->a = a; }
+
+void TextureFont::SetColorMod(uint8_t r, uint8_t g, uint8_t b) {
+	this->r = r;
+	this->g = g;
+	this->b = b;
 }

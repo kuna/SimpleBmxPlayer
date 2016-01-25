@@ -250,7 +250,7 @@ void ImagePool::Register(const char* id, Image* img) {
 }
 
 Image* ImagePool::GetById(const char* id) {
-	if (IsExists(id)) {
+	if (_imagepool.find(id) != _imagepool.end()) {
 		return _imagepool[id];
 	}
 	else {

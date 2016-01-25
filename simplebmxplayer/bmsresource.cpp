@@ -116,6 +116,7 @@ namespace BmsHelper {
 	Uint32			bgbar;			// bgm/bga bar position (private)
 	BGAInformation	currentbga;
 	Uint32			bmslength;		// bms length in msec
+	Uint32			bmsbar_index;	// only for `OnBeat`
 
 	/*
 	 * Loading thread should not interrupted but joined.
@@ -258,8 +259,10 @@ namespace BmsHelper {
 		for (; bgbar <= currentbar; bgbar++)
 		{
 			// OnBeat
-			if (BmsResource::BMSTIME[bgbar].measure)
+			if (BmsResource::BMSTIME[bgbar].beat * 2 > bmsbar_index + 1) {
+				bmsbar_index++;
 				BMSVALUE.OnBeat->Start();
+			}
 
 			// call event handler for BGA/BGM
 			BmsChannel& bgmchannel		= BmsResource::BMS.GetChannelManager()[BmsWord(1)];

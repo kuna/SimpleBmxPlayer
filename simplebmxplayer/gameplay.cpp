@@ -138,11 +138,14 @@ namespace GamePlay {
 			}
 			else if (obj->ToPlayObject()) {
 				SkinPlayObject* play = obj->ToPlayObject();
+				// lift
+				SkinRenderHelper::PushRenderOffset(0, -(int)play->GetLaneHeight() * *PLAYERVALUE[0].pLift_d);
 				RenderGroup(play);								// draw other objects first
 				// render judgeline
 				play->RenderJudgeLine();
 				if (PLAYER[0]) PLAYER[0]->RenderNote(play);		// and draw note/judgeline/line ...
 				if (PLAYER[1]) PLAYER[1]->RenderNote(play);
+				SkinRenderHelper::PopRenderOffset();
 				// draw line
 				//RenderLine(play);
 				// TODD: method - SetJudgelineThickness()
@@ -175,8 +178,10 @@ namespace GamePlay {
 		void Initalize_P1_RenderValue() {
 			PLAYERVALUE[0].pNoteSpeed = INTPOOL->Get("P1Speed");
 			PLAYERVALUE[0].pFloatSpeed = INTPOOL->Get("P1FloatSpeed");
-			PLAYERVALUE[0].pSuddenHeight = INTPOOL->Get("P1Sudden");
-			PLAYERVALUE[0].pLiftHeight = INTPOOL->Get("P1Lift");
+			PLAYERVALUE[0].pSudden = INTPOOL->Get("P1Sudden");
+			PLAYERVALUE[0].pLift = INTPOOL->Get("P1Lift");
+			PLAYERVALUE[0].pSudden_d = DOUBLEPOOL->Get("P1Sudden");
+			PLAYERVALUE[0].pLift_d = DOUBLEPOOL->Get("P1Lift");
 
 			PLAYERVALUE[0].pGauge_d = DOUBLEPOOL->Get("P1Gauge");
 			PLAYERVALUE[0].pGaugeType = INTPOOL->Get("P1GaugeType");
@@ -228,8 +233,10 @@ namespace GamePlay {
 		void Initalize_P2_RenderValue() {
 			PLAYERVALUE[1].pNoteSpeed = INTPOOL->Get("P2Speed");
 			PLAYERVALUE[1].pFloatSpeed = INTPOOL->Get("P2FloatSpeed");
-			PLAYERVALUE[1].pSuddenHeight = INTPOOL->Get("P2Sudden");
-			PLAYERVALUE[1].pLiftHeight = INTPOOL->Get("P2Lift");
+			PLAYERVALUE[1].pSudden = INTPOOL->Get("P2Sudden");
+			PLAYERVALUE[1].pSudden_d = DOUBLEPOOL->Get("P2Sudden");
+			PLAYERVALUE[1].pLift = INTPOOL->Get("P2Lift");
+			PLAYERVALUE[1].pLift_d = DOUBLEPOOL->Get("P2Lift");
 
 			PLAYERVALUE[1].pGauge_d = DOUBLEPOOL->Get("P2Gauge");
 			PLAYERVALUE[1].pGaugeType = INTPOOL->Get("P2GaugeType");
@@ -523,12 +530,12 @@ namespace GamePlay {
 				PLAYER[0]->DeltaSpeed(-0.05);
 			break;
 		case SDLK_RIGHT:
-			if (pressedCtrl) PLAYER[0]->DeltaSudden(0.05);
-			else PLAYER[0]->DeltaLift(0.05);
+			if (pressedCtrl) PLAYER[0]->DeltaLift(0.05);
+			else PLAYER[0]->DeltaSudden(0.05);
 			break;
 		case SDLK_LEFT:
-			if (pressedCtrl) PLAYER[0]->DeltaSudden(-0.05);
-			else PLAYER[0]->DeltaLift(-0.05);
+			if (pressedCtrl) PLAYER[0]->DeltaLift(-0.05);
+			else PLAYER[0]->DeltaSudden(-0.05);
 			break;
 		case SDLK_LCTRL:
 			pressedCtrl = true;

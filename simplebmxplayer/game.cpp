@@ -11,6 +11,7 @@
 #include "bmsresource.h"
 #include "playerinfo.h"
 #include "player.h"
+#include "logger.h"
 
 using namespace tinyxml2;
 
@@ -188,7 +189,7 @@ namespace Game {
 		 * Load basic setting file ...
 		 */
 		if (!GameSettingHelper::LoadSetting(SETTING)) {
-			wprintf(L"Cannot load settings files... Use Default settings...\n");
+			LOG->Warn("Cannot load settings files... Use Default settings...");
 			GameSettingHelper::DefaultSetting(SETTING);
 		}
 
@@ -203,11 +204,11 @@ namespace Game {
 		 * Game engine initalize
 		 */
 		if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-			wprintf(L"Failed to SDL_Init() ...\n");
+			LOG->Critical("Failed to SDL_Init() ...");
 			return -1;
 		}
 		if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024) == -1) {	// no lag, no sound latency
-			wprintf(L"Failed to Open Audio ...\n");
+			LOG->Critical("Failed to Open Audio ...");
 			return -1;
 		}
 		Mix_AllocateChannels(1296);
@@ -222,30 +223,30 @@ namespace Game {
 			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 			SETTING.width, SETTING.height, SDL_WINDOW_SHOWN);
 		if (!WINDOW) {
-			wprintf(L"Failed to create window\n");
+			LOG->Critical("Failed to create window");
 			return -1;
 		}
 		RENDERER = SDL_CreateRenderer(WINDOW, -1, SDL_RENDERER_ACCELERATED);// | SDL_RENDERER_PRESENTVSYNC);
 		if (!RENDERER) {
-			wprintf(L"Failed to create Renderer\n");
+			LOG->Critical("Failed to create Renderer");
 			return -1;
 		}
 
 		/*
-		 * Scene instance initalization
-		 * (MUST after graphic initalization finished)
-		 */
-		GamePlay::SCENE = new GamePlay::ScenePlay();
-		InitalizeScene(GamePlay::SCENE);
-
-		/*
 		 * prepare game basic resource
 		 */
-		IMAGEPOOL->Register("_black", new ImageColor(0xFF000000));
+		IMAGEPOOL->Register("_black", new ImageColor(0x000000FF));
 		IMAGEPOOL->Register("_white", new ImageColor(0xFFFFFFFF));
 		oninputstart = TIMERPOOL->Get("OnInputStart");
 		onscene = TIMERPOOL->Get("OnScene");
 		font = FONTPOOL->LoadTTFFont("_system", "../system/resource/NanumGothic.ttf", 28, FC_MakeColor(120, 120, 120, 255));
+
+		/*
+		* Scene instance initalization
+		* (MUST after graphic initalization finished)
+		*/
+		GamePlay::SCENE = new GamePlay::ScenePlay();
+		InitalizeScene(GamePlay::SCENE);
 
 		/*
 		 * FPS timer start

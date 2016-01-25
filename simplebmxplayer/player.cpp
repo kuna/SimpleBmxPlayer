@@ -143,6 +143,9 @@ Player::Player(PlayerPlayConfig* config, BmsNoteManager *note,
 	else {
 		SetSpeed(playconfig->speed);
 	}
+	SetSudden(playconfig->sudden);
+	SetLift(playconfig->lift);
+
 	// TODO: set OP switch... no, in main?
 }
 
@@ -199,8 +202,8 @@ void Player::SetSpeed(double speed) {
 	 */
 	*pv->pNoteSpeed = notespeed * 100;
 	*pv->pFloatSpeed = notefloat * (1 - suddenheight - liftheight);
-	*pv->pSuddenHeight = notefloat * suddenheight;
-	*pv->pLiftHeight = notefloat * liftheight;
+	*pv->pSudden = notefloat * suddenheight;
+	*pv->pLift = notefloat * liftheight;
 }
 void Player::DeltaSpeed(double speed) { SetSpeed(notespeed + speed); }
 
@@ -218,8 +221,8 @@ void Player::SetFloatSpeed(double speed) {
 	 */
 	*pv->pNoteSpeed = notespeed * 100;
 	*pv->pFloatSpeed = notefloat * (1 - suddenheight - liftheight);
-	*pv->pSuddenHeight = notefloat * suddenheight;
-	*pv->pLiftHeight = notefloat * liftheight;
+	*pv->pSudden = notefloat * suddenheight;
+	*pv->pLift = notefloat * liftheight;
 }
 void Player::DeltaFloatSpeed(double speed) { SetFloatSpeed(notefloat + speed); }
 
@@ -227,13 +230,14 @@ void Player::SetSudden(double height) {
 	playconfig->sudden
 		= suddenheight
 		= height;
+	*pv->pSudden_d = height;
 
 	/*
 	 * set the pointer values
 	 */
 	*pv->pFloatSpeed = notefloat * (1 - suddenheight - liftheight);
-	*pv->pSuddenHeight = notefloat * suddenheight;
-	*pv->pLiftHeight = notefloat * liftheight;
+	*pv->pSudden = notefloat * suddenheight;
+	*pv->pLift = notefloat * liftheight;
 }
 void Player::DeltaSudden(double height) { SetSudden(suddenheight + height); }
 
@@ -241,13 +245,14 @@ void Player::SetLift(double height) {
 	playconfig->lift
 		= liftheight
 		= height;
+	*pv->pLift_d = height;
 
 	/*
 	 * set the pointer values
 	 */
 	*pv->pFloatSpeed = notefloat * (1 - suddenheight - liftheight);
-	*pv->pSuddenHeight = notefloat * suddenheight;
-	*pv->pLiftHeight = notefloat * liftheight;
+	*pv->pSudden = notefloat * suddenheight;
+	*pv->pLift = notefloat * liftheight;
 }
 void Player::DeltaLift(double height) { SetLift(liftheight + height); }
 

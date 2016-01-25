@@ -394,6 +394,8 @@ void SkinTextObject::RenderText(const char* s) {
 			left_offset = -fnt->GetWidth(s);
 			break;
 		}
+		fnt->SetAlphaMod(dst_cached.frame.a);
+		fnt->SetColorMod(dst_cached.frame.r, dst_cached.frame.g, dst_cached.frame.b);
 		fnt->Render(s, 
 			left_offset + SkinRenderHelper::_offset_calculated.x + dst_cached.frame.x, 
 			SkinRenderHelper::_offset_calculated.y + dst_cached.frame.y);
@@ -980,7 +982,7 @@ void ConstructDSTFromElement(ImageDST &dst, XMLElement *e) {
 	dst.blend = e->IntAttribute("blend");
 	dst.rotatecenter = e->IntAttribute("rotatecenter");
 	dst.acctype = e->IntAttribute("acc");
-	dst.loopstart = 0;
+	dst.loopstart = -1; e->QueryIntAttribute("loop", &dst.loopstart);
 	XMLElement *ef = e->FirstChildElement("Frame");
 	while (ef) {
 		ImageDSTFrame f;
@@ -994,17 +996,10 @@ void ConstructDSTFromElement(ImageDST &dst, XMLElement *e) {
 		f.g = 255;	ef->QueryIntAttribute("g", &f.g);
 		f.b = 255;	ef->QueryIntAttribute("b", &f.b);
 		f.angle = ef->IntAttribute("angle");
-		if (ef->Attribute("loopstart")) {
-			dst.loopstart = f.time;
-		}
 		dst.loopend = f.time;
 		SkinRenderHelper::AddFrame(dst, f);
 		ef = ef->NextSiblingElement("Frame");
 	}
-	
-	// CASE: no loop (div by 0 error)
-	if (dst.loopstart == dst.loopend)
-		dst.loopstart = 0;
 }
 
 /* private */
@@ -1259,7 +1254,7 @@ bool SkinRenderHelper::CalculateFrame(ImageDST &dst, ImageDSTFrame &frame) {
 	uint32_t time = dst.timer->GetTick();
 
 	// get current frame
-	if (dst.loopstart > 0 && time > dst.loopstart) {
+	if (dst.loopstart != dst.loopend && dst.loopstart >= 0 && time > dst.loopstart) {
 		time = (time - dst.loopstart) % (dst.loopend - dst.loopstart) + dst.loopstart;
 	}
 	int nframe = 0;

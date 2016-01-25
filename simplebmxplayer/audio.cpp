@@ -37,6 +37,7 @@ Uint32 Audio::GetLength() {
 // http://stackoverflow.com/questions/19200033/match-duration-using-sdl-mixer
 void Audio::Resample(double rate) {
 	if (!IsLoaded()) return;
+	if (rate == 1) return;
 
 	int m = 1, n = 1;
 	Mix_Chunk *newsample = new Mix_Chunk;

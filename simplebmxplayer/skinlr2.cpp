@@ -485,14 +485,14 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			}
 			if (INT(args[14]))
 				frame->SetAttribute("angle", args[14]);
-			if (INT(args[2]) == looptime)
-				frame->SetAttribute("loop", true);
 			dst->LinkEndChild(frame);
 		}
 		// set common draw attribute
 		dst->SetAttribute("acc", acc);
 		if (blend > 1)
 			dst->SetAttribute("blend", blend);
+		if (looptime >= 0)
+			dst->SetAttribute("loop", looptime);
 		if (rotatecenter > 0)
 			dst->SetAttribute(
 			"rotatecenter", rotatecenter);
@@ -508,11 +508,6 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		if (c) cls.AddCondition(c);
 		if (cls.GetConditionNumber())
 			obj->SetAttribute("condition", cls.ToString());
-		// before register, check loop statement (is loop is in last object, it isn't necessary)
-		if (dst->LastChild() && dst->LastChild()->ToElement()->Attribute("loop")) {
-			dst->LastChild()->ToElement()->DeleteAttribute("loop");
-		}
-
 
 		/*
 		* If object is select screen panel dependent(timer/op code 2x),
@@ -1890,11 +1885,14 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 }
 
 const char* _LR2SkinParser::TranslateTimer(int timer) {
-	if (timer == 2) {
-		strcpy(translated, "OnClose");	// FADEOUT
+	if (timer == 1) {
+		strcpy(translated, "OnStartInput");
+	}
+	else if (timer == 2) {
+		strcpy(translated, "OnFadeOut");	// FADEOUT
 	}
 	else if (timer == 3) {
-		strcpy(translated, "OnFail");	// Stage failed
+		strcpy(translated, "OnClose");		// Stage failed
 	}
 	else if (timer == 21) {
 		strcpy(translated, "OnPanel1");

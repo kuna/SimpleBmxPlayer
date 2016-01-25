@@ -416,8 +416,8 @@
     <speed>200</speed>
     <speedtype>0</speedtype>
     <floatspeed>774.19354838709671</floatspeed>
-    <sudden>0</sudden>
-    <lift>0</lift>
+    <sudden>399.99999999999994</sudden>
+    <lift>-5.9999999999999911</lift>
     <op_1p>0</op_1p>
     <op_2p>0</op_2p>
     <gaugetype>0</gaugetype>

@@ -44,8 +44,10 @@ typedef struct {
 	int*				pTotalRate;
 	int*				pNoteSpeed;
 	int*				pFloatSpeed;
-	int*				pSuddenHeight;
-	int*				pLiftHeight;
+	int*				pSudden;
+	int*				pLift;
+	double*				pSudden_d;
+	double*				pLift_d;
 } PlayerRenderValue;
 
 /** @brief stores rendering variables related to Players */

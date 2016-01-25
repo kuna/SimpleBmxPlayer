@@ -77,7 +77,8 @@ struct ImageDST {
 	std::vector<ImageDSTFrame> frame;
 };
 
-#define _MAX_RENDER_CONDITION 20
+#define _MAX_RENDER_CONDITION	20
+#define _MAX_RENDER_DST			60
 
 /** @brief a simple condition evaluator for fast performance 
  * supporting format: divided by comma (only AND operator, maximum 10)
