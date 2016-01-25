@@ -22,6 +22,7 @@ typedef struct {
 	Timer*				pOnlastnote;		// when last note ends
 	Timer*				pOnGameover;		// game is over! (different from OnClose)
 	Timer*				pOnGaugeMax;		// guage max?
+	Timer*				pOnGaugeUp;
 	Timer*				pLanepress[10];
 	Timer*				pLanehold[10];
 	Timer*				pLaneup[10];

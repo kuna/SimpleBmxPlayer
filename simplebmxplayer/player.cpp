@@ -159,7 +159,10 @@ void Player::SetGauge(double v) {
 		pv->pOnGameover->Trigger(dieonnohealth);
 	}
 	*pv->pGauge_d = playergauge = v;
-	*pv->pGauge = (int)(v * 50) * 2;
+	int newgauge_int = (int)(v * 50) * 2;
+	if (newgauge_int > *pv->pGauge)
+		pv->pOnGaugeUp->Start();
+	*pv->pGauge = newgauge_int;
 }
 
 namespace {

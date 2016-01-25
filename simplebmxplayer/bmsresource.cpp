@@ -167,6 +167,7 @@ namespace BmsHelper {
 			BmsWord word(i);
 			if (BmsResource::BMS.GetRegistArraySet()["WAV"].IsExists(word)) {
 				BmsResource::SOUND.Load(i, BmsResource::BMS.GetRegistArraySet()["WAV"][word]);
+				BmsResource::SOUND.Get(word)->Resample(0.7);
 			}
 			if (BmsResource::BMS.GetRegistArraySet()["BMP"].IsExists(word)) {
 				BmsResource::IMAGE.Load(i, BmsResource::BMS.GetRegistArraySet()["BMP"][word]);
@@ -198,6 +199,7 @@ namespace BmsHelper {
 				}
 			}
 		}
+		delete note;
 
 		// end
 		BMSVALUE.OnSongLoadingEnd->Start();
@@ -232,10 +234,10 @@ namespace BmsHelper {
 		/*
 		* BMS related timer/value update
 		*/
-		int remaintime = GetEndTime() * 1000 - time;
+		int remaintime = GetEndTime() - time;
 		if (remaintime < 0) remaintime = 0;
 		*BMSVALUE.PlayProgress
-			= time / 1000.0 / BmsResource::BMSTIME.GetEndTime();
+			= (double)time / GetEndTime();
 		*BMSVALUE.PlayBPM = BmsResource::BMSTIME[currentbar].bpm;
 		*BMSVALUE.PlayMin = time / 1000 / 60;
 		*BMSVALUE.PlaySec = time / 1000 % 60;

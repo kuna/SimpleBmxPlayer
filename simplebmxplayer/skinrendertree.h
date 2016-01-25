@@ -371,6 +371,8 @@ public:
 	void RenderNote(int laneindex, double pos, bool mine = false);
 	/** @brief for longnote. */
 	void RenderNote(int laneindex, double pos_start, double pos_end);
+	void RenderLine(double pos);
+	void RenderJudgeLine();
 };
 
 /** @brief do nothing; just catch this object if you want to draw BGA. */

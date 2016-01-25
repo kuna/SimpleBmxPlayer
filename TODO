@@ -20,7 +20,7 @@ o Lane에 DST 없애기 -> 직접 속성으로 바꿔서 처리 더 수월하게
 o 기본 SRC 타이머는 loop -> 몇개만 loop=0 속성 추가해놓기.
 - 리프트/서든/배속설정 작업.
 o Autoplay 및 정상종료.
-  - 끝나는 시간: max(노트시간 + 키음길이) 으로 계산하기.
+  o 끝나는 시간: max(노트시간 + 키음길이) 으로 계산하기.
   o BGA별 타이머 생성 & position reset
 - black/white object 만들어주기
 - 레인에 LINE/JUDGELINE 객체 그리기

@@ -97,7 +97,10 @@ namespace GamePlay {
 	}
 
 	namespace {
-		/* object rendering part */
+		void RenderLine(SkinPlayObject *play) {
+			double currentpos = BmsHelper::GetCurrentPosFromTime(OnGameStart->GetTick() / 1000.0);
+			int currentbar = BmsHelper::GetCurrentBar();
+		}
 		void RenderObject(SkinRenderObject*);
 		void RenderGroup(SkinGroupObject *group) {
 			// iterate a group
@@ -138,7 +141,10 @@ namespace GamePlay {
 				RenderGroup(play);								// draw other objects first
 				if (PLAYER[0]) PLAYER[0]->RenderNote(play);		// and draw note/judgeline/line ...
 				if (PLAYER[1]) PLAYER[1]->RenderNote(play);
-				// TODO: judgeline is also drawed in RenderGroup
+				// draw line
+				RenderLine(play);
+				// render judgeline
+				play->RenderJudgeLine();
 				// TODD: method - SetJudgelineThickness()
 			}
 			else {
@@ -202,6 +208,7 @@ namespace GamePlay {
 			PLAYERVALUE[0].pOnlastnote = TIMERPOOL->Get("OnP1LastNote");
 			PLAYERVALUE[0].pOnGameover = TIMERPOOL->Get("OnP1GameOver");
 			PLAYERVALUE[0].pOnGaugeMax = TIMERPOOL->Get("OnP1GaugeMax");
+			PLAYERVALUE[0].pOnGaugeUp = TIMERPOOL->Get("OnP1GaugeUp");
 
 			/*
 			 * SC : note-index 0
@@ -254,6 +261,7 @@ namespace GamePlay {
 			PLAYERVALUE[1].pOnlastnote = TIMERPOOL->Get("OnP2LastNote");
 			PLAYERVALUE[1].pOnGameover = TIMERPOOL->Get("OnP2GameOver");
 			PLAYERVALUE[1].pOnGaugeMax = TIMERPOOL->Get("OnP2GaugeMax");
+			PLAYERVALUE[1].pOnGaugeUp = TIMERPOOL->Get("OnP2GaugeUp");
 
 			PLAYERVALUE[1].pLanepress[0] = TIMERPOOL->Get("OnP2KeySCPress");
 			PLAYERVALUE[1].pLaneup[0] = TIMERPOOL->Get("OnP2KeySCUp");
@@ -319,7 +327,6 @@ namespace GamePlay {
 		 * (load bms first to find out what key skin is proper)
 		 */
 		LoadBms(*Bmspath);
-		RString PlayskinPath = "";
 		playmode = BmsResource::BMS.GetKey();
 		bmsnote = new BmsNoteManager();
 		BmsResource::BMS.GetNotes(*bmsnote);
@@ -327,6 +334,7 @@ namespace GamePlay {
 		/*
 		 * Load skin
 		 */
+		RString PlayskinPath = "";
 		if (playmode < 10)
 			PlayskinPath = Game::SETTING.skin_play_7key;
 		else

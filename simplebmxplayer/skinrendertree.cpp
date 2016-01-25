@@ -725,6 +725,18 @@ void SkinPlayObject::RenderNote(int laneindex, double pos_start, double pos_end)
 		SkinRenderHelper::Render(Note[laneindex].img, &Note[laneindex].ln_start, &frame);
 	}
 }
+
+void SkinPlayObject::RenderLine(double pos) {
+	SkinRenderHelper::PushRenderOffset(0, h * pos);
+	imgobj_line->Update();
+	imgobj_line->Render();
+	SkinRenderHelper::PopRenderOffset();
+}
+
+void SkinPlayObject::RenderJudgeLine() {
+	imgobj_judgeline->Update();
+	imgobj_judgeline->Render();
+}
 #pragma endregion PLAYOBJECT
 
 #pragma region BGAOBJECT
