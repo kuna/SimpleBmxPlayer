@@ -528,34 +528,33 @@ void Player::RenderNote(SkinPlayObject *playobj) {
 	// COMMENT: maybe we have to convert lane number into channel number?
 	double lnpos[20] = { 0, };
 	bool lnstart[20] = { false, };
-	for (int lane = 0; lane <= 20; lane++) {
-		int channel = lane_to_channel[lane];
-		int currentnotebar = GetCurrentNoteBar(channel);
+	for (int lane = 0; lane < 20; lane++) {
+		int currentnotebar = GetCurrentNoteBar(lane);
 		while (currentnotebar >= 0) {
 			double pos = BmsHelper::GetCurrentPosFromBar(currentnotebar) - currentpos;
 			pos *= speed_mul * notespeed;
-			switch ((*bmsnote)[channel][currentnotebar].type) {
+			switch ((*bmsnote)[lane][currentnotebar].type) {
 			case BmsNote::NOTE_NORMAL:
 				playobj->RenderNote(lane, pos);
 				break;
 			case BmsNote::NOTE_LNSTART:
-				lnpos[channel] = pos;
-				lnstart[channel] = true;
+				lnpos[lane] = pos;
+				lnstart[lane] = true;
 				break;
 			case BmsNote::NOTE_LNEND:
-				if (!lnstart[channel]) {
+				if (!lnstart[lane]) {
 					playobj->RenderNote(lane, 0, pos);
 				}
-				playobj->RenderNote(lane, lnpos[channel], pos);
-				lnstart[channel] = false;
+				playobj->RenderNote(lane, lnpos[lane], pos);
+				lnstart[lane] = false;
 				break;
 			}
 			if (pos > 1) break;
-			currentnotebar = GetAvailableNoteIndex(channel, currentnotebar+1);
+			currentnotebar = GetAvailableNoteIndex(lane, currentnotebar+1);
 		}
 		// draw last ln
-		if (lnstart[channel]) {
-			playobj->RenderNote(lane, lnpos[channel], 2.0);
+		if (lnstart[lane]) {
+			playobj->RenderNote(lane, lnpos[lane], 2.0);
 		}
 	}
 }

@@ -41,7 +41,7 @@ namespace GamePlay {
 	SkinOption			skinoption;
 
 	// note
-	BmsNoteContainer*	bmsnote;
+	BmsNoteManager*		bmsnote;
 	int					playmode;	// PLAYTYPE
 
 	SDL_Texture* temptexture;	// only for test purpose
@@ -313,7 +313,7 @@ namespace GamePlay {
 		LoadBms(*Bmspath);
 		RString PlayskinPath = "";
 		playmode = BmsResource::BMS.GetKey();
-		bmsnote = new BmsNoteContainer();
+		bmsnote = new BmsNoteManager();
 		BmsResource::BMS.GetNotes(*bmsnote);
 
 		/*
