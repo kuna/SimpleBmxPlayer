@@ -221,7 +221,7 @@ namespace Game {
 			flag |= SDL_RENDERER_PRESENTVSYNC;
 		WINDOW = SDL_CreateWindow(PROGRAMNAME " - " PROGRAMDATE "(" PROGRAMCOMMIT ")", 
 			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-			SETTING.width, SETTING.height, SDL_WINDOW_SHOWN);
+			SETTING.width, SETTING.height, flag);
 		if (!WINDOW) {
 			LOG->Critical("Failed to create window");
 			return -1;
