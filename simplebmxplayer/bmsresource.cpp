@@ -160,6 +160,7 @@ namespace BmsHelper {
 		*/
 		mutex_bmsresource.lock();
 		isbmsloading = true;
+		BMSVALUE.OnSongLoadingEnd->Stop();
 
 		// load WAV/BMP
 		FileHelper::PushBasePath(IO::get_filedir(BmsResource::bmspath).c_str());
@@ -167,7 +168,7 @@ namespace BmsHelper {
 			BmsWord word(i);
 			if (BmsResource::BMS.GetRegistArraySet()["WAV"].IsExists(word)) {
 				BmsResource::SOUND.Load(i, BmsResource::BMS.GetRegistArraySet()["WAV"][word]);
-				BmsResource::SOUND.Get(word)->Resample(0.7);
+				//BmsResource::SOUND.Get(word)->Resample(0.7);
 			}
 			if (BmsResource::BMS.GetRegistArraySet()["BMP"].IsExists(word)) {
 				BmsResource::IMAGE.Load(i, BmsResource::BMS.GetRegistArraySet()["BMP"][word]);
@@ -205,6 +206,7 @@ namespace BmsHelper {
 		BMSVALUE.OnSongLoadingEnd->Start();
 		isbmsloading = false;
 		mutex_bmsresource.unlock();
+		LOG->Info("Bms resource loading done.");
 		return true;
 	}
 
@@ -386,7 +388,7 @@ namespace BmsHelper {
 		 */
 		if (currentbga.mainbga != 0) {
 			Image* img = BmsResource::IMAGE.Get(currentbga.mainbga);
-			img->Sync(BMSVALUE.OnBgaMain->GetTick());
+			if (img) img->Sync(BMSVALUE.OnBgaMain->GetTick());
 			return img;
 		}
 		else {
@@ -404,7 +406,7 @@ namespace BmsHelper {
 		*/
 		if (currentbga.layer1bga != 0) {
 			Image* img = BmsResource::IMAGE.Get(currentbga.layer1bga);
-			img->Sync(BMSVALUE.OnBgaLayer1->GetTick());
+			if (img) img->Sync(BMSVALUE.OnBgaLayer1->GetTick());
 			return img;
 		}
 		else {
@@ -418,7 +420,7 @@ namespace BmsHelper {
 		*/
 		if (currentbga.layer2bga != 0) {
 			Image* img = BmsResource::IMAGE.Get(currentbga.layer2bga);
-			img->Sync(BMSVALUE.OnBgaLayer2->GetTick());
+			if (img) img->Sync(BMSVALUE.OnBgaLayer2->GetTick());
 			return img;
 		}
 		else {

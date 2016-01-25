@@ -5,7 +5,7 @@
     <LocalDebuggerCommandArguments>"D:\LR2\BMS\CHMR\[CRYSTAL TECHNOLOGY]CHMR[SP ANOTHER].bme"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments>"D:\LR2\BMS\e-go-sa\_egs_22_hyper14.bme"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\BMS_test\[BACO]brain_analysis\03_brain_7a.bme"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

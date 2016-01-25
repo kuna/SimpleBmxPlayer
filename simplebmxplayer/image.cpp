@@ -67,7 +67,11 @@ bool Image::Load(const std::string& filepath, bool loop) {
 		}
 	}
 	else {
+		// MUST new context, or block renderer.
+		//SDL_GLContext c = SDL_GL_CreateContext(Game::WINDOW);
+		Game::RMUTEX.lock();
 		sdltex = IMG_LoadTexture(Game::RENDERER, filepath.c_str());
+		Game::RMUTEX.unlock();
 		if (!sdltex)
 			return false;
 	}

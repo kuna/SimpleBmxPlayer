@@ -22,6 +22,7 @@ namespace Game {
 	GameSetting		SETTING;
 	SceneBasic*		SCENE = NULL;
 	bool			bRunning = false;	// is game running?
+	std::mutex		RMUTEX;
 
 	// SDL
 	SDL_Window*		WINDOW = NULL;
@@ -326,11 +327,13 @@ namespace Game {
 			 *   so keypress will be out of lag
 			 *   (TODO)
 			 */
+			RMUTEX.lock();
 			SDL_RenderClear(RENDERER);
 			SCENE->Update();
 			SCENE->Render();
 			if (showfps) Render_FPS();
 			SDL_RenderPresent(RENDERER);
+			RMUTEX.unlock();
 		}
 	}
 

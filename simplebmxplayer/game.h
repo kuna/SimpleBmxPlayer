@@ -4,6 +4,7 @@
 #include "gamesetting.h"
 #include "playerinfo.h"
 #include <tchar.h>
+#include <mutex>
 
 class SceneBasic {
 public:
@@ -48,4 +49,5 @@ namespace Game {
 	extern SDL_Renderer*	RENDERER;
 	extern SDL_Window*		WINDOW;
 	extern GameSetting		SETTING;
+	extern std::mutex		RMUTEX;
 }

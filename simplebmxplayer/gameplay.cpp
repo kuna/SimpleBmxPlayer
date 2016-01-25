@@ -139,12 +139,12 @@ namespace GamePlay {
 			else if (obj->ToPlayObject()) {
 				SkinPlayObject* play = obj->ToPlayObject();
 				RenderGroup(play);								// draw other objects first
+				// render judgeline
+				play->RenderJudgeLine();
 				if (PLAYER[0]) PLAYER[0]->RenderNote(play);		// and draw note/judgeline/line ...
 				if (PLAYER[1]) PLAYER[1]->RenderNote(play);
 				// draw line
-				RenderLine(play);
-				// render judgeline
-				play->RenderJudgeLine();
+				//RenderLine(play);
 				// TODD: method - SetJudgelineThickness()
 			}
 			else {
@@ -344,7 +344,11 @@ namespace GamePlay {
 		/*
 		 * Load bms resource
 		 */
+#if _DEBUG
+		BmsHelper::LoadBmsResource();
+#else
 		BmsHelper::LoadBmsResourceOnThread();
+#endif
 
 		/*
 		 * Create player object for playing
@@ -372,7 +376,7 @@ namespace GamePlay {
 		if (close && PLAYER[1]) close = close && PLAYER[1]->IsDead();
 		OnClose->Trigger(close);
 		// OnFadeout is called when endtime is over
-		OnFadeOut->Trigger(BmsHelper::GetEndTime() + 2000 < OnGameStart->GetTick());
+		OnFadeOut->Trigger(BmsHelper::GetEndTime() < OnGameStart->GetTick());
 		// If OnClose/OnFadeout has enough time, then go to next scene (End here)
 		if (OnClose->GetTick() > 3000 || OnFadeOut->GetTick() > 3000)
 			Game::End();

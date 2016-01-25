@@ -44,9 +44,10 @@ namespace BmsResource {
 	bool IsBmsResourceLoaded();
 	double GetBmsResourceLoadingProgress();
 
-	extern SoundPool	SOUND;
-	extern ImagePool	IMAGE;
-	extern BmsBms		BMS;
+	extern SoundPool		SOUND;
+	extern ImagePool		IMAGE;
+	extern BmsBms			BMS;
+	extern BmsTimeManager	BMSTIME;
 }
 
 //

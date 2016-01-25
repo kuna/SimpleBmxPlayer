@@ -682,6 +682,7 @@ void SkinPlayObject::SetJudgelineObject(XMLElement *judgelineobj) {
 	if (!imgobj_judgeline) 
 		imgobj_judgeline = rtree->NewImageObject();
 	SkinRenderHelper::ConstructBasicRenderObject(imgobj_judgeline, judgelineobj);
+	imgobj_judgeline->SetSRC(judgelineobj);
 }
 
 void SkinPlayObject::SetLineObject(XMLElement *lineobj) {
@@ -689,6 +690,7 @@ void SkinPlayObject::SetLineObject(XMLElement *lineobj) {
 	if (!imgobj_line)
 		imgobj_line = rtree->NewImageObject();
 	SkinRenderHelper::ConstructBasicRenderObject(imgobj_line, lineobj);
+	imgobj_line->SetSRC(lineobj);
 }
 
 Uint32 SkinPlayObject::GetLaneHeight() { return h; }
@@ -727,15 +729,23 @@ void SkinPlayObject::RenderNote(int laneindex, double pos_start, double pos_end)
 }
 
 void SkinPlayObject::RenderLine(double pos) {
-	SkinRenderHelper::PushRenderOffset(0, h * pos);
+	ImageDSTFrame lane;
+	if (!SkinRenderHelper::CalculateFrame(dst[0], lane))
+		return;
+	SkinRenderHelper::PushRenderOffset(lane.x, -(int)h * pos);
 	imgobj_line->Update();
 	imgobj_line->Render();
 	SkinRenderHelper::PopRenderOffset();
 }
 
 void SkinPlayObject::RenderJudgeLine() {
+	ImageDSTFrame lane;
+	if (!SkinRenderHelper::CalculateFrame(dst[0], lane))
+		return;
+	SkinRenderHelper::PushRenderOffset(lane.x, 0);
 	imgobj_judgeline->Update();
 	imgobj_judgeline->Render();
+	SkinRenderHelper::PopRenderOffset();
 }
 #pragma endregion PLAYOBJECT
 

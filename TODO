@@ -11,7 +11,7 @@ o filemanager 만들어서 쉽게 파일 읽기 가능한지 확인하기
   - zlib 도입, 
   - archive로부터 파일 읽기
 o 쓰레드 도입.
-  - 쓰레드 버그 확인 (brain analysis)
+  o 쓰레드 버그 확인 (brain analysis)
 o 그래프/슬라이더 도입.
 o 폰트
   o 비트맵폰트: 속성에 cycle 넣고 animate 가능하게 만듬.
@@ -23,7 +23,7 @@ o Autoplay 및 정상종료.
   o 끝나는 시간: max(노트시간 + 키음길이) 으로 계산하기.
   o BGA별 타이머 생성 & position reset
 - black/white object 만들어주기
-- 레인에 LINE/JUDGELINE 객체 그리기
+o 레인에 LINE/JUDGELINE 객체 그리기
 - 타이틀폰트 fallback으로 그려지게 만들기.
 - target vs
 

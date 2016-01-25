@@ -519,19 +519,29 @@ bool Player::IsDead() {
 
 void Player::RenderNote(SkinPlayObject *playobj) {
 	double currentpos = BmsHelper::GetCurrentPosFromTime(currenttime / 1000.0);
-	// TODO: draw LINE/JUDGELINE
+
+	// render judgeline/line
+	int currentbar = BmsHelper::GetCurrentBar();
+	for (; currentbar < BmsResource::BMSTIME.GetSize(); currentbar++) {
+		if (BmsResource::BMSTIME[currentbar].measure) {
+			double pos = BmsHelper::GetCurrentPosFromBar(currentbar) - currentpos;
+			pos *= speed_mul * notespeed;
+			if (pos > 1) break;
+			playobj->RenderLine(pos);
+		}
+	}
 
 	// in lane, 0 == SC
 	// we have to check lane to ~ 20, actually.
-	// COMMENT: maybe we have to convert lane number into channel number?
 	double lnpos[20] = { 0, };
 	bool lnstart[20] = { false, };
 	for (int lane = 0; lane < 20; lane++) {
 		int currentnotebar = GetCurrentNoteBar(lane);
+		std::vector<BmsNote>& lanearr = (*bmsnote)[lane];
 		while (currentnotebar >= 0) {
 			double pos = BmsHelper::GetCurrentPosFromBar(currentnotebar) - currentpos;
 			pos *= speed_mul * notespeed;
-			switch ((*bmsnote)[lane][currentnotebar].type) {
+			switch (lanearr[currentnotebar].type) {
 			case BmsNote::NOTE_NORMAL:
 				playobj->RenderNote(lane, pos);
 				break;

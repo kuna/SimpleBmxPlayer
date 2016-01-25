@@ -153,7 +153,7 @@ namespace GameSettingHelper {
 
 	void DefaultSetting(GameSetting& setting) {
 		setting.width = 1280;
-		setting.height = 760;
+		setting.height = 720;
 		setting.vsync = 0;
 		setting.fullscreen = 1;
 		setting.resizable = 0;
