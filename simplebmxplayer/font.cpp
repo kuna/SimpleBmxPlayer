@@ -4,6 +4,11 @@
 #include "file.h"
 #include "globalresources.h"
 
+#define FALLBACK_FONT			"../system/resource/NanumGothicExtraBold.ttf"
+#define FALLBACK_FONT_TEXTURE_L	"../system/resource/fontbackground.png"
+#define FALLBACK_FONT_TEXTURE_M	"../system/resource/fontbackground_medium.png"
+#define FALLBACK_FONT_TEXTURE_S	"../system/resource/fontbackground_small.png"
+
 /*
  * TEMP: let's use FC_Font now...
  * implementing all those myself it REALLY hard T_T
@@ -20,16 +25,54 @@ Font::~Font() { Release(); }
 
 void Font::Release() {
 	SAFE_DELETE(texturefont);
-	SAFE_DELETE(ttffont);
+	if (ttffont) FC_ClearFont(ttffont), ttffont=0;
 }
 
+/*
+ * Font loading should be always successful. (incorrect font may be placed)
+ * So, use fallback font/texture when cannot found...
+ */
 bool Font::LoadTTFFont(const RString& path, int size, SDL_Color color, int thickness, 
-	SDL_Color bordercolor, int border, int style, const char* texturepath) {
+	SDL_Color bordercolor, int border, int fontstyle, const char* texturepath) {
 	ttffont = FC_CreateFont();
 	if (!ttffont)
 		return false;
-	// TODO: we're going to effect these font styles 
-	FC_LoadFont(ttffont, Game::RENDERER, path, 28, FC_MakeColor(120, 120, 120, 255), style);
+
+	RString path_ = path;
+	if (!FileHelper::IsFile(path_)) {
+		path_ = FALLBACK_FONT;
+		FileHelper::ConvertPathToSystem(path_);
+	}
+
+	FC_Style style;
+	memset(&style, 0, sizeof(FC_Style));
+
+	Uint32 *texture = 0;
+	if (texturepath) {
+		RString texturepath_ = texturepath;
+		if (!FileHelper::IsFile(texturepath_)) {
+			if (size < 70) texturepath_ = FALLBACK_FONT_TEXTURE_S;
+			else if (size < 120) texturepath_ = FALLBACK_FONT_TEXTURE_M;
+			else texturepath_ = FALLBACK_FONT_TEXTURE_L;
+			FileHelper::ConvertPathToSystem(texturepath_);
+		}
+		// load texture
+		SDL_Surface *surf = IMG_Load(texturepath_);
+		SDL_LockSurface(surf);
+		style.textureWidth = surf->w;
+		style.textureHeight = surf->h;
+		texture = new Uint32[surf->w * surf->h];
+		memcpy(texture, surf->pixels, sizeof(Uint32) * surf->w * surf->h);
+		SDL_UnlockSurface(surf);
+		SDL_FreeSurface(surf);
+	}
+	style.texture = texture;
+
+	style.fontSize = size;		style.color = color;				style.style = fontstyle;
+	style.outline = border;		style.outline_color = bordercolor;	style.thickness = thickness;
+	FC_LoadFontFromStyle(ttffont, Game::RENDERER, path_, &style);
+	FC_SetSpacing(ttffont, -border);
+	SAFE_DELETE(texture);
 	return true;
 }
 
@@ -53,7 +96,7 @@ bool Font::IsLoaded() {
 
 int Font::GetWidth(const char* text) {
 	if (ttffont) {
-		FC_GetWidth(ttffont, text);
+		return FC_GetWidth(ttffont, text);
 	}
 	else if (texturefont) {
 		return texturefont->GetWidth(text);
@@ -76,8 +119,7 @@ void Font::Render(const char* text, int x, int y, int width) {
 
 void Font::SetAlphaMod(uint8_t a) {
 	if (ttffont) {
-		// TODO
-		//SDL_SetTextureAlphaMod(FC_s)
+		FC_SetAlphaMod(ttffont, a);
 	}
 	else if (texturefont) {
 		texturefont->SetAlphaMod(a);
@@ -86,7 +128,7 @@ void Font::SetAlphaMod(uint8_t a) {
 
 void Font::SetColorMod(uint8_t r, uint8_t g, uint8_t b) {
 	if (ttffont) {
-		// TODO
+		FC_SetColorMod(ttffont, r, g, b);
 	}
 	else if (texturefont) {
 		texturefont->SetColorMod(r, g, b);

@@ -441,7 +441,7 @@ public:
 	/** @brief load image at globalresources. */
 	void RegisterImage(RString& id, RString& path);
 	/** @brief load font at globalresources. */
-	void RegisterTTFFont(RString& id, RString& path, int size);
+	void RegisterTTFFont(RString& id, RString& path, int size, int border, const char* texturepath = 0);
 	/** @brief load font at globalresources. (using texturefont raw data) */
 	void RegisterTextureFont(RString& id, RString& path);
 	/** @brief load font at globalresources. (using texturefont raw data) */

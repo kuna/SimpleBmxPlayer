@@ -153,7 +153,13 @@ namespace FileHelper {
 		return basepath_stack.back();
 	}
 
-	void ConvertPathToAbsolute(RString &path) {
+	RString& GetSystemPath() {
+		ASSERT(basepath_stack.size() > 0);
+		return basepath_stack.front();
+	}
+
+	/* private */
+	void ConvertPathToAbsolute(RString &path, RString &base) {
 		// replace some env into valid string (refers STRINGPOOL)
 		int p = 0, p2 = 0;
 		while (p != RString::npos) {
@@ -183,7 +189,15 @@ namespace FileHelper {
 		// if relative, then translate it into absolute
 		if (path.substr(0, 2) == "./" || path.substr(0, 2) == ".\\")
 			path = path.substr(2);
-		path = GetBasePath() + path;
+		path = base + path;
+	}
+
+	void ConvertPathToAbsolute(RString &path) {
+		return ConvertPathToAbsolute(path, GetBasePath());
+	}
+
+	void ConvertPathToSystem(RString &path) {
+		return ConvertPathToAbsolute(path, GetSystemPath());
 	}
 
 	bool GetAnyAvailableFilePath(RString &path) {

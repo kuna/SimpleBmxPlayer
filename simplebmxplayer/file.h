@@ -65,6 +65,7 @@ namespace FileHelper {
 	void PushBasePath(const char *path);
 	void PopBasePath();
 	RString& GetBasePath();
+	RString& GetSystemPath();
 	void GetFileList(const char *folderpath, std::vector<RString>& filelist, bool getfileonly = true);
 	void FilterFileList(const char *extfilters, std::vector<RString>& filelist);
 	/** @brief is path exists & file? */
@@ -77,6 +78,7 @@ namespace FileHelper {
 	RString GetParentDirectory(const RString& path);
 	/** @brief converts path to absolute path */
 	void ConvertPathToAbsolute(RString& path);
+	void ConvertPathToSystem(RString& path);
 	/* @description
 	 * this method tries these paths:
 	 * 1. path itself

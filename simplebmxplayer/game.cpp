@@ -239,7 +239,10 @@ namespace Game {
 		IMAGEPOOL->Register("_white", new ImageColor(0xFFFFFFFF));
 		oninputstart = TIMERPOOL->Get("OnInputStart");
 		onscene = TIMERPOOL->Get("OnScene");
-		font = FONTPOOL->LoadTTFFont("_system", "../system/resource/NanumGothic.ttf", 28, FC_MakeColor(120, 120, 120, 255));
+		font = FONTPOOL->LoadTTFFont("_system", 
+			"../system/resource/NanumGothicExtraBold.ttf", 28, FC_MakeColor(120, 120, 120, 255), 0,
+			FC_MakeColor(0, 0, 0, 255), 1, 0,
+			"../system/resource/fontbackground_small.png");
 
 		/*
 		* Scene instance initalization

@@ -92,29 +92,27 @@ public:
 	Image* LoadById(const char* id);
 };
 
-// TODO: namepool / pathpool is different. we should make them different.
-// don't make it confusing ...
+// FontPool is a little different from imagepool 
+// It just stores fonts but don't emits it.
+// so, you should Release it by yourself (to prevent memory leak)
+// but you may can make ID and get Font* from that.
+// (ID randomly created if you don't set it)
 class FontPool {
 private:
 	std::map<RString, Font*> _fontpool;
-	std::map<Font*, int> _loadcount;
 public:
 	~FontPool();
 	void ReleaseAll();
-
-	bool IsExists(const RString &id);
-	bool IsIDExists(const RString &id);
-	Font* LoadTTFFont(const RString &path, int size, SDL_Color color, int thickness = 0,
-		SDL_Color bordercolor = FC_MakeColor(0, 0, 0, 255), int border = 1,
-		int style = TTF_STYLE_NORMAL, const char* texturepath = 0);
-	Font* LoadTTFFont(const RString &id, const RString &path, int size, SDL_Color color, int thickness = 0,
-		SDL_Color bordercolor = FC_MakeColor(0, 0, 0, 255), int border = 1,
-		int style = TTF_STYLE_NORMAL, const char* texturepath = 0);
-	Font* LoadTextureFont(const RString &path);
-	Font* LoadTextureFontFromTextData(const RString &id, const RString &textdata);
-	Font* Get(const RString &path);
-	Font* GetByID(const RString &id);
 	bool Release(Font *f);
+	bool IsIDExists(const RString &id);
+	Font* GetByID(const RString &id);
+
+	Font* RegisterFont(const char* id, Font* f);
+	Font* LoadTTFFont(const char* id, const RString &path, int size, SDL_Color color, int thickness = 0,
+		SDL_Color bordercolor = FC_MakeColor(0, 0, 0, 255), int border = 1,
+		int style = TTF_STYLE_NORMAL, const char* texturepath = 0);
+	Font* LoadTextureFont(const char* id, const RString &path);
+	Font* LoadTextureFontFromTextData(const char* id, const RString &textdata);
 };
 
 class SoundPool {

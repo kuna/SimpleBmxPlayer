@@ -340,15 +340,29 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		resource->LinkEndChild(image);
 	}
 	else if (CMD_IS("#FONT")) {
+		printf("#FONT is depreciated option, ignore.\n");
+	}
+	else if (CMD_IS("#LR2FONT")) {
 		// we don't use bitmap fonts
 		// So if cannot found, we'll going to use default font/texture.
 		// current font won't support TTF, so basically we're going to use default font.
 		XMLElement *resource = s->skinlayout.FirstChildElement("Resource");
 		XMLElement *font = s->skinlayout.NewElement("Font");
 		font->SetAttribute("name", font_cnt++);
-		font->SetAttribute("path", args[4]);
-		font->SetAttribute("texturepath", "");
-		font->SetAttribute("size", INT(args[1]));
+		font->SetAttribute("path", "default");
+		int size = 18;
+		if (strstr(args[1], "small")) size = 15;
+		if (strstr(args[1], "title")
+			|| strstr(args[1], "big")
+			|| strstr(args[1], "large")) 
+			size = 42;
+		if (size > 20)
+			font->SetAttribute("texturepath", "default");
+		font->SetAttribute("size", size);
+#if 0
+		/*
+		 * these are available in #FONT, not #LR2FONT
+		 */
 		switch (INT(args[3])) {
 		case 0:
 			// normal
@@ -364,7 +378,8 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			break;
 		}
 		font->SetAttribute("thickness", INT(args[2]));
-		font->SetAttribute("border", 1);
+#endif
+		font->SetAttribute("border", size / 20 + 1);
 		resource->LinkEndChild(font);
 	}
 	else if (CMD_IS("#SETOPTION")) {
@@ -2781,7 +2796,7 @@ const char* _LR2SkinParser::TranslateText(int code) {
 		strcpy(translated, "Subtitle");
 	}
 	else if (code == 12) {
-		strcpy(translated, "SumTitle");
+		strcpy(translated, "MainTitle");
 	}
 	else if (code == 13) {
 		strcpy(translated, "Genre");

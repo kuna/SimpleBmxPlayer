@@ -48,7 +48,7 @@ public:
 	Font();
 	~Font();
 	bool LoadTTFFont(const RString& path, int size, SDL_Color color,
-		int border, SDL_Color bordercolor = FC_MakeColor(0, 0, 0, 255),
+		int border = 1, SDL_Color bordercolor = FC_MakeColor(0, 0, 0, 255),
 		int style = TTF_STYLE_NORMAL, int thickness = 0, const char* texturepath = 0);
 	bool LoadTextureFont(const RString& path);
 	void LoadTextureFontByText(const RString& textdata);

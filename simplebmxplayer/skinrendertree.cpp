@@ -356,6 +356,7 @@ SkinTextObject::SkinTextObject(SkinRenderTree* owner)
 void SkinTextObject::SetFont(const char* resid) { 
 	if (!resid || rtree->_fontkey.find(resid) == rtree->_fontkey.end()) {
 		// use system font (fallback)
+		// TODO: set to 0?
 		fnt = FONTPOOL->GetByID("_system");
 	}
 	else {
@@ -383,7 +384,7 @@ int SkinTextObject::GetTextWidth(const RString& s) {
 void SkinTextObject::Render() { if (v && drawable) RenderText(*v); }
 
 void SkinTextObject::RenderText(const char* s) {
-	if (fnt) {
+	if (fnt && drawable) {
 		// check align
 		int left_offset = 0;
 		switch (align) {
@@ -839,15 +840,15 @@ void SkinRenderTree::RegisterImage(RString &id, RString &path) {
 	}
 }
 
-void SkinRenderTree::RegisterTTFFont(RString &id, RString &path, int size) {
-	Font *f = FONTPOOL->LoadTTFFont(path, size, FC_MakeColor(255, 255, 255, 255));
+void SkinRenderTree::RegisterTTFFont(RString &id, RString &path, int size, int border, const char *texturepath) {
+	Font *f = FONTPOOL->LoadTTFFont(id, path, size, FC_MakeColor(255, 255, 255, 255), 0, FC_MakeColor(0, 0, 0, 255), border, 0, texturepath);
 	if (f) {
 		_fontkey.insert(std::pair<RString, Font*>(id, f));
 	}
 }
 
 void SkinRenderTree::RegisterTextureFont(RString &id, RString &path) {
-	Font *f = FONTPOOL->LoadTextureFont(path);
+	Font *f = FONTPOOL->LoadTextureFont(id, path);
 	if (f) {
 		_fontkey.insert(std::pair<RString, Font*>(id, f));
 	}
@@ -1178,7 +1179,8 @@ bool SkinRenderHelper::LoadResourceFromSkin(SkinRenderTree &rtree, Skin &s) {
 		while (font) {
 			RString path = font->Attribute("path");
 			RString id = font->Attribute("name");
-			rtree.RegisterTTFFont(id, path, font->IntAttribute("size"));
+			rtree.RegisterTTFFont(id, path, font->IntAttribute("size"),
+				font->IntAttribute("border"), font->Attribute("texturepath"));
 			font = font->NextSiblingElement("Font");
 		}
 		XMLElement *tfont = res->FirstChildElement("TextureFont");
@@ -1284,6 +1286,9 @@ bool SkinRenderHelper::CalculateFrame(ImageDST &dst, ImageDSTFrame &frame) {
 			frame = Tween(dst.frame[nframe], dst.frame[nframe + 1], t, dst.acctype);
 		}
 	}
+
+	// if alpha == 0, then don't draw.
+	if (frame.a == 0) return false;
 
 	return true;
 }

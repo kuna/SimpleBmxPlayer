@@ -339,6 +339,18 @@ namespace GamePlay {
 		BmsResource::BMS.GetNotes(*bmsnote);
 
 		/*
+		 * apply some switches/values about BMS
+		 * - if BACKBMP, then SET and load _backbmp
+		 */
+		STRPOOL->Set("MainTitle", "maintitle");
+		STRPOOL->Set("Title", "title");
+		STRPOOL->Set("Subtitle", "subtitle");
+		STRPOOL->Set("Genre", "genre");
+		STRPOOL->Set("Artist", "artist");
+		STRPOOL->Set("SubArtist", "subartist");
+		SWITCH_OFF("IsBACKBMP");
+
+		/*
 		 * Load skin
 		 */
 		RString PlayskinPath = "";

@@ -278,76 +278,58 @@ void FontPool::ReleaseAll() {
 		delete it->second;
 	}
 	_fontpool.clear();
-	_loadcount.clear();
 }
 
 bool FontPool::Release(Font *f) {
-	// reduce loadcount
-	// if loadcount <= 0, then release object from memory
-	if (_loadcount.find(f) != _loadcount.end()) {
-		int loadcount = --_loadcount[f];
-		if (loadcount <= 0) {
-			for (auto it = _fontpool.begin(); it != _fontpool.end(); ++it) {
-				if (it->second == f) {
-					_fontpool.erase(it);
-					break;
-				}
-			}
-			_loadcount.erase(_loadcount.find(f));
+	for (auto it = _fontpool.begin(); it != _fontpool.end(); ++it) {
+		if (it->second == f) {
+			_fontpool.erase(it);
 			delete f;
+			return true;
 		}
-		return true;
 	}
-	else {
-		// not exists
-		return false;
-	}
+	return false;
 }
 
-bool FontPool::IsExists(const RString &path) {
-	RString _path = path;
-	FileHelper::ConvertPathToAbsolute(_path);
-	return IsIDExists(_path);
-}
+/* private */
+RString randomID() { return ssprintf("%08x", rand()); }
 
 bool FontPool::IsIDExists(const RString &id) {
 	return (_fontpool.find(id) != _fontpool.end());
 }
 
-Font* FontPool::LoadTTFFont(const RString &path, 
-	int size, SDL_Color color, int border, SDL_Color bordercolor,
-	int style, int thickness, const char* texturepath) {
-	return LoadTTFFont(path, path, size, color, border, bordercolor, style, thickness, texturepath);
-}
-
-Font* FontPool::LoadTTFFont(const RString& id, const RString &path, 
-	int size, SDL_Color color, int border, SDL_Color bordercolor,
-	int style, int thickness, const char* texturepath) {
+Font* FontPool::RegisterFont(const char* id, Font* f) {
+	RString id_;
+	if (!id) id_ = randomID();
+	else id_ = id;
 	if (!IsIDExists(id)) {
-		// first convert path in easy way
-		RString _path = path;
-		FileHelper::ConvertPathToAbsolute(_path);
-		CheckFilenameValid(_path);
-		Font *f = new Font();
-		f->LoadTTFFont(_path, size, color, border, bordercolor, style, thickness, texturepath);
-		if (f->IsLoaded()) {
-			_fontpool.insert(pair<RString, Font*>(id, f));
-			_loadcount.insert(pair<Font*, int>(f, 1));
-			return f;
-		}
-		else {
-			delete f;
-			return 0;
-		}
-	}
-	else {
-		Font *f = _fontpool[id];
-		_loadcount[f]++;
+		_fontpool.insert(pair<RString, Font*>(id, f));
 		return f;
 	}
+	else {
+		// you can't register already existing font!
+		return 0;
+	}
 }
 
-Font* FontPool::LoadTextureFont(const RString &path) {
+Font* FontPool::LoadTTFFont(const char* id, const RString &path, 
+	int size, SDL_Color color, int border, SDL_Color bordercolor,
+	int style, int thickness, const char* texturepath) {
+	RString _path = path;
+	FileHelper::ConvertPathToAbsolute(_path);
+	CheckFilenameValid(_path);
+	Font *f = new Font();
+	f->LoadTTFFont(_path, size, color, border, bordercolor, style, thickness, texturepath);
+	if (f->IsLoaded() && RegisterFont(id, f)) {
+		return f;
+	}
+	else {
+		delete f;
+		return 0;
+	}
+}
+
+Font* FontPool::LoadTextureFont(const char* id, const RString &path) {
 	// first convert path in easy way
 	RString _path = path;
 	FileHelper::ConvertPathToAbsolute(_path);
@@ -361,31 +343,16 @@ Font* FontPool::LoadTextureFont(const RString &path) {
 	}
 }
 
-Font* FontPool::LoadTextureFontFromTextData(const RString &id, const RString &textdata) {
-	if (!IsIDExists(id)) {
-		Font *f = new Font();
-		f->LoadTextureFontByText(textdata);
-		if (f->IsLoaded()) {
-			_fontpool.insert(pair<RString, Font*>(id, f));
-			_loadcount.insert(pair<Font*, int>(f, 1));
-			return f;
-		}
-		else {
-			delete f;
-			return 0;
-		}
-	}
-	else {
-		Font *f = _fontpool[id];
-		_loadcount[f]++;
+Font* FontPool::LoadTextureFontFromTextData(const char* id, const RString &textdata) {
+	Font *f = new Font();
+	f->LoadTextureFontByText(textdata);
+	if (f->IsLoaded() && RegisterFont(id, f)) {
 		return f;
 	}
-}
-
-Font* FontPool::Get(const RString &path) {
-	RString _path = path;
-	FileHelper::ConvertPathToAbsolute(_path);
-	return GetByID(_path);
+	else {
+		delete f;
+		return 0;
+	}
 }
 
 Font* FontPool::GetByID(const RString &id) {
