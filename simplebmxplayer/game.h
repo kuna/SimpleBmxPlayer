@@ -1,27 +1,53 @@
+#pragma once
+
 #include "SDL/SDL.h"
-#include "SDL/SDL_FontCache.h"	// extract it to a class
-#include "SDL/SDL_timer.h"
-#include "image.h"
-#include "audio.h"
-#include "timer.h"
-#include "bmsresource.h"
-#include "player.h"
-#include "skin.h"
 #include "gamesetting.h"
+#include "playerinfo.h"
 #include <tchar.h>
+#include <mutex>
+
+class SceneBasic {
+public:
+	// basics
+	virtual void Initialize() {};
+	virtual void Start() {};
+	virtual void Update() {};
+	virtual void Render() {};
+	virtual void End() {};
+	virtual void Release() {};
+
+	// event handler
+	virtual void KeyUp(int code) {};
+	virtual void KeyDown(int code, bool repeating) {};
+	virtual void MouseUp(int x, int y) {};
+	virtual void MouseDown(int x, int y) {};
+	virtual void MouseMove(int x, int y) {};
+	virtual void MouseStartDrag(int x, int y) {};
+	virtual void MouseDrag(int x, int y) {};
+	virtual void MouseEndDrag(int x, int y) {};
+};
 
 namespace Game {
-	namespace Parameter {
-		void help();
-		bool parse(int argc, _TCHAR **argv);
-	}
-
-	bool Init();
-	void Start();
+	// game's main 3 loop: init, mainloop, release
+	/** @brief Initalize routine for game. */
+	bool Initialize();
+	/** @brief mainly, fetchs event / render */
 	void MainLoop();
+	/** @brief It isn't necessary to be called, but must called from somewhere else to exit MainLoop() */
+	void End();
+	/** @brief release all resources before program terminates. */
 	void Release();
 
-	// get/set
-	extern SDL_Renderer* RENDERER;
-	extern SDL_Window* WINDOW;
+	// game scene transition
+	/** @brief call OnScene/OnInputStart */
+	void StartScene();
+	/** @brief call StartScene() if scene is different */
+	void ChangeScene(SceneBasic *s);
+
+	// global veriables about game rendering.
+	extern SceneBasic*		SCENE;
+	extern SDL_Renderer*	RENDERER;
+	extern SDL_Window*		WINDOW;
+	extern GameSetting		SETTING;
+	extern std::mutex		RMUTEX;
 }

@@ -7,6 +7,30 @@
 #define READLINE_MAX 10240
 #define READALL_MAX 10240000	// about 10mib
 
+#define MD5HASH_BLOCKSIZE 1024
+RString FileBasic::GetMD5Hash() {
+	// md5
+	MD5_CTX mdContext;
+	char* data = new char[MD5HASH_BLOCKSIZE];
+	MD5Init(&mdContext);
+	int bytes;
+	while ((bytes = Read(data, MD5HASH_BLOCKSIZE)) != 0) {
+		MD5Update(&mdContext, (unsigned char*)data, bytes);
+	}
+	MD5Final(&mdContext);
+	// digest
+	char digest[40];
+	digest[32] = 0;
+	char *digest_p = digest;
+	for (int i = 0; i < 16; i++) {
+		sprintf(digest_p, "%02x", mdContext.digest[i]);
+		digest_p += 2;
+	}
+	// release & return
+	delete data;
+	return digest;
+}
+
 File::File() : fp(0) {}
 File::~File() {
 	Close();
@@ -57,6 +81,11 @@ int File::Read(RString &str, size_t size) {
 	size_t r = fread(p, 1, size, fp);
 	str = p;
 	delete p;
+	return r;
+}
+
+int File::Read(char *p, size_t size) {
+	size_t r = fread(p, 1, size, fp);
 	return r;
 }
 
@@ -157,6 +186,22 @@ namespace FileHelper {
 		path = GetBasePath() + path;
 	}
 
+	bool GetAnyAvailableFilePath(RString &path) {
+		if (IsFile(path)) return true;
+		ConvertPathToAbsolute(path);
+		if (IsFile(path)) return true;
+		RString ext = path.substr(path.find_last_of("./\\"));
+		RString folder = GetParentDirectory(path);
+		std::vector<RString> filelist;
+		GetFileList(folder, filelist);
+		FilterFileList(ext, filelist);
+		if (filelist.size() > 0) {
+			path = filelist[rand() % filelist.size()];
+			return true;
+		}
+		return false;
+	}
+
 #ifdef _WIN32
 #include <Windows.h>
 #endif
@@ -224,13 +269,80 @@ namespace FileHelper {
 		split(extfilters, ";", filters);
 
 		for (auto filepath = filelist.begin(); filepath != filelist.end(); ) {
+			bool update = true;
 			for (auto ext = filters.begin(); ext != filters.end(); ++ext) {
-				if (EndsWith(*filepath, *ext)) {
+				if (!EndsWith(*filepath, *ext)) {
 					filepath = filelist.erase(filepath);
+					update = false;
 					continue;
 				}
 			}
-			++filepath;
+			if (update) ++filepath;
 		}
+	}
+
+	bool IsFile(const RString& path) {
+#ifdef _WIN32
+		wchar_t path_w[1024];
+		ENCODING::utf8_to_wchar(path, path_w, 1024);
+		struct _stat64i32 s;
+		if (_wstat(path_w, &s) != 0) return false;
+		if (s.st_mode & S_IFREG) return true;
+		else return false;
+#else
+		struct stat s;
+		if (stat(path.c_str(), &s) != 0) return false;
+		if (s.st_mode & S_IFREG) return true;
+		else return false;
+#endif
+	}
+
+	bool IsFolder(const RString& path) {
+#ifdef _WIN32
+		wchar_t path_w[1024];
+		ENCODING::utf8_to_wchar(path, path_w, 1024);
+		struct _stat64i32 s;
+		if (_wstat(path_w, &s) != 0) return false;
+		if (s.st_mode & S_IFDIR) return true;
+		else return false;
+#else
+		struct stat s;
+		if (stat(path.c_str(), &s) != 0) return false;
+		if (s.st_mode & S_IFDIR) return true;
+		else return false;
+#endif
+	}
+
+	// private
+	bool _create_directory(const char* filepath) {
+#ifdef _WIN32
+		wchar_t path_w[1024];
+		ENCODING::utf8_to_wchar(filepath, path_w, 1024);
+		return (_wmkdir(path_w) == 0);
+#else
+		return (mkdir(filepath) == 0);
+#endif
+	}
+
+	bool CreateFolder(const RString& path) {
+		// if current directory is not exist
+		// then get parent directory
+		// and check it recursively
+		// after that, create own.
+		if (IsFolder(path))
+			return true;
+		if (IsFile(path))
+			return false;
+		if (!_create_directory(path)) {
+			RString parent = GetParentDirectory(path);
+			if (NOT(CreateFolder(parent))) {
+				return false;
+			}
+			return _create_directory(path);
+		}
+	}
+
+	RString GetParentDirectory(const RString& path) {
+		return path.substr(0, path.find_last_of("/\\"));
 	}
 }

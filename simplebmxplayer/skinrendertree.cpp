@@ -337,8 +337,11 @@ void SkinImageObject::SetImage(Image *img) {
 
 void SkinImageObject::SetSRC(XMLElement *e) {
 	ConstructSRCFromElement(imgsrc, e);
-	if (e->Attribute("resid"))
-		SetImage(rtree->_imagekey[e->Attribute("resid")]);
+	if (e->Attribute("resid")) {
+		Image *img = IMAGEPOOL->GetById(e->Attribute("resid"));
+		if (!img) img = rtree->_imagekey[e->Attribute("resid")];
+		SetImage(img);
+	}
 }
 
 void SkinImageObject::Render() {
@@ -385,12 +388,14 @@ void SkinTextObject::RenderText(const char* s) {
 		int left_offset = 0;
 		switch (align) {
 		case 1:		// center
-			left_offset = (dst_cached.frame.w - fnt->GetWidth(s)) / 2;
+			left_offset = -(fnt->GetWidth(s)) / 2;
 			break;
 		case 2:		// right
-			left_offset = dst_cached.frame.w - fnt->GetWidth(s);
+			left_offset = -fnt->GetWidth(s);
 			break;
 		}
+		fnt->SetAlphaMod(dst_cached.frame.a);
+		fnt->SetColorMod(dst_cached.frame.r, dst_cached.frame.g, dst_cached.frame.b);
 		fnt->Render(s, 
 			left_offset + SkinRenderHelper::_offset_calculated.x + dst_cached.frame.x, 
 			SkinRenderHelper::_offset_calculated.y + dst_cached.frame.y);
@@ -541,12 +546,12 @@ void SkinGrooveGaugeObject::SetObject(XMLElement *e) {
 	addx = e->IntAttribute("addx");
 	addy = e->IntAttribute("addy");
 	if (e->IntAttribute("side") == 0) {
-		v = DOUBLEPOOL->Get("Player1Gauge");
-		Gaugetype = INTPOOL->Get("Player1GaugeType");
+		v = DOUBLEPOOL->Get("P1Gauge");
+		Gaugetype = INTPOOL->Get("P1GaugeType");
 	}
 	else {
-		v = DOUBLEPOOL->Get("Player2Gauge");
-		Gaugetype = INTPOOL->Get("Player2GaugeType");
+		v = DOUBLEPOOL->Get("P2Gauge");
+		Gaugetype = INTPOOL->Get("P2GaugeType");
 	}
 	t = TIMERPOOL->Get("OnScene");
 	dotcnt = 50;
@@ -578,7 +583,7 @@ void SkinGrooveGaugeObject::SetObject(XMLElement *e) {
 
 void SkinGrooveGaugeObject::Render() {
 	// work like a graph
-	if (drawable && v) {
+	if (drawable && v && img) {
 		ImageDSTFrame f = dst_cached.frame;
 		ImageSRC *currentsrc;
 		int inactive = 0;
@@ -592,25 +597,26 @@ void SkinGrooveGaugeObject::Render() {
 			// grooveGauge => print as hard Gauge from 80%
 			if (Gaugetype_now == 0 && i >= groovedot)
 				Gaugetype_now = 1;
+			// should I blink?
+			switch (activedot - i) {
+			case 1:
+				if (blink >= 1)
+					inactive = true;
+					break;
+			case 2:
+				if (blink >= 2)
+					inactive = true;
+					break;
+			}
 			// now we can set currentSRC
 			if (inactive) 
 				currentsrc = &src_combo_inactive[Gaugetype_now];
 			else
 				currentsrc = &src_combo_active[Gaugetype_now];
-			// should I blink?
-			switch (activedot - i) {
-			case 1:
-				if (blink >= 1) break;
-			case 2:
-				if (blink >= 2) break;
-			case 3:
-				if (blink >= 3) break;
-			default:
-				// do render
-				SkinRenderHelper::Render(img, currentsrc, &f,
-					dst_cached.dst->blend, dst_cached.dst->rotatecenter);
-				break;
-			}
+			// do render
+			SkinRenderHelper::Render(img, currentsrc, &f,
+				dst_cached.dst->blend, dst_cached.dst->rotatecenter);
+
 			f.x += addx;
 			f.y += addy;
 		}
@@ -621,6 +627,7 @@ void SkinGrooveGaugeObject::Render() {
 SkinPlayObject::SkinPlayObject(SkinRenderTree* owner) : 
 SkinGroupObject(owner), imgobj_judgeline(0), imgobj_line(0) {
 	objtype = OBJTYPE::PLAYLANE;
+	memset(Note, 0, sizeof(Note));
 }
 
 void SkinPlayObject::ConstructLane(XMLElement *lane) {
@@ -677,6 +684,7 @@ void SkinPlayObject::SetJudgelineObject(XMLElement *judgelineobj) {
 	if (!imgobj_judgeline) 
 		imgobj_judgeline = rtree->NewImageObject();
 	SkinRenderHelper::ConstructBasicRenderObject(imgobj_judgeline, judgelineobj);
+	imgobj_judgeline->SetSRC(judgelineobj);
 }
 
 void SkinPlayObject::SetLineObject(XMLElement *lineobj) {
@@ -684,6 +692,7 @@ void SkinPlayObject::SetLineObject(XMLElement *lineobj) {
 	if (!imgobj_line)
 		imgobj_line = rtree->NewImageObject();
 	SkinRenderHelper::ConstructBasicRenderObject(imgobj_line, lineobj);
+	imgobj_line->SetSRC(lineobj);
 }
 
 Uint32 SkinPlayObject::GetLaneHeight() { return h; }
@@ -719,6 +728,26 @@ void SkinPlayObject::RenderNote(int laneindex, double pos_start, double pos_end)
 		SkinRenderHelper::Render(Note[laneindex].img, &Note[laneindex].ln_end, &endframe);
 		SkinRenderHelper::Render(Note[laneindex].img, &Note[laneindex].ln_start, &frame);
 	}
+}
+
+void SkinPlayObject::RenderLine(double pos) {
+	ImageDSTFrame lane;
+	if (!SkinRenderHelper::CalculateFrame(dst[0], lane))
+		return;
+	SkinRenderHelper::PushRenderOffset(lane.x, -(int)h * pos);
+	imgobj_line->Update();
+	imgobj_line->Render();
+	SkinRenderHelper::PopRenderOffset();
+}
+
+void SkinPlayObject::RenderJudgeLine() {
+	ImageDSTFrame lane;
+	if (!SkinRenderHelper::CalculateFrame(dst[0], lane))
+		return;
+	SkinRenderHelper::PushRenderOffset(lane.x, 0);
+	imgobj_judgeline->Update();
+	imgobj_judgeline->Render();
+	SkinRenderHelper::PopRenderOffset();
 }
 #pragma endregion PLAYOBJECT
 
@@ -774,7 +803,10 @@ void SkinScriptObject::Render() {
 // ----- SkinRenderTree -------------------------------------
 
 #pragma region SKINRENDERTREE
-SkinRenderTree::SkinRenderTree(int w, int h) : SkinGroupObject(this) { SetSkinSize(w, h); }
+SkinRenderTree::SkinRenderTree(int w, int h) : SkinGroupObject(this) { 
+	// set skin size
+	SetSkinSize(w, h); 
+}
 
 void SkinRenderTree::SetSkinSize(int w, int h) { _scr_w = w, _scr_h = h; }
 
@@ -950,7 +982,7 @@ void ConstructDSTFromElement(ImageDST &dst, XMLElement *e) {
 	dst.blend = e->IntAttribute("blend");
 	dst.rotatecenter = e->IntAttribute("rotatecenter");
 	dst.acctype = e->IntAttribute("acc");
-	dst.loopstart = 0;
+	dst.loopstart = -1; e->QueryIntAttribute("loop", &dst.loopstart);
 	XMLElement *ef = e->FirstChildElement("Frame");
 	while (ef) {
 		ImageDSTFrame f;
@@ -964,20 +996,14 @@ void ConstructDSTFromElement(ImageDST &dst, XMLElement *e) {
 		f.g = 255;	ef->QueryIntAttribute("g", &f.g);
 		f.b = 255;	ef->QueryIntAttribute("b", &f.b);
 		f.angle = ef->IntAttribute("angle");
-		if (ef->Attribute("loopstart")) {
-			dst.loopstart = f.time;
-		}
 		dst.loopend = f.time;
 		SkinRenderHelper::AddFrame(dst, f);
 		ef = ef->NextSiblingElement("Frame");
 	}
-	
-	// CASE: no loop (div by 0 error)
-	if (dst.loopstart == dst.loopend)
-		dst.loopstart = 0;
 }
 
 /* private */
+/* TODO: change object creating by matching name to `Registered objects` */
 void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XMLElement *e) {
 	while (e) {
 		SkinRenderObject *obj = 0;
@@ -1228,7 +1254,7 @@ bool SkinRenderHelper::CalculateFrame(ImageDST &dst, ImageDSTFrame &frame) {
 	uint32_t time = dst.timer->GetTick();
 
 	// get current frame
-	if (dst.loopstart > 0 && time > dst.loopstart) {
+	if (dst.loopstart != dst.loopend && dst.loopstart >= 0 && time > dst.loopstart) {
 		time = (time - dst.loopstart) % (dst.loopend - dst.loopstart) + dst.loopstart;
 	}
 	int nframe = 0;

@@ -57,7 +57,8 @@ bool Image::Load(const std::string& filepath, bool loop) {
 
 	// check is it movie or image
 	std::string ext = IO::get_fileext(filepath);	COMMON::lower(ext);
-	if (ext == ".mpg" || ext == ".avi" || ext == ".mpeg") {
+	if (ext == ".mpg" || ext == ".avi" || ext == ".mpeg"
+		|| ext == ".m1v") {
 		if (_movie_available) {
 			if (!LoadMovie(filepath.c_str())) {
 				ReleaseMovie();
@@ -66,7 +67,11 @@ bool Image::Load(const std::string& filepath, bool loop) {
 		}
 	}
 	else {
+		// MUST new context, or block renderer.
+		//SDL_GLContext c = SDL_GL_CreateContext(Game::WINDOW);
+		Game::RMUTEX.lock();
 		sdltex = IMG_LoadTexture(Game::RENDERER, filepath.c_str());
+		Game::RMUTEX.unlock();
 		if (!sdltex)
 			return false;
 	}
@@ -266,4 +271,16 @@ bool Image::IsLoaded() {
 
 SDL_Texture* Image::GetPtr() {
 	return sdltex;
+}
+
+#define COLOR_ARGB(a, r, g, b) ((a) << 24 | (r) << 16 | (g) << 8 | (b))
+
+ImageColor::ImageColor(uint32_t color, int w, int h) {
+	int pitch;
+	Uint32 *p;
+	sdltex = SDL_CreateTexture(Game::RENDERER, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, w, h);
+	SDL_LockTexture(sdltex, 0, (void**)&p, &pitch);
+	for (int i = 0; i < w * h; i++)
+		p[i] = color;
+	SDL_UnlockTexture(sdltex);
 }

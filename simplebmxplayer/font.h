@@ -6,6 +6,7 @@
 #include "skintexturefont.h"
 #include "image.h"
 #include "global.h"
+#include "timer.h"
 
 class TextureFont {
 private:
@@ -15,6 +16,8 @@ private:
 	int imgs_cnt;
 	// scale
 	double sx, sy;
+	// cached
+	uint8_t a, r, g, b;
 public:
 	TextureFont();
 	~TextureFont();
@@ -25,6 +28,9 @@ public:
 	SkinTextureFont::Glyph* GetGlyph(uint32_t code);
 	int GetWidth(const RString& text);
 	void Render(const RString& text, int x, int y);
+
+	void SetAlphaMod(uint8_t a);
+	void SetColorMod(uint8_t r, uint8_t g, uint8_t b);
 };
 
 /*
@@ -54,4 +60,7 @@ public:
 	/** @brief render text, but stretch if it's longer then width size. */
 	void Render(const char* text, int x, int y, int width);
 	void Release();
+
+	void SetAlphaMod(uint8_t a);
+	void SetColorMod(uint8_t r, uint8_t g, uint8_t b);
 };

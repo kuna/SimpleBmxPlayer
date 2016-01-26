@@ -86,6 +86,10 @@ public:
 	Image* Load(const RString &path);
 	bool Release(Image *img);
 	Image* Get(const RString &path);
+
+	void Register(const char* id, Image* img);
+	Image* GetById(const char* id);
+	Image* LoadById(const char* id);
 };
 
 // TODO: namepool / pathpool is different. we should make them different.

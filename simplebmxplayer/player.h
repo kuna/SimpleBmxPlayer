@@ -7,147 +7,49 @@
 #pragma once
 
 #include "bmsbel/bms_bms.h"
-#include "bmsinfo.h"
 #include "playrecord.h"
 #include "timer.h"
 #include "image.h"
 #include "global.h"
+#include "playerinfo.h"
+#include "gameplay.h"
 
-typedef uint32_t Uint32;
 class SkinPlayObject;
-
-/*
- * class Grade
- * - stores current play's score and evaluate
- *
- */
-namespace JUDGETYPE {
-	const int JUDGE_PGREAT	= 5;
-	const int JUDGE_GREAT	= 4;
-	const int JUDGE_GOOD	= 3;
-	const int JUDGE_POOR	= 2;
-	const int JUDGE_EMPTYPOOR	= 2;	// TODO
-	const int JUDGE_BAD		= 1;
-	const int JUDGE_EARLY	= 10;	// it's too early, so it should have no effect
-	const int JUDGE_LATE	= 11;	// it's too late, so it should have no effect
-}
-
-namespace GRADETYPE {
-	const int GRADE_AAA	= 8;
-	const int GRADE_AA	= 7;
-	const int GRADE_A	= 6;
-	const int GRADE_B	= 5;
-	const int GRADE_C	= 4;
-	const int GRADE_D	= 3;
-	const int GRADE_E	= 2;
-	const int GRADE_F	= 1;
-}
-
-class Grade {
-private:
-	int grade[6];
-	int notecnt;
-	int combo;
-	int maxcombo;
-public:
-	Grade(int notecnt);
-	Grade();
-	int CalculateEXScore();
-	int CalculateScore();
-	double CalculateRate();
-	int CalculateGrade();
-	void AddGrade(const int type);
-
-	// getter/setter
-	int GetMaxCombo();
-	int GetCombo();
-};
-
-/*
- * class PlayerRecord
- * have data about player's song play records with sqlite
- * (TODO)
- */
-class PlayerRecord {
-private:
-	std::map<BmsInfo, PlayRecord> playrecord;
-public:
-	void LoadPlayRecord(std::wstring& playerid);
-};
-
-// each key/play setting is different!
-class PlayerSetting {
-public:
-	// note/guage/keysetting
-	int keysetting[20][4];
-	int guageoption;
-	int noteoption;
-
-	// speed information
-	double speed;
-	double lane;
-	double lift;
-public:
-	// type0: SP, type1: DP, type3: 5Key, type4: 10key, type5: PMS
-	void LoadPlaySetting(const char* path);
-	void SavePlaySetting(const char* path);
-};
-
-namespace PLAYERTYPE {
-	const int NORMAL = 0;
-	const int AUTO = 1;
-	const int REPLAY = 2;
-	const int NETWORK = 3;	// not implemented
-}
 
 /*
  * @description
  * Very basic form of Player
- * Generally used for playing
+ * only stores data for real game play
+ * (don't store data for each player; refer PlayerInfo/PlayerSongRecord)
  */
 class Player {
 protected:
-	// stored/storing settings
-	// COMMENT: we don't need laneheight.
-	// we just need to get relative position of lane(0 ~ 1). 
-	// skinelement will process it by itself.
-	PlayerSetting		setting;
+	PlayerPlayConfig*	playconfig;
 	int					playside;
+	int					playmode;
 	int					playertype;
-	double				speed;				// for calculating speed_mul
-	double				speed_mul;			// absbeat * speed_mul = (real y pos)
-	int					speed_type;			// TODO
 
-	// some prefetch timers/values
-	Timer*				bmstimer;			// elapsed time
-	Timer*				on1pmiss;			// timer used when miss occured
-	Timer*				on2pmiss;			// timer used when miss occured
-	Timer*				lanepress[20];
-	Timer*				lanehold[20];
-	Timer*				laneup[20];
-	Timer*				lanejudgeokay[20];
-	Image*				currentmissbga;		// when miss occurs, get current Miss BGA
-	double*				exscore_graph;
-	double*				highscore_graph;
-	int*				playscore;
-	int*				playexscore;
-	int*				playcombo;
-	int*				playmaxcombo;
-	int*				playtotalnotes;
-	int*				playgrooveguage;
-	int*				playrivaldiff;
-	Timer*				on1pjudge;
-	Timer*				on2pjudge;
-	double*				playerguage;
-	int*				playerguagetype;
+	double				notespeed;			// current note speed
+	double				notefloat;			// current note float speed (note visible time; dropping time from lane, strictly.)
+	double				speed_mul;			// speed multiplicator (for MAX/MINBPM)
+	double				suddenheight;		// 0 ~ 1
+	double				liftheight;			// 0 ~ 1
+
+	// some prefetched(pointer) timers/values
+	Timer*				pBmstimer;
+	PlayerRenderValue*	pv;					// general current player
+	PlayerRenderValue*	pv_dp;				// in case of DP
+
+	// guage
+	double				playergauge;
+	int					playergaugetype;
+	bool				dieonnohealth;		// should I die when there's no health?
+	double				notehealth[6];		// health up/down per note (good, great, pgreat)
 
 	// DON'T CHEAT! check for value malpulation.
 	// (TODO) processed by CryptManager
 #ifdef _CRYPTMANAGER
 #endif
-
-	// grade information
-	Grade				grade;
 
 	// current judge/bar/channel related information
 	int					noteindex[20];					// currently processing note index(bar index)
@@ -156,8 +58,9 @@ protected:
 	double				health;							// player's health
 
 	// note/time information
-	BmsNoteContainer	bmsnote;
-	int					keys;
+	PlayerScore			score;
+	BmsNoteManager*		bmsnote;
+	int					judgenotecnt;		// judged note count; used for OnLastNote
 	Uint32				currenttime;
 	Uint32				currentbar;
 
@@ -166,25 +69,33 @@ protected:
 	// judge
 	int CheckJudgeByTiming(double delta);
 	// active note searcher
+	int GetCurrentNoteBar(int channel);
+	bool IsNoteAvailable(int notechannel);
+	int GetAvailableNoteIndex(int notechannel, int start = 0);
 	int GetNextAvailableNoteIndex(int notechannel);
+	BmsNote GetCurrentSoundNote(int notechannel);		// TODO
 	BmsNote* GetCurrentNote(int notechannel);
 	/** @brief make judgement. silent = true will not set JUDGE timer. */
 	void MakeJudge(int judgetype, int channel, bool silent = false);
 public:
-	Player(int type = PLAYERTYPE::NORMAL);
-
 	/*
-	 * @brief 
-	 * Generate Note object / 
-	 * Must call before game play starts, or there'll be nothing(no note/play) during gameplay.
+	 * @description
+	 * playside: main player is always 0. 1 is available when BATTLE mode.
+	 *           if player is flipped, then you should enter value 1.
+	 * playmode: SINGLE or DOUBLE or BATTLE? (check PLAYTYPE)
+	 * playertype: NORMAL or AUTO or what? (check PLAYERTYPE)
 	 */
-	void Prepare(int playside);
+	Player(PlayerPlayConfig* config, BmsNoteManager *note, int playside = 0,
+		int playmode = PLAYTYPE::KEY7, 
+		int playertype = PLAYERTYPE::NORMAL);
+
 	/*
 	 * @brief 
 	 * Update late note/note position
 	 * Uses Global Game(BmsResource) Timer
 	 */
 	virtual void Update();
+
 	/*
 	 * @brief
 	 * Hard-Reset player's note position
@@ -204,16 +115,21 @@ public:
 	void RenderNote(SkinPlayObject *);
 
 	/** @Get/Set */
-	double GetSpeed();
+	void SetGauge(double gauge);
+	/** @brief Set note speed as normal speed */
 	void SetSpeed(double speed);
-	Grade GetGrade();
-	int GetCurrentBar();
-	int GetCurrentNoteBar(int channel);
-	bool IsNoteAvailable(int notechannel);
-	int GetAvailableNoteIndex(int notechannel, int start = 0);
+	void DeltaSpeed(double speed);
+	/** @brief Set note speed as float speed */
+	void SetFloatSpeed(double speed);
+	void DeltaFloatSpeed(double speed);
+	/** @brief Set sudden (0 ~ 1) */
+	void SetSudden(double height);
+	void DeltaSudden(double height);
+	/** @brief Set lift (0 ~ 1) */
+	void SetLift(double height);
+	void DeltaLift(double height);
+	/** @brief is player dead? */
 	bool IsDead();
-	bool IsFinished();	// TODO
-	void SetPlayerSetting(const PlayerSetting& setting);
 };
 
 /*
@@ -225,7 +141,8 @@ class PlayerAuto : public Player {
 	double targetrate;
 
 public:
-	PlayerAuto();
+	PlayerAuto(PlayerPlayConfig *config, BmsNoteManager *note,
+		int playside = 0, int playmode = PLAYTYPE::KEY7);
 
 	virtual void Update();
 	virtual void PressKey(int channel);
@@ -241,9 +158,26 @@ public:
  */
 class PlayerGhost : public Player {
 public:
-	PlayerGhost();
+	PlayerGhost(PlayerPlayConfig *config, BmsNoteManager *note,
+		int playside = 0, int playmode = PLAYTYPE::KEY7);
 };
 
-namespace PlayerHelper {
 
+/*
+ * @description
+ * controls player variables & system variables(pool)
+ * by using this namespace
+ */
+namespace PlayHelper {
+	/** @description ? */
+	void FlipPlayside();		// TODO
+	void SpeedChange(int playerno, int delta);
+	void LaneChange(int playerno, int delta);
+	int LiftChange(int playerno, int delta);
+
+	void ToggleSpeedtype(int playerno);
 }
+
+// global-accessible
+// real object used during playing game
+extern Player*		PLAYER[4];

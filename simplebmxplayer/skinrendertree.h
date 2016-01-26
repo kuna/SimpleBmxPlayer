@@ -77,7 +77,8 @@ struct ImageDST {
 	std::vector<ImageDSTFrame> frame;
 };
 
-#define _MAX_RENDER_CONDITION 20
+#define _MAX_RENDER_CONDITION	20
+#define _MAX_RENDER_DST			60
 
 /** @brief a simple condition evaluator for fast performance 
  * supporting format: divided by comma (only AND operator, maximum 10)
@@ -371,6 +372,8 @@ public:
 	void RenderNote(int laneindex, double pos, bool mine = false);
 	/** @brief for longnote. */
 	void RenderNote(int laneindex, double pos_start, double pos_end);
+	void RenderLine(double pos);
+	void RenderJudgeLine();
 };
 
 /** @brief do nothing; just catch this object if you want to draw BGA. */
