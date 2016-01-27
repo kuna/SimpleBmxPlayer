@@ -18,12 +18,14 @@
   - download ```Dev Lib / Runtime Binaries``` directly from [SDL](https://www.libsdl.org/download-2.0.php), and extract file to ```include/SDL, lib/x86, Release```.
   - download ffmpeg from [Zeranoe FFmpeg](http://ffmpeg.zeranoe.com/builds/), and extract to ```include/ffmpeg, lib/ffmpeg, Release```
 
-
 ### how to use
 - drag BMS file to program.
 
 ### available options
 - (TODO)
+
+### preview (youtube link)
+- [@aaf3c68](https://www.youtube.com/watch?v=11DYI2wY4SU)
 
 ### known issue / etc
 - This program will use new skin format, which is ID/event-based and xml-formatted. but I'll try to convert lr2skin to this skin format automatically.
@@ -52,4 +54,4 @@
 - Hell LongNote *(GAME FEATURE)*
   - Combo is continually up during longnote pressing.
   - To use Hell LongNote, write ```#LNHELL 1``` to BMS header.
-  - 4 Combo per a bar(measure).
+  - Middle notes between Longnotes will be judged PGREAT if you just stay key pressed during hellnote.
