@@ -156,6 +156,54 @@ namespace SCENETYPE {
 
 }
 
+/*
+ * used by skin
+ */
+
+namespace ACTORTYPE {
+	enum ACTORTYPE {
+		NONE = 0,		/* same as unknown */
+		GENERAL = 1,	/* handled by basic rendering function */
+		GROUP = 2,
+		EXTERN = 3,
+		UNKNOWN = 4,
+		BASE = 5,
+		IMAGE = 10,
+		NUMBER = 11,
+		GRAPH = 12,
+		SLIDER = 13,
+		TEXT = 14,
+		BUTTON = 15,
+		LIST = 16,
+		SCRIPT = 17,
+		/* some renderer specific objects ... */
+		BGA = 20,
+		PLAYLANE = 21,
+		COMBO = 22,				// unused; same as general
+		GROOVEGAUGE = 23,		// unused; same as general
+	};
+}
+namespace ACTORROTATIONCENTER {
+	enum ROTATIONCENTER {
+		TOPLEFT = 7,
+		TOPCENTER = 8,
+		TOPRIGHT = 9,
+		CENTERLEFT = 4,
+		CENTER = 5,
+		CENTERRIGHT = 6,
+		BOTTOMLEFT = 1,
+		BOTTOMCENTER = 2,
+		BOTTOMRIGHT = 3,
+	};
+}
+namespace ACTORACCTYPE {
+	enum ACCTYPE {
+		LINEAR = 0,
+		ACCEL = 1,
+		DECEL = 2,
+		NONE = 3,
+	};
+}
 
 #ifdef _WIN32
 #define USE_MBCS	// uses wchar_t/wstring - for windows
