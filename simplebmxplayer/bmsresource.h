@@ -80,29 +80,20 @@ namespace BmsHelper {
 		BmsWord layer2bga;
 	};
 
-	Image* GetMissBGA(int player = 0);
+	Image* GetMissBGA();
 	Image* GetMainBGA();
 	Image* GetLayer1BGA();
 	Image* GetLayer2BGA();
 
-	/** @brief get current bar(not measure). not in general use; for Player object. */
-	uint32_t GetCurrentBar();
-
-	uint32_t GetEndTime();
-
-	double GetCurrentPosFromTime(double time_sec);
-
-	double GetCurrentPosFromBar(int bar);
-
-	double GetCurrentTimeFromBar(int bar);
-
-	double GetCurrentBPM();
-	
-	double GetMaxBPM();
-
-	double GetMinBPM();
-
-	double GetMediumBPM();
+	/** @brief get cached scroll bar value. */
+	double GetCurrentBar();
+	/** @brief get cached scroll pos value. */
+	double GetCurrentPos();
+	/*
+	 * @brief get end time of song. 
+	 * different from BmsBms::GetEndTime(). this method considers audio length.
+	 */
+	double GetEndTime();
 }
 
 typedef struct {

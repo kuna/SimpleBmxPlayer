@@ -606,6 +606,10 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		else if (OBJTYPE_IS("BGA")) {
 			// change tag to BGA and remove SRC tag
 			obj->SetName("Bga");
+			// set bga side & remove redundant tag
+			// (LR2 doesn't support 'real' battle mode, so no side attribute.)
+			obj->SetAttribute("side", 0);
+			obj->DeleteAttribute("resid");
 		}
 		else if (OBJTYPE_IS("NUMBER")) {
 			obj->SetName("Number");
@@ -2324,6 +2328,12 @@ const char* _LR2SkinParser::TranslateSlider(int code) {
 	}
 	else if (code == 6) {
 		strcpy(translated, "PlayProgress");
+	}
+	else if (code == 17) {
+		strcpy(translated, "Volume");
+	}
+	else if (code == 26) {
+		strcpy(translated, "Pitch");
 	}
 	// Lift isn't supported in LR2
 	/* else (skin scroll, FX, etc ...) are all depreciated, so ignore. */

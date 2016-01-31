@@ -25,10 +25,19 @@ struct ImageDST {
 #define _MAX_RENDER_CONDITION	20
 #define _MAX_RENDER_DST			60
 
-/** @brief a simple condition evaluator for fast performance
-* supporting format: divided by comma (only AND operator, maximum 10)
-* ex) condition="OnGameStart,On1PKey7Up"
-*/
+/*
+ * @comment
+ * 2 type of objects are VERY important: TEXT, IMAGE
+ * these objects are the base class of every extended classes, so they are real renderer.
+ * so, if we take care of those two objects carefully (like offset), 
+ * there'll be no problem of rendering.
+ */
+
+/*
+ * @brief a simple condition evaluator for fast performance
+ * supporting format: divided by comma (only AND operator, maximum 10)
+ * ex) condition="OnGameStart,On1PKey7Up"
+ */
 class RenderCondition {
 private:
 	RString luacondition;
@@ -46,16 +55,9 @@ public:
 
 /* redeclaration */
 class SkinRenderTree;
-class SkinUnknownObject;
 class SkinGroupObject;
-class SkinImageObject;
-class SkinSliderObject;
-class SkinGraphObject;
-class SkinTextObject;
-class SkinNumberObject;
-class SkinButtonObject;
 class SkinBgaObject;
-class SkinPlayObject;
+class SkinNoteFieldObject;
 
 /** @brief very basic rendering object which does nothing. */
 class SkinRenderObject {
@@ -86,6 +88,9 @@ protected:
 public:
 	SkinRenderObject(SkinRenderTree* owner, int type = ACTORTYPE::NONE);
 	int GetType();
+	/** @brief DST, condition */
+	void SetBasicObject(XMLElement *e);
+
 	virtual void Clear();
 	virtual void SetObject(XMLElement *e);
 	virtual void SetCondition(const RString &str);
@@ -94,6 +99,12 @@ public:
 	/** @brief should we have to invert condition? maybe useful for IFNOT clause. */
 	void InvertCondition(bool b);
 
+	/*
+	 * @comment
+	 * most inheritable object calls update, but sometimes it's overwritten
+	 * then you can use this method to update DST easily
+	 */
+	void UpdateBasic();
 	/* @brief must call before update object or do something */
 	virtual void Update();
 	/* @brief draw object to screen with it's own basic style */
@@ -110,11 +121,8 @@ public:
 	bool IsGroup();
 	bool IsGeneral();
 
-	SkinUnknownObject* ToUnknown();
 	SkinGroupObject* ToGroup();
-	SkinImageObject* ToImage();
-	SkinBgaObject* ToBGA();
-	SkinPlayObject* ToPlayObject();
+	SkinNoteFieldObject* ToNoteFieldObject();
 };
 
 class SkinUnknownObject : public SkinRenderObject {
@@ -129,29 +137,46 @@ protected:
 	Image *img;
 public:
 	SkinImageObject(SkinRenderTree* owner, int type = ACTORTYPE::IMAGE);
-	void SetSRC(XMLElement *e);
 	void SetSRC(const ImageSRC& imgsrc);
 	void SetImage(Image *img);
+
+	void SetImageObject(XMLElement *e);
+	virtual void SetObject(XMLElement *e);
 	virtual void Render();
 };
 
-class SkinGroupObject : public SkinImageObject {
-private:
+class SkinGroupObject : public SkinRenderObject {
+protected:
 	/** @brief base elements */
 	std::vector<SkinRenderObject*> _childs;
-	/** @brief canvas. if 0, then only pushs offset for drawing childs. */
-	SDL_Texture *t, *_org;
 public:
-	SkinGroupObject(SkinRenderTree* owner, bool createTexture = false);
+	SkinGroupObject(SkinRenderTree* owner);
 	~SkinGroupObject();
 	void AddChild(SkinRenderObject* obj);
 	std::vector<SkinRenderObject*>::iterator begin();
 	std::vector<SkinRenderObject*>::iterator end();
+	void UpdateChilds();
+
+	// CAUTION: this doesn't parses recursively
+	virtual void SetObject(XMLElement *e);
 	virtual void Render();
-	/** @brief reset coordination from group object */
+};
+
+class SkinCanvasObject : public SkinGroupObject {
+private:
+	/** @brief canvas. if 0, then only pushs offset for drawing childs. */
+	SDL_Texture *t, *_org;
+	/** @brief */
+	ImageSRC src;
+public:
+	SkinCanvasObject(SkinRenderTree* owner);
+	~SkinCanvasObject();
 	void SetAsRenderTarget();
-	/** @brief reset coordination from group object */
 	void ResetRenderTarget();
+	// CAUTION: this doesn't parses recursively
+	virtual void SetObject(XMLElement *e);
+	// render method follows image's one
+	virtual void Render();
 };
 
 class SkinTextObject : public SkinRenderObject {
@@ -167,6 +192,7 @@ public:
 	void SetEditable(bool editable);
 	void SetAlign(int align);
 	void SetValue(RString* s);
+	virtual void SetObject(XMLElement *e);
 	virtual void Render();
 	virtual int GetWidth();
 	int GetTextWidth(const RString& s);
@@ -184,6 +210,7 @@ public:
 	void SetValue(int *i);
 	void SetLength(int length);
 	void Set24Mode(bool b);
+	virtual void SetObject(XMLElement *e);
 	virtual void Render();
 	virtual int GetWidth();
 	/** @brief make string for rendering and call SkinTextObject::RenderText() */
@@ -201,6 +228,7 @@ public:
 	void SetType(int type);
 	void SetDirection(int direction);
 	void SetValue(double* pv);
+	virtual void SetObject(XMLElement *e);
 	virtual void Render();
 	// TODO
 	void EditValue(int dx, int dy);
@@ -218,6 +246,7 @@ public:
 	void SetDirection(int direction);
 	void SetRange(int range);
 	void SetValue(double* pv);
+	virtual void SetObject(XMLElement *e);
 	virtual void Render();
 	// TODO
 	void EditValue(int dx, int dy);
@@ -266,5 +295,6 @@ public:
 	void SetRunCondition(bool oneveryframe = false);
 	void LoadFile(const RString &filepath);
 	void SetScript(const RString &script);
+	virtual void SetObject(XMLElement *e);
 	virtual void Render();
 };

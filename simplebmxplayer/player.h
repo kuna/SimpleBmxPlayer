@@ -19,8 +19,8 @@ class SkinPlayObject;
 /*
  * @description
  * Very basic form of Player
- * only stores data for real game play
- * (don't store data for each player; refer PlayerInfo/PlayerSongRecord)
+ * only stores data for real game play (not rendering)
+ * (COMMENT: not storing data for each player; refer PlayerInfo/PlayerSongRecord)
  */
 class Player {
 protected:
@@ -46,38 +46,37 @@ protected:
 	bool				dieonnohealth;		// should I die when there's no health?
 	double				notehealth[6];		// health up/down per note (good, great, pgreat)
 
+#ifdef CRYPTMANAGER_
 	// DON'T CHEAT! check for value malpulation.
 	// (TODO) processed by CryptManager
-#ifdef _CRYPTMANAGER
 #endif
 
 	// current judge/bar/channel related information
-	int					noteindex[20];					// currently processing note index(bar index)
-	int					longnotestartpos[20];			// longnote start pos(bar index)
-	std::vector<BmsWord> keysound[20];					// sounding key value (per bar index)
-	double				health;							// player's health
+	int						noteindex[20];					// currently processing note index(bar index)
+	int						longnotestartpos[20];			// longnote start pos(bar index)
+	std::vector<BmsWord>	keysound[20];					// sounding key value (per bar index)
+	double					health;							// player's health
 
 	// note/time information
-	PlayerScore			score;
-	BmsNoteManager*		bmsnote;
-	int					judgenotecnt;		// judged note count; used for OnLastNote
-	Uint32				currenttime;
-	Uint32				currentbar;
+	PlayerScore				score;
+	BmsNoteManager*			bmsnote;
+	int						judgenotecnt;				// judged note count; used for OnLastNote
+	BmsNoteLane::Iterator	iter_judge_[20];			// currently judging iterator
+	BmsNoteLane::Iterator	iter_sound_[20];			// currently sounding iterator (include INVISIBLE note)
 
-	bool				IsLongNote(int notechannel);	// are you pressing longnote currently?
+	BmsNote*				GetCurrentNote(int notechannel);
+	BmsNote					GetCurrentSoundNote(int notechannel);
 
 	// judge
 	int CheckJudgeByTiming(double delta);
-	// active note searcher
-	int GetCurrentNoteBar(int channel);
-	bool IsNoteAvailable(int notechannel);
-	int GetAvailableNoteIndex(int notechannel, int start = 0);
-	int GetNextAvailableNoteIndex(int notechannel);
-	BmsNote GetCurrentSoundNote(int notechannel);		// TODO
-	BmsNote* GetCurrentNote(int notechannel);
 	/** @brief make judgement. silent = true will not set JUDGE timer. */
 	void MakeJudge(int judgetype, int channel, bool silent = false);
 public:
+	bool					IsLongNote(int notechannel);	// are you pressing longnote currently?
+	BmsNoteLane::Iterator	GetCurrentNoteIter(int lane);
+	BmsNoteLane::Iterator	GetEndNoteIter(int lane);
+	BmsNoteManager*			GetNoteData();
+
 	/*
 	 * @description
 	 * playside: main player is always 0. 1 is available when BATTLE mode.
@@ -85,9 +84,10 @@ public:
 	 * playmode: SINGLE or DOUBLE or BATTLE? (check PLAYTYPE)
 	 * playertype: NORMAL or AUTO or what? (check PLAYERTYPE)
 	 */
-	Player(PlayerPlayConfig* config, BmsNoteManager *note, int playside = 0,
+	Player(PlayerPlayConfig* config, int playside = 0,
 		int playmode = PLAYTYPE::KEY7, 
 		int playertype = PLAYERTYPE::NORMAL);
+	~Player();
 
 	/*
 	 * @brief 
@@ -110,9 +110,6 @@ public:
 
 	/** @brief How much elapsed from last MISS? effects to MISS BGA. */
 	double GetLastMissTime();
-
-	/** @brief renders note */
-	void RenderNote(SkinPlayObject *);
 
 	/** @Get/Set */
 	void SetGauge(double gauge);
@@ -141,7 +138,7 @@ class PlayerAuto : public Player {
 	double targetrate;
 
 public:
-	PlayerAuto(PlayerPlayConfig *config, BmsNoteManager *note,
+	PlayerAuto(PlayerPlayConfig *config,
 		int playside = 0, int playmode = PLAYTYPE::KEY7);
 
 	virtual void Update();
@@ -158,7 +155,7 @@ public:
  */
 class PlayerGhost : public Player {
 public:
-	PlayerGhost(PlayerPlayConfig *config, BmsNoteManager *note,
+	PlayerGhost(PlayerPlayConfig *config,
 		int playside = 0, int playmode = PLAYTYPE::KEY7);
 };
 

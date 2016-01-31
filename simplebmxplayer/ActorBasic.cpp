@@ -8,7 +8,7 @@
 #include "logger.h"
 
 // for rtree back-reference
-#include "skinrendertree.h"
+#include "ActorRenderer.h"
 
 // ------ SkinRenderCondition ----------------------
 
@@ -75,6 +75,12 @@ bool RenderCondition::Evaluate() {
 	return true;
 }
 
+
+
+
+
+
+
 // ------ Skin General rendering Objects -----------------
 
 #pragma region SKINRENDEROBJECT
@@ -129,23 +135,9 @@ bool SkinRenderObject::IsGeneral() {
 	return false;
 }
 
-SkinUnknownObject* SkinRenderObject::ToUnknown() {
-	if (objtype == ACTORTYPE::UNKNOWN)
-		return (SkinUnknownObject*)this;
-	else
-		return 0;
-}
-
 SkinGroupObject* SkinRenderObject::ToGroup() {
 	if (objtype == ACTORTYPE::GROUP)
 		return (SkinGroupObject*)this;
-	else
-		return 0;
-}
-
-SkinImageObject* SkinRenderObject::ToImage() {
-	if (objtype == ACTORTYPE::IMAGE)
-		return (SkinImageObject*)this;
 	else
 		return 0;
 }
@@ -157,9 +149,9 @@ SkinBgaObject* SkinRenderObject::ToBGA() {
 		return 0;
 }
 
-SkinPlayObject* SkinRenderObject::ToPlayObject() {
+SkinNoteFieldObject* SkinRenderObject::ToNoteFieldObject() {
 	if (objtype == ACTORTYPE::PLAYLANE)
-		return (SkinPlayObject*)this;
+		return (SkinNoteFieldObject*)this;
 	else
 		return 0;
 }
@@ -167,7 +159,7 @@ SkinPlayObject* SkinRenderObject::ToPlayObject() {
 // do nothing
 void SkinRenderObject::Render() {  }
 
-void SkinRenderObject::Update() {
+void SkinRenderObject::UpdateBasic() {
 	// fill DST
 	dst_cached.dst = 0;
 	for (int j = 0; j < dstcnt; j++) {
@@ -178,10 +170,19 @@ void SkinRenderObject::Update() {
 	}
 	if (dst_cached.dst) {
 		drawable = SkinRenderHelper::CalculateFrame(*dst_cached.dst, dst_cached.frame);
+		if (drawable) {
+			// take offset
+			dst_cached.frame.x += rtree->GetOffsetX();
+			dst_cached.frame.y += rtree->GetOffsetY();
+		}
 	}
 	else {
 		drawable = false;
 	}
+}
+
+void SkinRenderObject::Update() {
+	UpdateBasic();
 }
 
 bool SkinRenderObject::Click(int x, int y) {
@@ -220,81 +221,66 @@ int SkinRenderObject::GetY() {
 	return dst_cached.frame.y;
 }
 
+void SkinRenderObject::SetBasicObject(XMLElement *e) {
+	// parse common attribute: DST, condition
+	SkinRenderHelper::ConstructBasicRenderObject(this, e);
+}
+
+void SkinRenderObject::SetObject(XMLElement *e) {
+	SetBasicObject(e);
+}
+
 void SkinRenderObject::SetCondition(const RString &str) { condition.Set(str); }
+
 #pragma endregion SKINRENDEROBJECT
+
+
+
+
+
+
 
 SkinUnknownObject::SkinUnknownObject(SkinRenderTree* owner) : SkinRenderObject(owner, ACTORTYPE::UNKNOWN) {}
 
+
+
+
+
+
+
 #pragma region SKINGROUPOBJECT
-SkinGroupObject::SkinGroupObject(SkinRenderTree* owner, bool createTex)
-	: SkinImageObject(owner, ACTORTYPE::GROUP)
+SkinGroupObject::SkinGroupObject(SkinRenderTree* owner)
+	: SkinRenderObject(owner, ACTORTYPE::GROUP)
 {
-	if (createTex) {
-		t = rtree->GenerateTexture();
-	}
-	else {
-		t = NULL;
-	}
-}
-
-void SkinGroupObject::SetAsRenderTarget() {
-	if (t) {
-		_org = SDL_GetRenderTarget(Game::RENDERER);
-		SDL_SetRenderTarget(Game::RENDERER, t);
-	}
-	/*
-	* Offset: current DST's animated value
-	*/
-	ImageDST* _dst = 0;
-	for (int j = 0; j < dstcnt; j++) {
-		if (dst_condition[j].Evaluate()) {
-			_dst = &dst[j];
-			break;
-		}
-	}
-	ImageDSTFrame frame;
-	if (!_dst || !SkinRenderHelper::CalculateFrame(*_dst, frame)) {
-		SkinRenderHelper::PushRenderOffset(0, 0);
-	}
-	else {
-		SkinRenderHelper::PushRenderOffset(frame.x, frame.y);
-	}
-}
-
-void SkinGroupObject::ResetRenderTarget() {
-	if (t) {
-		SDL_SetRenderTarget(Game::RENDERER, _org);
-	}
-	SkinRenderHelper::PopRenderOffset();
-}
-
-void SkinGroupObject::Render() {
-	if (t) {
-		/*
-		* SRC & DST are same;
-		*/
-		ImageDST* _dst = 0;
-		for (int j = 0; j < dstcnt; j++) {
-			if (dst_condition[j].Evaluate()) {
-				_dst = &dst[j];
-				break;
-			}
-		}
-		ImageDSTFrame frame;
-		if (!_dst || !SkinRenderHelper::CalculateFrame(*_dst, frame))
-			return;
-		if (imgsrc.w <= 0) imgsrc.w = rtree->GetWidth();
-		if (imgsrc.h <= 0) imgsrc.h = rtree->GetHeight();
-		SDL_Rect src = SkinRenderHelper::ToRect(imgsrc);
-		SDL_Rect r = SkinRenderHelper::ToRect(frame);
-		SDL_RenderCopy(Game::RENDERER, t, &src, &r);
-	}
 }
 
 SkinGroupObject::~SkinGroupObject() {
-	if (t) {
-		SDL_DestroyTexture(t);
-		t = 0;
+}
+
+void SkinGroupObject::UpdateChilds() {
+	// after pushing offset
+	// update all child object's properties
+	// (recursively)
+	if (drawable) {
+		rtree->PushRenderOffset(dst_cached.frame.x, dst_cached.frame.y);
+		for (auto it = begin(); it != end(); ++it) {
+			(*it)->Update();
+			if ((*it)->ToGroup())
+				(*it)->ToGroup()->UpdateChilds();
+		}
+		rtree->PopRenderOffset();
+	}
+}
+
+void SkinGroupObject::SetObject(XMLElement *e) {
+	SetBasicObject(e);
+}
+
+void SkinGroupObject::Render() {
+	// recursively renders child element
+	if (!drawable) return;
+	for (auto it = begin(); it != end(); ++it) {
+		(*it)->Render();
 	}
 }
 
@@ -307,6 +293,46 @@ SkinGroupObject::begin() { return _childs.begin(); }
 
 std::vector<SkinRenderObject*>::iterator
 SkinGroupObject::end() { return _childs.end(); }
+
+
+
+
+
+
+SkinCanvasObject::SkinCanvasObject(SkinRenderTree *owner)
+	: SkinGroupObject(owner) {
+	t = SDL_CreateTexture(Game::RENDERER,
+		SDL_PIXELFORMAT_RGBA8888,
+		SDL_TEXTUREACCESS_TARGET, rtree->GetWidth(), rtree->GetHeight());
+}
+
+SkinCanvasObject::~SkinCanvasObject() { if (t) SDL_DestroyTexture(t); }
+
+void SkinCanvasObject::SetAsRenderTarget() {
+	if (!t) return;
+	_org = SDL_GetRenderTarget(Game::RENDERER);
+	SDL_SetRenderTarget(Game::RENDERER, t);
+}
+
+void SkinCanvasObject::ResetRenderTarget() {
+	if (!t) return;
+	SDL_SetRenderTarget(Game::RENDERER, _org);
+}
+
+void SkinCanvasObject::SetObject(XMLElement *e) {
+	SetBasicObject(e);
+	// set SRC
+	SkinRenderHelper::ConstructSRCFromElement(src, e);
+}
+
+void SkinCanvasObject::Render() {
+	// same method like ImageObject
+	if (!t) return;
+	if (!drawable) return;
+	SkinRenderHelper::Render(t, &src, &dst_cached.frame,
+		dst_cached.dst->blend, dst_cached.dst->rotatecenter);
+}
+
 #pragma endregion SKINGROUPOBJECT
 
 SkinImageObject::SkinImageObject(SkinRenderTree* owner, int type) : SkinRenderObject(owner, type) {
@@ -318,8 +344,15 @@ void SkinImageObject::SetImage(Image *img) {
 	this->img = img;
 }
 
-void SkinImageObject::SetSRC(XMLElement *e) {
-	ConstructSRCFromElement(imgsrc, e);
+void SkinImageObject::SetObject(XMLElement *e) {
+	SetImageObject(e);
+}
+
+//
+// for use of extended class
+//
+void SkinImageObject::SetImageObject(XMLElement *e) {
+	SkinRenderHelper::ConstructSRCFromElement(imgsrc, e);
 	if (e->Attribute("resid")) {
 		Image *img = IMAGEPOOL->GetById(e->Attribute("resid"));
 		if (!img) img = rtree->_imagekey[e->Attribute("resid")];
@@ -333,6 +366,12 @@ void SkinImageObject::Render() {
 		dst_cached.dst->blend, dst_cached.dst->rotatecenter);
 }
 
+
+
+
+
+
+
 SkinTextObject::SkinTextObject(SkinRenderTree* owner)
 	: SkinRenderObject(owner, ACTORTYPE::TEXT), fnt(0), v(0), align(0), editable(false) {}
 
@@ -345,6 +384,12 @@ void SkinTextObject::SetFont(const char* resid) {
 	else {
 		fnt = rtree->_fontkey[resid];
 	}
+}
+
+void SkinTextObject::SetObject(XMLElement *e) {
+	SetValue(STRPOOL->Get(e->Attribute("value")));
+	SetAlign(e->IntAttribute("align"));
+	SetFont(e->Attribute("resid"));
 }
 
 void SkinTextObject::SetValue(RString* s) { v = s; }
@@ -381,10 +426,16 @@ void SkinTextObject::RenderText(const char* s) {
 		fnt->SetAlphaMod(dst_cached.frame.a);
 		fnt->SetColorMod(dst_cached.frame.r, dst_cached.frame.g, dst_cached.frame.b);
 		fnt->Render(s,
-			left_offset + SkinRenderHelper::_offset_calculated.x + dst_cached.frame.x,
-			SkinRenderHelper::_offset_calculated.y + dst_cached.frame.y);
+			left_offset + rtree->GetOffsetX() + dst_cached.frame.x,
+			rtree->GetOffsetY() + dst_cached.frame.y);
 	}
 }
+
+
+
+
+
+
 
 SkinNumberObject::SkinNumberObject(SkinRenderTree* owner)
 	: SkinTextObject(owner) {
@@ -404,6 +455,14 @@ int SkinNumberObject::GetWidth() {
 }
 
 void SkinNumberObject::Set24Mode(bool b) { mode24 = b; }
+
+void SkinNumberObject::SetObject(XMLElement *e) {
+	SetValue(INTPOOL->Get(e->Attribute("value")));
+	SetAlign(e->IntAttribute("align"));
+	SetLength(e->IntAttribute("length"));
+	Set24Mode(e->IntAttribute("24mode"));
+	SetFont(e->Attribute("resid"));
+}
 
 void SkinNumberObject::Render() {
 	if (v && drawable) {
@@ -454,6 +513,12 @@ void SkinNumberObject::CacheInt(int n) {
 	}
 }
 
+
+
+
+
+
+
 SkinGraphObject::SkinGraphObject(SkinRenderTree* owner) : SkinImageObject(owner, ACTORTYPE::GRAPH) {}
 
 void SkinGraphObject::SetValue(double *d) { v = d; }
@@ -461,6 +526,11 @@ void SkinGraphObject::SetValue(double *d) { v = d; }
 void SkinGraphObject::SetType(int type) { this->type = type; }
 
 void SkinGraphObject::SetDirection(int direction) { this->direction = direction; }
+
+void SkinGraphObject::SetObject(XMLElement *e) {
+	SetImageObject(e);
+	SetValue(DOUBLEPOOL->Get(e->Attribute("value")));
+}
 
 void SkinGraphObject::Render() {
 	if (drawable && img) {
@@ -471,6 +541,12 @@ void SkinGraphObject::Render() {
 	}
 }
 
+
+
+
+
+
+
 SkinSliderObject::SkinSliderObject(SkinRenderTree* owner)
 	: SkinImageObject(owner, ACTORTYPE::SLIDER), range(0), direction(0) {}
 
@@ -479,6 +555,13 @@ void SkinSliderObject::SetValue(double *d) { v = d; }
 void SkinSliderObject::SetRange(int range) { this->range = range; }
 
 void SkinSliderObject::SetDirection(int directio) { this->direction = directio; }
+
+void SkinSliderObject::SetObject(XMLElement *e) {
+	SetImageObject(e);
+	SetValue(DOUBLEPOOL->Get(e->Attribute("value")));
+	SetRange(e->IntAttribute("range"));
+	SetDirection(e->IntAttribute("direction"));
+}
 
 void SkinSliderObject::Render() {
 	if (drawable && img) {
@@ -490,11 +573,32 @@ void SkinSliderObject::Render() {
 
 }
 
+
+
+
+
+
+
 SkinButtonObject::SkinButtonObject(SkinRenderTree* owner) : SkinImageObject(owner, ACTORTYPE::BUTTON) {}
+
+
+
+
+
+
 
 #pragma region SCRIPTOBJECT
 SkinScriptObject::SkinScriptObject(SkinRenderTree *t)
 	: SkinRenderObject(t, ACTORTYPE::SCRIPT), runoneveryframe(false), runtime(0) {}
+
+void SkinScriptObject::SetObject(XMLElement *e) {
+	if (e->Attribute("OnRender"))
+		SetRunCondition(true);
+	if (e->Attribute("src"))
+		LoadFile(e->Attribute("src"));
+	else if (e->GetText())
+		SetScript(e->GetText());
+}
 
 void SkinScriptObject::SetRunCondition(bool oneveryframe) {
 	runoneveryframe = oneveryframe;

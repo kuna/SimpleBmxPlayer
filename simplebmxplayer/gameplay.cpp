@@ -1,6 +1,6 @@
 #include "gameplay.h"
 #include "skin.h"
-#include "skinrendertree.h"
+#include "ActorRenderer.h"
 #include "handlerargs.h"
 #include "bmsbel/bms_bms.h"
 #include "bmsbel/bms_parser.h"
@@ -12,6 +12,7 @@
 #include "file.h"
 #include "logger.h"
 #include "player.h"
+#include "playerinfo.h"
 #include "game.h"
 
 PlayerRenderValue		PLAYERVALUE[4];
@@ -40,9 +41,7 @@ namespace GamePlay {
 	SkinRenderTree*		rtree;
 	SkinOption			skinoption;
 
-	// note
-	BmsNoteManager*		bmsnote;
-	int					playmode;	// PLAYTYPE
+	int					playmode;			// PLAYTYPE..?
 
 	bool LoadSkin(const char* path) {
 		//SkinDST::On(33);		// autoplay on
@@ -97,62 +96,9 @@ namespace GamePlay {
 	}
 
 	namespace {
-		void RenderLine(SkinPlayObject *play) {
-			double currentpos = BmsHelper::GetCurrentPosFromTime(OnGameStart->GetTick() / 1000.0);
-			int currentbar = BmsHelper::GetCurrentBar();
-		}
-		void RenderObject(SkinRenderObject*);
-		void RenderGroup(SkinGroupObject *group) {
-			// iterate a group
-			group->SetAsRenderTarget();
-			for (auto child = group->begin(); child != group->end(); ++child) {
-				RenderObject(*child);
-			}
-			group->ResetRenderTarget();
-			// if textured object, must call Render method.
-			group->Render();
-		}
 		void RenderObject(SkinRenderObject *obj) {
-			if (!obj->EvaluateCondition()) return;
-			// update first and see ...
 			obj->Update();
-			if (obj->IsGroup()) {
-				// iterate all child
-				RenderGroup(obj->ToGroup());
-			}
-			else if (obj->IsGeneral()) {
-				// let basic renderer do work
-				obj->Render();
-			}
-			/*
-			 * Under these are Ingeneral Objects: 
-			 * need special care! 
-			 */
-			else if (obj->ToBGA()) {
-				// TODO: check 1P / 2P
-				if (On1PMiss->IsStarted())
-					obj->ToBGA()->RenderBGA(BmsHelper::GetMissBGA());
-				obj->ToBGA()->RenderBGA(BmsHelper::GetLayer1BGA());
-				obj->ToBGA()->RenderBGA(BmsHelper::GetLayer2BGA());
-				obj->ToBGA()->RenderBGA(BmsHelper::GetMainBGA());
-			}
-			else if (obj->ToPlayObject()) {
-				SkinPlayObject* play = obj->ToPlayObject();
-				// lift
-				SkinRenderHelper::PushRenderOffset(0, -(int)play->GetLaneHeight() * *PLAYERVALUE[0].pLift_d);
-				RenderGroup(play);								// draw other objects first
-				// render judgeline
-				play->RenderJudgeLine();
-				if (PLAYER[0]) PLAYER[0]->RenderNote(play);		// and draw note/judgeline/line ...
-				if (PLAYER[1]) PLAYER[1]->RenderNote(play);
-				SkinRenderHelper::PopRenderOffset();
-				// draw line
-				//RenderLine(play);
-				// TODD: method - SetJudgelineThickness()
-			}
-			else {
-				// ignore unknown object
-			}
+			obj->Render();
 		}
 	}
 
@@ -336,7 +282,7 @@ namespace GamePlay {
 		LoadBms(*Bmspath);
 		playmode = BmsResource::BMS.GetKey();
 		bmsnote = new BmsNoteManager();
-		BmsResource::BMS.GetNotes(*bmsnote);
+		BmsResource::BMS.GetNoteData(*bmsnote);
 
 		/*
 		 * apply some switches/values about BMS
@@ -428,8 +374,7 @@ namespace GamePlay {
 	}
 
 	void ScenePlay::Release() {
-		// remove player & note
-		SAFE_DELETE(bmsnote);
+		// remove player
 		SAFE_DELETE(PLAYER[0]);
 		SAFE_DELETE(PLAYER[1]);
 

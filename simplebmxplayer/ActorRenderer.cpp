@@ -1,6 +1,6 @@
 
 #include "game.h"
-#include "skinrendertree.h"
+#include "ActorRenderer.h"
 #include "globalresources.h"	// for evaluation condition
 #include "luamanager.h"
 #include "util.h"
@@ -8,24 +8,6 @@
 #include "logger.h"
 #include "tinyxml2.h"
 using namespace tinyxml2;
-
-// redefinition;
-void ConstructSRCFromElement(ImageSRC &, XMLElement *);
-void ConstructDSTFromElement(ImageDST &, XMLElement *);
-namespace SkinRenderHelper {
-	struct _Offset {
-		int x, y;
-	};
-	std::vector<_Offset> _offset_stack;
-	_Offset _offset_calculated = { 0, 0 };
-	void RecalculateOffset() {
-		_offset_calculated = { 0, 0 };
-		for (auto it = _offset_stack.begin(); it != _offset_stack.end(); ++it) {
-			_offset_calculated.x += it->x;
-			_offset_calculated.y += it->y;
-		}
-	}
-}
 
 // ----- SkinRenderTree -------------------------------------
 
@@ -81,95 +63,37 @@ void SkinRenderTree::RegisterTextureFont(RString &id, RString &path) {
 }
 
 void SkinRenderTree::RegisterTextureFontByData(RString &id, RString &textdata) {
-	// TODO maybe I need to manipulate ID ...
 	Font *f = FONTPOOL->LoadTextureFontFromTextData(id, textdata);
 	if (f) {
 		_fontkey.insert(std::pair<RString, Font*>(id, f));
 	}
 }
 
-SDL_Texture* SkinRenderTree::GenerateTexture() {
-	return SDL_CreateTexture(Game::RENDERER,
-		SDL_PIXELFORMAT_RGBA8888,
-		SDL_TEXTUREACCESS_TARGET, _scr_w, _scr_h);
-}
-
 int SkinRenderTree::GetWidth() { return _scr_w; }
 
 int SkinRenderTree::GetHeight() { return _scr_h; }
 
-SkinUnknownObject* SkinRenderTree::NewUnknownObject() {
-	SkinUnknownObject* obj = new SkinUnknownObject(this);
-	_objpool.push_back(obj);
-	return obj;
+void SkinRenderTree::PushRenderOffset(int x, int y) {
+	_offset_stack.push_back({ x, y });
+	_offset_x += x;
+	_offset_y += y;
 }
 
-SkinGroupObject* SkinRenderTree::NewGroupObject(bool clipping) {
-	SkinGroupObject* obj = new SkinGroupObject(this, clipping);
-	_objpool.push_back(obj);
-	return obj;
+void SkinRenderTree::PopRenderOffset() {
+	_Offset _offset = _offset_stack.back();
+	_offset_stack.pop_back();
+	_offset_x -= _offset.x;
+	_offset_y -= _offset.y;
 }
 
-SkinImageObject* SkinRenderTree::NewImageObject() {
-	SkinImageObject* obj = new SkinImageObject(this);
-	_objpool.push_back(obj);
-	return obj;
-}
 
-SkinSliderObject* SkinRenderTree::NewSliderObject() {
-	SkinSliderObject* obj = new SkinSliderObject(this);
-	_objpool.push_back(obj);
-	return obj;
-}
-
-SkinGrooveGaugeObject* SkinRenderTree::NewGrooveGaugeObject() {
-	SkinGrooveGaugeObject* obj = new SkinGrooveGaugeObject(this);
-	_objpool.push_back(obj);
-	return obj;
-}
-
-SkinGraphObject* SkinRenderTree::NewGraphObject() {
-	SkinGraphObject* obj = new SkinGraphObject(this);
-	_objpool.push_back(obj);
-	return obj;
-}
-
-SkinTextObject* SkinRenderTree::NewTextObject() {
-	SkinTextObject* obj = new SkinTextObject(this);
-	_objpool.push_back(obj);
-	return obj;
-}
-
-SkinNumberObject* SkinRenderTree::NewNumberObject() {
-	SkinNumberObject* obj = new SkinNumberObject(this);
-	_objpool.push_back(obj);
-	return obj;
-}
-
-SkinPlayObject* SkinRenderTree::NewPlayObject() {
-	SkinPlayObject* obj = new SkinPlayObject(this);
-	_objpool.push_back(obj);
-	return obj;
-}
-
-SkinComboObject* SkinRenderTree::NewComboObject() {
-	SkinComboObject* obj = new SkinComboObject(this);
-	_objpool.push_back(obj);
-	return obj;
-}
-
-SkinBgaObject* SkinRenderTree::NewBgaObject() {
-	SkinBgaObject* obj = new SkinBgaObject(this);
-	_objpool.push_back(obj);
-	return obj;
-}
-
-SkinScriptObject* SkinRenderTree::NewScriptObject() {
-	SkinScriptObject* obj = new SkinScriptObject(this);
-	_objpool.push_back(obj);
-	return obj;
-}
 #pragma endregion SKINRENDERTREE
+
+
+
+
+
+
 
 // ------ SkinRenderHelper -----------------------------
 
@@ -177,8 +101,17 @@ SkinScriptObject* SkinRenderTree::NewScriptObject() {
 
 #define ISNAME(e, s) (strcmp(e->Name(), s) == 0)
 
-/* private */
-void ConstructSRCFromElement(ImageSRC &src, XMLElement *e) {
+namespace SkinRenderHelper {
+	//
+	// TODO: support extern actor
+	//
+	struct RegisteredObject {
+		std::string name;
+		bool(*register_object)();
+	};
+}
+
+void SkinRenderHelper::ConstructSRCFromElement(ImageSRC &src, XMLElement *e) {
 	src.x = e->IntAttribute("x");
 	src.y = e->IntAttribute("y");
 	src.w = e->IntAttribute("w");
@@ -197,8 +130,7 @@ void ConstructSRCFromElement(ImageSRC &src, XMLElement *e) {
 		src.loop = e->IntAttribute("loop");
 }
 
-/* private */
-void ConstructDSTFromElement(ImageDST &dst, XMLElement *e) {
+void SkinRenderHelper::ConstructDSTFromElement(ImageDST &dst, XMLElement *e) {
 	const char* timer = e->Attribute("timer");
 	if (timer) {
 		dst.timer = TIMERPOOL->Get(timer);
@@ -242,141 +174,53 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 			 * (TODO)
 			 */
 		}
-		else if (ISNAME(e, "If")) {
-			SkinGroupObject *g = rtree.NewGroupObject();
-			ConstructTreeFromElement(rtree, g, e->FirstChildElement());
-			obj = g;
-		}
 		else if (ISNAME(e, "Ifnot")) {
-			SkinGroupObject *g = rtree.NewGroupObject();
+			SkinGroupObject *g = rtree.NewSkinGroupObject();
 			g->InvertCondition(true);
 			ConstructTreeFromElement(rtree, g, e->FirstChildElement());
 			obj = g;
 		}
-		else if (ISNAME(e, "Group")) {
-			SkinGroupObject *g = rtree.NewGroupObject(true);
-			g->SetSRC(e);
+		else if (ISNAME(e, "If")) {
+			SkinGroupObject *g = rtree.NewSkinGroupObject();
 			ConstructTreeFromElement(rtree, g, e->FirstChildElement());
 			obj = g;
 		}
-		else if (ISNAME(e, "Image")) {
-			SkinImageObject *img = rtree.NewImageObject();
-			img->SetSRC(e);
-			obj = img;
-		}
-		else if (ISNAME(e, "Combo")) {
-			SkinComboObject *o = rtree.NewComboObject();
-			SkinImageObject *judge = 0;
-			SkinNumberObject *combo = 0;
-			XMLElement *e_judge = e->FirstChildElement("Image");
-			XMLElement *e_combo = e->FirstChildElement("Number");
-			if (e_judge) {
-				judge = rtree.NewImageObject();
-				SkinRenderHelper::ConstructBasicRenderObject(judge, e_judge);
-				judge->SetSRC(e_judge);
-				o->SetJudgeObject(judge);
-			}
-			if (e_combo) {
-				combo = rtree.NewNumberObject();
-				SkinRenderHelper::ConstructBasicRenderObject(combo, e_combo);
-				combo->SetValue(INTPOOL->Get(e_combo->Attribute("value")));
-				combo->SetAlign(e_combo->IntAttribute("align"));
-				combo->SetLength(e_combo->IntAttribute("length"));
-				combo->Set24Mode(e_combo->IntAttribute("24mode"));
-				combo->SetFont(e_combo->Attribute("resid"));
-				o->SetComboObject(combo);
-			}
-			obj = o;
-		}
-		else if (ISNAME(e, "Slider")) {
-			if (e->Attribute("value")) {
-				SkinSliderObject *slider = rtree.NewSliderObject();
-				slider->SetSRC(e);
-				slider->SetValue(DOUBLEPOOL->Get(e->Attribute("value")));
-				slider->SetRange(e->IntAttribute("range"));
-				slider->SetDirection(e->IntAttribute("direction"));
-				obj = slider;
-			}
-		}
-		else if (ISNAME(e, "Graph")) {
-			if (e->Attribute("value")) {
-				SkinGraphObject *graph = rtree.NewGraphObject();
-				graph->SetSRC(e);
-				graph->SetValue(DOUBLEPOOL->Get(e->Attribute("value")));
-				obj = graph;
-			}
-		}
-		else if (ISNAME(e, "Text")) {
-			if (e->Attribute("value")) {
-				SkinTextObject *text = rtree.NewTextObject();
-				text->SetValue(STRPOOL->Get(e->Attribute("value")));
-				text->SetAlign(e->IntAttribute("align"));
-				text->SetFont(e->Attribute("resid"));
-				obj = text;
-			}
-		}
-		else if (ISNAME(e, "Number")) {
-			if (e->Attribute("value")) {
-				SkinNumberObject *num = rtree.NewNumberObject();
-				num->SetValue(INTPOOL->Get(e->Attribute("value")));
-				num->SetAlign(e->IntAttribute("align"));
-				num->SetLength(e->IntAttribute("length"));
-				num->Set24Mode(e->IntAttribute("24mode"));
-				num->SetFont(e->Attribute("resid"));
-				obj = num;
-			}
-		}
-		else if (ISNAME(e, "Lua")) {
-			SkinScriptObject *script = rtree.NewScriptObject();
-			if (e->Attribute("OnRender"))
-				script->SetRunCondition(true);
-			if (e->Attribute("src"))
-				script->LoadFile(e->Attribute("src"));
-			else if (e->GetText())
-				script->SetScript(e->GetText());
-			obj = script;
-		}
-		/*
-		 * Special object parsing start
-		 */
-		else if (ISNAME(e, "Play")) {
-			SkinPlayObject *p = rtree.NewPlayObject();
-			p->x = e->IntAttribute("x");
-			p->y = e->IntAttribute("y");
-			p->w = e->IntAttribute("w");
-			p->h = e->IntAttribute("h");
-			XMLElement *lane = e->FirstChildElement("Note");
-			while (lane) {
-				p->ConstructLane(lane);
-				lane = lane->NextSiblingElement("Note");
-			}
-			p->SetJudgelineObject(e->FirstChildElement("JUDGELINE"));
-			p->SetLineObject(e->FirstChildElement("LINE"));
-			// TODO: fetch lane effect, or other lane relative images as child
-			ConstructTreeFromElement(rtree, p, e->FirstChildElement());
-
-			obj = p;
-		}
-		else if (ISNAME(e, "Bga")) {
-			SkinBgaObject *bga = rtree.NewBgaObject();
-			obj = bga;
-		}
-		else if (ISNAME(e, "GrooveGauge")) {
-			SkinGrooveGaugeObject *g = rtree.NewGrooveGaugeObject();
-			g->SetSRC(e);
-			g->SetObject(e);
+		else if (ISNAME(e, "Canvas")) {
+			SkinGroupObject *g = rtree.NewSkinCanvasObject();
+			ConstructTreeFromElement(rtree, g, e->FirstChildElement());
 			obj = g;
 		}
+#define PARSEOBJ(name, o)\
+	else if (ISNAME(e, name)) {\
+	o* newobj = rtree.New##o();\
+	obj = newobj; }
+		PARSEOBJ("Image", SkinImageObject)
+		PARSEOBJ("Slider", SkinSliderObject)
+		PARSEOBJ("Graph", SkinGraphObject)
+		PARSEOBJ("Text", SkinTextObject)
+		PARSEOBJ("Number", SkinNumberObject)
+		PARSEOBJ("Lua", SkinScriptObject)
+		/*
+		 * play scene object parsing start
+		 */
+		else if (ISNAME(e, "Play")) {
+			SkinNoteFieldObject *p = rtree.NewSkinNoteFieldObject();
+			// TODO: fetch lane effect, or other lane relative images as child
+			ConstructTreeFromElement(rtree, p, e->FirstChildElement());
+			obj = p;
+		}
+		PARSEOBJ("Combo", SkinComboObject)
+		PARSEOBJ("Bga", SkinBgaObject)
+		PARSEOBJ("GrooveGauge", SkinGrooveGaugeObject)
 		else {
 			// parsed as unknown object
 			// only parses SRC/DST condition
-			obj = rtree.NewUnknownObject();
+			obj = rtree.NewSkinUnknownObject();
 		}
 
 		if (obj) {
+			obj->SetObject(e);
 			group->AddChild(obj);
-			// parse common attribute: DST, condition
-			SkinRenderHelper::ConstructBasicRenderObject(obj, e);
 		}
 
 		// search for next element
@@ -437,11 +281,11 @@ void SkinRenderHelper::ConstructBasicRenderObject(SkinRenderObject *obj, XMLElem
 	const char* condition = e->Attribute("condition");
 	if (condition) obj->SetCondition(condition);
 	ImageSRC _s;
-	ConstructSRCFromElement(_s, e);
+	SkinRenderHelper::ConstructSRCFromElement(_s, e);
 	XMLElement *dst = e->FirstChildElement("DST");
 	while (dst) {
 		ImageDST _d;
-		ConstructDSTFromElement(_d, dst);
+		SkinRenderHelper::ConstructDSTFromElement(_d, dst);
 		const char* _cond = e->Attribute("condition");
 		obj->AddDST(_d, _cond ? _cond : "");
 		dst = e->NextSiblingElement("DST");
@@ -593,22 +437,18 @@ ImageDSTFrame SkinRenderHelper::Tween(ImageDSTFrame &a, ImageDSTFrame &b, double
 	}
 }
 
-void SkinRenderHelper::PushRenderOffset(int x, int y) {
-	_offset_stack.push_back({ x, y });
-	RecalculateOffset();
-}
-
-void SkinRenderHelper::PopRenderOffset() {
-	_offset_stack.pop_back();
-	RecalculateOffset();
-}
-
 void SkinRenderHelper::Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, int blend, int rotationcenter) {
+	if (!img) return;
+	SkinRenderHelper::Render(img->GetPtr(), src, frame, blend, rotationcenter);
+}
+
+void SkinRenderHelper::Render(SDL_Texture *t, ImageSRC *src, ImageDSTFrame *frame, int blend, int rotationcenter) {
 	// if alpha == 0 then don't draw
+	if (!t) return;
 	if (frame->a == 0) return;
 
-	SDL_SetTextureAlphaMod(img->GetPtr(), frame->a);
-	SDL_SetTextureColorMod(img->GetPtr(), frame->r, frame->g, frame->b);
+	SDL_SetTextureAlphaMod(t, frame->a);
+	SDL_SetTextureColorMod(t, frame->r, frame->g, frame->b);
 
 	switch (blend) {
 	case 0:
@@ -619,20 +459,20 @@ void SkinRenderHelper::Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, i
 		break;
 		*/
 	case 1:
-		SDL_SetTextureBlendMode(img->GetPtr(), SDL_BlendMode::SDL_BLENDMODE_BLEND);
+		SDL_SetTextureBlendMode(t, SDL_BlendMode::SDL_BLENDMODE_BLEND);
 		break;
 	case 2:
-		SDL_SetTextureBlendMode(img->GetPtr(), SDL_BlendMode::SDL_BLENDMODE_ADD);
+		SDL_SetTextureBlendMode(t, SDL_BlendMode::SDL_BLENDMODE_ADD);
 		break;
 	case 4:
-		SDL_SetTextureBlendMode(img->GetPtr(), SDL_BlendMode::SDL_BLENDMODE_MOD);
+		SDL_SetTextureBlendMode(t, SDL_BlendMode::SDL_BLENDMODE_MOD);
 		break;
 	default:
-		SDL_SetTextureBlendMode(img->GetPtr(), SDL_BlendMode::SDL_BLENDMODE_BLEND);
+		SDL_SetTextureBlendMode(t, SDL_BlendMode::SDL_BLENDMODE_BLEND);
 	}
 
-	if (src->w <= 0) src->w = img->GetWidth();
-	if (src->h <= 0) src->h = img->GetHeight();
+	if (src->w <= 0) SDL_QueryTexture(t, 0, 0, &src->w, 0);
+	if (src->h <= 0) SDL_QueryTexture(t, 0, 0, 0, &src->h);
 	SDL_Rect src_rect = ToRect(*src);
 	SDL_Rect dst_rect = ToRect(*frame);
 
@@ -678,12 +518,8 @@ void SkinRenderHelper::Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, i
 		dst_rect.w *= -1;
 	}
 
-	// Offset
-	dst_rect.x += _offset_calculated.x;
-	dst_rect.y += _offset_calculated.y;
-
 	SDL_RendererFlip flip = SDL_RendererFlip::SDL_FLIP_NONE;
-	SDL_RenderCopyEx(Game::RENDERER, img->GetPtr(), &src_rect, &dst_rect,
+	SDL_RenderCopyEx(Game::RENDERER, t, &src_rect, &dst_rect,
 		frame->angle, &rot_center, flip);
 }
 

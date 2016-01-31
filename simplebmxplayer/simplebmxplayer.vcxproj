@@ -83,6 +83,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ActorBasic.cpp" />
+    <ClCompile Include="ActorPlay.cpp" />
     <ClCompile Include="audio.cpp" />
     <ClCompile Include="bmsresource.cpp" />
     <ClCompile Include="file.cpp" />
@@ -108,6 +110,8 @@
     <ClCompile Include="timer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ActorBasic.h" />
+    <ClInclude Include="ActorPlay.h" />
     <ClInclude Include="audio.h" />
     <ClInclude Include="bmsresource.h" />
     <ClInclude Include="exception.h" />

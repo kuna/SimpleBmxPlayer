@@ -2,7 +2,7 @@
 #include "global.h"
 #include "handlerargs.h"
 #include "bmsresource.h"
-#include "skinrendertree.h"
+#include "ActorRenderer.h"
 #include "util.h"
 #include <time.h>
 
@@ -14,7 +14,7 @@ Player*		PLAYER[4];
 
 // ------- Player ----------------------------------------
 
-Player::Player(PlayerPlayConfig* config, BmsNoteManager *note, 
+Player::Player(PlayerPlayConfig* config, 
 	int playside, int playmode, int playertype) {
 	this->playconfig = config;
 	this->playside = playside;
@@ -28,7 +28,7 @@ Player::Player(PlayerPlayConfig* config, BmsNoteManager *note,
 	pBmstimer = TIMERPOOL->Get("OnGameStart");
 
 	// initalize note/score
-	bmsnote = note;
+	BmsResource::BMS.GetNoteData(*bmsnote);
 	memset(&score, 0, sizeof(score));
 	int notecnt
 		= score.totalnote
@@ -55,7 +55,9 @@ Player::Player(PlayerPlayConfig* config, BmsNoteManager *note,
 		break;
 	}
 	memset(notehealth, 0, sizeof(notehealth));
-	double total = 400;		// TODO: calculate TOTAL from BmsHelper. // TODO: sum all if in grade mode.
+	// IIDX style gauge TOTAL
+	double total_fallback = BmsResource::BMS.GetIIDXTotal();
+	double total = BmsResource::BMS.GetTotal(total_fallback);
 	switch (playergaugetype) {
 	case GAUGETYPE::GROOVE:
 		notehealth[5] = total / notecnt / 100;
@@ -147,6 +149,11 @@ Player::Player(PlayerPlayConfig* config, BmsNoteManager *note,
 	SetLift(playconfig->lift);
 
 	// TODO: set OP switch... no, in main?
+}
+
+Player::~Player() {
+	// delete note object
+	SAFE_DELETE(bmsnote);
 }
 
 void Player::SetGauge(double v) {
