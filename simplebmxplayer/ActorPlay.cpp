@@ -10,6 +10,7 @@ SkinComboObject::SkinComboObject(SkinRenderTree *owner)
 
 void SkinComboObject::Update() {
 	// combo object itself isn't a group, so we don't do UpdateBasic();
+	// (that is, don't calculate DST attribute)
 	drawable = condition.Evaluate();
 	if (!drawable) return;
 	if (combo) combo->Update();
@@ -39,7 +40,7 @@ void SkinComboObject::SetOffset(bool offset) {
 }
 
 void SkinComboObject::SetObject(XMLElement *e) {
-	//SetBasicObject(e);
+	SetBasicObject(e);	// parse condition
 	judge = 0;
 	combo = 0;
 	XMLElement *e_judge = e->FirstChildElement("Image");
@@ -424,6 +425,8 @@ void SkinBgaObject::RenderBGA(Image *img) {
 	ImageSRC src = { 0, 0, 0, 0, 0, 1, 1, 0, 0 };
 	SkinRenderHelper::Render(img, &src, &dst_cached.frame, 0, 5);
 }
+
+void SkinBgaObject::Update() { UpdateBasic(); }
 
 void SkinBgaObject::Render() {
 	if (!drawable) return;

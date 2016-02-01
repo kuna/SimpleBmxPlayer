@@ -120,5 +120,6 @@ public:
 	SkinBgaObject(SkinRenderTree *);
 	virtual void SetObject(XMLElement *e);
 	void RenderBGA(Image *img);
+	virtual void Update();
 	virtual void Render();
 };

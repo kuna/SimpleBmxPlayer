@@ -423,7 +423,8 @@ bool Player::IsNoteAvailable(int lane) {
 void Player::NextAvailableNote(int lane) {
 	do {
 		++iter_judge_[lane];
-	} while (iter_judge_[lane]->second.type == BmsNote::NOTE_HIDDEN ||
+	} while (IsNoteAvailable(lane) &&
+		iter_judge_[lane]->second.type == BmsNote::NOTE_HIDDEN ||
 		iter_judge_[lane]->second.type == BmsNote::NOTE_NONE);
 }
 

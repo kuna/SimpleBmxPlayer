@@ -209,17 +209,17 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 		PARSEOBJ("Number", SkinNumberObject)
 		PARSEOBJ("Lua", SkinScriptObject)
 		/*
-		 * play scene object parsing start
+		 * play scene object parsing
 		 */
 		/*else if (ISNAME(e, "Play")) {
 			SkinNoteFieldObject *p = rtree.NewSkinNoteFieldObject();
 			// TODO: fetch lane effect, or other lane relative images as child
 			ConstructTreeFromElement(rtree, p, e->FirstChildElement());
 			obj = p;
-		}
+		}*/
+		PARSEOBJ("GrooveGauge", SkinGrooveGaugeObject)
 		PARSEOBJ("Combo", SkinComboObject)
 		PARSEOBJ("Bga", SkinBgaObject)
-		PARSEOBJ("GrooveGauge", SkinGrooveGaugeObject)*/
 		else {
 			// parsed as unknown object
 			// only parses SRC/DST condition

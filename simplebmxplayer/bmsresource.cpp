@@ -113,7 +113,6 @@ namespace BmsHelper {
 	/* privates */
 	barindex		currentbar;		// current bar's index
 	double			currentpos;		// current bar's position
-	barindex		bgbar;			// bgm/bga bar position (private)
 	BGAInformation	currentbga;
 	Uint32			bmslength;		// bms length in msec
 	Uint32			bmsbar_index;	// only for `OnBeat`
@@ -136,21 +135,21 @@ namespace BmsHelper {
 	void Reset(Uint32 barindex) {
 		// just reset bar position & bgm/bga iterator
 		currentbar = barindex;
-		BmsBuffer& bgmchannel = BmsResource::BMS.GetChannelManager()[BmsWord(1)].GetBuffer();
+		BmsChannel& bgmchannel = BmsResource::BMS.GetChannelManager()[BmsWord(1)];
 		BmsBuffer& missbgachannel = BmsResource::BMS.GetChannelManager()[BmsWord(4)].GetBuffer();
 		BmsBuffer& bgachannel = BmsResource::BMS.GetChannelManager()[BmsWord(4)].GetBuffer();
 		BmsBuffer& bgachannel2 = BmsResource::BMS.GetChannelManager()[BmsWord(7)].GetBuffer();
 		BmsBuffer& bgachannel3 = BmsResource::BMS.GetChannelManager()[BmsWord(10)].GetBuffer();
-		bgm_channel_cnt_ = BmsResource::BMS.GetChannelManager()[BmsWord(1)].GetBufferCount();
+		bgm_channel_cnt_ = bgmchannel.GetBufferCount();
 		for (int i = 0; i < bgm_channel_cnt_; i++) {
-			bgm_iter_end_[i] = bgmchannel.End();
-			bgm_iter_[i] = bgmchannel.Begin(barindex);
+			bgm_iter_end_[i] = bgmchannel[i].End();
+			bgm_iter_[i] = bgmchannel[i].Begin(barindex);
 		}
-		bga_iter_ = bgmchannel.Begin(barindex);
+		bga_iter_ = bgachannel.Begin(barindex);
 		bga1_iter_ = bgachannel2.Begin(barindex);
 		bga2_iter_ = bgachannel3.Begin(barindex);
 		bga_miss_iter_ = missbgachannel.Begin(barindex);
-		bga_iter_end_ = bgmchannel.End();
+		bga_iter_end_ = bgachannel.End();
 		bga1_iter_end_ = bgachannel2.End();
 		bga2_iter_end_ = bgachannel3.End();
 		bga_miss_iter_end_ = missbgachannel.End();
@@ -173,7 +172,7 @@ namespace BmsHelper {
 		// clear instance
 		BmsResource::BMS.Clear();
 		BmsResource::bmspath = path;
-		currentbar = bgbar = 0;
+		currentbar = 0;
 
 		// load bms file & create time table
 		if (!BmsResource::BMS.LoadBmsFile(path)) {
@@ -294,59 +293,56 @@ namespace BmsHelper {
 		 * check for background keysound & background image
 		 * If there's bar change, then it'll check for keysound
 		 */
-		for (; bgbar <= currentbar; bgbar++)
-		{
-			// OnMeasure
-			if (BMS.GetBarManager().GetMeasureByBarNumber(currentbar) * 4 > bmsbar_index + 1) {
-				bmsbar_index++;
-				BMSVALUE.OnBeat->Start();
-			}
-
-			for (int i = 0; i < bgm_channel_cnt_; i++) {
-				for (; bgm_iter_[i] != bgm_iter_end_[i]; ++bgm_iter_[i]) {
-					if (bgbar < bgm_iter_[i]->first)
-						break;
-					BmsWord current_word(bgm_iter_[i]->second);
-					if (current_word == BmsWord::MIN)
-						continue;
-					BmsResource::SOUND.Play(current_word.ToInteger());
-				}
-			}
-			for (; bga_iter_ != bga_iter_end_; ++bga_iter_) {
-				if (bgbar < bga_iter_->first)
+		// OnMeasure
+		if (BMS.GetBarManager().GetMeasureByBar(bar_) * 4 >= bmsbar_index) {
+			bmsbar_index++;
+			BMSVALUE.OnBeat->Start();
+		}
+			
+		for (int i = 0; i < bgm_channel_cnt_; i++) {
+			for (; bgm_iter_[i] != bgm_iter_end_[i]; ++bgm_iter_[i]) {
+				if (currentbar < bgm_iter_[i]->first)
 					break;
-				BmsWord current_word(bga_iter_->second);
+				BmsWord current_word(bgm_iter_[i]->second);
 				if (current_word == BmsWord::MIN)
 					continue;
-				BMSVALUE.OnBgaMain->Start();
-				currentbga.mainbga = current_word;
+				BmsResource::SOUND.Play(current_word.ToInteger());
 			}
-			for (; bga1_iter_ != bga1_iter_end_; ++bga1_iter_) {
-				if (bgbar < bga1_iter_->first)
-					break;
-				BmsWord current_word(bga1_iter_->second);
-				if (current_word == BmsWord::MIN)
-					continue;
-				BMSVALUE.OnBgaLayer1->Start();
-				currentbga.layer1bga = current_word;
-			}
-			for (; bga2_iter_ != bga2_iter_end_; ++bga2_iter_) {
-				if (bgbar < bga2_iter_->first)
-					break;
-				BmsWord current_word(bga2_iter_->second);
-				if (current_word == BmsWord::MIN)
-					continue;
-				BMSVALUE.OnBgaLayer2->Start();
-				currentbga.layer2bga = current_word;
-			}
-			for (; bga_miss_iter_ != bga_miss_iter_end_; ++bga_miss_iter_) {
-				if (bgbar < bga_miss_iter_->first)
-					break;
-				BmsWord current_word(bga_miss_iter_->second);
-				if (current_word == BmsWord::MIN)
-					continue;
-				currentbga.missbga = current_word;
-			}
+		}
+		for (; bga_iter_ != bga_iter_end_; ++bga_iter_) {
+			if (currentbar < bga_iter_->first)
+				break;
+			BmsWord current_word(bga_iter_->second);
+			if (current_word == BmsWord::MIN)
+				continue;
+			BMSVALUE.OnBgaMain->Start();
+			currentbga.mainbga = current_word;
+		}
+		for (; bga1_iter_ != bga1_iter_end_; ++bga1_iter_) {
+			if (currentbar < bga1_iter_->first)
+				break;
+			BmsWord current_word(bga1_iter_->second);
+			if (current_word == BmsWord::MIN)
+				continue;
+			BMSVALUE.OnBgaLayer1->Start();
+			currentbga.layer1bga = current_word;
+		}
+		for (; bga2_iter_ != bga2_iter_end_; ++bga2_iter_) {
+			if (currentbar < bga2_iter_->first)
+				break;
+			BmsWord current_word(bga2_iter_->second);
+			if (current_word == BmsWord::MIN)
+				continue;
+			BMSVALUE.OnBgaLayer2->Start();
+			currentbga.layer2bga = current_word;
+		}
+		for (; bga_miss_iter_ != bga_miss_iter_end_; ++bga_miss_iter_) {
+			if (currentbar < bga_miss_iter_->first)
+				break;
+			BmsWord current_word(bga_miss_iter_->second);
+			if (current_word == BmsWord::MIN)
+				continue;
+			currentbga.missbga = current_word;
 		}
 	}
 

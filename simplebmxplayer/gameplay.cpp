@@ -357,8 +357,8 @@ namespace GamePlay {
 
 	void ScenePlay::Render() {
 		/*
-		* draw interface (make a render tree recursion)
-		*/
+		 * draw interface (make a render tree recursion)
+		 */
 		RenderObject(rtree);
 	}
 
