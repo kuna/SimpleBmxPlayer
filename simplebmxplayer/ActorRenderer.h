@@ -65,6 +65,10 @@ public:
 public:
 	SkinRenderTree(int skinwidth, int skinheight);
 	~SkinRenderTree();
+	virtual void Update();
+	//virtual void Render();	// use basic Group::Render()
+
+	/** @brief set skin's basic resolution. automatically set when you load skin. */
 	void SetSkinSize(int skinwidth, int skinheight);
 	/** @brief only releases all rendering object */
 	void ReleaseAll();

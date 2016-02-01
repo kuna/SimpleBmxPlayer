@@ -10,16 +10,17 @@ SkinComboObject::SkinComboObject(SkinRenderTree *owner)
 
 void SkinComboObject::Update() {
 	// combo object itself isn't a group, so we don't do UpdateBasic();
+	drawable = condition.Evaluate();
+	if (!drawable) return;
 	if (combo) combo->Update();
 	if (judge) {
-		if (makeoffset)
+		if (makeoffset && combo)
 			rtree->PushRenderOffset(-combo->GetWidth() / 2, 0);
 		else
 			rtree->PushRenderOffset(0, 0);
 		judge->Update();
 		rtree->PopRenderOffset();
 	}
-	drawable = condition.Evaluate();
 }
 
 void SkinComboObject::Render() {
@@ -38,6 +39,7 @@ void SkinComboObject::SetOffset(bool offset) {
 }
 
 void SkinComboObject::SetObject(XMLElement *e) {
+	//SetBasicObject(e);
 	judge = 0;
 	combo = 0;
 	XMLElement *e_judge = e->FirstChildElement("Image");
@@ -66,6 +68,7 @@ SkinGrooveGaugeObject::SkinGrooveGaugeObject(SkinRenderTree* owner)
 	: SkinImageObject(owner), dotcnt(0), v(0), addx(0), addy(0) { }
 
 void SkinGrooveGaugeObject::SetObject(XMLElement *e) {
+	SetBasicObject(e);
 	using namespace SkinRenderHelper;
 	// set basic property
 	addx = e->IntAttribute("addx");
@@ -161,6 +164,8 @@ SkinGroupObject(owner), imgobj_judgeline(0), imgobj_line(0) {
 }
 
 void SkinNoteFieldObject::SetObject(XMLElement *e) {
+	SetBasicObject(e);
+
 	// fetch player object first
 	side = e->IntAttribute("side");
 	p = PLAYER[side];
@@ -293,6 +298,9 @@ void SkinNoteObject::RenderNote(double pos_start, double pos_end) {
 
 void SkinNoteObject::SetObject(XMLElement *lane)
 {
+	// COMMENT: no dst in noteobject
+	// SetBasicObject(lane);
+
 	if (!lane) return;
 	using namespace SkinRenderHelper;
 	XMLElement *src_element;
@@ -406,6 +414,7 @@ SkinNoteJudgeLineObject::SkinNoteJudgeLineObject(SkinRenderTree *t) : SkinImageO
 SkinBgaObject::SkinBgaObject(SkinRenderTree *t) : SkinRenderObject(t, ACTORTYPE::BGA) {}
 
 void SkinBgaObject::SetObject(XMLElement *e) {
+	SetBasicObject(e);
 	side = e->IntAttribute("side");
 	miss = PLAYERVALUE[side].pOnMiss;
 }

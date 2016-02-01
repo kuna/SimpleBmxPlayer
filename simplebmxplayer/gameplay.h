@@ -50,9 +50,6 @@ typedef struct {
 	double*				pLift_d;
 } PlayerRenderValue;
 
-/** @brief stores rendering variables related to Players */
-extern PlayerRenderValue	 PLAYERVALUE[4];
-
 namespace GamePlay {
 	class ScenePlay : public SceneBasic {
 		// basics

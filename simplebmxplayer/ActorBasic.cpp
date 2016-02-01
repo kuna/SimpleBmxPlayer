@@ -85,7 +85,7 @@ bool RenderCondition::Evaluate() {
 
 #pragma region SKINRENDEROBJECT
 SkinRenderObject::SkinRenderObject(SkinRenderTree* owner, int type)
-	: rtree(owner), dstcnt(0), tag(0),
+	: rtree(owner), dstcnt(0), tag(0), drawable(false),
 	clickable(false), focusable(false), invertcondition(false), objtype(type) { }
 
 int SkinRenderObject::GetType() { return objtype; }
@@ -153,6 +153,9 @@ SkinNoteFieldObject* SkinRenderObject::ToNoteFieldObject() {
 void SkinRenderObject::Render() {  }
 
 void SkinRenderObject::UpdateBasic() {
+	// evaluate
+	drawable = condition.Evaluate();
+	if (!drawable) return;
 	// fill DST
 	dst_cached.dst = 0;
 	for (int j = 0; j < dstcnt; j++) {
@@ -254,12 +257,11 @@ void SkinGroupObject::UpdateChilds() {
 	// after pushing offset
 	// update all child object's properties
 	// (recursively)
+	UpdateBasic();
 	if (drawable) {
 		rtree->PushRenderOffset(dst_cached.frame.x, dst_cached.frame.y);
 		for (auto it = begin(); it != end(); ++it) {
 			(*it)->Update();
-			if ((*it)->ToGroup())
-				(*it)->ToGroup()->UpdateChilds();
 		}
 		rtree->PopRenderOffset();
 	}
@@ -267,6 +269,18 @@ void SkinGroupObject::UpdateChilds() {
 
 void SkinGroupObject::SetObject(XMLElement *e) {
 	SetBasicObject(e);
+	// if dst count = 0, then add basic dst
+	if (dstcnt == 0) {
+		ImageDSTFrame f = { 0, 0, 0, 0, 0, 255, 255, 255, 255, 0 };
+		std::vector<ImageDSTFrame> vf;
+		vf.push_back(f);
+		ImageDST dst = { 0, 0, 0, 0, 0, 0, vf };
+		AddDST(dst);
+	}
+}
+
+void SkinGroupObject::Update() {
+	UpdateChilds();
 }
 
 void SkinGroupObject::Render() {
@@ -322,6 +336,13 @@ void SkinCanvasObject::Render() {
 	// same method like ImageObject
 	if (!t) return;
 	if (!drawable) return;
+	// first draw childs recursively
+	SetAsRenderTarget();
+	for (auto it = begin(); it != end(); ++it) {
+		(*it)->Render();
+	}
+	ResetRenderTarget();
+	// then draw cached texture like image object
 	SkinRenderHelper::Render(t, &src, &dst_cached.frame,
 		dst_cached.dst->blend, dst_cached.dst->rotatecenter);
 }
@@ -338,6 +359,7 @@ void SkinImageObject::SetImage(Image *img) {
 }
 
 void SkinImageObject::SetObject(XMLElement *e) {
+	SetBasicObject(e);
 	SetImageObject(e);
 }
 
@@ -351,6 +373,10 @@ void SkinImageObject::SetImageObject(XMLElement *e) {
 		if (!img) img = rtree->_imagekey[e->Attribute("resid")];
 		SetImage(img);
 	}
+}
+
+void SkinImageObject::Update() {
+	UpdateBasic();
 }
 
 void SkinImageObject::Render() {
@@ -380,6 +406,7 @@ void SkinTextObject::SetFont(const char* resid) {
 }
 
 void SkinTextObject::SetObject(XMLElement *e) {
+	SetBasicObject(e);
 	if (e->Attribute("value"))
 		SetValue(STRPOOL->Get(e->Attribute("value")));
 	SetAlign(e->IntAttribute("align"));
@@ -451,6 +478,7 @@ int SkinNumberObject::GetWidth() {
 void SkinNumberObject::Set24Mode(bool b) { mode24 = b; }
 
 void SkinNumberObject::SetObject(XMLElement *e) {
+	SetBasicObject(e);
 	if (e->Attribute("value"))
 		SetValue(INTPOOL->Get(e->Attribute("value")));
 	SetAlign(e->IntAttribute("align"));
@@ -523,6 +551,7 @@ void SkinGraphObject::SetType(int type) { this->type = type; }
 void SkinGraphObject::SetDirection(int direction) { this->direction = direction; }
 
 void SkinGraphObject::SetObject(XMLElement *e) {
+	SetBasicObject(e);
 	SetImageObject(e);
 	SetValue(DOUBLEPOOL->Get(e->Attribute("value")));
 }
@@ -552,6 +581,7 @@ void SkinSliderObject::SetRange(int range) { this->range = range; }
 void SkinSliderObject::SetDirection(int directio) { this->direction = directio; }
 
 void SkinSliderObject::SetObject(XMLElement *e) {
+	SetBasicObject(e);
 	SetImageObject(e);
 	SetValue(DOUBLEPOOL->Get(e->Attribute("value")));
 	SetRange(e->IntAttribute("range"));
@@ -615,7 +645,7 @@ void SkinScriptObject::SetScript(const RString &script_) {
 	script = script_;
 }
 
-void SkinScriptObject::Render() {
+void SkinScriptObject::Update() {
 	if (runtime && !runoneveryframe) return;
 
 	Lua *l = LUA->Get();
@@ -627,4 +657,9 @@ void SkinScriptObject::Render() {
 
 	runtime++;
 }
+
+void SkinScriptObject::Render() {
+	// do nothing on rendering
+}
+
 #pragma endregion SCRIPTOBJECT

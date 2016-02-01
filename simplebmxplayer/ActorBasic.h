@@ -145,6 +145,7 @@ public:
 
 	void SetImageObject(XMLElement *e);
 	virtual void SetObject(XMLElement *e);
+	virtual void Update();
 	virtual void Render();
 };
 
@@ -162,6 +163,7 @@ public:
 
 	// CAUTION: this doesn't parses recursively
 	virtual void SetObject(XMLElement *e);
+	virtual void Update();
 	virtual void Render();
 };
 
@@ -299,5 +301,6 @@ public:
 	void LoadFile(const RString &filepath);
 	void SetScript(const RString &script);
 	virtual void SetObject(XMLElement *e);
+	virtual void Update();
 	virtual void Render();
 };

@@ -15,8 +15,6 @@
 #include "playerinfo.h"
 #include "game.h"
 
-PlayerRenderValue		PLAYERVALUE[4];
-
 namespace GamePlay {
 	// scene
 	ScenePlay*			SCENE;

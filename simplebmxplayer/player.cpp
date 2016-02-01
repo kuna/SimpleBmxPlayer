@@ -7,7 +7,8 @@
 #include <time.h>
 
 // global
-Player*		PLAYER[4];
+Player*					PLAYER[4];			// player object
+PlayerRenderValue		PLAYERVALUE[4];		// player variables for play
 
 // macro
 #define PLAYSOUND(k)	BmsResource::SOUND.Play(k)
@@ -28,6 +29,7 @@ Player::Player(PlayerPlayConfig* config,
 	pBmstimer = TIMERPOOL->Get("OnGameStart");
 
 	// initalize note/score
+	bmsnote = new BmsNoteManager();
 	BmsResource::BMS.GetNoteData(*bmsnote);
 	memset(&score, 0, sizeof(score));
 	int notecnt

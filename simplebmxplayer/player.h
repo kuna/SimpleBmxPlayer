@@ -177,4 +177,5 @@ namespace PlayHelper {
 
 // global-accessible
 // real object used during playing game
-extern Player*		PLAYER[4];
+extern PlayerRenderValue	PLAYERVALUE[4];
+extern Player*				PLAYER[4];

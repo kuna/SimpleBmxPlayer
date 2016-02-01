@@ -15,6 +15,8 @@ using namespace tinyxml2;
 SkinRenderTree::SkinRenderTree(int w, int h) : SkinGroupObject(this) { 
 	// set skin size
 	SetSkinSize(w, h); 
+
+	_offset_x = _offset_y = 0;
 }
 
 void SkinRenderTree::SetSkinSize(int w, int h) { _scr_w = w, _scr_h = h; }
@@ -86,6 +88,12 @@ void SkinRenderTree::PopRenderOffset() {
 	_offset_y -= _offset.y;
 }
 
+void SkinRenderTree::Update() {
+	drawable = true;
+	for (auto it = begin(); it != end(); ++it) {
+		(*it)->Update();
+	}
+}
 
 #pragma endregion SKINRENDERTREE
 
@@ -203,7 +211,7 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 		/*
 		 * play scene object parsing start
 		 */
-		else if (ISNAME(e, "Play")) {
+		/*else if (ISNAME(e, "Play")) {
 			SkinNoteFieldObject *p = rtree.NewSkinNoteFieldObject();
 			// TODO: fetch lane effect, or other lane relative images as child
 			ConstructTreeFromElement(rtree, p, e->FirstChildElement());
@@ -211,7 +219,7 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 		}
 		PARSEOBJ("Combo", SkinComboObject)
 		PARSEOBJ("Bga", SkinBgaObject)
-		PARSEOBJ("GrooveGauge", SkinGrooveGaugeObject)
+		PARSEOBJ("GrooveGauge", SkinGrooveGaugeObject)*/
 		else {
 			// parsed as unknown object
 			// only parses SRC/DST condition
@@ -315,10 +323,13 @@ SDL_Rect SkinRenderHelper::ToRect(ImageDSTFrame &d) {
 }
 
 bool SkinRenderHelper::CalculateFrame(ImageDST &dst, ImageDSTFrame &frame) {
-	if (dst.timer == 0 || dst.frame.size() == 0) {
-		// this shouldnt happened
+	// this shouldnt happened
+	if (dst.frame.size() == 0) {
 		return false;
 	}
+	// if no timer, then use base timer
+	if (dst.timer == 0)
+		dst.timer = TIMERPOOL->Get("OnScene");
 
 	// timer should alive
 	if (!dst.timer->IsStarted())
