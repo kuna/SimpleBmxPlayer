@@ -5,6 +5,7 @@
  */
 #pragma once
 
+#include "global.h"
 #include "image.h"
 #include "timer.h"
 #include "font.h"
@@ -14,29 +15,6 @@
 #include "tinyxml2.h"
 using namespace tinyxml2;
 
-namespace ACTORTYPE {
-	enum ACTORTYPE {
-		NONE = 0,		/* same as unknown */
-		GENERAL = 1,	/* handled by basic rendering function */
-		GROUP = 2,
-		EXTERN = 3,
-		UNKNOWN = 4,
-		BASE = 5,
-		IMAGE = 10,
-		NUMBER = 11,
-		GRAPH = 12,
-		SLIDER = 13,
-		TEXT = 14,
-		BUTTON = 15,
-		LIST = 16,
-		SCRIPT = 17,
-		/* some renderer specific objects ... */
-		BGA = 20,
-		PLAYLANE = 21,
-		COMBO = 22,				// unused; same as general
-		GROOVEGAUGE = 23,		// unused; same as general
-	};
-}
 namespace ROTATIONCENTER {
 	enum ROTATIONCENTER {
 		TOPLEFT = 7,
@@ -146,7 +124,7 @@ namespace SkinRenderHelper {
 	bool CalculateFrame(ImageDST &dst, ImageDSTFrame &frame);
 	ImageDSTFrame Tween(ImageDSTFrame& a, ImageDSTFrame &b, double t, int acctype);
 	/** @brief in debug mode, border will drawn around object. */
-	inline void Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, int blend = 1, int rotationcenter = ROTATIONCENTER::CENTER);
+	void Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, int blend = 1, int rotationcenter = ROTATIONCENTER::CENTER);
 	void Render(SDL_Texture *img, ImageSRC *src, ImageDSTFrame *frame, int blend = 1, int rotationcenter = ROTATIONCENTER::CENTER);
 
 	/** @brief replaces path string to a correct one */

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "ActorBasic.h"
 #include "global.h"
 #include "image.h"
@@ -57,8 +59,7 @@ public:
 	void SetLineObject(XMLElement *lineobj);
 	void RenderLine(double pos);
 	void RenderJudgeLine();
-
-	virtual void Render();
+	// Render() uses basic function of SkinGroupObject::Render()
 };
 
 // draws a lane's note - repeatedly
@@ -96,12 +97,14 @@ public:
 
 // draws object repeatedly
 class SkinNoteLineObject : public SkinImageObject {
+	int side;		// which player's speed? (TODO)
 public:
 	SkinNoteLineObject(SkinRenderTree *);
+	void RenderLine(double pos);
 	virtual void Render();
 };
 
-// nothing much, just an tedious object
+// nothing much, just an tedious object (beatmania/LR2 specific style)
 class SkinNoteJudgeLineObject : public SkinImageObject {
 public:
 	SkinNoteJudgeLineObject(SkinRenderTree *);
@@ -112,7 +115,7 @@ public:
 class SkinBgaObject : public SkinRenderObject {
 private:
 	int side;		// which player?
-	Player *p;		// to get Miss time
+	Timer *miss;	// the player's miss timer
 public:
 	SkinBgaObject(SkinRenderTree *);
 	virtual void SetObject(XMLElement *e);

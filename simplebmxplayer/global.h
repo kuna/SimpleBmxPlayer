@@ -159,6 +159,29 @@ namespace SCENETYPE {
 /*
  * used by skin
  */
+namespace ACTORTYPE {
+	enum ACTORTYPE {
+		NONE = 0,		/* same as unknown */
+		GENERAL = 1,	/* handled by basic rendering function */
+		GROUP = 2,
+		EXTERN = 3,
+		UNKNOWN = 4,
+		BASE = 5,
+		IMAGE = 10,
+		NUMBER = 11,
+		GRAPH = 12,
+		SLIDER = 13,
+		TEXT = 14,
+		BUTTON = 15,
+		LIST = 16,
+		SCRIPT = 17,
+		/* some renderer specific objects ... */
+		BGA = 20,
+		PLAYLANE = 21,
+		COMBO = 22,				// unused; same as general
+		GROOVEGAUGE = 23,		// unused; same as general
+	};
+}
 
 
 #ifdef _WIN32

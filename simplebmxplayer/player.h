@@ -52,29 +52,32 @@ protected:
 #endif
 
 	// current judge/bar/channel related information
-	int						noteindex[20];					// currently processing note index(bar index)
-	int						longnotestartpos[20];			// longnote start pos(bar index)
-	std::vector<BmsWord>	keysound[20];					// sounding key value (per bar index)
-	double					health;							// player's health
+	double					health;						// player's health
 
 	// note/time information
 	PlayerScore				score;
 	BmsNoteManager*			bmsnote;
 	int						judgenotecnt;				// judged note count; used for OnLastNote
 	BmsNoteLane::Iterator	iter_judge_[20];			// currently judging iterator
-	BmsNoteLane::Iterator	iter_sound_[20];			// currently sounding iterator (include INVISIBLE note)
+	BmsNoteLane::Iterator	iter_end_[20];				// 
+	bool					islongnote_[20];			// currently longnote pressing?
+	bool					ispress_[20];				// currently pressing?
 
-	BmsNote*				GetCurrentNote(int notechannel);
-	BmsNote					GetCurrentSoundNote(int notechannel);
+	BmsNote*				GetCurrentNote(int lane) {
+		if (iter_judge_[lane] == iter_end_[lane]) return 0;
+		else return &iter_judge_[lane]->second;
+	};
 
 	// judge
-	int CheckJudgeByTiming(double delta);
+	int						CheckJudgeByTiming(double delta);
 	/** @brief make judgement. silent = true will not set JUDGE timer. */
-	void MakeJudge(int judgetype, int channel, bool silent = false);
+	void					MakeJudge(int judgetype, int channel, bool silent = false);
+	/** @brief is there any more note to draw/judge? */
+	bool					IsNoteAvailable(int lane);
+	void					NextAvailableNote(int lane);
 public:
-	bool					IsLongNote(int notechannel);	// are you pressing longnote currently?
-	BmsNoteLane::Iterator	GetCurrentNoteIter(int lane);
-	BmsNoteLane::Iterator	GetEndNoteIter(int lane);
+	BmsNoteLane::Iterator	GetCurrentNoteIter(int lane) { return iter_judge_[lane]; };
+	BmsNoteLane::Iterator	GetEndNoteIter(int lane) { return iter_end_[lane]; };
 	BmsNoteManager*			GetNoteData();
 
 	/*
@@ -101,15 +104,12 @@ public:
 	 * Hard-Reset player's note position
 	 * Not generally used, only used for starting from specific position.
 	 */
-	virtual void Reset();
+	virtual void Reset(barindex bar);
 
 	/** @brief General key input for judgement */
 	virtual void UpKey(int keychannel);
 	/** @brief General key input for judgement */
 	virtual void PressKey(int keychannel);
-
-	/** @brief How much elapsed from last MISS? effects to MISS BGA. */
-	double GetLastMissTime();
 
 	/** @Get/Set */
 	void SetGauge(double gauge);

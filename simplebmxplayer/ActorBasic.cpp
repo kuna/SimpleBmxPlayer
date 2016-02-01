@@ -142,13 +142,6 @@ SkinGroupObject* SkinRenderObject::ToGroup() {
 		return 0;
 }
 
-SkinBgaObject* SkinRenderObject::ToBGA() {
-	if (objtype == ACTORTYPE::BGA)
-		return (SkinBgaObject*)this;
-	else
-		return 0;
-}
-
 SkinNoteFieldObject* SkinRenderObject::ToNoteFieldObject() {
 	if (objtype == ACTORTYPE::PLAYLANE)
 		return (SkinNoteFieldObject*)this;
@@ -387,7 +380,8 @@ void SkinTextObject::SetFont(const char* resid) {
 }
 
 void SkinTextObject::SetObject(XMLElement *e) {
-	SetValue(STRPOOL->Get(e->Attribute("value")));
+	if (e->Attribute("value"))
+		SetValue(STRPOOL->Get(e->Attribute("value")));
 	SetAlign(e->IntAttribute("align"));
 	SetFont(e->Attribute("resid"));
 }
@@ -438,7 +432,7 @@ void SkinTextObject::RenderText(const char* s) {
 
 
 SkinNumberObject::SkinNumberObject(SkinRenderTree* owner)
-	: SkinTextObject(owner) {
+	: SkinTextObject(owner), v(0) {
 	objtype = ACTORTYPE::NUMBER;
 }
 
@@ -457,7 +451,8 @@ int SkinNumberObject::GetWidth() {
 void SkinNumberObject::Set24Mode(bool b) { mode24 = b; }
 
 void SkinNumberObject::SetObject(XMLElement *e) {
-	SetValue(INTPOOL->Get(e->Attribute("value")));
+	if (e->Attribute("value"))
+		SetValue(INTPOOL->Get(e->Attribute("value")));
 	SetAlign(e->IntAttribute("align"));
 	SetLength(e->IntAttribute("length"));
 	Set24Mode(e->IntAttribute("24mode"));

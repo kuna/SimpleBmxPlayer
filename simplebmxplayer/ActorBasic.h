@@ -1,3 +1,6 @@
+#pragma once
+
+#include "global.h"
 #include "font.h"
 #include <vector>
 #include "tinyxml2.h"

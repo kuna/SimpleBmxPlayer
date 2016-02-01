@@ -148,6 +148,12 @@ void SkinGrooveGaugeObject::Render() {
 	}
 }
 
+
+
+
+
+
+
 #pragma region PLAYOBJECT
 SkinNoteFieldObject::SkinNoteFieldObject(SkinRenderTree* owner) :
 SkinGroupObject(owner), imgobj_judgeline(0), imgobj_line(0) {
@@ -317,6 +323,7 @@ void SkinNoteObject::SetObject(XMLElement *lane)
 }
 
 void SkinNoteObject::Render() {
+	// TODO: consider speed
 	if (!note.img) return;
 
 	double pos = BmsHelper::GetCurrentPos();	// updated value
@@ -353,12 +360,54 @@ void SkinNoteObject::Render() {
 }
 #pragma endregion PLAYOBJECT
 
+
+
+
+
+
+SkinNoteLineObject::SkinNoteLineObject(SkinRenderTree *t) : SkinImageObject(t) {}
+
+void SkinNoteLineObject::RenderLine(double pos) {
+	ImageDSTFrame f;
+	f = dst_cached.frame;
+	f.h *= pos;
+	SkinRenderHelper::Render(img, &imgsrc, &f);
+}
+
+void SkinNoteLineObject::Render() {
+	// render barrrrrrrrrr
+	// TODO: consider speed
+	using namespace BmsResource;
+	double pos = BmsHelper::GetCurrentPos();
+	measureindex m = BMS.GetBarManager().GetMeasureByBarNumber(BmsHelper::GetCurrentBar());
+	barindex bar = BMS.GetBarManager().GetBarNumberByMeasure(m);
+	for (; m < BmsConst::BAR_MAX_COUNT; m++) {
+		double measurepos = BMS.GetBarManager().GetPosByBar(bar) - pos;
+		if (measurepos > 1) break;
+		RenderLine(measurepos);
+		bar += BMS.GetBarManager()[m];
+	}
+}
+
+
+
+
+
+
+SkinNoteJudgeLineObject::SkinNoteJudgeLineObject(SkinRenderTree *t) : SkinImageObject(t) {}
+
+
+
+
+
+
+
 #pragma region BGAOBJECT
 SkinBgaObject::SkinBgaObject(SkinRenderTree *t) : SkinRenderObject(t, ACTORTYPE::BGA) {}
 
 void SkinBgaObject::SetObject(XMLElement *e) {
 	side = e->IntAttribute("side");
-	p = PLAYER[side];
+	miss = PLAYERVALUE[side].pOnMiss;
 }
 
 void SkinBgaObject::RenderBGA(Image *img) {
@@ -378,7 +427,7 @@ void SkinBgaObject::Render() {
 	RenderBGA(BmsHelper::GetMainBGA());
 	RenderBGA(BmsHelper::GetLayer1BGA());
 	RenderBGA(BmsHelper::GetLayer2BGA());
-	if (p->GetLastMissTime() > 0 && p->GetLastMissTime() < 1000)
+	if (miss->IsStarted() && miss->GetTick() < 1000)
 		RenderBGA(BmsHelper::GetMissBGA());
 }
 #pragma endregion BGAOBJECT

@@ -106,7 +106,7 @@
     <ClCompile Include="luamanager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="player.cpp" />
-    <ClCompile Include="skinrendertree.cpp" />
+    <ClCompile Include="ActorRenderer.cpp" />
     <ClCompile Include="timer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -136,7 +136,7 @@
     <ClInclude Include="playrecord.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="skin.h" />
-    <ClInclude Include="skinrendertree.h" />
+    <ClInclude Include="ActorRenderer.h" />
     <ClInclude Include="StdString.h" />
     <ClInclude Include="timer.h" />
     <ClInclude Include="version.h" />

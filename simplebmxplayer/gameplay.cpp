@@ -281,8 +281,6 @@ namespace GamePlay {
 		 */
 		LoadBms(*Bmspath);
 		playmode = BmsResource::BMS.GetKey();
-		bmsnote = new BmsNoteManager();
-		BmsResource::BMS.GetNoteData(*bmsnote);
 
 		/*
 		 * apply some switches/values about BMS
@@ -318,7 +316,7 @@ namespace GamePlay {
 		/*
 		 * Create player object for playing
 		 */
-		PLAYER[0] = new PlayerAuto(&PLAYERINFO[0].playconfig, bmsnote, 0, playmode);
+		PLAYER[0] = new PlayerAuto(&PLAYERINFO[0].playconfig, 0, playmode);
 		PLAYER[1] = NULL;
 
 		/*

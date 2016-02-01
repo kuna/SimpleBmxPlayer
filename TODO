@@ -25,7 +25,7 @@ o Autoplay 및 정상종료.
   o BGA별 타이머 생성 & position reset
 o black/white object 만들어주기
 o 레인에 LINE/JUDGELINE 객체 그리기
-- 타이틀폰트 fallback으로 그려지게 만들기.
+o 타이틀폰트 fallback으로 그려지게 만들기.
 - target vs
 - button object (HIFIX/MINFIX ...)
 

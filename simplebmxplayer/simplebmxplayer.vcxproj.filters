@@ -54,9 +54,6 @@
     <ClCompile Include="globalresources.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="skinrendertree.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="skinlr2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -82,6 +79,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="md5.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ActorBasic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ActorPlay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ActorRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -143,9 +149,6 @@
     <ClInclude Include="globalresources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="skinrendertree.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="skinoption.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -168,6 +171,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ActorBasic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ActorPlay.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ActorRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
