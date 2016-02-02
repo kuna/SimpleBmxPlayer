@@ -28,6 +28,8 @@ namespace Game {
 	// SDL
 	SDL_Window*		WINDOW = NULL;
 	SDL_Renderer*	RENDERER = NULL;
+	SDL_Joystick*	JOYSTICK[10] = { 0, };
+	int				nJoystickCnt = 0;
 
 	// FPS
 	Timer			fpstimer;
@@ -203,7 +205,7 @@ namespace Game {
 		/*
 		 * Game engine initalize
 		 */
-		if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) != 0) {
 			LOG->Critical("Failed to SDL_Init() ...");
 			return -1;
 		}
@@ -230,6 +232,11 @@ namespace Game {
 		if (!RENDERER) {
 			LOG->Critical("Failed to create Renderer");
 			return -1;
+		}
+		nJoystickCnt = SDL_NumJoysticks();
+		if (nJoystickCnt > 10) nJoystickCnt = 10;
+		for (int i = 0; i < nJoystickCnt; i++) {
+			JOYSTICK[i] = SDL_JoystickOpen(i);
 		}
 
 		/*
@@ -311,6 +318,12 @@ namespace Game {
 						SCENE->KeyUp(e.key.keysym.sym);
 					}
 				}
+				else if (e.type == SDL_JOYBUTTONDOWN) {
+					SCENE->KeyDown(1000 + e.jbutton.button, 0);
+				}
+				else if (e.type == SDL_JOYBUTTONUP) {
+					SCENE->KeyUp(1000 + e.jbutton.button);
+				}
 				else if (e.type == SDL_MOUSEBUTTONDOWN) {
 					// TODO
 				}
@@ -360,7 +373,9 @@ namespace Game {
 		// release basic instances
 		delete LUA;
 
-		// finally, game engine (audio/renderer) release
+		// finally, game engine (audio/renderer/joystick/etc...) release
+		for (int i = 0; i < nJoystickCnt; i++)
+			SDL_JoystickClose(JOYSTICK[i]);
 		Mix_CloseAudio();
 		SDL_DestroyRenderer(RENDERER);
 		SDL_DestroyWindow(WINDOW);

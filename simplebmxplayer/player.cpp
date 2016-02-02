@@ -15,9 +15,8 @@ PlayerRenderValue		PLAYERVALUE[4];		// player variables for play
 
 // ------- Player ----------------------------------------
 
-Player::Player(PlayerPlayConfig* config, 
-	int playside, int playmode, int playertype) {
-	this->playconfig = config;
+Player::Player(int playside, int playmode, int playertype) {
+	this->playconfig = &PLAYERINFO[playside].playconfig;
 	this->playside = playside;
 	this->playmode = playmode;
 	this->playertype = playertype;
@@ -26,7 +25,21 @@ Player::Player(PlayerPlayConfig* config,
 	pv = &PLAYERVALUE[playside];
 	if (playmode >= 10) pv_dp = &PLAYERVALUE[playside + 1];
 	else pv_dp = 0;
+	for (int i = 0; i < 10; i++) {
+		pLanepress[i] = pv->pLanepress[i];
+		pLaneup[i] = pv->pLaneup[i];
+		pLanehold[i] = pv->pLanehold[i];
+		pLanejudgeokay[i] = pv->pLanejudgeokay[i];
+		if (pv_dp) {
+			pLanepress[i + 10] = pv_dp->pLanepress[i];
+			pLaneup[i + 10] = pv_dp->pLaneup[i];
+			pLanehold[i + 10] = pv_dp->pLanehold[i];
+			pLanejudgeokay[i + 10] = pv_dp->pLanejudgeokay[i];
+		}
+	}
 	pBmstimer = TIMERPOOL->Get("OnGameStart");
+	memset(ispress_, 0, sizeof(ispress_));
+	memset(islongnote_, 0, sizeof(islongnote_));
 
 	// initalize note/score
 	bmsnote = new BmsNoteManager();
@@ -279,7 +292,7 @@ double Player::GetSpeedMul() { return notespeed * speed_mul; }	// for rendering
 * Judge related
 *------------------------------------------------------------------*/
 
-int Player::CheckJudgeByTiming(double delta) {
+int Player::CheckJudgeByTiming(int delta) {
 	double abs_delta = abs(delta);
 	if (abs_delta <= BmsJudgeTiming::PGREAT)
 		return JUDGETYPE::JUDGE_PGREAT;
@@ -429,7 +442,7 @@ void Player::NextAvailableNote(int lane) {
 		iter_judge_[lane]->second.type == BmsNote::NOTE_NONE));
 }
 
-void Player::Update() {
+void Player::UpdateTimer() {
 	// timer/value update
 	pv->pOnCombo->OffTrigger(pv->pOnCombo->GetTick() > 500);
 	pv->pOnMiss->OffTrigger(pv->pOnMiss->GetTick() > 1000);
@@ -437,6 +450,10 @@ void Player::Update() {
 		pv_dp->pOnCombo->OffTrigger(pv_dp->pOnCombo->GetTick() > 500);
 		pv_dp->pOnMiss->OffTrigger(pv_dp->pOnMiss->GetTick() > 1000);
 	}
+}
+
+void Player::Update() {
+	UpdateTimer();
 
 	// if gameover then don't update
 	if (IsDead()) return;
@@ -458,13 +475,15 @@ void Player::Update() {
 			BmsNote& note = iter_judge_[i]->second;
 			// if note is mine, then lets ignore as fast as we can
 			if (note.type == BmsNote::NOTE_MINE) {
+				NextAvailableNote(i);
 			}
 			// if note is press(HELL CHARGE), judge from pressing status
 			else if (note.type == BmsNote::NOTE_PRESS) {
 				MakeJudge(ispress_[i] ? JUDGETYPE::JUDGE_PGREAT : JUDGETYPE::JUDGE_POOR, i);
+				NextAvailableNote(i);
 			}
 			// if not autoplay, check timing for poor
-			else if (CheckJudgeByTiming(GetTimeFromBar(iter_judge_[i]->first) - time_sec)
+			else if (CheckJudgeByTiming((GetTimeFromBar(iter_judge_[i]->first) - time_sec) * 1000)
 				== JUDGETYPE::JUDGE_LATE) {
 				//
 				// if late, POOR judgement is always occured
@@ -480,12 +499,14 @@ void Player::Update() {
 				}
 				// make POOR judge
 				// (CLAIM) if hidden note isn't ignored by NextAvailableNote(), 
-				// you have to hit it or you'll get miss.
+				//         you have to hit it or you'll get miss.
 				MakeJudge(JUDGETYPE::JUDGE_POOR, i);
+				NextAvailableNote(i);
 			}
-
-			// retrieve next note
-			NextAvailableNote(i);
+			else {
+				// Don't skip note; it's not timing yet. wait next turn.
+				break;
+			}
 		}
 	}
 }
@@ -499,27 +520,50 @@ void Player::UpKey(int lane) {
 	if (islongnote_[lane]) {
 		if (IsNoteAvailable(lane) && GetCurrentNote(lane)->type == BmsNote::NOTE_LNEND) {
 			double t = pBmstimer->GetTick() / 1000.0;
-			int judge = CheckJudgeByTiming(t - GetTimeFromBar(iter_judge_[lane]->first));
+			int judge = CheckJudgeByTiming((t - GetTimeFromBar(iter_judge_[lane]->first)) * 1000);
 			MakeJudge(judge, lane);
 			// get next note and remove current longnote
 			NextAvailableNote(lane);
 		}
+		pLanehold[lane]->Stop();
 		islongnote_[lane] = false;
 	}
+
+	// trigger time & set value
+	pLanepress[lane]->Stop();
+	pLaneup[lane]->Start();
+	ispress_[lane] = false;
 }
 
 void Player::PressKey(int lane) {
+	// if already pressed then ignore
+	if (ispress_[lane]) return;
 	// if gameover then ignore
 	if (IsDead()) return;
+
+	// pressed!
+	ispress_[lane] = true;
+	pLanepress[lane]->Start();
+	pLaneup[lane]->Stop();
+
+	//
+	// cache current judge index first
+	// because current key index will be changed after making judgement
+	//
+	BmsNoteLane::Iterator iter_sound_ = iter_judge_[lane];
+
+	//
 	// make judge
+	//
 	if (IsNoteAvailable(lane)) {
 		double t = pBmstimer->GetTick() / 1000.0;
-		int judge = CheckJudgeByTiming(t - GetTimeFromBar(iter_judge_[lane]->first));
+		int judge = CheckJudgeByTiming((t - GetTimeFromBar(iter_judge_[lane]->first)) * 1000);
 		// only continue judging if judge isn't too fast or too late
 		if (judge != JUDGETYPE::JUDGE_LATE && judge != JUDGETYPE::JUDGE_EARLY) {
 			if (GetCurrentNote(lane)->type == BmsNote::NOTE_LNSTART) {
 				// set longnote status
 				MakeJudge(judge, lane, true);
+				pLanehold[lane]->Start();
 				islongnote_[lane] = true;
 			}
 			else if (GetCurrentNote(lane)->type == BmsNote::NOTE_MINE) {
@@ -532,15 +576,22 @@ void Player::PressKey(int lane) {
 			else if (GetCurrentNote(lane)->type == BmsNote::NOTE_NORMAL) {
 				MakeJudge(judge, lane);
 			}
+			NextAvailableNote(lane);
 		}
 	}
+
 	//
-	// now scan for current play sound
+	// play sound
 	// if current lane has no note, then don't play
 	//
-	BmsNoteLane::Iterator iter_sound_ = iter_judge_[lane];
-	while ((iter_sound_->second.type == BmsNote::NOTE_HIDDEN)
-		&& iter_sound_ != (*bmsnote)[lane].Begin()) --iter_sound_;
+	BmsNoteLane::Iterator begin_ = (*bmsnote)[lane].Begin();
+	while (iter_sound_ != begin_ &&
+		(iter_sound_->second.type == BmsNote::NOTE_HIDDEN)) --iter_sound_;
+	if (iter_sound_ == iter_end_[lane]) {
+		// if no more note exists(end of the game), find previous note to play
+		if (iter_sound_ == begin_) return;
+		--iter_sound_;
+	}
 	PLAYSOUND(iter_sound_->second.value.ToInteger());
 }
 
@@ -555,8 +606,8 @@ bool Player::IsDead() {
 
 // ------ PlayerAuto -----------------------------------
 
-PlayerAuto::PlayerAuto(PlayerPlayConfig *config, int playside, int playmode)
-	: Player(config, playside, playmode, PLAYERTYPE::AUTO) {}
+PlayerAuto::PlayerAuto(int playside, int playmode)
+	: Player(playside, playmode, PLAYERTYPE::AUTO) {}
 
 void PlayerAuto::Update() {
 	// timer/value update
@@ -656,5 +707,5 @@ void PlayerAuto::SetGoal(double rate) {
 
 // ------ PlayerGhost ----------------------------
 
-PlayerGhost::PlayerGhost(PlayerPlayConfig *config, int playside, int playmode)
-	: Player(config, playside, playmode, PLAYERTYPE::AUTO) {}
+PlayerGhost::PlayerGhost(int playside, int playmode)
+	: Player(playside, playmode, PLAYERTYPE::AUTO) {}

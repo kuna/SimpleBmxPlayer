@@ -29,12 +29,13 @@ o 타이틀폰트 fallback으로 그려지게 만들기.
 - target vs
 - button object (HIFIX/MINFIX ...)
 
-- support controller
+o support controller
 - 채보 옵션
-- 플레이어 오브젝트
-  - 플레이어가 실제로 키입력을 받고 처리하게 할 것
-  - DP 플레이 가능하도록 하기
+o 플레이어 오브젝트
+  o 플레이어가 실제로 키입력을 받고 처리하게 할 것
+  o DP 플레이 가능하도록 하기
   - PlayerPacemaker 오브젝트 만들기
+- fast/slow 도입
 - freq
 - skin include (DeepCopy or XMLNode - append)
 o play/program setting

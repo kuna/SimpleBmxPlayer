@@ -311,7 +311,7 @@ namespace GamePlay {
 		 * Create player object for playing
 		 * MUST create before load skin
 		 */
-		PLAYER[0] = new PlayerAuto(&PLAYERINFO[0].playconfig, 0, playmode);
+		PLAYER[0] = new Player(0, playmode);
 		PLAYER[1] = NULL;
 
 		/*
@@ -418,16 +418,16 @@ namespace GamePlay {
 			channel = 5;
 			break;
 		case PlayerKeyIndex::P1_BUTTON6:
-			channel = 8;
-			break;
-		case PlayerKeyIndex::P1_BUTTON7:
-			channel = 9;
-			break;
-		case PlayerKeyIndex::P1_BUTTON8:
 			channel = 6;
 			break;
-		case PlayerKeyIndex::P1_BUTTON9:
+		case PlayerKeyIndex::P1_BUTTON7:
 			channel = 7;
+			break;
+		case PlayerKeyIndex::P1_BUTTON8:
+			channel = 0;
+			break;
+		case PlayerKeyIndex::P1_BUTTON9:
+			channel = 9;
 			break;
 		case PlayerKeyIndex::P2_BUTTON1:
 			channel = 11;
@@ -445,16 +445,16 @@ namespace GamePlay {
 			channel = 15;
 			break;
 		case PlayerKeyIndex::P2_BUTTON6:
-			channel = 18;
-			break;
-		case PlayerKeyIndex::P2_BUTTON7:
-			channel = 19;
-			break;
-		case PlayerKeyIndex::P2_BUTTON8:
 			channel = 16;
 			break;
-		case PlayerKeyIndex::P2_BUTTON9:
+		case PlayerKeyIndex::P2_BUTTON7:
 			channel = 17;
+			break;
+		case PlayerKeyIndex::P2_BUTTON8:
+			channel = 10;
+			break;
+		case PlayerKeyIndex::P2_BUTTON9:
+			channel = 19;
 			break;
 		}
 		return channel;

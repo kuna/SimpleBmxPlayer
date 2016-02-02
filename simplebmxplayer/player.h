@@ -39,6 +39,10 @@ protected:
 	Timer*				pBmstimer;
 	PlayerRenderValue*	pv;					// general current player
 	PlayerRenderValue*	pv_dp;				// in case of DP
+	Timer*				pLanepress[20];
+	Timer*				pLaneup[20];
+	Timer*				pLanehold[20];
+	Timer*				pLanejudgeokay[20];
 
 	// guage
 	double				playergauge;
@@ -69,7 +73,7 @@ protected:
 	};
 
 	// judge
-	int						CheckJudgeByTiming(double delta);
+	int						CheckJudgeByTiming(int delta);
 	/** @brief make judgement. silent = true will not set JUDGE timer. */
 	void					MakeJudge(int judgetype, int channel, bool silent = false);
 	/** @brief is there any more note to draw/judge? */
@@ -87,8 +91,7 @@ public:
 	 * playmode: SINGLE or DOUBLE or BATTLE? (check PLAYTYPE)
 	 * playertype: NORMAL or AUTO or what? (check PLAYERTYPE)
 	 */
-	Player(PlayerPlayConfig* config, int playside = 0,
-		int playmode = PLAYTYPE::KEY7, 
+	Player(int playside = 0, int playmode = PLAYTYPE::KEY7, 
 		int playertype = PLAYERTYPE::NORMAL);
 	~Player();
 
@@ -98,6 +101,10 @@ public:
 	 * Uses Global Game(BmsResource) Timer
 	 */
 	virtual void Update();
+	/* 
+	 * @brief update basic timers, like combo / lane pressing / miss / etc.
+	 */
+	void UpdateTimer();
 
 	/*
 	 * @brief
@@ -139,8 +146,7 @@ class PlayerAuto : public Player {
 	double targetrate;
 
 public:
-	PlayerAuto(PlayerPlayConfig *config,
-		int playside = 0, int playmode = PLAYTYPE::KEY7);
+	PlayerAuto(int playside = 0, int playmode = PLAYTYPE::KEY7);
 
 	virtual void Update();
 	virtual void PressKey(int channel);
@@ -156,8 +162,7 @@ public:
  */
 class PlayerGhost : public Player {
 public:
-	PlayerGhost(PlayerPlayConfig *config,
-		int playside = 0, int playmode = PLAYTYPE::KEY7);
+	PlayerGhost(int playside = 0, int playmode = PLAYTYPE::KEY7);
 };
 
 
