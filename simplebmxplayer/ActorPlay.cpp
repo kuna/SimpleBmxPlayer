@@ -125,7 +125,7 @@ void SkinGrooveGaugeObject::Render() {
 			// check for current status to decide SRC
 			inactive = (i > activedot) ? 1 : 0;
 			// grooveGauge => print as hard Gauge from 80%
-			if (Gaugetype_now == 0 && i >= groovedot)
+			if (Gaugetype_now == 0 && i + 1 >= groovedot)
 				Gaugetype_now = 1;
 			// should I blink?
 			switch (activedot - i) {
@@ -297,10 +297,12 @@ void SkinNoteObject::Render() {
 	if (!p) return;
 
 	double speed = p->GetSpeedMul();
-	double pos = BmsHelper::GetCurrentPos();	// updated value
+	double pos = BmsHelper::GetCurrentPos();	// current scroll pos
+	// basic note drawing
+	// only draw notes that is not judged yet
 	bool isln = false;
 	double lnprevpos;
-	for (auto it = p->GetCurrentNoteIter(lane); it != p->GetEndNoteIter(lane); ++it) {
+	for (auto it = p->GetNoteIter(lane); it != p->GetNoteEndIter(lane); ++it) {
 		double notepos = 
 			BmsResource::BMS.GetBarManager().GetPosByBar(it->first) - pos;
 		notepos *= speed;
@@ -326,6 +328,30 @@ void SkinNoteObject::Render() {
 		}
 		// only break loop if longnote is finished
 		if (notepos > 1 && !isln) break;
+	}
+	// there might be longnote that isn't drawn (judge failed)
+	// in LR2, that also should be drawn, so scan it
+	BmsNoteLane::Iterator it_prev = p->GetNoteIter(lane);
+	if (it_prev == p->GetNoteBeginIter(lane)) return;
+	isln = false;
+	for (--it_prev; it_prev != p->GetNoteBeginIter(lane); --it_prev) {
+		double notepos =
+			BmsResource::BMS.GetBarManager().GetPosByBar(it_prev->first) - pos;
+		notepos *= speed;
+		// only break loop when out-of-screen
+		if (notepos < 0 && !isln) break;
+		if (notepos < 0) notepos = 0;
+		switch (it_prev->second.type) {
+		case BmsNote::NOTE_LNEND:
+			lnprevpos = notepos;
+			isln = true;
+			break;
+		case BmsNote::NOTE_LNSTART:
+			if (!isln) break;
+			RenderNote(notepos, lnprevpos);
+			isln = false;
+			break;
+		}
 	}
 }
 

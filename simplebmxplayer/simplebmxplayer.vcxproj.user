@@ -5,7 +5,7 @@
     <LocalDebuggerCommandArguments>"D:\LR2\BMS\CHMR\[CRYSTAL TECHNOLOGY]CHMR[SP ANOTHER].bme"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments>"D:\LR2\BMS\Engine\engine_DPA.bms"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\LR2\BMS\-Parallel World-\PW_H.bml"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

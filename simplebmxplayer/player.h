@@ -62,8 +62,9 @@ protected:
 	PlayerScore				score;
 	BmsNoteManager*			bmsnote;
 	int						judgenotecnt;				// judged note count; used for OnLastNote
-	BmsNoteLane::Iterator	iter_judge_[20];			// currently judging iterator
+	BmsNoteLane::Iterator	iter_judge_[20];			// current judging iterator
 	BmsNoteLane::Iterator	iter_end_[20];				// 
+	BmsNoteLane::Iterator	iter_begin_[20];				// 
 	bool					islongnote_[20];			// currently longnote pressing?
 	bool					ispress_[20];				// currently pressing?
 
@@ -80,8 +81,9 @@ protected:
 	bool					IsNoteAvailable(int lane);
 	void					NextAvailableNote(int lane);
 public:
-	BmsNoteLane::Iterator	GetCurrentNoteIter(int lane) { return iter_judge_[lane]; };
-	BmsNoteLane::Iterator	GetEndNoteIter(int lane) { return iter_end_[lane]; };
+	BmsNoteLane::Iterator	GetNoteIter(int lane) { return iter_judge_[lane]; };
+	BmsNoteLane::Iterator	GetNoteEndIter(int lane) { return iter_end_[lane]; };
+	BmsNoteLane::Iterator	GetNoteBeginIter(int lane) { return iter_begin_[lane]; };
 	BmsNoteManager*			GetNoteData();
 
 	/*
@@ -102,9 +104,9 @@ public:
 	 */
 	virtual void Update();
 	/* 
-	 * @brief update basic timers, like combo / lane pressing / miss / etc.
+	 * @brief update basics, like combo / miss / rendering note iterator / etc.
 	 */
-	void UpdateTimer();
+	void UpdateBasic();
 
 	/*
 	 * @brief
