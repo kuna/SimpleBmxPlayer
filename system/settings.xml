@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <setting>
-    <width>1280</width>
-    <height>720</height>
+    <width>1600</width>
+    <height>900</height>
     <vsync>0</vsync>
     <fullscreen>0</fullscreen>
     <resizable>0</resizable>

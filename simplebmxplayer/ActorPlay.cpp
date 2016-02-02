@@ -69,9 +69,10 @@ SkinGrooveGaugeObject::SkinGrooveGaugeObject(SkinRenderTree* owner)
 	: SkinImageObject(owner), dotcnt(0), v(0), addx(0), addy(0) { }
 
 void SkinGrooveGaugeObject::SetObject(XMLElement *e) {
-	SetBasicObject(e);
 	using namespace SkinRenderHelper;
 	// set basic property
+	SetBasicObject(e);
+	SetImageObject(e);
 	addx = e->IntAttribute("addx");
 	addy = e->IntAttribute("addy");
 	if (e->IntAttribute("side") == 0) {
@@ -117,9 +118,9 @@ void SkinGrooveGaugeObject::Render() {
 		ImageSRC *currentsrc;
 		int inactive = 0;
 		int Gaugetype_now = *Gaugetype;
-		int activedot = *v * dotcnt;	// till when we should display guage as active cell
-		int groovedot = 0.8 * dotcnt;	// starting point of turning red when groove guage
-		int blink = t->GetTick() % 4;	// used when blinking guage
+		int activedot = *v * dotcnt - 1;	// till when we should display gauge as active cell
+		int groovedot = 0.8 * dotcnt;	// starting point of turning red when groove gauge
+		int blink = t->GetTick() % 4;	// used when blinking gauge
 		for (int i = 0; i < dotcnt; i++) {
 			// check for current status to decide SRC
 			inactive = (i > activedot) ? 1 : 0;

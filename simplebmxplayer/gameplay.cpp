@@ -285,12 +285,26 @@ namespace GamePlay {
 		 * apply some switches/values about BMS
 		 * - if BACKBMP, then SET and load _backbmp
 		 */
-		STRPOOL->Set("MainTitle", "maintitle");
-		STRPOOL->Set("Title", "title");
-		STRPOOL->Set("Subtitle", "subtitle");
-		STRPOOL->Set("Genre", "genre");
-		STRPOOL->Set("Artist", "artist");
-		STRPOOL->Set("SubArtist", "subartist");
+		std::string title = "";
+		std::string subtitle = "";
+		std::string genre = "";
+		std::string artist = "";
+		std::string subartist = "";
+		BmsResource::BMS.GetHeaders().Query("TITLE", title);
+		BmsResource::BMS.GetHeaders().Query("SUBTITLE", subtitle);
+		BmsResource::BMS.GetHeaders().Query("ARTIST", artist);
+		BmsResource::BMS.GetHeaders().Query("SUBARTIST", subartist);
+		BmsResource::BMS.GetHeaders().Query("GENRE", genre);
+		std::string maintitle = title;
+		if (subtitle.size())
+			maintitle = maintitle + " [" + subtitle + "]";
+
+		STRPOOL->Set("MainTitle", maintitle);
+		STRPOOL->Set("Title", title);
+		STRPOOL->Set("Subtitle", subtitle);
+		STRPOOL->Set("Genre", genre);
+		STRPOOL->Set("Artist", artist);
+		STRPOOL->Set("SubArtist", subartist);
 		SWITCH_OFF("IsBACKBMP");
 
 		/*

@@ -92,8 +92,8 @@ void SkinRenderTree::Render() {
 	// similar to SkinGroup
 	// difference is, uses ratio to fit skin to screen
 	SDL_RenderSetScale(Game::RENDERER,
-		(float)_scr_w / Game::SETTING.width,
-		(float)_scr_h / Game::SETTING.height);
+		(float)Game::SETTING.width / _scr_w,
+		(float)Game::SETTING.height / _scr_h);
 	for (auto it = begin(); it != end(); ++it) {
 		(*it)->Render();
 	}

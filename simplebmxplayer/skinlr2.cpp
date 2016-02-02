@@ -54,7 +54,7 @@ bool _LR2SkinParser::ParseLR2Skin(const char *filepath, Skin *s) {
 	s->skinlayout.LinkEndChild(resource);
 	s->skinlayout.LinkEndChild(skin);
 	ADDTEXT(info, "Width", 1280);
-	ADDTEXT(info, "Height", 760);
+	ADDTEXT(info, "Height", 720);
 
 	// load skin line
 	// because lr2skin file format has no end tag, 

@@ -1,3 +1,3 @@
 #define PROGRAMNAME		"SimpleBmxPlayer"
-#define PROGRAMDATE		"160126"
+#define PROGRAMDATE		"160201"
 #define PROGRAMCOMMIT	"@6dbcf16"

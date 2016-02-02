@@ -375,7 +375,7 @@ namespace PlayerInfoHelper {
 	bool LoadPlayerInfo(PlayerInfo& player, const char* name) {
 		// create & convert db path to absolute
 		RString absolute_db_path = ssprintf("../player/%s.xml", name);
-		FileHelper::ConvertPathToAbsolute(absolute_db_path);
+		FileHelper::ConvertPathToSystem(absolute_db_path);
 		RString absolute_db_dir = FileHelper::GetParentDirectory(absolute_db_path);
 		FileHelper::CreateFolder(absolute_db_dir);
 		// start to parse XML file
@@ -408,7 +408,7 @@ namespace PlayerInfoHelper {
 	bool SavePlayerInfo(PlayerInfo& player) {
 		// create & convert db path to absolute
 		RString absolute_db_path = ssprintf("../player/%s.xml", player.name.c_str());
-		FileHelper::ConvertPathToAbsolute(absolute_db_path);
+		FileHelper::ConvertPathToSystem(absolute_db_path);
 		RString absolute_db_dir = FileHelper::GetParentDirectory(absolute_db_path);
 		FileHelper::CreateFolder(absolute_db_dir);
 		// make new XML file
