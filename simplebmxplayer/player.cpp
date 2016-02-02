@@ -214,7 +214,7 @@ void Player::SetSpeed(double speed) {
 	/*
 	 * set the pointer values
 	 */
-	*pv->pNoteSpeed = notespeed * 100;
+	*pv->pNoteSpeed = notespeed * 100 + 0.5;
 	*pv->pFloatSpeed = notefloat * (1 - suddenheight - liftheight);
 	*pv->pSudden = notefloat * suddenheight;
 	*pv->pLift = notefloat * liftheight;
@@ -233,7 +233,7 @@ void Player::SetFloatSpeed(double speed) {
 	/*
 	 * set the pointer values
 	 */
-	*pv->pNoteSpeed = notespeed * 100;
+	*pv->pNoteSpeed = notespeed * 100 + 0.5;
 	*pv->pFloatSpeed = notefloat * (1 - suddenheight - liftheight);
 	*pv->pSudden = notefloat * suddenheight;
 	*pv->pLift = notefloat * liftheight;
@@ -269,7 +269,7 @@ void Player::SetLift(double height) {
 	*pv->pLift = notefloat * liftheight;
 }
 void Player::DeltaLift(double height) { SetLift(liftheight + height); }
-
+double Player::GetSpeedMul() { return notespeed * speed_mul; }	// for rendering
 
 
 
@@ -421,11 +421,12 @@ bool Player::IsNoteAvailable(int lane) {
 }
 
 void Player::NextAvailableNote(int lane) {
+	// search for next judged note
 	do {
 		++iter_judge_[lane];
 	} while (IsNoteAvailable(lane) &&
-		iter_judge_[lane]->second.type == BmsNote::NOTE_HIDDEN ||
-		iter_judge_[lane]->second.type == BmsNote::NOTE_NONE);
+		(iter_judge_[lane]->second.type == BmsNote::NOTE_HIDDEN ||
+		iter_judge_[lane]->second.type == BmsNote::NOTE_NONE));
 }
 
 void Player::Update() {

@@ -160,7 +160,7 @@ void SkinGrooveGaugeObject::Render() {
 
 #pragma region PLAYOBJECT
 SkinNoteFieldObject::SkinNoteFieldObject(SkinRenderTree* owner) :
-SkinGroupObject(owner), imgobj_judgeline(0), imgobj_line(0) {
+SkinGroupObject(owner) {
 	objtype = ACTORTYPE::PLAYLANE;
 }
 
@@ -168,7 +168,12 @@ void SkinNoteFieldObject::SetObject(XMLElement *e) {
 	SetBasicObject(e);
 
 	// fetch player object first
-	side = e->IntAttribute("side");
+	// if not battle, then ignore side attribute
+	if (rtree->_keycount == 15 ||
+		rtree->_keycount == 17)
+		side = e->IntAttribute("side");
+	else
+		side = 0;
 	p = PLAYER[side];
 
 	// similar with SkinRenderHelper::ConstructObject()
@@ -184,114 +189,61 @@ void SkinNoteFieldObject::SetObject(XMLElement *e) {
 		}
 		if (ISNAME("LINE")) {
 			APPENDCHILD(SkinNoteLineObject);
+			((SkinNoteLineObject*)obj)->SetPlayer(p);
 		}
 		if (ISNAME("JUDGELINE")) {
 			APPENDCHILD(SkinNoteJudgeLineObject);
 		}
 		if (ISNAME("Note")) {
-			APPENDCHILD(SkinImageObject);
+			APPENDCHILD(SkinNoteObject);
 			((SkinNoteObject*)obj)->SetPlayer(p);
 		}
 	}
 }
 
-void SkinNoteFieldObject::ConstructLane(XMLElement *lane) {
-	using namespace SkinRenderHelper;
-	if (!lane)
-		return;
-
-	int idx = lane->IntAttribute("index");
-	if (idx < 0 || idx >= 20) {
-		LOG->Warn("Invalid Lane found in <Play> object (%d), ignore.", idx);
-		return;
-	}
-	XMLElement *src_element;
-}
-
-void SkinNoteFieldObject::SetJudgelineObject(XMLElement *judgelineobj) {
-	if (!judgelineobj) return;
-	if (!imgobj_judgeline)
-		imgobj_judgeline = rtree->NewSkinImageObject();
-	imgobj_judgeline->SetObject(judgelineobj);
-}
-
-void SkinNoteFieldObject::SetLineObject(XMLElement *lineobj) {
-	if (!lineobj) return;
-	if (!imgobj_line)
-		imgobj_line = rtree->NewSkinImageObject();
-	SkinRenderHelper::ConstructBasicRenderObject(imgobj_line, lineobj);
-	imgobj_line->SetObject(lineobj);
-}
-
-void SkinNoteFieldObject::RenderLine(double pos) {
-	/*
-	 * since we don't create multiple line object,
-	 * update line object as we render
-	 */
-	if (!drawable) return;
-	rtree->PushRenderOffset(dst_cached.frame.x, -(int)dst_cached.frame.h * pos);
-	imgobj_line->Update();
-	rtree->PopRenderOffset();
-	imgobj_line->Render();
-}
-
-void SkinNoteFieldObject::RenderJudgeLine() {
-	/*
-	* since we don't create multiple judgeline object,
-	* update line object as we render
-	*/
-	if (!drawable) return;
-	rtree->PushRenderOffset(dst_cached.frame.x, 0);
-	imgobj_judgeline->Update();
-	rtree->PopRenderOffset();
-	imgobj_judgeline->Render();
-}
 
 
 
 
 
 SkinNoteObject::SkinNoteObject(SkinRenderTree *tree)
-	: SkinRenderObject(tree) {
+	: SkinRenderObject(tree), lane(0) {
 	memset(&note, 0, sizeof(note));
 }
 
 void SkinNoteObject::RenderNote(double pos) {
 	ImageDSTFrame frame = note.f;
-	frame.x += dst_cached.frame.x;
-	frame.y -= dst_cached.frame.h * pos;
+	frame.y *= 1 - pos;
 
-	frame.x += rtree->GetOffsetX();
-	frame.y += rtree->GetOffsetY();
+	frame.x += rx;
+	frame.y += ry;
 	SkinRenderHelper::Render(note.img, &note.normal, &frame);
 }
 
 void SkinNoteObject::RenderMineNote(double pos) {
 	ImageDSTFrame frame = note.f;
-	frame.x += dst_cached.frame.x;
-	frame.y -= dst_cached.frame.h * pos;
+	frame.y *= 1 - pos;
 
-	frame.x += rtree->GetOffsetX();
-	frame.y += rtree->GetOffsetY();
+	frame.x += rx;
+	frame.y += ry;
 	SkinRenderHelper::Render(note.img, &note.normal, &frame);
 }
 
 void SkinNoteObject::RenderNote(double pos_start, double pos_end) {
 	ImageDSTFrame frame = note.f;
-	frame.x += dst_cached.frame.x;
 	ImageDSTFrame bodyframe = frame;
 	ImageDSTFrame endframe = frame;
-	frame.y -= dst_cached.frame.h * pos_start;
-	endframe.y -= dst_cached.frame.h * pos_end;
+	frame.y *= 1 - pos_start;
+	endframe.y *= 1 - pos_end;
 	bodyframe.y = endframe.y + endframe.h;
 	bodyframe.h = frame.y - endframe.y - endframe.h;
 
-	frame.x += rtree->GetOffsetX();
-	frame.y += rtree->GetOffsetY();
-	bodyframe.x += rtree->GetOffsetX();
-	bodyframe.y += rtree->GetOffsetY();
-	endframe.x += rtree->GetOffsetX();
-	endframe.y += rtree->GetOffsetY();
+	frame.x += rx;
+	frame.y += ry;
+	bodyframe.x += rx;
+	bodyframe.y += ry;
+	endframe.x += rx;
+	endframe.y += ry;
 	SkinRenderHelper::Render(note.img, &note.ln_body, &bodyframe);
 	SkinRenderHelper::Render(note.img, &note.ln_end, &endframe);
 	SkinRenderHelper::Render(note.img, &note.ln_start, &frame);
@@ -304,14 +256,20 @@ void SkinNoteObject::SetObject(XMLElement *lane)
 
 	if (!lane) return;
 	using namespace SkinRenderHelper;
-	XMLElement *src_element;
-
+	this->lane = lane->IntAttribute("index");
+	note.f.x = lane->IntAttribute("x");
+	note.f.y = lane->IntAttribute("y");
+	note.f.w = lane->IntAttribute("w");
+	note.f.h = lane->IntAttribute("h");
 	note.f.a = 255;
 	note.f.r = 255;
 	note.f.g = 255;
 	note.f.b = 255;
 	note.f.angle = 0;
 	note.img = rtree->_imagekey[lane->Attribute("resid")];
+	XMLElement *src_element;
+	src_element = lane->FirstChildElement("SRC_NOTE");
+	if (src_element) ConstructSRCFromElement(note.normal, src_element);
 	src_element = lane->FirstChildElement("SRC_LN_START");
 	if (src_element) ConstructSRCFromElement(note.ln_start, src_element);
 	src_element = lane->FirstChildElement("SRC_LN_BODY");
@@ -321,6 +279,7 @@ void SkinNoteObject::SetObject(XMLElement *lane)
 	src_element = lane->FirstChildElement("SRC_MINE");
 	if (src_element) ConstructSRCFromElement(note.mine, src_element);
 	src_element = lane->FirstChildElement("SRC_AUTO_NOTE");
+	if (src_element) ConstructSRCFromElement(note.auto_normal, src_element);
 	src_element = lane->FirstChildElement("SRC_AUTO_LN_START");
 	if (src_element) ConstructSRCFromElement(note.auto_ln_start, src_element);
 	src_element = lane->FirstChildElement("SRC_AUTO_LN_BODY");
@@ -332,15 +291,19 @@ void SkinNoteObject::SetObject(XMLElement *lane)
 }
 
 void SkinNoteObject::Render() {
-	// TODO: consider speed
 	if (!note.img) return;
+	if (!drawable) return;
+	if (!p) return;
 
+	double speed = p->GetSpeedMul();
 	double pos = BmsHelper::GetCurrentPos();	// updated value
 	bool isln = false;
 	double lnprevpos;
 	for (auto it = p->GetCurrentNoteIter(lane); it != p->GetEndNoteIter(lane); ++it) {
 		double notepos = 
 			BmsResource::BMS.GetBarManager().GetPosByBar(it->first) - pos;
+		notepos *= speed;
+		if (notepos < 0) notepos = 0;
 		switch (it->second.type) {
 		case BmsNote::NOTE_NORMAL:
 			RenderNote(notepos);
@@ -354,10 +317,7 @@ void SkinNoteObject::Render() {
 			break;
 		case BmsNote::NOTE_LNEND:
 			if (!isln) {
-				auto it_prev = it;
-				--it_prev;
-				lnprevpos = 
-					BmsResource::BMS.GetBarManager().GetPosByBar(it_prev->first) - pos;
+				lnprevpos = 0;
 			}
 			RenderNote(lnprevpos, notepos);
 			isln = false;
@@ -366,6 +326,13 @@ void SkinNoteObject::Render() {
 		// only break loop if longnote is finished
 		if (notepos > 1 && !isln) break;
 	}
+}
+
+void SkinNoteObject::Update() {
+	// only update drawable & relative position
+	drawable = condition.Evaluate();
+	rx = rtree->GetOffsetX();
+	ry = rtree->GetOffsetY();
 }
 #pragma endregion PLAYOBJECT
 
@@ -379,19 +346,21 @@ SkinNoteLineObject::SkinNoteLineObject(SkinRenderTree *t) : SkinImageObject(t) {
 void SkinNoteLineObject::RenderLine(double pos) {
 	ImageDSTFrame f;
 	f = dst_cached.frame;
-	f.h *= pos;
+	f.y *= 1 - pos;
 	SkinRenderHelper::Render(img, &imgsrc, &f);
 }
 
 void SkinNoteLineObject::Render() {
-	// render barrrrrrrrrr
-	// TODO: consider speed
+	if (!p) return;
+	// render barrrrrrrrrrs
 	using namespace BmsResource;
+	double speed = p->GetSpeedMul();
 	double pos = BmsHelper::GetCurrentPos();
 	measureindex m = BMS.GetBarManager().GetMeasureByBarNumber(BmsHelper::GetCurrentBar());
 	barindex bar = BMS.GetBarManager().GetBarNumberByMeasure(m);
 	for (; m < BmsConst::BAR_MAX_COUNT; m++) {
 		double measurepos = BMS.GetBarManager().GetPosByBar(bar) - pos;
+		measurepos *= speed;
 		if (measurepos > 1) break;
 		RenderLine(measurepos);
 		bar += BMS.GetBarManager()[m];

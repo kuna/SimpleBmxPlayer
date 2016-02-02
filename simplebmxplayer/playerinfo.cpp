@@ -552,7 +552,8 @@ namespace PlayOptionHelper {
 		XMLElement *playconfig = doc->NewElement("PlayConfig");
 		doc->LinkEndChild(playconfig);
 
-		CreateElement(playconfig, "speed")->SetText(config.speed * 100);
+		// 0.5 : kind of round() function
+		CreateElement(playconfig, "speed")->SetText(config.speed * 100 + 0.5);
 		CreateElement(playconfig, "speedtype")->SetText(config.speedtype);
 		CreateElement(playconfig, "floatspeed")->SetText(config.floatspeed * 1000);
 		CreateElement(playconfig, "sudden")->SetText(config.sudden * 1000);

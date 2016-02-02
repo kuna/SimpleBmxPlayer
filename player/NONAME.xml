@@ -413,7 +413,7 @@
 </KeyConfig>
 
 <PlayConfig>
-    <speed>200</speed>
+    <speed>200.5</speed>
     <speedtype>0</speedtype>
     <floatspeed>689.65517241379314</floatspeed>
     <sudden>1</sudden>

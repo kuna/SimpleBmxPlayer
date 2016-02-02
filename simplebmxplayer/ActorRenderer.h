@@ -43,7 +43,13 @@ namespace ACCTYPE {
 
 /** @brief rendering tree which is used in real rendering - based on Xml skin structure */
 class SkinRenderTree: public SkinGroupObject {
-public:
+private:
+	friend SkinRenderObject;
+	friend SkinImageObject;
+	friend SkinTextObject;
+	friend SkinNoteObject;
+	friend SkinNoteFieldObject;
+
 	/** @brief stores all skin render objects */
 	std::vector<SkinRenderObject*> _objpool;
 
@@ -54,6 +60,8 @@ public:
 
 	/** @brief decide group object's texture size */
 	int _scr_w, _scr_h;
+	/** @brief skin key count (zero if not play skin) */
+	int _keycount;
 
 	/** @brief object's relative position */
 	struct _Offset { int x, y; };
@@ -65,8 +73,9 @@ public:
 public:
 	SkinRenderTree(int skinwidth, int skinheight);
 	~SkinRenderTree();
+	virtual void SetObject(XMLElement *info);
 	virtual void Update();
-	//virtual void Render();	// use basic Group::Render()
+	virtual void Render();
 
 	/** @brief set skin's basic resolution. automatically set when you load skin. */
 	void SetSkinSize(int skinwidth, int skinheight);

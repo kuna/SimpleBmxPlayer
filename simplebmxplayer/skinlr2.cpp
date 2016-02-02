@@ -23,6 +23,13 @@ char* Trim(char *p) {
 	return r;
 }
 
+// utility macros
+#define ADDCHILD(base, name)\
+	base->LinkEndChild(base->GetDocument()->NewElement(name))
+#define ADDTEXT(base, name, val)\
+	((XMLElement*)ADDCHILD(base, name))->SetText(val);
+	
+
 // ---------------------------------------------------------------
 
 bool _LR2SkinParser::ParseLR2Skin(const char *filepath, Skin *s) {
@@ -46,8 +53,8 @@ bool _LR2SkinParser::ParseLR2Skin(const char *filepath, Skin *s) {
 	s->skinlayout.LinkEndChild(option);
 	s->skinlayout.LinkEndChild(resource);
 	s->skinlayout.LinkEndChild(skin);
-	info->SetAttribute("width", 1280);
-	info->SetAttribute("height", 760);
+	ADDTEXT(info, "Width", 1280);
+	ADDTEXT(info, "Height", 760);
 
 	// load skin line
 	// because lr2skin file format has no end tag, 
@@ -272,39 +279,71 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	else if (CMD_IS("#INFORMATION")) {
 		// set skin's metadata
 		XMLElement *info = s->skinlayout.FirstChildElement("Info");
-		XMLElement *type = s->skinlayout.NewElement("Type");
-		int type_ = INT(args[1]);		// 0: 7key, 1: 9key, 2: 14key, 12: battle
-		switch (type_) {
-		case 0:
-			// 7key
-			type->SetText("7Key");
-			break;
-		case 1:
-			// 9key
-			type->SetText("9Key");
-			break;
-		case 2:
-			// 14key
-			type->SetText("14Key");
-			break;
-		case 5:
-			// select screen
-			type->SetText("SelectMusic");
-			break;
-		case 12:
-			// battle
-			type->SetText("7KBattle");
-			break;
-		default:
-			printf("[ERROR] unknown type of lr2skin(%d). consider as 7Key.\n", type_);
+		int type_ = INT(args[1]);
+		if (type_ == 5) {
+			ADDTEXT(info, "Type", "Select");
 		}
-		XMLElement *skinname = s->skinlayout.NewElement("Name");
-		skinname->SetText(args[2]);
-		XMLElement *author = s->skinlayout.NewElement("Author");
-		author->SetText(args[3]);
-		info->LinkEndChild(type);
-		info->LinkEndChild(skinname);
-		info->LinkEndChild(author);
+		else if (type_ == 6) {
+			ADDTEXT(info, "Type", "Decide");
+		}
+		else if (type_ == 7) {
+			ADDTEXT(info, "Type", "Result");
+		}
+		else if (type_ == 8) {
+			ADDTEXT(info, "Type", "KeyConfig");
+		}
+		/** @comment skinselect / soundselect are all depreciated, integrated into option. */
+		else if (type_ == 9) {
+			ADDTEXT(info, "Type", "SkinSelect");
+		}
+		else if (type_ == 10) {
+			ADDTEXT(info, "Type", "SoundSelect");
+		}
+		/** @comment end */
+		else if (type_ == 12) {
+			ADDTEXT(info, "Type", "Play");
+			ADDTEXT(info, "Key", 15);
+		}
+		else if (type_ == 13) {
+			ADDTEXT(info, "Type", "Play");
+			ADDTEXT(info, "Key", 17);
+		}
+		else if (type_ == 15) {
+			ADDTEXT(info, "Type", "CourseResult");
+		}
+		else {
+			printf("[ERROR] unknown type of lr2skin(%d). consider as 7Key Play.\n", type_);
+			type_ = 0;
+		}
+
+		if (type_ < 5) {
+			ADDTEXT(info, "Type", "Play");
+			int key_ = 7;
+			switch (type_) {
+			case 0:
+				// 7key
+				key_ = 7;
+				break;
+			case 1:
+				// 9key
+				key_ = 5;
+				break;
+			case 2:
+				// 14key
+				key_ = 14;
+				break;
+			case 3:
+				key_ = 10;
+				break;
+			case 4:
+				key_ = 9;
+				break;
+			}
+			ADDTEXT(info, "Key", key_);
+		}
+
+		ADDTEXT(info, "Name", args[2]);
+		ADDTEXT(info, "Author", args[3]);
 	}
 	/*
 	* we very first parsed #INCLUDE command

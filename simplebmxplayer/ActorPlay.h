@@ -45,20 +45,12 @@ public:
 
 /** @brief specific object used during play */
 class SkinNoteFieldObject : public SkinGroupObject {
-private:
-	SkinImageObject *imgobj_judgeline;
-	SkinImageObject *imgobj_line;
 public:
 	int			side;			// decide what player this object render
 	Player*		p;
 public:
 	SkinNoteFieldObject(SkinRenderTree* owner);
 	void SetObject(XMLElement *e);
-	void ConstructLane(XMLElement *laneobj);
-	void SetJudgelineObject(XMLElement *judgelineobj);
-	void SetLineObject(XMLElement *lineobj);
-	void RenderLine(double pos);
-	void RenderJudgeLine();
 	// Render() uses basic function of SkinGroupObject::Render()
 };
 
@@ -83,6 +75,8 @@ private:
 	int			lane;
 	Player*		p;				// get from NoteFieldObject
 
+	int			rx, ry;			// relative pos
+
 	/** @brief `pos = 1` means note on the top of the lane */
 	void RenderNote(double pos);
 	void RenderMineNote(double pos);
@@ -91,17 +85,19 @@ private:
 public:
 	SkinNoteObject(SkinRenderTree *);
 	virtual void SetObject(XMLElement *e);
+	virtual void Update();
 	virtual void Render();
 	void SetPlayer(Player *p) { this->p = p; }
 };
 
 // draws object repeatedly
 class SkinNoteLineObject : public SkinImageObject {
-	int side;		// which player's speed? (TODO)
+	Player *p;				// get from NoteFieldObject
 public:
 	SkinNoteLineObject(SkinRenderTree *);
 	void RenderLine(double pos);
 	virtual void Render();
+	void SetPlayer(Player *p) { this->p = p; }
 };
 
 // nothing much, just an tedious object (beatmania/LR2 specific style)

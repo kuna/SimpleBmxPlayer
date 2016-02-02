@@ -88,11 +88,30 @@ void SkinRenderTree::PopRenderOffset() {
 	_offset_y -= _offset.y;
 }
 
+void SkinRenderTree::Render() {
+	// similar to SkinGroup
+	// difference is, uses ratio to fit skin to screen
+	SDL_RenderSetScale(Game::RENDERER,
+		(float)_scr_w / Game::SETTING.width,
+		(float)_scr_h / Game::SETTING.height);
+	for (auto it = begin(); it != end(); ++it) {
+		(*it)->Render();
+	}
+	SDL_RenderSetScale(Game::RENDERER, 1, 1);
+}
+
 void SkinRenderTree::Update() {
 	drawable = true;
 	for (auto it = begin(); it != end(); ++it) {
 		(*it)->Update();
 	}
+}
+
+void SkinRenderTree::SetObject(XMLElement *e) {
+	if (!e) return;
+	_keycount = atoi(e->FirstChildElement("Key")->GetText());
+	_scr_w = atoi(e->FirstChildElement("Width")->GetText());
+	_scr_h = atoi(e->FirstChildElement("Height")->GetText());
 }
 
 #pragma endregion SKINRENDERTREE
@@ -211,12 +230,7 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 		/*
 		 * play scene object parsing
 		 */
-		/*else if (ISNAME(e, "Play")) {
-			SkinNoteFieldObject *p = rtree.NewSkinNoteFieldObject();
-			// TODO: fetch lane effect, or other lane relative images as child
-			ConstructTreeFromElement(rtree, p, e->FirstChildElement());
-			obj = p;
-		}*/
+		PARSEOBJ("Play", SkinNoteFieldObject)
 		PARSEOBJ("GrooveGauge", SkinGrooveGaugeObject)
 		PARSEOBJ("Combo", SkinComboObject)
 		PARSEOBJ("Bga", SkinBgaObject)

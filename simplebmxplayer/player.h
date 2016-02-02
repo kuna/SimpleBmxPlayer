@@ -125,6 +125,7 @@ public:
 	/** @brief Set lift (0 ~ 1) */
 	void SetLift(double height);
 	void DeltaLift(double height);
+	double GetSpeedMul();
 	/** @brief is player dead? */
 	bool IsDead();
 };

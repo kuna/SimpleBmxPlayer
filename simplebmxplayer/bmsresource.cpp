@@ -164,7 +164,7 @@ namespace BmsHelper {
 	bool isbmsloading = false;
 
 	bool LoadBms(const RString& path) {
-		bool succeed = false;
+		bool succeed = true;
 		// lock first, so LoadBmsResource() can wait 
 		// until BMS is fully loaded.
 		mutex_bmsresource.lock();
@@ -176,7 +176,7 @@ namespace BmsHelper {
 
 		// load bms file & create time table
 		if (!BmsResource::BMS.LoadBmsFile(path)) {
-			LOG->Critical("Failed to load BMS file - %s\n", path.c_str());
+			succeed = false;
 		}
 
 		mutex_bmsresource.unlock();

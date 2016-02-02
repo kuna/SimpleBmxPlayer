@@ -75,6 +75,7 @@ namespace GamePlay {
 		RString skindirpath = IO::get_filedir(path);
 		FileHelper::ConvertPathToAbsolute(skindirpath);
 		FileHelper::PushBasePath(skindirpath);
+		rtree->SetObject(playskin.skinlayout.FirstChildElement("Info"));
 		SkinRenderHelper::LoadResourceFromSkin(*rtree, playskin);
 		SkinRenderHelper::ConstructTreeFromSkin(*rtree, playskin);
 		FileHelper::PopBasePath();
@@ -293,6 +294,13 @@ namespace GamePlay {
 		SWITCH_OFF("IsBACKBMP");
 
 		/*
+		 * Create player object for playing
+		 * MUST create before load skin
+		 */
+		PLAYER[0] = new PlayerAuto(&PLAYERINFO[0].playconfig, 0, playmode);
+		PLAYER[1] = NULL;
+
+		/*
 		 * Load skin
 		 */
 		RString PlayskinPath = "";
@@ -310,12 +318,6 @@ namespace GamePlay {
 #else
 		BmsHelper::LoadBmsResourceOnThread();
 #endif
-
-		/*
-		 * Create player object for playing
-		 */
-		PLAYER[0] = new PlayerAuto(&PLAYERINFO[0].playconfig, 0, playmode);
-		PLAYER[1] = NULL;
 
 		/*
 		 * must call at the end of the scene preparation
