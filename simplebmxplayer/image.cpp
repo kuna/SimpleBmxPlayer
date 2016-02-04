@@ -46,11 +46,8 @@ Image::Image() : sdltex(0), moviectx(0) {
 	moviectx = 0;
 }
 
-Image::Image(std::wstring& filepath, bool loop) : Image() {
-	Load(filepath.c_str(), loop);
-}
-
-Image::Image(std::string& filepath, bool loop) : Image() {
+#ifdef _WIN32
+Image::Image(const std::wstring& filepath, bool loop) : Image() {
 	Load(filepath.c_str(), loop);
 }
 
@@ -58,6 +55,10 @@ bool Image::Load(const std::wstring& filepath, bool loop) {
 	char path_utf8[1024];
 	ENCODING::wchar_to_utf8(filepath.c_str(), path_utf8, 1024);
 	return Load(path_utf8, loop);
+}
+#endif
+Image::Image(const std::string& filepath, bool loop) : Image() {
+	Load(filepath.c_str(), loop);
 }
 
 bool Image::Load(const std::string& filepath, bool loop) {

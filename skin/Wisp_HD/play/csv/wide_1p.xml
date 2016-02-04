@@ -206,13 +206,13 @@ SetTimer("968")
 SetTimer("IsSelectBarFolder")
 </lua>
     </if>
-    <if condition="">
+    <if condition="ExpertCourse">
         <lua>
 SetTimer("982")
 SetTimer("IsSelectBarFolder")
 </lua>
     </if>
-    <if condition="">
+    <if condition="ClassCourse">
         <lua>
 SetTimer("982")
 SetTimer("IsSelectBarFolder")
@@ -748,17 +748,17 @@ SetTimer("IsSelectBarFolder")
                 <frame x="443" y="213" w="168" h="1" time="800"/>
             </DST>
         </sprite>
-        <sprite resid="1" x="5" y="119" w="1" h="1" timer="OnReady" condition=",!IsAutoPlay,IsScoreGraph">
+        <sprite resid="1" x="5" y="119" w="1" h="1" timer="OnReady" condition="!IsAutoPlay,IsP1ReachAAA,IsScoreGraph">
             <DST acc="0" loop="0" timer="OnReady">
                 <frame x="443" y="141" w="168" h="1" time="0"/>
             </DST>
         </sprite>
-        <sprite resid="1" x="5" y="119" w="1" h="1" timer="OnReady" condition=",!IsAutoPlay,IsScoreGraph">
+        <sprite resid="1" x="5" y="119" w="1" h="1" timer="OnReady" condition="!IsAutoPlay,IsP1ReachAA,IsScoreGraph">
             <DST acc="0" loop="0" timer="OnReady">
                 <frame x="443" y="177" w="168" h="1" time="0"/>
             </DST>
         </sprite>
-        <sprite resid="1" x="5" y="119" w="1" h="1" timer="OnReady" condition=",!IsAutoPlay,IsScoreGraph">
+        <sprite resid="1" x="5" y="119" w="1" h="1" timer="OnReady" condition="!IsAutoPlay,IsP1ReachA,IsScoreGraph">
             <DST acc="0" loop="0" timer="OnReady">
                 <frame x="443" y="213" w="168" h="1" time="0"/>
             </DST>
@@ -1018,17 +1018,17 @@ SetTimer("IsSelectBarFolder")
                 <frame x="1110" y="213" w="168" h="1" time="800"/>
             </DST>
         </sprite>
-        <sprite resid="1" x="5" y="119" w="1" h="1" timer="OnReady" condition=",!IsAutoPlay,IsScoreGraph">
+        <sprite resid="1" x="5" y="119" w="1" h="1" timer="OnReady" condition="!IsAutoPlay,IsP1ReachAAA,IsScoreGraph">
             <DST acc="0" loop="0" timer="OnReady">
                 <frame x="1110" y="141" w="168" h="1" time="0"/>
             </DST>
         </sprite>
-        <sprite resid="1" x="5" y="119" w="1" h="1" timer="OnReady" condition=",!IsAutoPlay,IsScoreGraph">
+        <sprite resid="1" x="5" y="119" w="1" h="1" timer="OnReady" condition="!IsAutoPlay,IsP1ReachAA,IsScoreGraph">
             <DST acc="0" loop="0" timer="OnReady">
                 <frame x="1110" y="177" w="168" h="1" time="0"/>
             </DST>
         </sprite>
-        <sprite resid="1" x="5" y="119" w="1" h="1" timer="OnReady" condition=",!IsAutoPlay,IsScoreGraph">
+        <sprite resid="1" x="5" y="119" w="1" h="1" timer="OnReady" condition="!IsAutoPlay,IsP1ReachA,IsScoreGraph">
             <DST acc="0" loop="0" timer="OnReady">
                 <frame x="1110" y="213" w="168" h="1" time="0"/>
             </DST>
@@ -1240,7 +1240,7 @@ SetTimer("IsSelectBarFolder")
         </DST>
     </sprite>
     <if condition="982">
-        <sprite resid="1" x="283" y="710" w="262" h="22" condition="">
+        <sprite resid="1" x="283" y="710" w="262" h="22" condition="IsCourse1Stage">
             <DST acc="0" loop="1000">
                 <frame x="722" y="7" w="262" h="22" time="800" a="0"/>
                 <frame x="722" y="7" w="262" h="22" time="1000"/>
@@ -1249,7 +1249,7 @@ SetTimer("IsSelectBarFolder")
                 <frame x="722" y="7" w="262" h="22" time="4000"/>
             </DST>
         </sprite>
-        <sprite resid="1" x="283" y="732" w="262" h="22" condition="">
+        <sprite resid="1" x="283" y="732" w="262" h="22" condition="IsCourse2Stage">
             <DST acc="0" loop="1000">
                 <frame x="722" y="7" w="262" h="22" time="800" a="0"/>
                 <frame x="722" y="7" w="262" h="22" time="1000"/>
@@ -1258,7 +1258,7 @@ SetTimer("IsSelectBarFolder")
                 <frame x="722" y="7" w="262" h="22" time="4000"/>
             </DST>
         </sprite>
-        <sprite resid="1" x="283" y="754" w="262" h="22" condition="">
+        <sprite resid="1" x="283" y="754" w="262" h="22" condition="IsCourse3Stage">
             <DST acc="0" loop="1000">
                 <frame x="722" y="7" w="262" h="22" time="800" a="0"/>
                 <frame x="722" y="7" w="262" h="22" time="1000"/>
@@ -1267,7 +1267,7 @@ SetTimer("IsSelectBarFolder")
                 <frame x="722" y="7" w="262" h="22" time="4000"/>
             </DST>
         </sprite>
-        <sprite resid="1" x="283" y="776" w="262" h="22" condition="">
+        <sprite resid="1" x="283" y="776" w="262" h="22" condition="IsCourse4Stage">
             <DST acc="0" loop="1000">
                 <frame x="722" y="7" w="262" h="22" time="800" a="0"/>
                 <frame x="722" y="7" w="262" h="22" time="1000"/>
@@ -1276,7 +1276,7 @@ SetTimer("IsSelectBarFolder")
                 <frame x="722" y="7" w="262" h="22" time="4000"/>
             </DST>
         </sprite>
-        <sprite resid="1" x="283" y="798" w="262" h="22" condition="">
+        <sprite resid="1" x="283" y="798" w="262" h="22" condition="IsCourseFinal">
             <DST acc="0" loop="1000">
                 <frame x="722" y="7" w="262" h="22" time="800" a="0"/>
                 <frame x="722" y="7" w="262" h="22" time="1000"/>
@@ -2085,7 +2085,7 @@ SetTimer("IsSelectBarFolder")
             <frame x="336" y="652" w="86" h="17" time="1400"/>
         </DST>
     </sprite>
-    <number resid="8" condition="" value="P1Sudden" align="0" length="3">
+    <number resid="8" condition="OnP1SuddenChange" value="P1Sudden" align="0" length="3">
         <DST acc="0" loop="1000">
             <frame x="214" y="9" w="15" h="18" time="0"/>
             <frame x="214" y="9" w="15" h="18" time="1000"/>
@@ -2628,6 +2628,19 @@ SetTimer("IsSelectBarFolder")
             <frame x="196" y="301" w="15" h="18" time="500"/>
         </DST>
     </number>
+    <!-- Automatically added FAST/SLOW indicator (GhostA type) -->
+    <if condition="IsGhostA">
+        <sprite resid="_fastslow" x="0" y="0" w="67" h="26">
+            <DST timer="On1PFast">
+                <frame x="196" y="280" w="67" h="26" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="_fastslow" x="0" y="26" w="67" h="26">
+            <DST timer="On1PSlow">
+                <frame x="196" y="280" w="67" h="26" time="0"/>
+            </DST>
+        </sprite>
+    </if>
     <number resid="5" condition="!IsAutoPlay,IsGhostB" mode24="1" value="P1RivalDiff" align="0" length="4">
         <DST acc="0" loop="0" timer="OnReady">
             <frame x="440" y="338" w="15" h="18" time="0"/>

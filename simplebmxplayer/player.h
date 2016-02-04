@@ -76,7 +76,7 @@ protected:
 	// judge
 	int						CheckJudgeByTiming(int delta);
 	/** @brief make judgement. silent = true will not set JUDGE timer. */
-	void					MakeJudge(int judgetype, int channel, bool silent = false);
+	void					MakeJudge(int delta, int channel, int fastslow = 0, bool silent = false);
 	/** @brief is there any more note to draw/judge? */
 	bool					IsNoteAvailable(int lane);
 	void					NextAvailableNote(int lane);

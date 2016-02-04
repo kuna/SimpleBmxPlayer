@@ -40,13 +40,15 @@ protected:
 	bool LoadMovie(const char *path);
 	void ReleaseMovie();
 public:
-	Image(std::wstring& filepath, bool loop = true);
-	Image(std::string& filepath, bool loop = true);
+#ifdef _WIN32
+	Image(const std::wstring& filepath, bool loop = true);
+	bool Load(const std::wstring& filepath, bool loop = true);
+#endif
+	Image(const std::string& filepath, bool loop = true);
+	bool Load(const std::string& filepath, bool loop = true);
 	Image();
 	~Image();
 	void Release();
-	bool Load(const std::wstring& filepath, bool loop = true);
-	bool Load(const std::string& filepath, bool loop = true);
 	int GetWidth();
 	int GetHeight();
 

@@ -2,7 +2,7 @@
     <Switch name="PLAY_SIDE" value="900"/>
     <Switch name="Lane_darkness" value="920"/>
     <Switch name="Displayjudge" value="981"/>
-    <Switch name="Display_judge_timing" value="985"/>
+    <Switch name="Display_judge_timing" value="986"/>
     <Switch name="GRAPH_SIDE" value="950"/>
     <Switch name="loading_ACTION" value="954"/>
     <Switch name="LAST_NOTE_ACTION" value="952"/>

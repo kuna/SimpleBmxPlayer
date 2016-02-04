@@ -313,7 +313,7 @@ int Player::CheckJudgeByTiming(int delta) {
 		return JUDGETYPE::JUDGE_EARLY;
 }
 
-void Player::MakeJudge(int judgetype, int channel, bool silent) {
+void Player::MakeJudge(int judgetype, int channel, int fastslow, bool silent) {
 	// if judgetype is not valid (TOO LATE or TOO EARLY) then ignore
 	if (judgetype >= 10) return;
 	// get current judgeside
@@ -337,6 +337,17 @@ void Player::MakeJudge(int judgetype, int channel, bool silent) {
 		// update graph/number
 		if (judgetype <= JUDGETYPE::JUDGE_BAD)
 			pv->pOnMiss->Start();
+		// slow/fast?
+		if (judgetype < JUDGETYPE::JUDGE_PGREAT) {
+			if (fastslow == 1) {
+				pv->pOnFast->Start();
+				pv->pOnSlow->Stop();
+			}
+			else if (fastslow == 2) {
+				pv->pOnFast->Stop();
+				pv->pOnSlow->Start();
+			}
+		}
 		break;
 	case 2:
 		if (judgetype >= JUDGETYPE::JUDGE_GREAT)
@@ -344,11 +355,21 @@ void Player::MakeJudge(int judgetype, int channel, bool silent) {
 		// update graph/number
 		if (judgetype <= JUDGETYPE::JUDGE_BAD)
 			pv_dp->pOnMiss->Start();
+		// slow/fast
+		if (judgetype < JUDGETYPE::JUDGE_PGREAT) {
+			if (fastslow == 1) {
+				pv_dp->pOnFast->Start();
+				pv_dp->pOnSlow->Stop();
+			}
+			else if (fastslow == 2) {
+				pv_dp->pOnFast->Stop();
+				pv_dp->pOnSlow->Start();
+			}
+		}
 		break;
 	}
-
+	// add current judge to grade
 	score.AddGrade(judgetype);
-	// update judged note count
 	switch (judgetype) {
 	case JUDGETYPE::JUDGE_POOR:
 	case JUDGETYPE::JUDGE_BAD:
@@ -358,6 +379,9 @@ void Player::MakeJudge(int judgetype, int channel, bool silent) {
 		judgenotecnt++;
 		break;
 	}
+	// TODO current pgreat / etc ...
+	// TODO reached rank?
+	// TODO pacemaker
 	// update gauge
 	SetGauge(playergauge + notehealth[judgetype]);
 	// update exscore/combo/etc ...
@@ -452,9 +476,13 @@ void Player::UpdateBasic() {
 	// basic timer/value update
 	pv->pOnCombo->OffTrigger(pv->pOnCombo->GetTick() > 500);
 	pv->pOnMiss->OffTrigger(pv->pOnMiss->GetTick() > 1000);
+	pv->pOnFast->OffTrigger(pv->pOnFast->GetTick() > 500);
+	pv->pOnSlow->OffTrigger(pv->pOnSlow->GetTick() > 500);
 	if (pv_dp) {
 		pv_dp->pOnCombo->OffTrigger(pv_dp->pOnCombo->GetTick() > 500);
 		pv_dp->pOnMiss->OffTrigger(pv_dp->pOnMiss->GetTick() > 1000);
+		pv_dp->pOnFast->OffTrigger(pv_dp->pOnFast->GetTick() > 500);
+		pv_dp->pOnSlow->OffTrigger(pv_dp->pOnSlow->GetTick() > 500);
 	}
 }
 
@@ -529,11 +557,11 @@ void Player::UpKey(int lane) {
 	if (islongnote_[lane] && GetCurrentNote(lane)->type == BmsNote::NOTE_LNEND) {
 		// get judge
 		double t = pBmstimer->GetTick() / 1000.0;
-		double notetime = GetTimeFromBar(iter_judge_[lane]->first - t);
-		int judge = CheckJudgeByTiming((notetime - t) * 1000);
+		int delta = (t - GetTimeFromBar(iter_judge_[lane]->first)) * 1000;
+		int judge = CheckJudgeByTiming(delta);
 		if (judge == JUDGETYPE::JUDGE_EARLY || judge == JUDGETYPE::JUDGE_NPOOR)
 			judge = JUDGETYPE::JUDGE_POOR;
-		MakeJudge(judge, lane);
+		MakeJudge(judge, lane, delta > 0 ? 1 : 2);
 		// you're not longnote anymore~
 		pLanehold[lane]->Stop();
 		islongnote_[lane] = false;
@@ -571,18 +599,20 @@ void Player::PressKey(int lane) {
 	//
 	if (IsNoteAvailable(lane)) {
 		double t = pBmstimer->GetTick() / 1000.0;
-		int judge = CheckJudgeByTiming((t - GetTimeFromBar(iter_judge_[lane]->first)) * 1000);
+		int delta = (t - GetTimeFromBar(iter_judge_[lane]->first)) * 1000;
+		int fastslow = delta > 0 ? 1 : 2;
+		int judge = CheckJudgeByTiming(delta);
 		// only continue judging if judge isn't too fast or too late
 		if (judge != JUDGETYPE::JUDGE_LATE && judge != JUDGETYPE::JUDGE_EARLY) {
 			// if ÍöPOOR,
 			// then don't process note - just judge as NPOOR
 			if (judge == JUDGETYPE::JUDGE_NPOOR) {
-				MakeJudge(judge, lane);
+				MakeJudge(judge, lane, fastslow);
 			}
 			else {
 				if (GetCurrentNote(lane)->type == BmsNote::NOTE_LNSTART) {
 					// set longnote status
-					MakeJudge(judge, lane, true);
+					MakeJudge(judge, lane, fastslow, true);
 					pLanehold[lane]->Start();
 					islongnote_[lane] = true;
 				}
@@ -594,7 +624,7 @@ void Player::PressKey(int lane) {
 						health -= GetCurrentNote(lane)->value.ToInteger();
 				}
 				else if (GetCurrentNote(lane)->type == BmsNote::NOTE_NORMAL) {
-					MakeJudge(judge, lane);
+					MakeJudge(judge, lane, fastslow);
 				}
 
 				// only go for next note if judge is over poor

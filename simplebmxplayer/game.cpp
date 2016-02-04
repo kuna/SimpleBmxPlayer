@@ -244,6 +244,13 @@ namespace Game {
 		 */
 		IMAGEPOOL->Register("_black", new ImageColor(0x000000FF));
 		IMAGEPOOL->Register("_white", new ImageColor(0xFFFFFFFF));
+		RString path;
+		path = "./system/resource/fastslow.png";
+		FileHelper::ConvertPathToSystem(path);
+		IMAGEPOOL->Register("_fastslow", new Image(path));
+		path = "./system/resource/number_float.png";
+		FileHelper::ConvertPathToSystem(path);
+		IMAGEPOOL->Register("_number_float", new Image(path));
 		oninputstart = TIMERPOOL->Get("OnInputStart");
 		onscene = TIMERPOOL->Get("OnScene");
 		font = FONTPOOL->LoadTTFFont("_system", 

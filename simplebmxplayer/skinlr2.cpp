@@ -1252,7 +1252,7 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 		/* this is an constant code - but should NOT given as argument, I suggest. */
 		strcat(translated, "true");
 	}
-	else if (op > 0 && op < 300) {
+	else if (op > 0 && op < 200) {
 		if (op == 1) {
 			strcat(translated, "IsSelectBarFolder");
 		}

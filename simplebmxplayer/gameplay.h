@@ -18,6 +18,8 @@ typedef struct {
 	Timer*				pOnMiss;			// timer used when miss occured (DP)
 	Timer*				pOnCombo;
 	Timer*				pOnJudge[6];		// pf/gr/gd/bd/pr
+	Timer*				pOnSlow;
+	Timer*				pOnFast;
 	Timer*				pOnfullcombo;		// needless to say?
 	Timer*				pOnlastnote;		// when last note ends
 	Timer*				pOnGameover;		// game is over! (different from OnClose)

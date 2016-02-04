@@ -144,6 +144,8 @@ namespace GamePlay {
 			PLAYERVALUE[0].pOnJudge[2] = TIMERPOOL->Set("OnP1JudgeBad");
 			PLAYERVALUE[0].pOnJudge[1] = TIMERPOOL->Set("OnP1JudgePoor");
 			PLAYERVALUE[0].pOnJudge[0] = TIMERPOOL->Set("OnP1JudgePoor");
+			PLAYERVALUE[0].pOnSlow = TIMERPOOL->Set("OnP1Slow");
+			PLAYERVALUE[0].pOnFast = TIMERPOOL->Set("OnP1Fast");
 
 			PLAYERVALUE[0].pOnMiss = TIMERPOOL->Get("OnP1Miss");
 			PLAYERVALUE[0].pOnCombo = TIMERPOOL->Get("OnP1Combo");
@@ -199,6 +201,8 @@ namespace GamePlay {
 			PLAYERVALUE[1].pOnJudge[2] = TIMERPOOL->Set("OnP2JudgeBad");
 			PLAYERVALUE[1].pOnJudge[1] = TIMERPOOL->Set("OnP2JudgePoor");
 			PLAYERVALUE[1].pOnJudge[0] = TIMERPOOL->Set("OnP2JudgePoor");
+			PLAYERVALUE[1].pOnSlow = TIMERPOOL->Set("OnP2Slow");
+			PLAYERVALUE[1].pOnFast = TIMERPOOL->Set("OnP2Fast");
 
 			PLAYERVALUE[1].pOnMiss = TIMERPOOL->Get("OnP2Miss");
 			PLAYERVALUE[1].pOnCombo = TIMERPOOL->Get("OnP2Combo");
@@ -251,12 +255,20 @@ namespace GamePlay {
 		 * initalize timers
 		 */
 		GameTimer::Tick();
-		SWITCH_ON("OnDiffAnother");
+		// TODO
+		SWITCH_OFF("IsGhostOff");
+		SWITCH_ON("IsGhostA");
+		SWITCH_OFF("IsGhostB");
+		SWITCH_OFF("IsGhostC");
+		SWITCH_OFF("OnDiffBeginner");
+		SWITCH_OFF("OnDiffNormal");
+		SWITCH_OFF("OnDiffHyper");
+		SWITCH_ON ("OnDiffAnother");
+		SWITCH_OFF("OnDiffInsane");
 		SWITCH_ON("IsScoreGraph");
 		SWITCH_OFF("IsAutoPlay");
 		SWITCH_ON("IsBGA");
 		SWITCH_ON("IsExtraMode");
-		SWITCH_ON("OnDiffInsane");
 		//SWITCH_ON("Is1PSuddenChange");
 		//SWITCH_ON("981");
 		DOUBLEPOOL->Set("TargetExScore", 0.5);
@@ -275,7 +287,7 @@ namespace GamePlay {
 		playmode = BmsResource::BMS.GetKey();
 
 		/*
-		 * apply some switches/values about BMS
+		 * Bms metadata apply (switches/values)
 		 * - if BACKBMP, then SET and load _backbmp
 		 */
 		std::string title = "";

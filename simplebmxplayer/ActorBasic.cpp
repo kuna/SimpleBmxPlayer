@@ -155,6 +155,7 @@ void SkinRenderObject::Render() {  }
 void SkinRenderObject::UpdateBasic() {
 	// evaluate
 	drawable = condition.Evaluate();
+	if (invertcondition) drawable = !drawable;
 	if (!drawable) return;
 	// fill DST
 	dst_cached.dst = 0;
