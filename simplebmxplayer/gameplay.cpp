@@ -339,7 +339,8 @@ namespace GamePlay {
 		 */
 		if (OnReady->Trigger(OnSongLoadingEnd->IsStarted() && OnSongLoading->GetTick() >= 3000))
 			OnSongLoading->Stop();
-		OnGameStart->Trigger(OnReady->GetTick() >= 2000);
+		if (OnGameStart->Trigger(OnReady->GetTick() >= 1000))
+			OnSongLoadingEnd->Stop();
 		// OnClose is called when all player is dead
 		bool close = true;
 		if (close && PLAYER[0]) close = close && PLAYER[0]->IsDead();
@@ -393,7 +394,7 @@ namespace GamePlay {
 
 	/** private */
 	int GetChannelFromFunction(int func) {
-		int channel = 0;
+		int channel = -1;	// no channel
 		switch (func) {
 		case PlayerKeyIndex::P1_BUTTON1:
 			channel = 1;
@@ -506,8 +507,10 @@ namespace GamePlay {
 			func = PlayerKeyHelper::GetKeyCodeFunction(PLAYERINFO[0].keyconfig, code);
 			// change it to key channel ...
 			int channel = GetChannelFromFunction(func);
-			if (PLAYER[0]) PLAYER[0]->PressKey(channel);
-			if (PLAYER[1]) PLAYER[1]->PressKey(channel);
+			if (channel >= 0) {
+				if (PLAYER[0]) PLAYER[0]->PressKey(channel);
+				if (PLAYER[1]) PLAYER[1]->PressKey(channel);
+			}
 		}
 	}
 
@@ -520,8 +523,10 @@ namespace GamePlay {
 		default:
 			func = PlayerKeyHelper::GetKeyCodeFunction(PLAYERINFO[0].keyconfig, code);
 			int channel = GetChannelFromFunction(func);
-			if (PLAYER[0]) PLAYER[0]->UpKey(channel);
-			if (PLAYER[1]) PLAYER[1]->UpKey(channel);
+			if (channel >= 0) {
+				if (PLAYER[0]) PLAYER[0]->UpKey(channel);
+				if (PLAYER[1]) PLAYER[1]->UpKey(channel);
+			}
 		}
 	}
 }

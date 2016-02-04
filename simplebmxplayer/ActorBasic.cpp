@@ -382,6 +382,9 @@ void SkinImageObject::SetImageObject(XMLElement *e) {
 
 void SkinImageObject::Update() {
 	UpdateBasic();
+	// if image is not loop && tick overtime end then don't draw
+	drawable &= imgsrc.loop || (!imgsrc.loop && imgsrc.timer &&
+		imgsrc.timer->GetTick() < imgsrc.cycle);
 }
 
 void SkinImageObject::Render() {

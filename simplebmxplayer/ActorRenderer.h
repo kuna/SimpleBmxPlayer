@@ -70,6 +70,9 @@ private:
 
 	/** @brief stores element ID-pointer. use GetElementById() to use this array. */
 	std::map<RString, SkinRenderObject*> _idpool;
+
+	/** @brief rendered textured (triple-buffer) */
+	SDL_Texture *tex_render;
 public:
 	SkinRenderTree(int skinwidth, int skinheight);
 	~SkinRenderTree();

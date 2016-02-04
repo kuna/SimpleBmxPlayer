@@ -13,13 +13,19 @@ using namespace tinyxml2;
 
 #pragma region SKINRENDERTREE
 SkinRenderTree::SkinRenderTree(int w, int h) : SkinGroupObject(this) { 
+	tex_render = 0;
+
 	// set skin size
 	SetSkinSize(w, h); 
 
 	_offset_x = _offset_y = 0;
 }
 
-void SkinRenderTree::SetSkinSize(int w, int h) { _scr_w = w, _scr_h = h; }
+void SkinRenderTree::SetSkinSize(int w, int h) { 
+	_scr_w = w, _scr_h = h; 
+	if (tex_render) SDL_DestroyTexture(tex_render);
+	tex_render = SDL_CreateTexture(Game::RENDERER, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, _scr_w, _scr_h);
+}
 
 SkinRenderTree::~SkinRenderTree() {
 	ReleaseAll();
@@ -89,15 +95,21 @@ void SkinRenderTree::PopRenderOffset() {
 }
 
 void SkinRenderTree::Render() {
-	// similar to SkinGroup
-	// difference is, uses ratio to fit skin to screen
-	SDL_RenderSetScale(Game::RENDERER,
-		(float)Game::SETTING.width / _scr_w,
-		(float)Game::SETTING.height / _scr_h);
+	SDL_SetRenderTarget(Game::RENDERER, tex_render);
+	SDL_RenderClear(Game::RENDERER);
 	for (auto it = begin(); it != end(); ++it) {
 		(*it)->Render();
 	}
+	SDL_SetRenderTarget(Game::RENDERER, 0);
+	// similar to SkinGroup
+	// difference is, uses ratio to fit skin to screen
+	SDL_RenderCopy(Game::RENDERER, tex_render, 0, 0);
+	/*
+	SDL_RenderSetScale(Game::RENDERER,
+		(float)Game::SETTING.width / _scr_w,
+		(float)Game::SETTING.height / _scr_h);
 	SDL_RenderSetScale(Game::RENDERER, 1, 1);
+	*/
 }
 
 void SkinRenderTree::Update() {
@@ -112,6 +124,8 @@ void SkinRenderTree::SetObject(XMLElement *e) {
 	_keycount = atoi(e->FirstChildElement("key")->GetText());
 	_scr_w = atoi(e->FirstChildElement("width")->GetText());
 	_scr_h = atoi(e->FirstChildElement("height")->GetText());
+	// to resize texture
+	SetSkinSize(_scr_w, _scr_h);
 }
 
 #pragma endregion SKINRENDERTREE
