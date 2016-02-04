@@ -18,8 +18,6 @@ o 폰트
 o 키 인풋
 o Lane에 DST 없애기 -> 직접 속성으로 바꿔서 처리 더 수월하게 하기.
 o 기본 SRC 타이머는 loop -> 몇개만 loop=0 속성 추가해놓기.
-o 리프트/서든/배속설정 작업.
-  - 플로팅스피드
 o Autoplay 및 정상종료.
   o 끝나는 시간: max(노트시간 + 키음길이) 으로 계산하기.
   o BGA별 타이머 생성 & position reset
@@ -32,13 +30,16 @@ o 타이틀폰트 fallback으로 그려지게 만들기.
 
 o support controller
 - 채보 옵션
+o 리프트/서든/배속설정 작업.
+  - 플로팅스피드
 o 플레이어 오브젝트
   o 플레이어가 실제로 키입력을 받고 처리하게 할 것
   o DP 플레이 가능하도록 하기
   - PlayerPacemaker 오브젝트 만들기
 - fast/slow 도입
+- utf8 파일경로 제대로 못읽는 문제 해결하기.
 - freq
-- skin include (DeepCopy or XMLNode - append)
+o skin include (DeepCopy or XMLNode - append)
 o play/program setting
 - playrecord save/load
 - ID attribute 도입

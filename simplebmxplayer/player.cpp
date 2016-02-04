@@ -502,6 +502,7 @@ void Player::Update() {
 				// if LNEND late, reset longnote pressing
 				else if (note.type == BmsNote::NOTE_LNEND && islongnote_[i]) {
 					islongnote_[i] = false;
+					pLanehold[i]->Stop();
 				}
 				// make POOR judge
 				// (CLAIM) if hidden note isn't ignored by NextAvailableNote(), 

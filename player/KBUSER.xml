@@ -1,5 +1,5 @@
 <BasicConfig>
-    <Name>NONAME</Name>
+    <Name>KBUSER</Name>
     <SPGrade>0</SPGrade>
     <DPGrade>0</DPGrade>
     <Playcount>0</Playcount>
@@ -415,7 +415,7 @@
 <PlayConfig>
     <speed>200.5</speed>
     <speedtype>0</speedtype>
-    <floatspeed>615.38461538461547</floatspeed>
+    <floatspeed>800</floatspeed>
     <sudden>1</sudden>
     <lift>-3</lift>
     <op_1p>0</op_1p>

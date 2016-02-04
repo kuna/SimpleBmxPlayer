@@ -76,6 +76,8 @@ namespace FileHelper {
 	bool CreateFolder(const RString& path);
 	/** @brief just get parent directory path. no IO function. */
 	RString GetParentDirectory(const RString& path);
+	/** @brief replace some env into valid string (refers STRINGPOOL) */
+	void ReplacePathEnv(RString& path);
 	/** @brief converts path to absolute path */
 	void ConvertPathToAbsolute(RString& path);
 	void ConvertPathToSystem(RString& path);

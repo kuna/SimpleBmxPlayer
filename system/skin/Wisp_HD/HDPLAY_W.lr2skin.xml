@@ -1,0 +1,23 @@
+<Options>
+    <Switch name="PLAY_SIDE" value="900"/>
+    <Switch name="Lane_darkness" value="920"/>
+    <Switch name="Displayjudge" value="981"/>
+    <Switch name="Display_judge_timing" value="985"/>
+    <Switch name="GRAPH_SIDE" value="950"/>
+    <Switch name="loading_ACTION" value="954"/>
+    <Switch name="LAST_NOTE_ACTION" value="952"/>
+    <Switch name="BGA_Brightness_" value="925"/>
+    <File name="BG" path="./parts/BG/full bg/black leather.png"/>
+    <File name="FRAME_BG" path="./parts/BG/frame bg/black.png"/>
+    <File name="NOTES" path="./parts/note/default.png"/>
+    <File name="BOMB" path="./parts/bomb/splash_red.png"/>
+    <File name="LANECOVER" path="./parts/lanecover/default.png"/>
+    <File name="Turntable" path="./parts/sara/black.png"/>
+    <File name="LASER" path="./parts/laser/default.png"/>
+    <File name="FC_effect" path="./parts/fc/RANDOM.png"/>
+    <File name="keyflash" path="./parts/keyflash/red.png"/>
+    <File name="progress_bar" path="./parts/progressbar/blue.png"/>
+    <File name="JUDGE" path="./parts/judge/perfectdark.png"/>
+    <File name="GAUGE_COLOR" path="./parts/gauge/default.png"/>
+    <File name="CLOSE" path="./parts/close/shutter.png"/>
+</Options>

@@ -36,6 +36,14 @@ Image::Image() : sdltex(0), moviectx(0) {
 	}
 	catch (...) {
 	}
+
+	frame = 0;
+	uPlane = 0;
+	vPlane = 0;
+	yPlane = 0;
+	codecctxorig = 0;
+	codecctx = 0;
+	moviectx = 0;
 }
 
 Image::Image(std::wstring& filepath, bool loop) : Image() {

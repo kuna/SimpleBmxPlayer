@@ -22,7 +22,7 @@ public:
 	Skin();
 	~Skin();
 	void Release();
-	bool Parse(const char *filepath);
+	bool Load(const char *filepath);
 	bool Save(const char *filepath);
 
 	// must call after skin data is loaded
@@ -31,7 +31,7 @@ public:
 
 
 // -------------------------------------------------------------
-#define MAX_LINE 20000
+#define MAX_LINE 50000
 #define MAX_LINE_CHARACTER 1024
 
 class _LR2SkinParser {
@@ -42,6 +42,7 @@ private:
 	char *line_args[MAX_LINE][100];				// contain arguments for each lines
 	int line_position[MAX_LINE];				// line position per each included files
 	int line_total;								// the line we totally read
+	char filepath[1024];						// current file name
 
 	/*
 	 * 
@@ -81,7 +82,7 @@ private:
 	int ProcessSelectBar(tinyxml2::XMLElement *obj, int line);	// process commands about select bar
 	int ProcessSelectBar_DST(int line);					// process commands about select bar
 	// pacemaker: use default XML
-public:
+private:
 	/*
 	 * there're 3 pools: string/number(float)/timer(handler)
 	 * and we can call these pool by string name. 
@@ -95,7 +96,15 @@ public:
 	static const char* TranslateNumber(int code);		// number to value code (float)
 	static const char* TranslateText(int code);			// text to value code (string)
 
+public:
+	// for extern use
+	void AddPathToOption(const std::string& path, const std::string& option) {
+		filter_to_optionname.insert(std::pair<std::string, std::string>(path, option));
+	};
+
 	// after parsing, this will automatically call Clear();
 	bool ParseLR2Skin(const char *filepath, Skin *s);
 	void Clear();
+
+	_LR2SkinParser() { Clear(); }
 };

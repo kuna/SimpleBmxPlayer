@@ -1,0 +1,11 @@
+<Options>
+    <Switch name="PLAYSIDE" value="900"/>
+    <Switch name="TURNTABLE" value="905"/>
+    <Switch name="LANESIZE" value="910"/>
+    <Switch name="AUTOPLAY_LANE" value="915"/>
+    <File name="FRAME" path="./frame/LR2 default.tga"/>
+    <File name="BOMB" path="./bomb/LR2 default.tga"/>
+    <File name="FULLCOMBO" path="./fullcombo/LR2 default.tga"/>
+    <File name="DISC_LABEL" path="./turntable/LR2 default.tga"/>
+    <File name="LANE_COVER" path="./lanecover/LR2 default.tga"/>
+</Options>

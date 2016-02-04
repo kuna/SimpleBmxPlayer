@@ -142,8 +142,10 @@ namespace SkinRenderHelper {
 
 	/** @brief replaces path string to a correct one */
 	//void ConvertPath(RString& path);
+	/** @brief load Skin (path is relative one!) */
+	bool LoadSkin(const char* path, Skin& skin);
 	/** @brief constructs resid-object mapping and loads resources from XmlSkin. */
-	bool LoadResourceFromSkin(SkinRenderTree &rtree, Skin &s);
+	void LoadResourceFromSkin(SkinRenderTree &rtree, Skin &s);
 	/** @brief constructs rendertree object from XmlSkin. must LoadResource first. */
 	bool ConstructTreeFromSkin(SkinRenderTree &rtree, Skin &s);
 

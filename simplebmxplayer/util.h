@@ -27,6 +27,9 @@ namespace IO {
 	std::string substitute_extension(const std::string& filepath, const std::string& newext);
 	std::string substitute_filename(const std::string& filepath, const std::string& newname);	// excludes extension
 	bool is_file_exists(const std::string& filename);
+	bool create_directory(const std::string& dir);
+	bool make_parent_directory_recursive(const std::string& dir);
+	FILE* openfile(const std::string& filepath, const std::string& mode);
 
 #ifdef USE_MBCS	
 	std::wstring get_fileext(const std::wstring& filepath);

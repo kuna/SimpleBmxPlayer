@@ -85,13 +85,23 @@ namespace IO {
 		return filepath.substr(0, i_start) + PATH_SEPARATOR + newname + filepath.substr(i_end);
 	}
 
-	bool is_file_exists(const std::string& filename) {
-		FILE *f;
-		fopen_s(&f, filename.c_str(), "r");
-		if (!f)
+	bool is_file_exists(const std::string& filepath) {
+#ifdef _WIN32
+		wchar_t filepath_w[1024];
+		ENCODING::utf8_to_wchar(filepath.c_str(), filepath_w, 1024);
+		return is_file_exists(filepath_w);
+#else
+		struct stat s;
+		if (stat(filepath.c_str(), &s) == 0) {
+			if (s.st_mode & S_IFREG)
+				return true;
+			else
+				return false;
+		}
+		else {
 			return false;
-		fclose(f);
-		return true;
+		}
+#endif
 	}
 
 	std::string get_filename(const std::string& filepath) {
@@ -99,6 +109,45 @@ namespace IO {
 		if (i == std::wstring::npos)
 			return "";
 		return filepath.substr(i + 1);
+	}
+
+	FILE* openfile(const std::string& filepath, const std::string& mode) {
+#ifdef _WIN32
+		FILE *fp;
+		wchar_t filepath_w[1024];
+		wchar_t mode_w[32];
+		ENCODING::utf8_to_wchar(filepath.c_str(), filepath_w, 1024);
+		ENCODING::utf8_to_wchar(mode.c_str(), mode_w, 32);
+		if (_wfopen_s(&fp, filepath_w, mode_w) == 0)
+			return fp;
+		else
+			return 0;
+#else
+		return fopen(filepath.c_str(), mode.c_str());
+#endif
+	}
+
+	bool create_directory(const std::string& dir) {
+#ifdef _WIN32
+		wchar_t dir_w[1024];
+		ENCODING::utf8_to_wchar(dir.c_str(), dir_w, 1024);
+		return create_directory(dir_w);
+#else
+		/* TODO: buffer overflow */
+		char tmp[1024];
+		sprintf(tmp, "mkdir -r %s", dir.c_str());
+		return system(tmp);
+#endif
+	}
+
+	bool make_parent_directory_recursive(const std::string& dir) {
+#ifdef _WIN32
+		wchar_t dir_w[1024];
+		ENCODING::utf8_to_wchar(dir.c_str(), dir_w, 1024);
+		return make_parent_directory_recursive(dir_w);
+#else
+		create_directory(dir);
+#endif
 	}
 
 #ifdef USE_MBCS
@@ -137,13 +186,17 @@ namespace IO {
 		return filepath.substr(i + 1);
 	}
 
-	bool is_file_exists(const std::wstring& filename) {
-		FILE *f;
-		_wfopen_s(&f, filename.c_str(), L"r");
-		if (!f)
+	bool is_file_exists(const std::wstring& filepath) {
+		struct _stat64i32 s;
+		if (_wstat(filepath.c_str(), &s) == 0) {
+			if (s.st_mode & S_IFREG)
+				return true;
+			else
+				return false;
+		}
+		else {
 			return false;
-		fclose(f);
-		return true;
+		}
 	}
 
 	bool is_directory_exists(const std::wstring& dirpath) {
@@ -160,7 +213,7 @@ namespace IO {
 	}
 
 	std::wstring get_parentdir(const std::wstring& dirpath) {
-		auto i = dirpath.find_last_of(PATH_SEPARATOR_CHAR);
+		auto i = dirpath.find_last_of(L"/\\");
 		if (i == std::wstring::npos)
 			return L"";
 		return dirpath.substr(0, i);
@@ -186,6 +239,9 @@ namespace IO {
 				return false;
 			}
 			return create_directory(filepath.c_str());
+		}
+		else {
+			return true;
 		}
 	}
 

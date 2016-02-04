@@ -43,8 +43,8 @@ void SkinComboObject::SetObject(XMLElement *e) {
 	SetBasicObject(e);	// parse condition
 	judge = 0;
 	combo = 0;
-	XMLElement *e_judge = e->FirstChildElement("Image");
-	XMLElement *e_combo = e->FirstChildElement("Number");
+	XMLElement *e_judge = e->FirstChildElement("sprite");
+	XMLElement *e_combo = e->FirstChildElement("number");
 	if (e_judge) {
 		judge = rtree->NewSkinImageObject();
 		judge->SetObject(e_judge);
@@ -185,17 +185,17 @@ void SkinNoteFieldObject::SetObject(XMLElement *e) {
 	obj->SetObject(child);\
 	AddChild(obj);
 	for (XMLElement *child = e->FirstChildElement(); child; child = child->NextSiblingElement()) {
-		if (ISNAME("Image")) {
+		if (ISNAME("sprite")) {
 			APPENDCHILD(SkinImageObject);
 		}
-		if (ISNAME("LINE")) {
+		if (ISNAME("line")) {
 			APPENDCHILD(SkinNoteLineObject);
 			((SkinNoteLineObject*)obj)->SetPlayer(p);
 		}
-		if (ISNAME("JUDGELINE")) {
+		if (ISNAME("judgeline")) {
 			APPENDCHILD(SkinNoteJudgeLineObject);
 		}
-		if (ISNAME("Note")) {
+		if (ISNAME("note")) {
 			APPENDCHILD(SkinNoteObject);
 			((SkinNoteObject*)obj)->SetPlayer(p);
 		}

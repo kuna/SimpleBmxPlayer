@@ -158,9 +158,7 @@ namespace FileHelper {
 		return basepath_stack.front();
 	}
 
-	/* private */
-	void ConvertPathToAbsolute(RString &path, RString &base) {
-		// replace some env into valid string (refers STRINGPOOL)
+	void ReplacePathEnv(RString& path) {
 		int p = 0, p2 = 0;
 		while (p != RString::npos) {
 			p = path.find("$(", p);
@@ -181,9 +179,13 @@ namespace FileHelper {
 				break;
 			}
 		}
+	}
+
+	void ConvertPathToAbsolute(RString &path, RString &base) {
 		// no empty path
 		if (path == "")
 			return;
+		ReplacePathEnv(path);
 		if (path[0] == '/' || path.substr(1, 2) == ":\\" || path.substr(1, 2) == ":/")
 			return;		// it's already absolute path, dont touch it.
 		// if relative, then translate it into absolute
@@ -204,7 +206,9 @@ namespace FileHelper {
 		if (IsFile(path)) return true;
 		ConvertPathToAbsolute(path);
 		if (IsFile(path)) return true;
-		RString ext = path.substr(path.find_last_of("./\\"));
+		int p = path.find_last_of("./\\");
+		if (p == std::string::npos) return false;
+		RString ext = path.substr(p);
 		RString folder = GetParentDirectory(path);
 		std::vector<RString> filelist;
 		GetFileList(folder, filelist);

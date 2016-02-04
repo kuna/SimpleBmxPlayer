@@ -109,9 +109,9 @@ void SkinRenderTree::Update() {
 
 void SkinRenderTree::SetObject(XMLElement *e) {
 	if (!e) return;
-	_keycount = atoi(e->FirstChildElement("Key")->GetText());
-	_scr_w = atoi(e->FirstChildElement("Width")->GetText());
-	_scr_h = atoi(e->FirstChildElement("Height")->GetText());
+	_keycount = atoi(e->FirstChildElement("key")->GetText());
+	_scr_w = atoi(e->FirstChildElement("width")->GetText());
+	_scr_h = atoi(e->FirstChildElement("height")->GetText());
 }
 
 #pragma endregion SKINRENDERTREE
@@ -169,7 +169,7 @@ void SkinRenderHelper::ConstructDSTFromElement(ImageDST &dst, XMLElement *e) {
 	dst.rotatecenter = e->IntAttribute("rotatecenter");
 	dst.acctype = e->IntAttribute("acc");
 	dst.loopstart = -1; e->QueryIntAttribute("loop", &dst.loopstart);
-	XMLElement *ef = e->FirstChildElement("Frame");
+	XMLElement *ef = e->FirstChildElement("frame");
 	while (ef) {
 		ImageDSTFrame f;
 		f.time = ef->IntAttribute("time");
@@ -184,7 +184,7 @@ void SkinRenderHelper::ConstructDSTFromElement(ImageDST &dst, XMLElement *e) {
 		f.angle = ef->IntAttribute("angle");
 		dst.loopend = f.time;
 		SkinRenderHelper::AddFrame(dst, f);
-		ef = ef->NextSiblingElement("Frame");
+		ef = ef->NextSiblingElement("frame");
 	}
 }
 
@@ -194,25 +194,25 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 	while (e) {
 		SkinRenderObject *obj = 0;
 
-		if (ISNAME(e, "Init")) {
+		if (ISNAME(e, "init")) {
 			/*
 			 * Init object is only called once;
 			 * it doesn't added to render tree if it's conditions is bad
 			 * (TODO)
 			 */
 		}
-		else if (ISNAME(e, "Ifnot")) {
+		else if (ISNAME(e, "ifnot")) {
 			SkinGroupObject *g = rtree.NewSkinGroupObject();
 			g->InvertCondition(true);
 			ConstructTreeFromElement(rtree, g, e->FirstChildElement());
 			obj = g;
 		}
-		else if (ISNAME(e, "If")) {
+		else if (ISNAME(e, "if")) {
 			SkinGroupObject *g = rtree.NewSkinGroupObject();
 			ConstructTreeFromElement(rtree, g, e->FirstChildElement());
 			obj = g;
 		}
-		else if (ISNAME(e, "Canvas")) {
+		else if (ISNAME(e, "canvas")) {
 			SkinGroupObject *g = rtree.NewSkinCanvasObject();
 			ConstructTreeFromElement(rtree, g, e->FirstChildElement());
 			obj = g;
@@ -221,19 +221,28 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 	else if (ISNAME(e, name)) {\
 	o* newobj = rtree.New##o();\
 	obj = newobj; }
-		PARSEOBJ("Image", SkinImageObject)
-		PARSEOBJ("Slider", SkinSliderObject)
-		PARSEOBJ("Graph", SkinGraphObject)
-		PARSEOBJ("Text", SkinTextObject)
-		PARSEOBJ("Number", SkinNumberObject)
-		PARSEOBJ("Lua", SkinScriptObject)
+#define IGNOREOBJ(name)\
+	else if (ISNAME(e, name)) {}
+		PARSEOBJ("sprite", SkinImageObject)
+		PARSEOBJ("slider", SkinSliderObject)
+		PARSEOBJ("graph", SkinGraphObject)
+		PARSEOBJ("text", SkinTextObject)
+		PARSEOBJ("number", SkinNumberObject)
+		PARSEOBJ("lua", SkinScriptObject)
 		/*
 		 * play scene object parsing
 		 */
-		PARSEOBJ("Play", SkinNoteFieldObject)
-		PARSEOBJ("GrooveGauge", SkinGrooveGaugeObject)
-		PARSEOBJ("Combo", SkinComboObject)
-		PARSEOBJ("Bga", SkinBgaObject)
+		PARSEOBJ("notefield", SkinNoteFieldObject)
+		PARSEOBJ("groovegauge", SkinGrooveGaugeObject)
+		PARSEOBJ("combo", SkinComboObject)
+		PARSEOBJ("bga", SkinBgaObject)
+		/*
+		 * ignored objects
+		 */
+		IGNOREOBJ("include")
+		IGNOREOBJ("image")
+		IGNOREOBJ("font")
+		IGNOREOBJ("texturefont")
 		else {
 			// parsed as unknown object
 			// only parses SRC/DST condition
@@ -251,52 +260,146 @@ void ConstructTreeFromElement(SkinRenderTree &rtree, SkinGroupObject *group, XML
 }
 
 bool SkinRenderHelper::ConstructTreeFromSkin(SkinRenderTree &rtree, Skin &s) {
-	XMLElement *e = s.skinlayout.FirstChildElement("Skin")->FirstChildElement();
+	XMLElement *e = s.skinlayout.FirstChildElement("skin")->FirstChildElement();
 	ConstructTreeFromElement(rtree, &rtree, e);
 
 	return true;
 }
 
-bool SkinRenderHelper::LoadResourceFromSkin(SkinRenderTree &rtree, Skin &s) {
-	XMLElement *res = s.skinlayout.FirstChildElement("Resource");
-	if (res) {
-		XMLElement *img = res->FirstChildElement("Image");
-		while (img) {
-			RString path = img->Attribute("path");
-			RString id = img->Attribute("name");
-			rtree.RegisterImage(id, path);
-			img = img->NextSiblingElement("Image");
-		}
-		XMLElement *font = res->FirstChildElement("Font");
-		while (font) {
-			RString path = font->Attribute("path");
-			RString id = font->Attribute("name");
-			rtree.RegisterTTFFont(id, path, font->IntAttribute("size"),
-				font->IntAttribute("border"), font->Attribute("texturepath"));
-			font = font->NextSiblingElement("Font");
-		}
-		XMLElement *tfont = res->FirstChildElement("TextureFont");
-		while (tfont) {
-			if (!tfont->Attribute("path"))
-			{
-				if (!tfont->GetText()) continue;
-				RString data = tfont->GetText();
-				RString id = tfont->Attribute("name");
-				rtree.RegisterTextureFontByData(id, data);
-			}
-			else {
-				RString path = tfont->Attribute("path");
-				RString id = tfont->Attribute("name");
-				rtree.RegisterTextureFont(id, path);
-			}
-			tfont = tfont->NextSiblingElement("TextureFont");
+namespace {
+	// private
+	// only for LR2 compatibility
+	std::map<std::string, std::string> filter_to_option;
+
+	// some utils for recursing skin tree
+	void DeepCopy(const XMLNode *from, XMLNode* to) {
+		XMLDocument *doc = to->GetDocument();
+		for (const XMLNode* node = from->FirstChild(); node; node = node->NextSibling()) {
+			XMLNode* copy = node->ShallowClone(doc);
+			to->InsertEndChild(copy);
+			// check for child
+			DeepCopy(node, copy);
 		}
 	}
-	else {
-		return false;
+#define ISNAME(name) (strcmp(e->Name(), name) == 0)
+	void ParseSkinTree(SkinRenderTree &rtree, XMLElement *e) {
+		for (e = e->FirstChildElement(); e; e = e->NextSiblingElement()) {
+			if (ISNAME("if")) {
+				RenderCondition cond;
+				cond.Set(e->Attribute("condition"));
+				if (cond.Evaluate())
+					ParseSkinTree(rtree, e);
+			}
+			else if (ISNAME("ifnot")) {
+				RenderCondition cond;
+				cond.Set(e->Attribute("condition"));
+				if (!cond.Evaluate())
+					ParseSkinTree(rtree, e);
+			}
+			else if (ISNAME("include")) {
+				// first get options from original lr2skin
+				// (in case of LR2skin; this code is unnecessary if it's not LR2skin.)
+				filter_to_option.clear();
+				XMLDocument *doc = e->GetDocument();
+				for (XMLElement *option = doc->FirstChildElement("skin")
+					->FirstChildElement("option")
+					->FirstChildElement("customfile"); option; option = option->NextSiblingElement("customfile")) {
+					XMLComment *c = option->NextSibling()->ToComment();
+					if (c) {
+						filter_to_option.insert(std::pair<std::string, std::string>
+							(c->Value(), option->Attribute("name")));
+					}
+				}
+				// loadskin & deepcopy
+				Skin *skin_temp_ = new Skin();
+				SkinRenderHelper::LoadSkin(e->Attribute("path"), *skin_temp_);
+				DeepCopy(skin_temp_->skinlayout.FirstChildElement("skin"), e->Parent());
+				delete skin_temp_;
+			}
+			else if (ISNAME("image")) {
+				RString path = e->Attribute("path");
+				RString id = e->Attribute("name");
+				rtree.RegisterImage(id, path);
+			}
+			else if (ISNAME("font")) {
+				RString path = e->Attribute("path");
+				RString id = e->Attribute("name");
+				rtree.RegisterTTFFont(id, path, e->IntAttribute("size"),
+					e->IntAttribute("border"), e->Attribute("texturepath"));
+			}
+			else if (ISNAME("texturefont")) {
+				if (!e->Attribute("path"))
+				{
+					if (!e->GetText()) continue;
+					RString data = e->GetText();
+					RString id = e->Attribute("name");
+					rtree.RegisterTextureFontByData(id, data);
+				}
+				else {
+					RString path = e->Attribute("path");
+					RString id = e->Attribute("name");
+					rtree.RegisterTextureFont(id, path);
+				}
+			}
+		}
+	}
+}
+
+bool SkinRenderHelper::LoadSkin(const char* path, Skin& skin) {
+	// - if skin is lr2skin, find *.main.xml converted skin
+	//   otherwise convert & save one
+	// - if skin is csv, find *.xml converted skin
+	//   otherwise convert & save one
+	RString abspath = path;
+	FileHelper::ConvertPathToAbsolute(abspath);
+	bool r = false;
+	if (EndsWith(abspath, ".lr2skin")) {
+		RString newpath = abspath;
+		newpath = IO::substitute_extension(newpath, ".main.xml");
+		if (IO::is_file_exists(newpath)) {
+			abspath = newpath;
+		}
+		else {
+			_LR2SkinParser *lr2skin = new _LR2SkinParser();
+			r = lr2skin->ParseLR2Skin(abspath, &skin);
+			delete lr2skin;
+			skin.Save(newpath);
+		}
+	}
+	else if (EndsWith(abspath, ".csv")) {
+		RString newpath = abspath;
+		newpath = IO::substitute_extension(newpath, ".xml");
+		if (IO::is_file_exists(newpath)) {
+			abspath = newpath;
+		}
+		else {
+			// in case of CSV, there might be a parent lr2skin
+			// which has information about translating #IMAGE path
+			_LR2SkinParser *lr2skin = new _LR2SkinParser();
+			for (auto it = filter_to_option.begin(); it != filter_to_option.end(); ++it)
+				lr2skin->AddPathToOption(it->first, it->second);
+			r = lr2skin->ParseLR2Skin(abspath, &skin);
+			delete lr2skin;
+			skin.Save(newpath);
+		}
 	}
 
-	return true;
+	if (EndsWith(abspath, ".xml")) {
+		r = skin.Load(abspath);
+	}
+	return r;
+}
+
+void SkinRenderHelper::LoadResourceFromSkin(SkinRenderTree &rtree, Skin &s) {
+	//
+	// recursively parses skin tree
+	// - if `if`, then check condition & decide to go in.
+	// - if `include`, then load into Skin tree.
+	// - if `image / font / texturefont`, then load resource.
+	//
+	ParseSkinTree(rtree, s.skinlayout.FirstChildElement("skin"));
+	filter_to_option.clear();
+	//s.skinlayout.Print();
 }
 
 void SkinRenderHelper::ConstructBasicRenderObject(SkinRenderObject *obj, XMLElement *e) {

@@ -246,10 +246,12 @@ void TextureFont::Render(const RString& text, int x, int y) {
 		if (gl) {
 			SDL_Rect src = { gl->x, gl->y, gl->w, gl->h };
 			SDL_Rect dst = { leftpos, y, gl->w, gl->h };
-			SDL_Texture *t = imgs[gl->image]->GetPtr();
-			SDL_SetTextureAlphaMod(t, a);
-			SDL_SetTextureColorMod(t, r, g, b);
-			SDL_RenderCopy(Game::RENDERER, t, &src, &dst);
+			SDL_Texture *t = imgs[gl->image] ? imgs[gl->image]->GetPtr() : 0;
+			if (t) {
+				SDL_SetTextureAlphaMod(t, a);
+				SDL_SetTextureColorMod(t, r, g, b);
+				SDL_RenderCopy(Game::RENDERER, t, &src, &dst);
+			}
 			leftpos += gl->w;
 		} else leftpos += stf.GetFallbackWidth();
 		p++;

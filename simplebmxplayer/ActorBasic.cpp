@@ -257,14 +257,11 @@ void SkinGroupObject::UpdateChilds() {
 	// after pushing offset
 	// update all child object's properties
 	// (recursively)
-	UpdateBasic();
-	if (drawable) {
-		rtree->PushRenderOffset(dst_cached.frame.x, dst_cached.frame.y);
-		for (auto it = begin(); it != end(); ++it) {
-			(*it)->Update();
-		}
-		rtree->PopRenderOffset();
+	rtree->PushRenderOffset(dst_cached.frame.x, dst_cached.frame.y);
+	for (auto it = begin(); it != end(); ++it) {
+		(*it)->Update();
 	}
+	rtree->PopRenderOffset();
 }
 
 void SkinGroupObject::SetObject(XMLElement *e) {
@@ -280,10 +277,12 @@ void SkinGroupObject::SetObject(XMLElement *e) {
 }
 
 void SkinGroupObject::Update() {
-	UpdateChilds();
+	UpdateBasic();
+	if (drawable) UpdateChilds();
 }
 
 void SkinGroupObject::Render() {
+	// TODO: use SDL_RenderSetViewport
 	// recursively renders child element
 	if (!drawable) return;
 	for (auto it = begin(); it != end(); ++it) {
@@ -348,6 +347,12 @@ void SkinCanvasObject::Render() {
 }
 
 #pragma endregion SKINGROUPOBJECT
+
+
+
+
+
+
 
 SkinImageObject::SkinImageObject(SkinRenderTree* owner, int type) : SkinRenderObject(owner, type) {
 	imgsrc = { 0, 0, 0, 0 };
@@ -483,7 +488,7 @@ void SkinNumberObject::SetObject(XMLElement *e) {
 		SetValue(INTPOOL->Get(e->Attribute("value")));
 	SetAlign(e->IntAttribute("align"));
 	SetLength(e->IntAttribute("length"));
-	Set24Mode(e->IntAttribute("24mode"));
+	Set24Mode(e->IntAttribute("mode24"));
 	SetFont(e->Attribute("resid"));
 }
 

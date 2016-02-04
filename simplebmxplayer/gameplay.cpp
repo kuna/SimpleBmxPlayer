@@ -42,32 +42,24 @@ namespace GamePlay {
 	int					playmode;			// PLAYTYPE..?
 
 	bool LoadSkin(const char* path) {
-		//SkinDST::On(33);		// autoplay on
-		//SkinDST::On(41);		// BGA on
-
-		// load play skin (lr2)
-		// and create render tree
-		RString abspath = path;
-		FileHelper::ConvertPathToAbsolute(abspath);
-		bool r = false;
-		if (strstr(abspath, ".lr2skin") == 0) {
-			r = playskin.Parse(path);
-		}
-		else {
-			_LR2SkinParser *lr2skin = new _LR2SkinParser();
-			r = lr2skin->ParseLR2Skin(abspath, &playskin);
-			delete lr2skin;
-			//playskin.Save("./test.xml");
-		}
-		if (!r)
+		// load skin (lr2skin, csv, xml)
+		if (!SkinRenderHelper::LoadSkin(path, playskin))
 		{
-			LOG->Critical("Failed to load skin %s\n", abspath);
+			LOG->Critical("Failed to load skin %s\n", path);
 			return false;
 		}
 
 		// load skin (default) option, and set Environment.
 		// MUST do before loading skin resource.
-		playskin.GetDefaultOption(&skinoption);
+		RString skinname = IO::get_filename(path);
+		RString skinnamespace = IO::get_filename(IO::get_filedir(IO::get_filedir(path)));
+		RString optionpath = "../system/skin/" + skinnamespace + "/" + skinname + ".xml";
+		FileHelper::ConvertPathToSystem(optionpath);
+		IO::make_parent_directory_recursive(IO::get_filedir(optionpath));
+		if (!skinoption.LoadSkinOption(optionpath)) {
+			playskin.GetDefaultOption(&skinoption);
+			skinoption.SaveSkinOption(optionpath);
+		}
 		skinoption.SetEnvironmentFromOption();
 
 		// load skin resource
@@ -75,7 +67,8 @@ namespace GamePlay {
 		RString skindirpath = IO::get_filedir(path);
 		FileHelper::ConvertPathToAbsolute(skindirpath);
 		FileHelper::PushBasePath(skindirpath);
-		rtree->SetObject(playskin.skinlayout.FirstChildElement("Info"));
+		rtree->SetObject(playskin.skinlayout
+			.FirstChildElement("skin")->FirstChildElement("info"));
 		SkinRenderHelper::LoadResourceFromSkin(*rtree, playskin);
 		SkinRenderHelper::ConstructTreeFromSkin(*rtree, playskin);
 		FileHelper::PopBasePath();
