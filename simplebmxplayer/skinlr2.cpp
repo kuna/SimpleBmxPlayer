@@ -1623,29 +1623,32 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 		else if (op == 217) {
 			SETOPTION("IsP2F");
 		}
+		/*
+		 * op 220~227 : same with Is1Pxxx
+		 */
 		else if (op == 220) {
-			SETOPTION("IsP1ReachAAA");
+			SETOPTION("IsP1AAA");
 		}
 		else if (op == 221) {
-			SETOPTION("IsP1ReachAA");
+			SETOPTION("IsP1AA");
 		}
 		else if (op == 222) {
-			SETOPTION("IsP1ReachA");
+			SETOPTION("IsP1A");
 		}
 		else if (op == 223) {
-			SETOPTION("IsP1ReachB");
+			SETOPTION("IsP1B");
 		}
 		else if (op == 224) {
-			SETOPTION("IsP1ReachC");
+			SETOPTION("IsP1C");
 		}
 		else if (op == 225) {
-			SETOPTION("IsP1ReachD");
+			SETOPTION("IsP1D");
 		}
 		else if (op == 226) {
-			SETOPTION("IsP1ReachE");
+			SETOPTION("IsP1E");
 		}
 		else if (op == 227) {
-			SETOPTION("IsP1ReachF");
+			SETOPTION("IsP1F");
 		}
 		/* 23X : I dont want to implement these useless one ... hmm... don't want ... .... */
 		else if (op == 241) {

@@ -16,6 +16,63 @@
 
 class SkinPlayObject;
 
+
+/*
+* @describes
+* stores all variables about player skin rendering value
+* initalized at ScenePlay::Initialize()
+*/
+typedef struct {
+	Timer*				pOnMiss;			// timer used when miss occured (DP)
+	Timer*				pOnCombo;
+	Timer*				pOnJudge[6];		// pf/gr/gd/bd/pr
+	Timer*				pOnSlow;
+	Timer*				pOnFast;
+	Timer*				pOnfullcombo;		// needless to say?
+	Timer*				pOnlastnote;		// when last note ends
+	Timer*				pOnGameover;		// game is over! (different from OnClose)
+	Timer*				pOnGaugeMax;		// guage max?
+	Timer*				pOnGaugeUp;
+	Timer*				pLanepress[10];
+	Timer*				pLanehold[10];
+	Timer*				pLaneup[10];
+	Timer*				pLanejudgeokay[10];
+	int*				pNotePerfect;
+	int*				pNoteGreat;
+	int*				pNoteGood;
+	int*				pNoteBad;
+	int*				pNotePoor;
+	Timer*				pOnAAA;
+	Timer*				pOnAA;
+	Timer*				pOnA;
+	Timer*				pOnB;
+	Timer*				pOnC;
+	Timer*				pOnD;
+	Timer*				pOnE;
+	Timer*				pOnF;
+	double*				pExscore_d;
+	double*				pHighscore_d;
+	int*				pScore;
+	int*				pExscore;
+	int*				pCombo;
+	int*				pMaxCombo;
+	int*				pTotalnotes;
+	int*				pRivaldiff;		// TODO where to process it?
+	double*				pGauge_d;
+	int*				pGaugeType;
+	int*				pGauge;
+	double*				pRate_d;
+	int*				pRate;
+	double*				pTotalRate_d;
+	int*				pTotalRate;
+	int*				pNoteSpeed;
+	int*				pFloatSpeed;
+	int*				pSudden;
+	int*				pLift;
+	double*				pSudden_d;
+	double*				pLift_d;
+} PlayerRenderValue;
+
 /*
  * @description
  * Very basic form of Player
@@ -182,6 +239,7 @@ namespace PlayHelper {
 
 	void ToggleSpeedtype(int playerno);
 }
+
 
 // global-accessible
 // real object used during playing game

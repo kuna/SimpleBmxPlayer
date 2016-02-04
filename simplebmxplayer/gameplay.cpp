@@ -144,8 +144,22 @@ namespace GamePlay {
 			PLAYERVALUE[0].pOnJudge[2] = TIMERPOOL->Set("OnP1JudgeBad");
 			PLAYERVALUE[0].pOnJudge[1] = TIMERPOOL->Set("OnP1JudgePoor");
 			PLAYERVALUE[0].pOnJudge[0] = TIMERPOOL->Set("OnP1JudgePoor");
+			PLAYERVALUE[0].pNotePerfect = INTPOOL->Get("P1PerfectCount");
+			PLAYERVALUE[0].pNoteGreat = INTPOOL->Get("P1GreatCount");
+			PLAYERVALUE[0].pNoteGood = INTPOOL->Get("P1GoodCount");
+			PLAYERVALUE[0].pNoteBad = INTPOOL->Get("P1BadCount");
+			PLAYERVALUE[0].pNotePoor = INTPOOL->Get("P1PoorCount");
 			PLAYERVALUE[0].pOnSlow = TIMERPOOL->Set("OnP1Slow");
 			PLAYERVALUE[0].pOnFast = TIMERPOOL->Set("OnP1Fast");
+
+			PLAYERVALUE[0].pOnAAA = TIMERPOOL->Get("IsP1AAA");
+			PLAYERVALUE[0].pOnAA = TIMERPOOL->Get("IsP1AA");
+			PLAYERVALUE[0].pOnA = TIMERPOOL->Get("IsP1A");
+			PLAYERVALUE[0].pOnB = TIMERPOOL->Get("IsP1B");
+			PLAYERVALUE[0].pOnC = TIMERPOOL->Get("IsP1C");
+			PLAYERVALUE[0].pOnD = TIMERPOOL->Get("IsP1D");
+			PLAYERVALUE[0].pOnE = TIMERPOOL->Get("IsP1E");
+			PLAYERVALUE[0].pOnF = TIMERPOOL->Get("IsP1F");
 
 			PLAYERVALUE[0].pOnMiss = TIMERPOOL->Get("OnP1Miss");
 			PLAYERVALUE[0].pOnCombo = TIMERPOOL->Get("OnP1Combo");
@@ -201,8 +215,22 @@ namespace GamePlay {
 			PLAYERVALUE[1].pOnJudge[2] = TIMERPOOL->Set("OnP2JudgeBad");
 			PLAYERVALUE[1].pOnJudge[1] = TIMERPOOL->Set("OnP2JudgePoor");
 			PLAYERVALUE[1].pOnJudge[0] = TIMERPOOL->Set("OnP2JudgePoor");
+			PLAYERVALUE[1].pNotePerfect = INTPOOL->Get("P2PerfectCount");
+			PLAYERVALUE[1].pNoteGreat = INTPOOL->Get("P2GreatCount");
+			PLAYERVALUE[1].pNoteGood = INTPOOL->Get("P2GoodCount");
+			PLAYERVALUE[1].pNoteBad = INTPOOL->Get("P2BadCount");
+			PLAYERVALUE[1].pNotePoor = INTPOOL->Get("P2PoorCount");
 			PLAYERVALUE[1].pOnSlow = TIMERPOOL->Set("OnP2Slow");
 			PLAYERVALUE[1].pOnFast = TIMERPOOL->Set("OnP2Fast");
+
+			PLAYERVALUE[1].pOnAAA = TIMERPOOL->Get("IsP2AAA");
+			PLAYERVALUE[1].pOnAA = TIMERPOOL->Get("IsP2AA");
+			PLAYERVALUE[1].pOnA = TIMERPOOL->Get("IsP2A");
+			PLAYERVALUE[1].pOnB = TIMERPOOL->Get("IsP2B");
+			PLAYERVALUE[1].pOnC = TIMERPOOL->Get("IsP2C");
+			PLAYERVALUE[1].pOnD = TIMERPOOL->Get("IsP2D");
+			PLAYERVALUE[1].pOnE = TIMERPOOL->Get("IsP2E");
+			PLAYERVALUE[1].pOnF = TIMERPOOL->Get("IsP2F");
 
 			PLAYERVALUE[1].pOnMiss = TIMERPOOL->Get("OnP2Miss");
 			PLAYERVALUE[1].pOnCombo = TIMERPOOL->Get("OnP2Combo");
@@ -257,7 +285,7 @@ namespace GamePlay {
 		GameTimer::Tick();
 		// TODO
 		SWITCH_OFF("IsGhostOff");
-		SWITCH_ON("IsGhostA");
+		SWITCH_ON ("IsGhostA");
 		SWITCH_OFF("IsGhostB");
 		SWITCH_OFF("IsGhostC");
 		SWITCH_OFF("OnDiffBeginner");

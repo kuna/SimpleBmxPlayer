@@ -379,8 +379,21 @@ void Player::MakeJudge(int judgetype, int channel, int fastslow, bool silent) {
 		judgenotecnt++;
 		break;
 	}
-	// TODO current pgreat / etc ...
-	// TODO reached rank?
+	// current pgreat
+	*pv->pNotePerfect = score.score[5];
+	*pv->pNoteGreat = score.score[4];
+	*pv->pNoteGood = score.score[3];
+	*pv->pNoteBad = score.score[2];
+	*pv->pNotePoor = score.score[1] + score.score[0];
+	// reached rank?
+	pv->pOnAAA->Trigger(score.CalculateGrade() >= GRADETYPE::GRADE_AAA);
+	pv->pOnAA->Trigger(score.CalculateGrade() >= GRADETYPE::GRADE_AA);
+	pv->pOnA->Trigger(score.CalculateGrade() >= GRADETYPE::GRADE_A);
+	pv->pOnB->Trigger(score.CalculateGrade() >= GRADETYPE::GRADE_B);
+	pv->pOnC->Trigger(score.CalculateGrade() >= GRADETYPE::GRADE_C);
+	pv->pOnD->Trigger(score.CalculateGrade() >= GRADETYPE::GRADE_D);
+	pv->pOnE->Trigger(score.CalculateGrade() >= GRADETYPE::GRADE_E);
+	pv->pOnF->Trigger(score.CalculateGrade() >= GRADETYPE::GRADE_F);
 	// TODO pacemaker
 	// update gauge
 	SetGauge(playergauge + notehealth[judgetype]);
@@ -561,7 +574,7 @@ void Player::UpKey(int lane) {
 		int judge = CheckJudgeByTiming(delta);
 		if (judge == JUDGETYPE::JUDGE_EARLY || judge == JUDGETYPE::JUDGE_NPOOR)
 			judge = JUDGETYPE::JUDGE_POOR;
-		MakeJudge(judge, lane, delta > 0 ? 1 : 2);
+		MakeJudge(judge, lane, delta < 0 ? 1 : 2);
 		// you're not longnote anymore~
 		pLanehold[lane]->Stop();
 		islongnote_[lane] = false;
@@ -600,7 +613,7 @@ void Player::PressKey(int lane) {
 	if (IsNoteAvailable(lane)) {
 		double t = pBmstimer->GetTick() / 1000.0;
 		int delta = (t - GetTimeFromBar(iter_judge_[lane]->first)) * 1000;
-		int fastslow = delta > 0 ? 1 : 2;
+		int fastslow = delta < 0 ? 1 : 2;
 		int judge = CheckJudgeByTiming(delta);
 		// only continue judging if judge isn't too fast or too late
 		if (judge != JUDGETYPE::JUDGE_LATE && judge != JUDGETYPE::JUDGE_EARLY) {

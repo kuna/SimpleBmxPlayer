@@ -2631,13 +2631,13 @@ SetTimer("IsSelectBarFolder")
     <!-- Automatically added FAST/SLOW indicator (GhostA type) -->
     <if condition="IsGhostA">
         <sprite resid="_fastslow" x="0" y="0" w="67" h="26">
-            <DST timer="On1PFast">
-                <frame x="196" y="280" w="67" h="26" time="0"/>
+            <DST timer="OnP1Fast">
+                <frame x="196" y="270" w="45" h="18" time="0"/>
             </DST>
         </sprite>
         <sprite resid="_fastslow" x="0" y="26" w="67" h="26">
-            <DST timer="On1PSlow">
-                <frame x="196" y="280" w="67" h="26" time="0"/>
+            <DST timer="OnP1Slow">
+                <frame x="196" y="270" w="45" h="18" time="0"/>
             </DST>
         </sprite>
     </if>
