@@ -95,6 +95,16 @@ namespace GamePlay {
 	}
 
 	namespace {
+		int *pRivalDiff;
+		double *pRivalDiff_d;
+		double *pRivalDiff_d_total;
+
+		void Initalize_commonValue() {
+			pRivalDiff = INTPOOL->Get("P1RivalDiff");
+			pRivalDiff_d = DOUBLEPOOL->Get("P2ExScore");
+			pRivalDiff_d_total = DOUBLEPOOL->Get("P2ExScoreEstI");
+		}
+
 		void Initalize_BmsValue() {
 			BMSVALUE.songloadprogress = DOUBLEPOOL->Get("SongLoadProgress");
 			BMSVALUE.OnSongLoading = TIMERPOOL->Get("OnSongLoading");
@@ -289,6 +299,7 @@ namespace GamePlay {
 		Bmspath = STRPOOL->Get("Bmspath");
 
 		// initalize player rendering values
+		Initalize_commonValue();
 		Initalize_BmsValue();
 		Initalize_P1_RenderValue();
 		Initalize_P2_RenderValue();
@@ -361,12 +372,15 @@ namespace GamePlay {
 		 * MUST create before load skin
 		 * MUST create after Bms loaded (rate configured)
 		 */
-#ifdef _DEBUG
+#ifdef SECONDRUN//_DEBUG
 		PLAYER[0] = new PlayerAuto(0, playmode);
+		((PlayerAuto*)PLAYER[0])->SetGoal(8.0/9.0);
+		PLAYER[1] = NULL;
 #else
 		PLAYER[0] = new Player(0, playmode);
+		PLAYER[1] = new PlayerAuto(1, playmode);
+		((PlayerAuto*)PLAYER[1])->SetGoal(7.0 / 9.0);
 #endif
-		PLAYER[1] = NULL;
 
 		// random?
 		//int nc_1 = PLAYER[0]->GetNoteData()->GetNoteCount();
@@ -431,7 +445,15 @@ namespace GamePlay {
 		 * Player update
 		 */
 		if (PLAYER[0]) PLAYER[0]->Update();
-		if (PLAYER[1]) PLAYER[1]->Update();
+		if (PLAYER[1]) {
+			PLAYER[1]->Update();
+			// update rival score if P2 exists
+			*pRivalDiff = 
+				PLAYER[0]->GetScoreData()->CalculateEXScore() - 
+				PLAYER[1]->GetScoreData()->CalculateEXScore();
+			*pRivalDiff_d = PLAYER[1]->GetScoreData()->CurrentRate();
+			*pRivalDiff_d_total = PLAYER[1]->GetScoreData()->CalculateRate();
+		}
 	}
 
 	void ScenePlay::Render() {

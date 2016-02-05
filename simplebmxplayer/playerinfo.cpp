@@ -59,8 +59,14 @@ void PlayerScore::Clear() {
 int PlayerScore::LastNoteFinished() {
 	return totalnote <= score[1] + score[2] + score[3] + score[4] + score[5];
 }
+int PlayerScore::GetJudgedNote() {
+	return score[1] + score[2] + score[3] + score[4] + score[5];
+}
 int PlayerScore::CalculateEXScore() {
 	return score[JUDGETYPE::JUDGE_PGREAT] * 2 + score[JUDGETYPE::JUDGE_GREAT];
+}
+double PlayerScore::CurrentRate() {
+	return (double)CalculateEXScore() / GetJudgedNote() / 2;
 }
 int PlayerScore::CalculateScore() { return CalculateRate() * 200000; }
 double PlayerScore::CalculateRate() {

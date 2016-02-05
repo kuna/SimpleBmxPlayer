@@ -153,6 +153,7 @@ public:
 	BmsNoteLane::Iterator	GetNoteEndIter(int lane) { return iter_end_[lane]; };
 	BmsNoteLane::Iterator	GetNoteBeginIter(int lane) { return iter_begin_[lane]; };
 	BmsNoteManager*			GetNoteData() { return bmsnote; };
+	PlayerScore*			GetScoreData() { return &score; };
 
 	/*
 	 * @description
@@ -210,7 +211,7 @@ public:
 /*
  * @description
  * Played by CPU
- * If this player activated, 'Autoplay' mark will show up.
+ * If this player activated, 'Autoplay' mark should be show up.
  */
 class PlayerAuto : public Player {
 	double targetrate;
@@ -233,19 +234,6 @@ public:
 class PlayerReplay : public Player {
 public:
 	PlayerReplay(int playside = 0, int playmode = PLAYTYPE::KEY7);
-};
-
-/*
- * @description
- * Only for pacemaker
- * If Replay exists, make pace as replay
- */
-class PlayerPacemaker : public Player {
-public:
-	PlayerPacemaker(int playside = 0, int playmode = PLAYTYPE::KEY7);
-	//
-	virtual void Update();
-	double GetRate();
 };
 
 

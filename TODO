@@ -46,6 +46,8 @@ o play/program setting
   - bms 파일 hash / base64 테스트
   - zlib 연동 및 base64 인코딩 테스트
 - ID attribute 도입
+- survival/exhard gauge 지원 (5)
+- course mode 지원 (6)
 <플레이 프로젝트 끝. 다음 프로젝트에서 계속 ...>
 
 - Animated Value change(double/int) 도입하기.

@@ -55,6 +55,8 @@ public:
 	// just a utils
 	void Clear();
 	int LastNoteFinished();
+	int GetJudgedNote();
+	double CurrentRate();
 	int CalculateEXScore();
 	int CalculateScore();
 	double CalculateRate();
