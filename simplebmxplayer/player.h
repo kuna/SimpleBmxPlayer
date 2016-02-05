@@ -50,6 +50,14 @@ typedef struct {
 	Timer*				pOnD;
 	Timer*				pOnE;
 	Timer*				pOnF;
+	Timer*				pOnReachAAA;
+	Timer*				pOnReachAA;
+	Timer*				pOnReachA;
+	Timer*				pOnReachB;
+	Timer*				pOnReachC;
+	Timer*				pOnReachD;
+	Timer*				pOnReachE;
+	Timer*				pOnReachF;
 	double*				pExscore_d;
 	double*				pHighscore_d;
 	int*				pScore;
@@ -131,12 +139,15 @@ protected:
 	};
 
 	// judge
+	/** @brief judge timing offset (LR2's judge offset) */
+	int						judgeoffset;
+	int						judgecalibration;
 	int						CheckJudgeByTiming(int delta);
 	/** @brief make judgement. silent = true will not set JUDGE timer. */
 	void					MakeJudge(int delta, int channel, int fastslow = 0, bool silent = false);
 	/** @brief is there any more note to draw/judge? */
 	bool					IsNoteAvailable(int lane);
-	void					NextAvailableNote(int lane);
+	void					NextNote(int lane);
 public:
 	BmsNoteLane::Iterator	GetNoteIter(int lane) { return iter_judge_[lane]; };
 	BmsNoteLane::Iterator	GetNoteEndIter(int lane) { return iter_end_[lane]; };

@@ -37,6 +37,8 @@ Player::Player(int playside, int playmode, int playertype) {
 			pLanejudgeokay[i + 10] = pv_dp->pLanejudgeokay[i];
 		}
 	}
+	judgeoffset = playconfig->judgeoffset;
+	judgecalibration = playconfig->judgecalibration;
 	pBmstimer = TIMERPOOL->Get("OnGameStart");
 	memset(ispress_, 0, sizeof(ispress_));
 	memset(islongnote_, 0, sizeof(islongnote_));
@@ -152,14 +154,15 @@ Player::Player(int playside, int playmode, int playertype) {
 		speed_mul = 120.0 / BmsResource::BMS.GetTimeManager().GetMediumBPM();
 		break;
 	}
+	// set sudden/lift first (floatspeed is relative to them)
+	SetSudden(playconfig->sudden);
+	SetLift(playconfig->lift);
 	if (playconfig->usefloatspeed) {
 		SetFloatSpeed(playconfig->floatspeed);
 	}
 	else {
 		SetSpeed(playconfig->speed);
 	}
-	SetSudden(playconfig->sudden);
-	SetLift(playconfig->lift);
 
 	// TODO: set OP switch... no, in main?
 }
@@ -201,7 +204,7 @@ namespace {
 		 * the time 1 beat needs to go off:
 		 * 1 / (speed) / (BPM) * 60 (sec)
 		 */
-		return 1.0 / speed / bpm * 60 * 4;
+		return 1.0 / speed / bpm * 60 * 2;
 	}
 
 	double ConvertFloatToSpeed(double speed, double bpm) {
@@ -209,7 +212,7 @@ namespace {
 		 * just reverse equation
 		 * 1 / (float) / (BPM) * 60 (speed) 
 		 */
-		return 1.0 / speed / bpm * 60 * 4;
+		return 1.0 / speed / bpm * 60 * 2;
 	}
 }
 
@@ -228,9 +231,9 @@ void Player::SetSpeed(double speed) {
 	 * set the pointer values
 	 */
 	*pv->pNoteSpeed = notespeed * 100 + 0.5;
-	*pv->pFloatSpeed = notefloat * (1 - suddenheight - liftheight);
-	*pv->pSudden = notefloat * suddenheight;
-	*pv->pLift = notefloat * liftheight;
+	*pv->pFloatSpeed = 1000 * notefloat * (1 - suddenheight - liftheight);
+	*pv->pSudden = 1000 * suddenheight;
+	*pv->pLift = 1000 * liftheight;
 }
 void Player::DeltaSpeed(double speed) { SetSpeed(notespeed + speed); }
 
@@ -247,9 +250,9 @@ void Player::SetFloatSpeed(double speed) {
 	 * set the pointer values
 	 */
 	*pv->pNoteSpeed = notespeed * 100 + 0.5;
-	*pv->pFloatSpeed = notefloat * (1 - suddenheight - liftheight);
-	*pv->pSudden = notefloat * suddenheight;
-	*pv->pLift = notefloat * liftheight;
+	*pv->pFloatSpeed = 1000 * notefloat * (1 - suddenheight - liftheight);
+	*pv->pSudden = 1000 * suddenheight;
+	*pv->pLift = 1000 * liftheight;
 }
 void Player::DeltaFloatSpeed(double speed) { SetFloatSpeed(notefloat + speed); }
 
@@ -257,14 +260,14 @@ void Player::SetSudden(double height) {
 	playconfig->sudden
 		= suddenheight
 		= height;
-	*pv->pSudden_d = height;
 
 	/*
 	 * set the pointer values
 	 */
-	*pv->pFloatSpeed = notefloat * (1 - suddenheight - liftheight);
-	*pv->pSudden = notefloat * suddenheight;
-	*pv->pLift = notefloat * liftheight;
+	*pv->pSudden_d = height;
+	*pv->pFloatSpeed = 1000 * notefloat * (1 - suddenheight - liftheight);
+	*pv->pSudden = 1000 * suddenheight;
+	*pv->pLift = 1000 * liftheight;
 }
 void Player::DeltaSudden(double height) { SetSudden(suddenheight + height); }
 
@@ -272,14 +275,14 @@ void Player::SetLift(double height) {
 	playconfig->lift
 		= liftheight
 		= height;
-	*pv->pLift_d = height;
 
 	/*
 	 * set the pointer values
 	 */
-	*pv->pFloatSpeed = notefloat * (1 - suddenheight - liftheight);
-	*pv->pSudden = notefloat * suddenheight;
-	*pv->pLift = notefloat * liftheight;
+	*pv->pLift_d = height;
+	*pv->pFloatSpeed = 1000 * notefloat * (1 - suddenheight - liftheight);
+	*pv->pSudden = 1000 * suddenheight;
+	*pv->pLift = 1000 * liftheight;
 }
 void Player::DeltaLift(double height) { SetLift(liftheight + height); }
 double Player::GetSpeedMul() { return notespeed * speed_mul; }	// for rendering
@@ -328,8 +331,8 @@ void Player::MakeJudge(int judgetype, int channel, int fastslow, bool silent) {
 		if (playside == 0) judgeside = 1;
 		else judgeside = 2;
 	}
-	int channel_p = channel % 10;
 
+	const int channel_p = channel % 10;
 	switch (judgeside) {
 	case 1:
 		if (judgetype >= JUDGETYPE::JUDGE_GREAT)
@@ -386,22 +389,42 @@ void Player::MakeJudge(int judgetype, int channel, int fastslow, bool silent) {
 	*pv->pNoteBad = score.score[2];
 	*pv->pNotePoor = score.score[1] + score.score[0];
 	// reached rank?
-	pv->pOnAAA->Trigger(score.CalculateGrade() >= GRADETYPE::GRADE_AAA);
-	pv->pOnAA->Trigger(score.CalculateGrade() >= GRADETYPE::GRADE_AA);
-	pv->pOnA->Trigger(score.CalculateGrade() >= GRADETYPE::GRADE_A);
-	pv->pOnB->Trigger(score.CalculateGrade() >= GRADETYPE::GRADE_B);
-	pv->pOnC->Trigger(score.CalculateGrade() >= GRADETYPE::GRADE_C);
-	pv->pOnD->Trigger(score.CalculateGrade() >= GRADETYPE::GRADE_D);
-	pv->pOnE->Trigger(score.CalculateGrade() >= GRADETYPE::GRADE_E);
-	pv->pOnF->Trigger(score.CalculateGrade() >= GRADETYPE::GRADE_F);
+	const int scoregrade = score.CalculateGrade();
+	pv->pOnReachAAA->Trigger(scoregrade >= GRADETYPE::GRADE_AAA);
+	pv->pOnReachAA->Trigger(scoregrade >= GRADETYPE::GRADE_AA);
+	pv->pOnReachA->Trigger(scoregrade >= GRADETYPE::GRADE_A);
+	pv->pOnReachB->Trigger(scoregrade >= GRADETYPE::GRADE_B);
+	pv->pOnReachC->Trigger(scoregrade >= GRADETYPE::GRADE_C);
+	pv->pOnReachD->Trigger(scoregrade >= GRADETYPE::GRADE_D);
+	pv->pOnReachE->Trigger(scoregrade >= GRADETYPE::GRADE_E);
+	pv->pOnReachF->Trigger(scoregrade >= GRADETYPE::GRADE_F);
+	pv->pOnAAA->Trigger(scoregrade == GRADETYPE::GRADE_AAA);
+	pv->pOnAA->Trigger(scoregrade == GRADETYPE::GRADE_AA);
+	pv->pOnA->Trigger(scoregrade == GRADETYPE::GRADE_A);
+	pv->pOnB->Trigger(scoregrade == GRADETYPE::GRADE_B);
+	pv->pOnC->Trigger(scoregrade == GRADETYPE::GRADE_C);
+	pv->pOnD->Trigger(scoregrade == GRADETYPE::GRADE_D);
+	pv->pOnE->Trigger(scoregrade == GRADETYPE::GRADE_E);
+	pv->pOnF->Trigger(scoregrade == GRADETYPE::GRADE_F);
+	pv->pOnAAA->OffTrigger(scoregrade != GRADETYPE::GRADE_AAA);
+	pv->pOnAA->OffTrigger(scoregrade != GRADETYPE::GRADE_AA);
+	pv->pOnA->OffTrigger(scoregrade != GRADETYPE::GRADE_A);
+	pv->pOnB->OffTrigger(scoregrade != GRADETYPE::GRADE_B);
+	pv->pOnC->OffTrigger(scoregrade != GRADETYPE::GRADE_C);
+	pv->pOnD->OffTrigger(scoregrade != GRADETYPE::GRADE_D);
+	pv->pOnE->OffTrigger(scoregrade != GRADETYPE::GRADE_E);
+	pv->pOnF->OffTrigger(scoregrade != GRADETYPE::GRADE_F);
 	// TODO pacemaker
 	// update gauge
 	SetGauge(playergauge + notehealth[judgetype]);
 	// update exscore/combo/etc ...
-	*pv->pExscore_d = score.CalculateRate();
-	*pv->pHighscore_d = score.CalculateRate();
+	const double rate_ = score.CalculateRate();
+	*pv->pExscore_d = rate_;		// graph
+	*pv->pHighscore_d = rate_;		// graph
 	*pv->pScore = score.CalculateScore();
 	*pv->pExscore = score.CalculateEXScore();
+	*pv->pRate_d = rate_;
+	*pv->pRate = rate_ * 100;
 	*pv->pMaxCombo = score.maxcombo;
 	// fullcombo/lastnote check
 	if (score.combo == score.totalnote)
@@ -474,15 +497,9 @@ bool Player::IsNoteAvailable(int lane) {
 	return iter_judge_[lane] != iter_end_[lane];
 }
 
-void Player::NextAvailableNote(int lane) {
+void Player::NextNote(int lane) {
 	// search for next judged note
 	if (IsNoteAvailable(lane)) ++iter_judge_[lane];
-	// if current note is HIDDEN or NONE, search for another next note
-	while (IsNoteAvailable(lane) &&
-		(iter_judge_[lane]->second.type == BmsNote::NOTE_HIDDEN ||
-		iter_judge_[lane]->second.type == BmsNote::NOTE_NONE)) {
-		++iter_judge_[lane];
-	}
 }
 
 void Player::UpdateBasic() {
@@ -516,22 +533,33 @@ void Player::Update() {
 	// COMMENT: `int i` means lane index, NOT channel number.
 	for (int i = 0; i < 20; i++) {
 		/*
+		 * If (next note exists)
+		 */
+		while (IsNoteAvailable(i)) {
+			// skip hidden note
+			if (iter_judge_[i]->second.type == BmsNote::NOTE_HIDDEN ||
+				iter_judge_[i]->second.type == BmsNote::NOTE_NONE)
+				NextNote(i);
+			else break;
+		}
+		/*
 		 * If (next note exists && note is at the bottom; hit timing)
 		 */
 		while (IsNoteAvailable(i) && iter_judge_[i]->first <= currentbar) {
 			BmsNote& note = iter_judge_[i]->second;
 			// if note is mine, then lets ignore as fast as we can
 			if (note.type == BmsNote::NOTE_MINE) {
-				NextAvailableNote(i);
+				NextNote(i);
 			}
 			// if note is press(HELL CHARGE), judge from pressing status
 			else if (note.type == BmsNote::NOTE_PRESS) {
 				MakeJudge(ispress_[i] ? JUDGETYPE::JUDGE_PGREAT : JUDGETYPE::JUDGE_POOR, i);
-				NextAvailableNote(i);
+				NextNote(i);
 			}
 			// if not autoplay, check timing for poor
-			else if (CheckJudgeByTiming((GetTimeFromBar(iter_judge_[i]->first) - time_sec) * 1000)
-				== JUDGETYPE::JUDGE_LATE) {
+			else if (CheckJudgeByTiming(
+				(GetTimeFromBar(iter_judge_[i]->first) - time_sec) * 1000 + judgeoffset
+				) == JUDGETYPE::JUDGE_LATE) {
 				//
 				// if late, POOR judgement is always occured
 				// but we need to take care of in case of LongNote
@@ -549,7 +577,7 @@ void Player::Update() {
 				// (CLAIM) if hidden note isn't ignored by NextAvailableNote(), 
 				//         you have to hit it or you'll get miss.
 				MakeJudge(JUDGETYPE::JUDGE_POOR, i);
-				NextAvailableNote(i);
+				NextNote(i);
 			}
 			else {
 				// Don't skip note; it's not timing yet. wait next turn.
@@ -570,7 +598,7 @@ void Player::UpKey(int lane) {
 	if (islongnote_[lane] && GetCurrentNote(lane)->type == BmsNote::NOTE_LNEND) {
 		// get judge
 		double t = pBmstimer->GetTick() / 1000.0;
-		int delta = (t - GetTimeFromBar(iter_judge_[lane]->first)) * 1000;
+		int delta = (GetTimeFromBar(iter_judge_[lane]->first) - t) * 1000 + judgeoffset;
 		int judge = CheckJudgeByTiming(delta);
 		if (judge == JUDGETYPE::JUDGE_EARLY || judge == JUDGETYPE::JUDGE_NPOOR)
 			judge = JUDGETYPE::JUDGE_POOR;
@@ -579,7 +607,7 @@ void Player::UpKey(int lane) {
 		pLanehold[lane]->Stop();
 		islongnote_[lane] = false;
 		// focus judging note to next one
-		NextAvailableNote(lane);
+		NextNote(lane);
 	}
 
 	// trigger time & set value
@@ -612,7 +640,7 @@ void Player::PressKey(int lane) {
 	//
 	if (IsNoteAvailable(lane)) {
 		double t = pBmstimer->GetTick() / 1000.0;
-		int delta = (t - GetTimeFromBar(iter_judge_[lane]->first)) * 1000;
+		int delta = (t - GetTimeFromBar(iter_judge_[lane]->first)) * 1000 + judgeoffset;
 		int fastslow = delta < 0 ? 1 : 2;
 		int judge = CheckJudgeByTiming(delta);
 		// only continue judging if judge isn't too fast or too late
@@ -642,7 +670,7 @@ void Player::PressKey(int lane) {
 
 				// only go for next note if judge is over poor
 				// (don't allow Íöpoor)
-				NextAvailableNote(lane);
+				NextNote(lane);
 			}
 		}
 	}
@@ -650,20 +678,11 @@ void Player::PressKey(int lane) {
 	//
 	// play sound
 	// - if current lane has no note, then don't play
-	// - if previous key is HIDDEN note, then change keysound to that
 	//
 	if (iter_sound_ == iter_end_[lane]) {
 		// if no more note exists(end of the game), find previous note to play
 		if (iter_sound_ == iter_begin_[lane]) return;
 		--iter_sound_;
-	}
-	while (iter_sound_ != iter_begin_[lane]) {
-		BmsNoteLane::Iterator iter_sound_prev_ = iter_sound_;
-		--iter_sound_prev_;
-		if (iter_sound_prev_->second.type == BmsNote::NOTE_HIDDEN)
-			iter_sound_ = iter_sound_prev_;
-		else
-			break;
 	}
 	PLAYSOUND(iter_sound_->second.value.ToInteger());
 }
@@ -747,7 +766,7 @@ void PlayerAuto::Update() {
 			}
 
 			// fetch next note
-			NextAvailableNote(i);
+			NextNote(i);
 		}
 
 		/*

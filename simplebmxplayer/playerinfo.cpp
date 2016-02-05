@@ -531,6 +531,7 @@ namespace PlayOptionHelper {
 		config.speed = GetIntValue(playconfig, "speed") / 100.0;
 		config.speedtype = GetIntValue(playconfig, "speedtype");
 		config.floatspeed = GetIntValue(playconfig, "floatspeed") / 1000.0;
+		config.usefloatspeed = GetIntValue(playconfig, "usefloat");
 		config.sudden = GetIntValue(playconfig, "sudden") / 1000.0;
 		config.lift = GetIntValue(playconfig, "lift") / 1000.0;
 		config.op_1p = GetIntValue(playconfig, "op_1p");
@@ -543,6 +544,8 @@ namespace PlayOptionHelper {
 		config.longnote = GetIntValue(playconfig, "longnote");
 		config.morenote = GetIntValue(playconfig, "morenote");
 		config.judge = GetIntValue(playconfig, "judge");
+		config.judgeoffset = GetIntValue(playconfig, "judgeoffset");
+		config.judgecalibration = GetIntValue(playconfig, "judgecalibration");
 		config.scratch = GetIntValue(playconfig, "scratch");
 		config.freq = GetIntValue(playconfig, "freq") / 100.0;
 	}
@@ -553,9 +556,10 @@ namespace PlayOptionHelper {
 		doc->LinkEndChild(playconfig);
 
 		// 0.5 : kind of round() function
-		CreateElement(playconfig, "speed")->SetText(config.speed * 100 + 0.5);
+		CreateElement(playconfig, "speed")->SetText((int)(config.speed * 100 + 0.5));
 		CreateElement(playconfig, "speedtype")->SetText(config.speedtype);
 		CreateElement(playconfig, "floatspeed")->SetText(config.floatspeed * 1000);
+		CreateElement(playconfig, "usefloat")->SetText(config.usefloatspeed);
 		CreateElement(playconfig, "sudden")->SetText(config.sudden * 1000);
 		CreateElement(playconfig, "lift")->SetText(config.lift * 1000);
 		CreateElement(playconfig, "op_1p")->SetText(config.op_1p);
@@ -568,6 +572,8 @@ namespace PlayOptionHelper {
 		CreateElement(playconfig, "longnote")->SetText(config.longnote);
 		CreateElement(playconfig, "morenote")->SetText(config.morenote);
 		CreateElement(playconfig, "judge")->SetText(config.judge);
+		CreateElement(playconfig, "judgeoffset")->SetText(config.judgeoffset);
+		CreateElement(playconfig, "judgecalibration")->SetText(config.judgecalibration);
 		CreateElement(playconfig, "scratch")->SetText(config.scratch);
 		CreateElement(playconfig, "freq")->SetText(config.freq * 100);
 	}

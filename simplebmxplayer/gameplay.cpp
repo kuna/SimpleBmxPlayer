@@ -160,6 +160,14 @@ namespace GamePlay {
 			PLAYERVALUE[0].pOnD = TIMERPOOL->Get("IsP1D");
 			PLAYERVALUE[0].pOnE = TIMERPOOL->Get("IsP1E");
 			PLAYERVALUE[0].pOnF = TIMERPOOL->Get("IsP1F");
+			PLAYERVALUE[0].pOnReachAAA = TIMERPOOL->Get("IsP1ReachAAA");
+			PLAYERVALUE[0].pOnReachAA = TIMERPOOL->Get("IsP1ReachAA");
+			PLAYERVALUE[0].pOnReachA = TIMERPOOL->Get("IsP1ReachA");
+			PLAYERVALUE[0].pOnReachB = TIMERPOOL->Get("IsP1ReachB");
+			PLAYERVALUE[0].pOnReachC = TIMERPOOL->Get("IsP1ReachC");
+			PLAYERVALUE[0].pOnReachD = TIMERPOOL->Get("IsP1ReachD");
+			PLAYERVALUE[0].pOnReachE = TIMERPOOL->Get("IsP1ReachE");
+			PLAYERVALUE[0].pOnReachF = TIMERPOOL->Get("IsP1ReachF");
 
 			PLAYERVALUE[0].pOnMiss = TIMERPOOL->Get("OnP1Miss");
 			PLAYERVALUE[0].pOnCombo = TIMERPOOL->Get("OnP1Combo");
@@ -231,6 +239,14 @@ namespace GamePlay {
 			PLAYERVALUE[1].pOnD = TIMERPOOL->Get("IsP2D");
 			PLAYERVALUE[1].pOnE = TIMERPOOL->Get("IsP2E");
 			PLAYERVALUE[1].pOnF = TIMERPOOL->Get("IsP2F");
+			PLAYERVALUE[1].pOnReachAAA = TIMERPOOL->Get("IsP2ReachAAA");
+			PLAYERVALUE[1].pOnReachAA = TIMERPOOL->Get("IsP2ReachAA");
+			PLAYERVALUE[1].pOnReachA = TIMERPOOL->Get("IsP2ReachA");
+			PLAYERVALUE[1].pOnReachB = TIMERPOOL->Get("IsP2ReachB");
+			PLAYERVALUE[1].pOnReachC = TIMERPOOL->Get("IsP2ReachC");
+			PLAYERVALUE[1].pOnReachD = TIMERPOOL->Get("IsP2ReachD");
+			PLAYERVALUE[1].pOnReachE = TIMERPOOL->Get("IsP2ReachE");
+			PLAYERVALUE[1].pOnReachF = TIMERPOOL->Get("IsP2ReachF");
 
 			PLAYERVALUE[1].pOnMiss = TIMERPOOL->Get("OnP2Miss");
 			PLAYERVALUE[1].pOnCombo = TIMERPOOL->Get("OnP2Combo");
@@ -297,8 +313,7 @@ namespace GamePlay {
 		SWITCH_OFF("IsAutoPlay");
 		SWITCH_ON("IsBGA");
 		SWITCH_ON("IsExtraMode");
-		//SWITCH_ON("Is1PSuddenChange");
-		//SWITCH_ON("981");
+		//SWITCH_ON("OnP1SuddenChange");
 		DOUBLEPOOL->Set("TargetExScore", 0.5);
 		DOUBLEPOOL->Set("TargetExScore", 0.5);
 		OnSongLoadingEnd->Stop();
@@ -343,6 +358,7 @@ namespace GamePlay {
 		/*
 		 * Create player object for playing
 		 * MUST create before load skin
+		 * MUST create after Bms loaded
 		 */
 		PLAYER[0] = new Player(0, playmode);
 		PLAYER[1] = NULL;
@@ -496,6 +512,7 @@ namespace GamePlay {
 
 	// lane is changed instead of sudden if you press CTRL key
 	bool pressedCtrl = false;
+	bool pressedStart = false;
 	void ScenePlay::KeyDown(int code, bool repeating) {
 		/*
 		 * -- some presets --
@@ -514,7 +531,7 @@ namespace GamePlay {
 		int func = PlayerKeyIndex::NONE;
 		switch (code) {
 		case SDLK_F12:
-			// refresh delta speed and toggle floating mode
+			// refresh float speed and toggle floating mode
 			PLAYER[0]->DeltaSpeed(0);
 			PLAYERINFO[0].playconfig.usefloatspeed
 				= !PLAYERINFO[0].playconfig.usefloatspeed;
@@ -522,13 +539,14 @@ namespace GamePlay {
 		case SDLK_UP:
 			// ONLY 1P. may need to PRS+WKEY if you need to control 2P.
 			if (PLAYERINFO[0].playconfig.usefloatspeed)
-				PLAYER[0]->DeltaFloatSpeed(0.01);
+				PLAYER[0]->DeltaFloatSpeed(0.001);
 			else
 				PLAYER[0]->DeltaSpeed(0.05);
 			break;
 		case SDLK_DOWN:
+			// if pressed start button, float speed will change.
 			if (PLAYERINFO[0].playconfig.usefloatspeed)
-				PLAYER[0]->DeltaFloatSpeed(-0.01);
+				PLAYER[0]->DeltaFloatSpeed(-0.001);
 			else
 				PLAYER[0]->DeltaSpeed(-0.05);
 			break;
@@ -545,11 +563,20 @@ namespace GamePlay {
 			break;
 		default:
 			func = PlayerKeyHelper::GetKeyCodeFunction(PLAYERINFO[0].keyconfig, code);
-			// change it to key channel ...
-			int channel = GetChannelFromFunction(func);
-			if (channel >= 0) {
-				if (PLAYER[0]) PLAYER[0]->PressKey(channel);
-				if (PLAYER[1]) PLAYER[1]->PressKey(channel);
+			switch (func) {
+			case PlayerKeyIndex::P1_BUTTONSTART:
+				SWITCH_ON("OnP1SuddenChange");
+				pressedStart = true;
+				break;
+			default:
+			{
+				// change it to key channel ...
+				int channel = GetChannelFromFunction(func);
+				if (channel >= 0) {
+					if (PLAYER[0]) PLAYER[0]->PressKey(channel);
+					if (PLAYER[1]) PLAYER[1]->PressKey(channel);
+				}
+			}
 			}
 		}
 	}
@@ -562,10 +589,19 @@ namespace GamePlay {
 			break;
 		default:
 			func = PlayerKeyHelper::GetKeyCodeFunction(PLAYERINFO[0].keyconfig, code);
-			int channel = GetChannelFromFunction(func);
-			if (channel >= 0) {
-				if (PLAYER[0]) PLAYER[0]->UpKey(channel);
-				if (PLAYER[1]) PLAYER[1]->UpKey(channel);
+			switch (func) {
+			case PlayerKeyIndex::P1_BUTTONSTART:
+				SWITCH_OFF("OnP1SuddenChange");
+				pressedStart = false;
+				break;
+			default:
+			{
+				int channel = GetChannelFromFunction(func);
+				if (channel >= 0) {
+					if (PLAYER[0]) PLAYER[0]->UpKey(channel);
+					if (PLAYER[1]) PLAYER[1]->UpKey(channel);
+				}
+			}
 			}
 		}
 	}

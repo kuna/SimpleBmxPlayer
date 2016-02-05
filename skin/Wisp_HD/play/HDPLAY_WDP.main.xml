@@ -1,0 +1,80 @@
+<!--Auto-generated code.
+Converted from LR2Skin.
+LR2 project origins from lavalse, All rights reserved.-->
+<skin>
+    <info>
+        <width>1280</width>
+        <height>720</height>
+        <type>Play</type>
+        <key>14</key>
+        <name>W-mix play WIDE DOUBLE</name>
+        <author>Wisp</author>
+    </info>
+    <option>
+        <customswitch name="Lane_darkness">
+            <option name="0%" value="920"/>
+            <option name="100%" value="921"/>
+            <option name="70%" value="922"/>
+            <option name="50%" value="923"/>
+            <option name="30%" value="924"/>
+        </customswitch>
+        <customswitch name="Displayjudge">
+            <option name="OFF" value="980"/>
+            <option name="ON" value="981"/>
+        </customswitch>
+        <customswitch name="Display_judge_timing">
+            <option name="OFF" value="985"/>
+            <option name="G-type B" value="986"/>
+            <option name=" G-type C" value="987"/>
+        </customswitch>
+        <customswitch name="gauge_Direction">
+            <option name="normal" value="900"/>
+            <option name="reverse" value="901"/>
+        </customswitch>
+        <customswitch name="GRAPH_SIDE">
+            <option name="RIGHT" value="950"/>
+            <option name="LEFT" value="951"/>
+        </customswitch>
+        <customswitch name="loading_ACTION">
+            <option name="lanecover-slide" value="954"/>
+            <option name="lanecover-fadeout" value="955"/>
+            <option name="nothing" value="956"/>
+        </customswitch>
+        <customswitch name="LAST_NOTE_ACTION">
+            <option name="lanecover down" value="952"/>
+            <option name="nothing" value="953"/>
+        </customswitch>
+        <customswitch name="BGA_Brightness_">
+            <option name="100%" value="925"/>
+            <option name="80%" value="926"/>
+            <option name="50%" value="927"/>
+        </customswitch>
+        <customfile name="BG" type="file/image" path="./parts/BG/full bg/black leather.png"/>
+        <!--.\LR2files\Theme\WMIX_HD\play\parts\BG\full bg\*.png-->
+        <customfile name="FRAME_BG" type="file/image" path="./parts/BG/frame bg/DP/black.png"/>
+        <!--.\LR2files\Theme\WMIX_HD\play\parts\BG\frame bg\DP\*.png-->
+        <customfile name="NOTES" type="file/image" path="./parts/note/default.png"/>
+        <!--.\LR2files\Theme\WMIX_HD\play\parts\note\*.png-->
+        <customfile name="BOMB" type="file/image" path="./parts/bomb/splash_red.png"/>
+        <!--.\LR2files\Theme\WMIX_HD\play\parts\bomb\*.png-->
+        <customfile name="LANECOVER" type="file/image" path="./parts/lanecover/default.png"/>
+        <!--.\LR2files\Theme\WMIX_HD\play\parts\lanecover\*.png-->
+        <customfile name="Turntable" type="file/image" path="./parts/sara/black.png"/>
+        <!--.\LR2files\Theme\WMIX_HD\play\parts\sara\*.png-->
+        <customfile name="LASER" type="file/image" path="./parts/laser/default.png"/>
+        <!--.\LR2files\Theme\WMIX_HD\play\parts\laser\*.png-->
+        <customfile name="FC_effect" type="file/image" path="./parts/fc/RANDOM.png"/>
+        <!--.\LR2files\Theme\WMIX_HD\play\parts\fc\*.png-->
+        <customfile name="keyflash" type="file/image" path="./parts/keyflash/red.png"/>
+        <!--.\LR2files\Theme\WMIX_HD\play\parts\keyflash\*.png-->
+        <customfile name="progress_bar" type="file/image" path="./parts/progressbar/blue.png"/>
+        <!--.\LR2files\Theme\WMIX_HD\play\parts\progressbar\*.png-->
+        <customfile name="JUDGE" type="file/image" path="./parts/judge/perfectdark.png"/>
+        <!--.\LR2files\Theme\WMIX_HD\play\parts\judge\*.png-->
+        <customfile name="GAUGE_COLOR" type="file/image" path="./parts/gauge/default.png"/>
+        <!--.\LR2files\Theme\WMIX_HD\play\parts\gauge\*.png-->
+        <customfile name="CLOSE" type="file/image" path="./parts/close/shutter.png"/>
+        <!--.\LR2files\Theme\WMIX_HD\play\parts\close\*.png-->
+    </option>
+    <include path="./csv/wide_dp.csv"/>
+</skin>

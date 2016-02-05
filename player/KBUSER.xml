@@ -211,7 +211,7 @@
         <Index7>0</Index7>
     </Key19>
     <Key20>
-        <Index0>0</Index0>
+        <Index0>96</Index0>
         <Index1>0</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
@@ -413,11 +413,12 @@
 </KeyConfig>
 
 <PlayConfig>
-    <speed>200.5</speed>
+    <speed>200</speed>
     <speedtype>0</speedtype>
-    <floatspeed>548.57142857142901</floatspeed>
+    <floatspeed>333.33333333333337</floatspeed>
+    <usefloat>0</usefloat>
     <sudden>1</sudden>
-    <lift>-253</lift>
+    <lift>0</lift>
     <op_1p>0</op_1p>
     <op_2p>0</op_2p>
     <gaugetype>0</gaugetype>
@@ -426,6 +427,8 @@
     <longnote>0</longnote>
     <morenote>0</morenote>
     <judge>0</judge>
+    <judgeoffset>0</judgeoffset>
+    <judgecalibration>0</judgecalibration>
     <scratch>0</scratch>
     <freq>100</freq>
 </PlayConfig>

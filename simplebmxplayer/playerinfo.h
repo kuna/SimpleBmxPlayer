@@ -22,7 +22,7 @@ struct PlayerPlayConfig {
 	int op_1p, op_2p;
 	double sudden, lift;
 	int showsudden, showlift;
-	int speed;
+	double speed;
 	int speedtype;		// off, float, max, min, medium, constant(assist)
 	double floatspeed;	// float speed itself
 	int usefloatspeed;	// should we use float speed?

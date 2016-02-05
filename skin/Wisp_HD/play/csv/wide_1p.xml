@@ -2091,6 +2091,12 @@ SetTimer("IsSelectBarFolder")
             <frame x="214" y="9" w="15" h="18" time="1000"/>
         </DST>
     </number>
+    <!-- Automatically generated code (floatspeed, lift) -->
+    <number resid="8" condition="OnP1SuddenChange" value="P1FloatSpeed" align="0" length="3">
+        <DST acc="0">
+            <frame x="264" y="9" w="15" h="18" time="0"/>
+        </DST>
+    </number>
     <if condition="!IsAutoPlay,950,IsScoreGraph">
         <sprite resid="2" x="307" y="800" w="162" h="130" condition="981">
             <DST acc="0" loop="1200">
