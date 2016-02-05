@@ -358,6 +358,7 @@ namespace FileHelper {
 			}
 			return _create_directory(path);
 		}
+		else return true;
 	}
 
 	RString GetParentDirectory(const RString& path) {

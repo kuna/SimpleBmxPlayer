@@ -978,6 +978,10 @@ std::string _getcomboconditionstring(int player, int level) {
 	case 5:
 		return std::string(buf) + "Perfect";
 		break;
+	default:
+		/* this shouldn't be happened */
+		return "";
+		break;
 	}
 }
 int __comboy = 0;

@@ -118,8 +118,8 @@ void SkinGrooveGaugeObject::Render() {
 		ImageSRC *currentsrc;
 		int inactive = 0;
 		int Gaugetype_now = *Gaugetype;
-		int activedot = *v * dotcnt - 1;	// till when we should display gauge as active cell
-		int groovedot = 0.8 * dotcnt;	// starting point of turning red when groove gauge
+		int activedot = (int)(*v * dotcnt) - 1;	// till when we should display gauge as active cell
+		int groovedot = (int)(0.8 * dotcnt);	// starting point of turning red when groove gauge
 		int blink = t->GetTick() % 4;	// used when blinking gauge
 		for (int i = 0; i < dotcnt; i++) {
 			// check for current status to decide SRC

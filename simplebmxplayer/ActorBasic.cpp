@@ -185,7 +185,7 @@ void SkinRenderObject::Update() {
 bool SkinRenderObject::Click(int x, int y) {
 	// must call after Update()
 	if (drawable && clickable) {
-
+		return false;
 	}
 	else {
 		return false;
@@ -195,7 +195,7 @@ bool SkinRenderObject::Click(int x, int y) {
 bool SkinRenderObject::Hover(int x, int y) {
 	// must call after Update()
 	if (drawable && focusable) {
-
+		return false;
 	}
 	else {
 		return false;
@@ -428,7 +428,7 @@ void SkinTextObject::SetEditable(bool editable) { this->editable = editable; }
 
 void SkinTextObject::SetAlign(int align) { this->align = align; }
 
-int SkinTextObject::GetWidth() { if (v) GetTextWidth(*v); else return 0; }
+int SkinTextObject::GetWidth() { if (v) return GetTextWidth(*v); else return 0; }
 
 int SkinTextObject::GetTextWidth(const RString& s) {
 	if (fnt) {
