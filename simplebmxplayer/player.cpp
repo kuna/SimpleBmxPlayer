@@ -599,6 +599,11 @@ void Player::UpKey(int lane) {
 	if (IsDead()) return;
 	// if not DP then make lane single
 	if (playmode < 10) lane = lane % 10;
+
+	// record to replay
+	Uint32 currenttime = pBmstimer->GetTick();
+	playrecord.AddPress(currenttime, lane, 0);
+
 	// generally upkey do nothing
 	// but works only if you pressing longnote
 	if (islongnote_[lane] && GetCurrentNote(lane)->type == BmsNote::NOTE_LNEND) {
@@ -608,7 +613,7 @@ void Player::UpKey(int lane) {
 		int judge = CheckJudgeByTiming(delta);
 		if (judge == JUDGETYPE::JUDGE_EARLY || judge == JUDGETYPE::JUDGE_NPOOR)
 			judge = JUDGETYPE::JUDGE_POOR;
-		MakeJudge(judge, lane, delta < 0 ? 1 : 2);
+		MakeJudge(judge, currenttime, lane, delta < 0 ? 1 : 2);
 		// you're not longnote anymore~
 		pLanehold[lane]->Stop();
 		islongnote_[lane] = false;
@@ -616,9 +621,6 @@ void Player::UpKey(int lane) {
 		NextNote(lane);
 	}
 
-	// record to replay
-	Uint32 currenttime = pBmstimer->GetTick();
-	playrecord.AddPress(currenttime, lane, 0);
 
 	// trigger time & set value
 	pLanepress[lane]->Stop();
@@ -646,6 +648,12 @@ void Player::PressKey(int lane) {
 	BmsNoteLane::Iterator iter_sound_ = iter_judge_[lane];
 
 	//
+	// record to replay
+	//
+	Uint32 currenttime = pBmstimer->GetTick();
+	playrecord.AddPress(currenttime, lane, 1);
+
+	//
 	// make judge
 	//
 	if (IsNoteAvailable(lane)) {
@@ -658,12 +666,12 @@ void Player::PressKey(int lane) {
 			// if ÍöPOOR,
 			// then don't process note - just judge as NPOOR
 			if (judge == JUDGETYPE::JUDGE_NPOOR) {
-				MakeJudge(judge, lane, fastslow);
+				MakeJudge(judge, currenttime, lane, fastslow);
 			}
 			else {
 				if (GetCurrentNote(lane)->type == BmsNote::NOTE_LNSTART) {
 					// set longnote status
-					MakeJudge(judge, lane, fastslow, true);
+					MakeJudge(judge, currenttime, lane, fastslow, true);
 					pLanehold[lane]->Start();
 					islongnote_[lane] = true;
 				}
@@ -675,7 +683,7 @@ void Player::PressKey(int lane) {
 						health -= GetCurrentNote(lane)->value.ToInteger();
 				}
 				else if (GetCurrentNote(lane)->type == BmsNote::NOTE_NORMAL) {
-					MakeJudge(judge, lane, fastslow);
+					MakeJudge(judge, currenttime, lane, fastslow);
 				}
 
 				// only go for next note if judge is over poor
@@ -684,10 +692,6 @@ void Player::PressKey(int lane) {
 			}
 		}
 	}
-
-	// record to replay
-	Uint32 currenttime = pBmstimer->GetTick();
-	playrecord.AddPress(currenttime, lane, 1);
 
 	//
 	// play sound

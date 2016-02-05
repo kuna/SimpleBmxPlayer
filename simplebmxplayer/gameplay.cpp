@@ -361,11 +361,19 @@ namespace GamePlay {
 		 * MUST create before load skin
 		 * MUST create after Bms loaded (rate configured)
 		 */
+#ifdef _DEBUG
 		PLAYER[0] = new PlayerAuto(0, playmode);
+#else
+		PLAYER[0] = new Player(0, playmode);
+#endif
 		PLAYER[1] = NULL;
 
 		// random?
-		PLAYER[0]->GetNoteData()->Random(10);
+		//int nc_1 = PLAYER[0]->GetNoteData()->GetNoteCount();
+		PLAYER[0]->GetNoteData()->Random(10);	// shuffle lanes
+		//int nc_2 = PLAYER[0]->GetNoteData()->GetNoteCount();
+		//ASSERT(nc_1 == nc_2);
+		PLAYER[0]->Reset(0);					// reset iterator (MUST do it)
 		//SWITCH_ON("");
 
 		/*
