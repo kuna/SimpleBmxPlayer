@@ -31,7 +31,7 @@ o lr2skin을 자동으로 xml로 변환 및 path 그것으로 바꾸기 & 설정
 o support controller
 - 채보 옵션
 o 리프트/서든/배속설정 작업.
-  - 플로팅스피드
+  o 플로팅스피드
   - constant speed
 o 플레이어 오브젝트
   o 플레이어가 실제로 키입력을 받고 처리하게 할 것

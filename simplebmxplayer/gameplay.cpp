@@ -328,6 +328,7 @@ namespace GamePlay {
 		 */
 		LoadBms(*Bmspath);
 		playmode = BmsResource::BMS.GetKey();
+		//BmsHelper::SetRate(0.5);
 
 		/*
 		 * Bms metadata apply (switches/values)
@@ -358,10 +359,14 @@ namespace GamePlay {
 		/*
 		 * Create player object for playing
 		 * MUST create before load skin
-		 * MUST create after Bms loaded
+		 * MUST create after Bms loaded (rate configured)
 		 */
-		PLAYER[0] = new Player(0, playmode);
+		PLAYER[0] = new PlayerAuto(0, playmode);
 		PLAYER[1] = NULL;
+
+		// random?
+		PLAYER[0]->GetNoteData()->Random(10);
+		//SWITCH_ON("");
 
 		/*
 		 * Load skin

@@ -32,6 +32,8 @@ public:
 
 	/* not implemented but necessary methods */
 	bool GetCRC32(uint32_t *iRet);
+	bool GetBase64(RString* out);
+	bool SetBase64(RString* in);
 	RString GetMD5Hash();
 };
 

@@ -93,6 +93,8 @@ namespace BmsHelper {
 	 * different from BmsBms::GetEndTime(). this method considers audio length.
 	 */
 	double GetEndTime();
+	/** MUST call AFTER load bms & BEFORE load bms audios */
+	void SetRate(double length);
 }
 
 typedef struct {

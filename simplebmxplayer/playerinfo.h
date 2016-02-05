@@ -47,34 +47,56 @@ public:
 	int totalnote;
 	int combo;
 	int maxcombo;
+	int slow, fast;
 public:
 	PlayerScore(int notecnt);
 	PlayerScore();
 
 	// just a utils
+	void Clear();
+	int LastNoteFinished();
 	int CalculateEXScore();
 	int CalculateScore();
 	double CalculateRate();
 	int CalculateGrade();
 	void AddGrade(const int type);
+	int Slow() { slow++; }
+	int Fast() { fast++; }
 };
 
-class PlayerReplay {
+/*
+* PlayRecordObject: objects consisting play record
+* PlayerReplayRecord: a record of a playing
+*/
+struct PlayReplayObject {
+	unsigned int time;
+	/* if judgement, then lane == 255 */
+	unsigned int lane;
+	/*
+	* note press: 1, up: 0
+	* if judge: 0 ~ 5
+	*/
+	unsigned int value;
+};
+
+class PlayerReplayRecord {
 private:
 	// about chart
 	// (TODO: assist? how to include ...)
+	char songhash[32];
 	int op_1p, op_2p;
 	int scratch, longnote, morenote, judge;
-	int guage;
-	double rate;
+	int gauge;
 	int rseed;
+	float rate;
 	// store judge for each note
-	std::vector<int> judges;
+	std::vector<PlayReplayObject> objects;
 public:
-	void AddJudge(int judge);
+	void AddPress(int time, int lane, int press);
+	void AddJudge(int time, int judge);
 	void Clear();
-	void Serialize(RString& out);		// XML output
-	void Parse(const RString& in);		// XML input
+	void Serialize(RString& out);		// Get base64 zipped string
+	void Parse(const RString& in);		// Input base64 zipped string
 };
 
 /*
@@ -97,7 +119,7 @@ public:
 	int maxcombo;			// CAUTION: it's different fram grade.
 	// records used for game play
 	PlayerScore score;		// we only store high-score
-	PlayerReplay replay;	//
+	PlayerReplayRecord replay;	//
 public:
 	// used for hashing
 	RString Serialize();

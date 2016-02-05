@@ -102,6 +102,7 @@ namespace BmsResource {
 	ImagePool			IMAGE;
 	BmsBms				BMS;
 	RString				bmspath;
+	double				soundrate = 1;
 }
 
 namespace BmsHelper {
@@ -172,6 +173,7 @@ namespace BmsHelper {
 		// clear instance
 		BmsResource::BMS.Clear();
 		BmsResource::bmspath = path;
+		BmsResource::soundrate = 1;
 		currentbar = 0;
 
 		// load bms file & create time table
@@ -204,8 +206,8 @@ namespace BmsHelper {
 		for (unsigned int i = 0; i < BmsConst::WORD_MAX_COUNT && isbmsloading; i++) {
 			BmsWord word(i);
 			if (BMS.GetRegistArraySet()["WAV"].IsExists(word)) {
-				SOUND.Load(i, BMS.GetRegistArraySet()["WAV"][word]);
-				//BmsResource::SOUND.Get(word)->Resample(0.7);
+				if (SOUND.Load(i, BMS.GetRegistArraySet()["WAV"][word]))
+					SOUND.Get(word)->Resample(soundrate);
 			}
 			if (BMS.GetRegistArraySet()["BMP"].IsExists(word)) {
 				IMAGE.Load(i, BMS.GetRegistArraySet()["BMP"][word]);
@@ -418,5 +420,18 @@ namespace BmsHelper {
 		else {
 			return 0;
 		}
+	}
+
+	/*
+	 * call this function before bmsresource load sound
+	 */
+	void SetRate(double r) {
+		using namespace BmsResource;
+		BMS.GetTimeManager().SetRate(r);
+		soundrate = r;
+		/*for (unsigned int i = 0; i < BmsConst::WORD_MAX_COUNT; i++) {
+			Audio *audio = SOUND.Get(i);
+			if (audio) audio->Resample(1 / r);
+		}*/
 	}
 }

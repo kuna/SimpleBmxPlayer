@@ -31,16 +31,22 @@ public:
 
 
 // -------------------------------------------------------------
-#define MAX_LINE 50000
-#define MAX_LINE_CHARACTER 1024
+#define MAX_LINE_CHARACTER_	1024
+#define MAX_ARGS_COUNT_		100
 
 class _LR2SkinParser {
 private:
+	typedef char line_[MAX_LINE_CHARACTER_];
+	typedef const char* args_[MAX_ARGS_COUNT_];
+	typedef const char** args_read_;
+	struct line_v_ { line_ line__; };
+	struct args_v_ { args_ args__; };
+
+private:
 	Skin *s;
 	tinyxml2::XMLElement *cur_e;				// current base element
-	char lines[MAX_LINE][MAX_LINE_CHARACTER];	// contain included lines
-	char *line_args[MAX_LINE][100];				// contain arguments for each lines
-	int line_position[MAX_LINE];				// line position per each included files
+	std::vector<line_v_> lines_;					// contains line data
+	std::vector<args_v_> line_args_;				// contains arguments per line
 	int line_total;								// the line we totally read
 	char filepath[1024];						// current file name
 
@@ -71,7 +77,7 @@ private:
 	int LoadSkin(const char *filepath, int linebufferpos = 0);
 	void ParseSkin();
 	int ParseSkinLine(int line);			// returns next line to be parsed
-	void ParseSkinLineArgument(char *line, char** args);
+	void ParseSkinLineArgument(char *line, const char** args);
 private:
 	/*
 	 * under are a little macros

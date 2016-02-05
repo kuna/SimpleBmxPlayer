@@ -50,7 +50,6 @@ Player::Player(int playside, int playmode, int playertype) {
 	int notecnt
 		= score.totalnote
 		= bmsnote->GetNoteCount();
-	judgenotecnt = 0;
 	Reset(0);
 
 	// initialize gauge
@@ -316,7 +315,7 @@ int Player::CheckJudgeByTiming(int delta) {
 		return JUDGETYPE::JUDGE_EARLY;
 }
 
-void Player::MakeJudge(int judgetype, int channel, int fastslow, bool silent) {
+void Player::MakeJudge(int judgetype, int time, int channel, int fastslow, bool silent) {
 	// if judgetype is not valid (TOO LATE or TOO EARLY) then ignore
 	if (judgetype >= 10) return;
 	// get current judgeside
@@ -371,17 +370,19 @@ void Player::MakeJudge(int judgetype, int channel, int fastslow, bool silent) {
 		}
 		break;
 	}
+	// auto judge offset / add fast-slow grade
+	if (judgetype < JUDGETYPE::JUDGE_PGREAT) {
+		if (fastslow == 1) {
+			score.fast++;
+			if (judgecalibration) judgeoffset++;
+		}
+		else if (fastslow == 2) {
+			score.slow++;
+			if (judgecalibration) judgeoffset--;
+		}
+	}
 	// add current judge to grade
 	score.AddGrade(judgetype);
-	switch (judgetype) {
-	case JUDGETYPE::JUDGE_POOR:
-	case JUDGETYPE::JUDGE_BAD:
-	case JUDGETYPE::JUDGE_GOOD:
-	case JUDGETYPE::JUDGE_GREAT:
-	case JUDGETYPE::JUDGE_PGREAT:
-		judgenotecnt++;
-		break;
-	}
 	// current pgreat
 	*pv->pNotePerfect = score.score[5];
 	*pv->pNoteGreat = score.score[4];
@@ -427,10 +428,14 @@ void Player::MakeJudge(int judgetype, int channel, int fastslow, bool silent) {
 	*pv->pRate = rate_ * 100;
 	*pv->pMaxCombo = score.maxcombo;
 	// fullcombo/lastnote check
-	if (score.combo == score.totalnote)
-		pv->pOnfullcombo->Start();
-	if (judgenotecnt == score.totalnote)
-		pv->pOnlastnote->Start();
+	pv->pOnfullcombo->Trigger(score.combo == score.totalnote);
+	pv->pOnlastnote->Trigger(score.LastNoteFinished());
+
+	// record into playrecord
+	if (!silent)
+		playrecord.AddJudge(time, judgetype);
+	else
+		playrecord.AddJudge(time, judgetype + 10);
 	
 	if (!silent) {
 		switch (judgeside) {
@@ -553,7 +558,8 @@ void Player::Update() {
 			}
 			// if note is press(HELL CHARGE), judge from pressing status
 			else if (note.type == BmsNote::NOTE_PRESS) {
-				MakeJudge(ispress_[i] ? JUDGETYPE::JUDGE_PGREAT : JUDGETYPE::JUDGE_POOR, i);
+				MakeJudge(ispress_[i] ? JUDGETYPE::JUDGE_PGREAT : JUDGETYPE::JUDGE_POOR,
+					currenttime, i);
 				NextNote(i);
 			}
 			// if not autoplay, check timing for poor
@@ -566,7 +572,7 @@ void Player::Update() {
 				//
 				// if LNSTART late, get POOR for LNEND (2 miss)
 				if (note.type == BmsNote::NOTE_LNSTART) {
-					MakeJudge(JUDGETYPE::JUDGE_POOR, i);	// LNEND's poor
+					MakeJudge(JUDGETYPE::JUDGE_POOR, currenttime, i);	// LNEND's poor
 				}
 				// if LNEND late, reset longnote pressing
 				else if (note.type == BmsNote::NOTE_LNEND && islongnote_[i]) {
@@ -576,7 +582,7 @@ void Player::Update() {
 				// make POOR judge
 				// (CLAIM) if hidden note isn't ignored by NextAvailableNote(), 
 				//         you have to hit it or you'll get miss.
-				MakeJudge(JUDGETYPE::JUDGE_POOR, i);
+				MakeJudge(JUDGETYPE::JUDGE_POOR, currenttime, i);
 				NextNote(i);
 			}
 			else {
@@ -609,6 +615,10 @@ void Player::UpKey(int lane) {
 		// focus judging note to next one
 		NextNote(lane);
 	}
+
+	// record to replay
+	Uint32 currenttime = pBmstimer->GetTick();
+	playrecord.AddPress(currenttime, lane, 0);
 
 	// trigger time & set value
 	pLanepress[lane]->Stop();
@@ -675,6 +685,10 @@ void Player::PressKey(int lane) {
 		}
 	}
 
+	// record to replay
+	Uint32 currenttime = pBmstimer->GetTick();
+	playrecord.AddPress(currenttime, lane, 1);
+
 	//
 	// play sound
 	// - if current lane has no note, then don't play
@@ -738,13 +752,13 @@ void PlayerAuto::Update() {
 			}
 			// if note is press, just combo up
 			else if (note.type == BmsNote::NOTE_PRESS) {
-				MakeJudge(JUDGETYPE::JUDGE_PGREAT, i);
+				MakeJudge(JUDGETYPE::JUDGE_PGREAT, currenttime, i);
 			}
 			else {
 				// Autoplay -> Automatically play
 				if (note.type == BmsNote::NOTE_LNSTART) {
 					PLAYSOUND(note.value.ToInteger());
-					MakeJudge(JUDGETYPE::JUDGE_PGREAT, i, true);
+					MakeJudge(JUDGETYPE::JUDGE_PGREAT, currenttime, i, true);
 					// we won't judge on LNSTART
 					islongnote_[i] = true;
 					pv_->pLanehold[ni]->Start();
@@ -753,13 +767,13 @@ void PlayerAuto::Update() {
 				}
 				else if (note.type == BmsNote::NOTE_LNEND) {
 					// TODO we won't play sound(turn off) on LNEND
-					MakeJudge(JUDGETYPE::JUDGE_PGREAT, i);
+					MakeJudge(JUDGETYPE::JUDGE_PGREAT, currenttime, i);
 					islongnote_[i] = false;
 					pv_->pLanehold[ni]->Stop();
 				}
 				else if (note.type == BmsNote::NOTE_NORMAL) {
 					PLAYSOUND(note.value.ToInteger());
-					MakeJudge(JUDGETYPE::JUDGE_PGREAT, i);
+					MakeJudge(JUDGETYPE::JUDGE_PGREAT, currenttime, i);
 					pv_->pLaneup[ni]->Stop();
 					pv_->pLanepress[ni]->Start();
 				}
@@ -799,5 +813,5 @@ void PlayerAuto::SetGoal(double rate) {
 
 // ------ PlayerGhost ----------------------------
 
-PlayerGhost::PlayerGhost(int playside, int playmode)
+PlayerReplay::PlayerReplay(int playside, int playmode)
 	: Player(playside, playmode, PLAYERTYPE::AUTO) {}

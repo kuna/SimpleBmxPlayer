@@ -47,8 +47,17 @@ namespace {
 
 #pragma region PLAYERSCORE
 PlayerScore::PlayerScore() : PlayerScore(0) {}
-PlayerScore::PlayerScore(int notecnt) : totalnote(notecnt), combo(0), maxcombo(0) {
+PlayerScore::PlayerScore(int notecnt) : totalnote(notecnt) {
+	Clear();
+}
+void PlayerScore::Clear() {
 	memset(score, 0, sizeof(score));
+	combo = 0;
+	maxcombo = 0;
+	fast = slow = 0;
+}
+int PlayerScore::LastNoteFinished() {
+	return totalnote <= score[1] + score[2] + score[3] + score[4] + score[5];
 }
 int PlayerScore::CalculateEXScore() {
 	return score[JUDGETYPE::JUDGE_PGREAT] * 2 + score[JUDGETYPE::JUDGE_GREAT];
@@ -151,20 +160,52 @@ void PlayerScore::AddGrade(const int type) {
 #define GETINT(col, v)\
 	CHECKTYPE(col, SQLITE_INTEGER), v = sqlite3_column_int(stmt, col)
 
-void PlayerReplay::AddJudge(int judge) {
-	// TODO
+void PlayerReplayRecord::AddPress(int time, int lane, int value) {
+	objects.push_back({ time, lane, value });
 }
 
-void PlayerReplay::Clear() {
-	// TODO
+void PlayerReplayRecord::AddJudge(int time, int judge) {
+	objects.push_back({ time, 0xFF, judge });
 }
 
-void PlayerReplay::Serialize(RString &out) {
-	// TODO
+void PlayerReplayRecord::Clear() {
+	objects.clear();
 }
 
-void PlayerReplay::Parse(const RString& in) {
-	// TODO
+#define MAX_REPLAY_BUFFER 1024000	// about 1000kb
+void PlayerReplayRecord::Serialize(RString &out) {
+	char *buf = new char[MAX_REPLAY_BUFFER];
+	// 
+	//  0 ~ 32 byte: songhash
+	// 40 ~ 44 byte: op1 code
+	// 44 ~ 48 byte: op2 code
+	// 48 ~ 52 byte: gauge 
+	// 52 ~ 56 byte: rseed
+	// 56 ~ 72 byte: rate (float)
+	// (dummy)
+	// 120 byte: header end, replay body data starts
+	// (1 row per 4 * 3 = 12bytes)
+	//
+	strcpy(buf, songhash);
+
+	for (int i = 0; i < objects.size(); i++) {
+		memcpy(buf + 120 + i * 12, &objects[i], 12);
+	}
+
+	// zip compress
+
+	// serialize compressed data to base64
+
+	// delete original data
+	delete buf;
+}
+
+void PlayerReplayRecord::Parse(const RString& in) {
+	// parse base64 data into binary
+
+	// zip uncompress
+
+	// memcpy datas
 }
 
 namespace PlayerReplayHelper {

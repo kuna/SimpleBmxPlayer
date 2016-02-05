@@ -90,6 +90,7 @@ typedef struct {
 class Player {
 protected:
 	PlayerPlayConfig*	playconfig;
+	PlayerReplayRecord	playrecord;
 	int					playside;
 	int					playmode;
 	int					playertype;
@@ -126,7 +127,6 @@ protected:
 	// note/time information
 	PlayerScore				score;
 	BmsNoteManager*			bmsnote;
-	int						judgenotecnt;				// judged note count; used for OnLastNote
 	BmsNoteLane::Iterator	iter_judge_[20];			// current judging iterator
 	BmsNoteLane::Iterator	iter_end_[20];				// 
 	BmsNoteLane::Iterator	iter_begin_[20];				// 
@@ -144,7 +144,7 @@ protected:
 	int						judgecalibration;
 	int						CheckJudgeByTiming(int delta);
 	/** @brief make judgement. silent = true will not set JUDGE timer. */
-	void					MakeJudge(int delta, int channel, int fastslow = 0, bool silent = false);
+	void					MakeJudge(int delta, int time, int channel, int fastslow = 0, bool silent = false);
 	/** @brief is there any more note to draw/judge? */
 	bool					IsNoteAvailable(int lane);
 	void					NextNote(int lane);
@@ -152,7 +152,7 @@ public:
 	BmsNoteLane::Iterator	GetNoteIter(int lane) { return iter_judge_[lane]; };
 	BmsNoteLane::Iterator	GetNoteEndIter(int lane) { return iter_end_[lane]; };
 	BmsNoteLane::Iterator	GetNoteBeginIter(int lane) { return iter_begin_[lane]; };
-	BmsNoteManager*			GetNoteData();
+	BmsNoteManager*			GetNoteData() { return bmsnote; };
 
 	/*
 	 * @description
@@ -230,9 +230,22 @@ public:
  * Played from Replay data.
  * If this player activated, `Replay` mark will show up.
  */
-class PlayerGhost : public Player {
+class PlayerReplay : public Player {
 public:
-	PlayerGhost(int playside = 0, int playmode = PLAYTYPE::KEY7);
+	PlayerReplay(int playside = 0, int playmode = PLAYTYPE::KEY7);
+};
+
+/*
+ * @description
+ * Only for pacemaker
+ * If Replay exists, make pace as replay
+ */
+class PlayerPacemaker : public Player {
+public:
+	PlayerPacemaker(int playside = 0, int playmode = PLAYTYPE::KEY7);
+	//
+	virtual void Update();
+	double GetRate();
 };
 
 
