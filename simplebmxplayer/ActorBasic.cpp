@@ -504,6 +504,8 @@ void SkinNumberObject::Render() {
 }
 
 void SkinNumberObject::CacheInt(int n) {
+	bool negative = n < 0;
+	n = abs(n);
 	if (!length) {
 		itoa(n, buf, 10);
 	}
@@ -520,9 +522,9 @@ void SkinNumberObject::CacheInt(int n) {
 		}
 	}
 	if (mode24) {
-		if (n < 0) {
-			char t1[] = "0123456789";
-			char t2[] = "ABCDEFGHIJ";
+		if (negative) {
+			char t1[] = "0123456789*";
+			char t2[] = "ABCDEFGHIJ#";
 			for (int i = 0; i < strlen(buf); i++) {
 				for (int j = 0; j < strlen(t1); j++) {
 					if (buf[i] == t1[j]) {
