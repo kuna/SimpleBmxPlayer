@@ -605,6 +605,14 @@ void Player::UpKey(int lane) {
 	Uint32 currenttime = pBmstimer->GetTick();
 	playrecord.AddPress(currenttime, lane, 0);
 
+	// if scratch, then set timer
+	// (TODO)
+
+	// convert SCDOWN to SCUP
+	// (comment: in popn music, we don't do it.)
+	if (lane == PlayerKeyIndex::P1_BUTTONSCDOWN) lane = PlayerKeyIndex::P1_BUTTONSCUP;
+	if (lane == PlayerKeyIndex::P2_BUTTONSCDOWN) lane = PlayerKeyIndex::P2_BUTTONSCUP;
+
 	// generally upkey do nothing
 	// but works only if you pressing longnote
 	if (islongnote_[lane] && GetCurrentNote(lane)->type == BmsNote::NOTE_LNEND) {
@@ -630,12 +638,30 @@ void Player::UpKey(int lane) {
 }
 
 void Player::PressKey(int lane) {
+	// if gameover then ignore
+	if (IsDead()) return;
 	// if already pressed then ignore
 	if (ispress_[lane]) return;
 	// if not DP then make lane single
 	if (playmode < 10) lane = lane % 10;
-	// if gameover then ignore
-	if (IsDead()) return;
+
+	//
+	// record to replay
+	//
+	Uint32 currenttime = pBmstimer->GetTick();
+	playrecord.AddPress(currenttime, lane, 1);
+
+	// if scratch, then set timer
+	// (TODO)
+
+	// convert SCDOWN to SCUP (do it before judge)
+	// (comment: in popn music, we don't do it.)
+	if (lane == PlayerKeyIndex::P1_BUTTONSCDOWN) lane = PlayerKeyIndex::P1_BUTTONSCUP;
+	if (lane == PlayerKeyIndex::P2_BUTTONSCDOWN) lane = PlayerKeyIndex::P2_BUTTONSCUP;
+
+	/*
+	 * judge process start
+	 */
 
 	// pressed!
 	ispress_[lane] = true;
@@ -647,12 +673,6 @@ void Player::PressKey(int lane) {
 	// because current key index will be changed after making judgement
 	//
 	BmsNoteLane::Iterator iter_sound_ = iter_judge_[lane];
-
-	//
-	// record to replay
-	//
-	Uint32 currenttime = pBmstimer->GetTick();
-	playrecord.AddPress(currenttime, lane, 1);
 
 	//
 	// make judge
@@ -720,6 +740,7 @@ bool Player::IsDead() {
 PlayerAuto::PlayerAuto(int playside, int playmode)
 	: Player(playside, playmode, PLAYERTYPE::AUTO) {
 	targetrate = 1;
+	ispacemaker = false;
 }
 
 void PlayerAuto::Update() {
@@ -773,7 +794,7 @@ void PlayerAuto::Update() {
 			else {
 				// Autoplay -> Automatically play
 				if (note.type == BmsNote::NOTE_LNSTART) {
-					PLAYSOUND(note.value.ToInteger());
+					if (!ispacemaker) PLAYSOUND(note.value.ToInteger());
 					MakeJudge(newjudge, currenttime, i, true);
 					// we won't judge on LNSTART
 					islongnote_[i] = true;
@@ -788,7 +809,7 @@ void PlayerAuto::Update() {
 					pv_->pLanehold[ni]->Stop();
 				}
 				else if (note.type == BmsNote::NOTE_NORMAL) {
-					PLAYSOUND(note.value.ToInteger());
+					if (!ispacemaker) PLAYSOUND(note.value.ToInteger());
 					MakeJudge(newjudge, currenttime, i);
 					pv_->pLaneup[ni]->Stop();
 					pv_->pLanepress[ni]->Start();
@@ -820,6 +841,10 @@ void PlayerAuto::UpKey(int channel) {
 
 void PlayerAuto::SetGoal(double rate) {
 	targetrate = rate;
+}
+
+void PlayerAuto::SetAsPacemaker(bool pacemaker) {
+	ispacemaker = pacemaker;
 }
 
 

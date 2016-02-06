@@ -380,6 +380,7 @@ namespace GamePlay {
 		PLAYER[0] = new Player(0, playmode);
 		PLAYER[1] = new PlayerAuto(1, playmode);
 		((PlayerAuto*)PLAYER[1])->SetGoal(7.0 / 9.0);
+		((PlayerAuto*)PLAYER[1])->SetAsPacemaker();
 #endif
 
 		// random?
@@ -508,8 +509,11 @@ namespace GamePlay {
 		case PlayerKeyIndex::P1_BUTTON7:
 			channel = 7;
 			break;
-		case PlayerKeyIndex::P1_BUTTON8:
+		case PlayerKeyIndex::P1_BUTTONSCUP:
 			channel = 0;
+			break;
+		case PlayerKeyIndex::P1_BUTTONSCDOWN:
+			channel = 8;
 			break;
 		case PlayerKeyIndex::P1_BUTTON9:
 			channel = 9;
@@ -535,8 +539,11 @@ namespace GamePlay {
 		case PlayerKeyIndex::P2_BUTTON7:
 			channel = 17;
 			break;
-		case PlayerKeyIndex::P2_BUTTON8:
+		case PlayerKeyIndex::P2_BUTTONSCUP:
 			channel = 10;
+			break;
+		case PlayerKeyIndex::P2_BUTTONSCDOWN:
+			channel = 18;
 			break;
 		case PlayerKeyIndex::P2_BUTTON9:
 			channel = 19;
@@ -563,37 +570,37 @@ namespace GamePlay {
 		 * speed change (arrow key / WKEY+START)
 		 * - SETTING::Speeddelta
 		 */
-		int func = PlayerKeyIndex::NONE;
+		int func = -1;
 		switch (code) {
-		case SDLK_F12:
+		case SDL_SCANCODE_F12:
 			// refresh float speed and toggle floating mode
 			PLAYER[0]->DeltaSpeed(0);
 			PLAYERINFO[0].playconfig.usefloatspeed
 				= !PLAYERINFO[0].playconfig.usefloatspeed;
 			break;
-		case SDLK_UP:
+		case SDL_SCANCODE_UP:
 			// ONLY 1P. may need to PRS+WKEY if you need to control 2P.
 			if (PLAYERINFO[0].playconfig.usefloatspeed)
 				PLAYER[0]->DeltaFloatSpeed(0.001);
 			else
 				PLAYER[0]->DeltaSpeed(0.05);
 			break;
-		case SDLK_DOWN:
+		case SDL_SCANCODE_DOWN:
 			// if pressed start button, float speed will change.
 			if (PLAYERINFO[0].playconfig.usefloatspeed)
 				PLAYER[0]->DeltaFloatSpeed(-0.001);
 			else
 				PLAYER[0]->DeltaSpeed(-0.05);
 			break;
-		case SDLK_RIGHT:
+		case SDL_SCANCODE_RIGHT:
 			if (pressedCtrl) PLAYER[0]->DeltaLift(0.05);
 			else PLAYER[0]->DeltaSudden(0.05);
 			break;
-		case SDLK_LEFT:
+		case SDL_SCANCODE_LEFT:
 			if (pressedCtrl) PLAYER[0]->DeltaLift(-0.05);
 			else PLAYER[0]->DeltaSudden(-0.05);
 			break;
-		case SDLK_LCTRL:
+		case SDL_SCANCODE_LCTRL:
 			pressedCtrl = true;
 			break;
 		default:
@@ -617,7 +624,7 @@ namespace GamePlay {
 	}
 
 	void ScenePlay::KeyUp(int code) {
-		int func = PlayerKeyIndex::NONE;
+		int func = -1;
 		switch (code) {
 		case SDLK_LCTRL:
 			pressedCtrl = false;

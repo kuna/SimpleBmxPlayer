@@ -496,7 +496,7 @@ namespace PlayerKeyHelper {
 					return i;
 			}
 		}
-		return PlayerKeyIndex::NONE;
+		return -1;
 	}
 
 	void LoadKeyConfig(PlayerKeyConfig &config, XMLNode *base) {
@@ -531,25 +531,36 @@ namespace PlayerKeyHelper {
 	}
 
 	void DefaultKeyConfig(PlayerKeyConfig &config) {
-		config.keycode[PlayerKeyIndex::P1_BUTTON1][0] = SDLK_z;
-		config.keycode[PlayerKeyIndex::P1_BUTTON2][0] = SDLK_s;
-		config.keycode[PlayerKeyIndex::P1_BUTTON3][0] = SDLK_x;
-		config.keycode[PlayerKeyIndex::P1_BUTTON4][0] = SDLK_d;
-		config.keycode[PlayerKeyIndex::P1_BUTTON5][0] = SDLK_c;
-		config.keycode[PlayerKeyIndex::P1_BUTTON6][0] = SDLK_f;
-		config.keycode[PlayerKeyIndex::P1_BUTTON7][0] = SDLK_v;
-		config.keycode[PlayerKeyIndex::P1_BUTTONSC][0] = SDLK_LSHIFT;
-		config.keycode[PlayerKeyIndex::P1_BUTTONSC][1] = SDLK_LCTRL;
+		config.keycode[PlayerKeyIndex::P1_BUTTON1][0] = SDL_SCANCODE_Z;
+		config.keycode[PlayerKeyIndex::P1_BUTTON2][0] = SDL_SCANCODE_S;
+		config.keycode[PlayerKeyIndex::P1_BUTTON3][0] = SDL_SCANCODE_X;
+		config.keycode[PlayerKeyIndex::P1_BUTTON4][0] = SDL_SCANCODE_D;
+		config.keycode[PlayerKeyIndex::P1_BUTTON5][0] = SDL_SCANCODE_C;
+		config.keycode[PlayerKeyIndex::P1_BUTTON6][0] = SDL_SCANCODE_F;
+		config.keycode[PlayerKeyIndex::P1_BUTTON7][0] = SDL_SCANCODE_V;
+		config.keycode[PlayerKeyIndex::P1_BUTTON1][1] = 1001;
+		config.keycode[PlayerKeyIndex::P1_BUTTON2][1] = 1002;
+		config.keycode[PlayerKeyIndex::P1_BUTTON3][1] = 1003;
+		config.keycode[PlayerKeyIndex::P1_BUTTON4][1] = 1004;
+		config.keycode[PlayerKeyIndex::P1_BUTTON5][1] = 1005;
+		config.keycode[PlayerKeyIndex::P1_BUTTON6][1] = 1006;
+		config.keycode[PlayerKeyIndex::P1_BUTTON7][1] = 1007;
+		config.keycode[PlayerKeyIndex::P1_BUTTONSCUP][0] = SDL_SCANCODE_LSHIFT;
+		config.keycode[PlayerKeyIndex::P1_BUTTONSCDOWN][0] = SDL_SCANCODE_LCTRL;
+		config.keycode[PlayerKeyIndex::P1_BUTTONSCUP][1] = 1100;					// up
+		config.keycode[PlayerKeyIndex::P1_BUTTONSCDOWN][1] = 1101;					// down
+		config.keycode[PlayerKeyIndex::P1_BUTTONSTART][0] = SDL_SCANCODE_1;
 
-		config.keycode[PlayerKeyIndex::P2_BUTTON1][0] = SDLK_m;
-		config.keycode[PlayerKeyIndex::P2_BUTTON2][0] = SDLK_k;
-		config.keycode[PlayerKeyIndex::P2_BUTTON3][0] = SDLK_COMMA;
-		config.keycode[PlayerKeyIndex::P2_BUTTON4][0] = SDLK_l;
-		config.keycode[PlayerKeyIndex::P2_BUTTON5][0] = SDLK_PERIOD;
-		config.keycode[PlayerKeyIndex::P2_BUTTON6][0] = SDLK_SEMICOLON;
-		config.keycode[PlayerKeyIndex::P2_BUTTON7][0] = SDLK_SLASH;
-		config.keycode[PlayerKeyIndex::P2_BUTTONSC][0] = SDLK_RSHIFT;
-		config.keycode[PlayerKeyIndex::P2_BUTTONSC][1] = SDLK_RCTRL;
+		config.keycode[PlayerKeyIndex::P2_BUTTON1][0] = SDL_SCANCODE_M;
+		config.keycode[PlayerKeyIndex::P2_BUTTON2][0] = SDL_SCANCODE_K;
+		config.keycode[PlayerKeyIndex::P2_BUTTON3][0] = SDL_SCANCODE_COMMA;
+		config.keycode[PlayerKeyIndex::P2_BUTTON4][0] = SDL_SCANCODE_L;
+		config.keycode[PlayerKeyIndex::P2_BUTTON5][0] = SDL_SCANCODE_PERIOD;
+		config.keycode[PlayerKeyIndex::P2_BUTTON6][0] = SDL_SCANCODE_SEMICOLON;
+		config.keycode[PlayerKeyIndex::P2_BUTTON7][0] = SDL_SCANCODE_SLASH;
+		config.keycode[PlayerKeyIndex::P2_BUTTONSCUP][0] = SDL_SCANCODE_RSHIFT;
+		config.keycode[PlayerKeyIndex::P2_BUTTONSCDOWN][0] = SDL_SCANCODE_RCTRL;
+		config.keycode[PlayerKeyIndex::P2_BUTTONSTART][0] = SDL_SCANCODE_2;
 	}
 }
 

@@ -308,21 +308,21 @@ namespace Game {
 					End();
 				}
 				else if (e.type == SDL_KEYDOWN) {
-					switch (e.key.keysym.sym) {
-					case SDLK_ESCAPE:
+					switch (e.key.keysym.scancode) {
+					case SDL_SCANCODE_ESCAPE:
 						End();
 						break;
-					case SDLK_F7:
+					case SDL_SCANCODE_F7:
 						showfps = !showfps;
 						break;
 					default:
-						SCENE->KeyDown(e.key.keysym.sym, e.key.repeat);
+						SCENE->KeyDown(e.key.keysym.scancode, e.key.repeat);
 					}
 				}
 				else if (e.type == SDL_KEYUP) {
-					switch (e.key.keysym.sym) {
+					switch (e.key.keysym.scancode) {
 					default:
-						SCENE->KeyUp(e.key.keysym.sym);
+						SCENE->KeyUp(e.key.keysym.scancode);
 					}
 				}
 				else if (e.type == SDL_JOYBUTTONDOWN) {

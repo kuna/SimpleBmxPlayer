@@ -215,6 +215,7 @@ public:
  */
 class PlayerAuto : public Player {
 	double targetrate;
+	bool ispacemaker;
 
 public:
 	PlayerAuto(int playside = 0, int playmode = PLAYTYPE::KEY7);
@@ -224,6 +225,7 @@ public:
 	virtual void UpKey(int channel);
 
 	void SetGoal(double rate);
+	void SetAsPacemaker(bool pacemaker = true);
 };
 
 /*
@@ -235,7 +237,6 @@ class PlayerReplay : public Player {
 public:
 	PlayerReplay(int playside = 0, int playmode = PLAYTYPE::KEY7);
 };
-
 
 /*
  * @description
