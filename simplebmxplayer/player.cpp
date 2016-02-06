@@ -304,14 +304,15 @@ int Player::CheckJudgeByTiming(int delta) {
 		return JUDGETYPE::JUDGE_GOOD;
 	else if (abs_delta <= BmsJudgeTiming::BAD)
 		return JUDGETYPE::JUDGE_BAD;
-	else if (abs_delta <= BmsJudgeTiming::POOR)
-		return JUDGETYPE::JUDGE_POOR;
 	else if (delta > 0 && abs_delta <= BmsJudgeTiming::NPOOR)
 		// ÍöPOOR is ONLY allowed in case of early pressing
 		return JUDGETYPE::JUDGE_NPOOR;
 	else if (delta < 0)
-		return JUDGETYPE::JUDGE_LATE;
+		// if later then BAD timing, then it's POOR
+		//return JUDGETYPE::JUDGE_LATE;
+		return JUDGETYPE::JUDGE_POOR;
 	else
+		// eariler then ÍöPOOR -> no judge
 		return JUDGETYPE::JUDGE_EARLY;
 }
 
@@ -565,7 +566,7 @@ void Player::Update() {
 			// if not autoplay, check timing for poor
 			else if (CheckJudgeByTiming(
 				(GetTimeFromBar(iter_judge_[i]->first) - time_sec) * 1000 + judgeoffset
-				) == JUDGETYPE::JUDGE_LATE) {
+				) == JUDGETYPE::JUDGE_POOR) {
 				//
 				// if late, POOR judgement is always occured
 				// but we need to take care of in case of LongNote
@@ -613,7 +614,7 @@ void Player::UpKey(int lane) {
 		int judge = CheckJudgeByTiming(delta);
 		if (judge == JUDGETYPE::JUDGE_EARLY || judge == JUDGETYPE::JUDGE_NPOOR)
 			judge = JUDGETYPE::JUDGE_POOR;
-		MakeJudge(judge, currenttime, lane, delta < 0 ? 1 : 2);
+		MakeJudge(judge, currenttime, lane, delta > 0 ? 1 : 2);
 		// you're not longnote anymore~
 		pLanehold[lane]->Stop();
 		islongnote_[lane] = false;
@@ -658,11 +659,11 @@ void Player::PressKey(int lane) {
 	//
 	if (IsNoteAvailable(lane)) {
 		double t = pBmstimer->GetTick() / 1000.0;
-		int delta = (t - GetTimeFromBar(iter_judge_[lane]->first)) * 1000 + judgeoffset;
-		int fastslow = delta < 0 ? 1 : 2;
+		int delta = (GetTimeFromBar(iter_judge_[lane]->first) - t) * 1000 + judgeoffset;
+		int fastslow = delta > 0 ? 1 : 2;
 		int judge = CheckJudgeByTiming(delta);
-		// only continue judging if judge isn't too fast or too late
-		if (judge != JUDGETYPE::JUDGE_LATE && judge != JUDGETYPE::JUDGE_EARLY) {
+		// only continue judging if judge isn't too fast (no judge)
+		if (judge != JUDGETYPE::JUDGE_EARLY) {
 			// if ÍöPOOR,
 			// then don't process note - just judge as NPOOR
 			if (judge == JUDGETYPE::JUDGE_NPOOR) {

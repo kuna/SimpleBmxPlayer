@@ -36,7 +36,7 @@ o 리프트/서든/배속설정 작업.
 o 플레이어 오브젝트
   o 플레이어가 실제로 키입력을 받고 처리하게 할 것
   o DP 플레이 가능하도록 하기
-  - PlayerPacemaker 오브젝트 만들기 (1)
+  o PlayerPacemaker 오브젝트 만들기 (1)
 o fast/slow 도입
 - utf8 파일경로 제대로 못읽는 문제 해결하기.
 o freq
