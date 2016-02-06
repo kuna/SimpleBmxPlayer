@@ -382,7 +382,7 @@ namespace BmsHelper {
 		 */
 		if (currentbga.mainbga != 0) {
 			Image* img = BmsResource::IMAGE.Get(currentbga.mainbga);
-			if (img) img->Sync(BMSVALUE.OnBgaMain->GetTick());
+			if (img) img->Sync(BMSVALUE.OnBgaMain->GetTick() / BmsResource::soundrate);
 			return img;
 		}
 		else {
@@ -400,7 +400,7 @@ namespace BmsHelper {
 		*/
 		if (currentbga.layer1bga != 0) {
 			Image* img = BmsResource::IMAGE.Get(currentbga.layer1bga);
-			if (img) img->Sync(BMSVALUE.OnBgaLayer1->GetTick());
+			if (img) img->Sync(BMSVALUE.OnBgaLayer1->GetTick() / BmsResource::soundrate);
 			return img;
 		}
 		else {
@@ -414,7 +414,7 @@ namespace BmsHelper {
 		*/
 		if (currentbga.layer2bga != 0) {
 			Image* img = BmsResource::IMAGE.Get(currentbga.layer2bga);
-			if (img) img->Sync(BMSVALUE.OnBgaLayer2->GetTick());
+			if (img) img->Sync(BMSVALUE.OnBgaLayer2->GetTick() / BmsResource::soundrate);
 			return img;
 		}
 		else {

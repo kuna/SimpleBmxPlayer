@@ -40,15 +40,16 @@ void Audio::Resample(double rate) {
 	if (rate == 1) return;
 
 	int m = 1, n = 1;
-	Mix_Chunk *newsample = new Mix_Chunk;
+	Mix_Chunk *newsample = (Mix_Chunk*)SDL_malloc(sizeof(Mix_Chunk));
 	int original_length = sdlaudio->alen;
 	int length = original_length * rate;
-
-	newsample->allocated = sdlaudio->allocated;
+	
+	int allocsize = sizeof(Uint8) * length;
+	newsample->allocated = allocsize;
 	newsample->abuf = NULL;
 	newsample->alen = length;
 	newsample->volume = sdlaudio->volume;
-	Uint8 *data1 = new Uint8[length];
+	Uint8 *data1 = (Uint8*)SDL_malloc(allocsize);// new Uint8[length];
 	Uint8 *start = sdlaudio->abuf;		// position of old buffer
 	Uint8 *start1 = data1;				// position of new buffer
 

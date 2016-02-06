@@ -116,11 +116,6 @@ protected:
 	bool				dieonnohealth;		// should I die when there's no health?
 	double				notehealth[6];		// health up/down per note (good, great, pgreat)
 
-#ifdef CRYPTMANAGER_
-	// DON'T CHEAT! check for value malpulation.
-	// (TODO) processed by CryptManager
-#endif
-
 	// current judge/bar/channel related information
 	double					health;						// player's health
 
@@ -148,12 +143,18 @@ protected:
 	/** @brief is there any more note to draw/judge? */
 	bool					IsNoteAvailable(int lane);
 	void					NextNote(int lane);
+	
+	/* internal function */
+	void					PlaySound(BmsWord& value);
 public:
 	BmsNoteLane::Iterator	GetNoteIter(int lane) { return iter_judge_[lane]; };
 	BmsNoteLane::Iterator	GetNoteEndIter(int lane) { return iter_end_[lane]; };
 	BmsNoteLane::Iterator	GetNoteBeginIter(int lane) { return iter_begin_[lane]; };
 	BmsNoteManager*			GetNoteData() { return bmsnote; };
 	PlayerScore*			GetScoreData() { return &score; };
+
+	// etc
+	bool					playsound;
 
 	/*
 	 * @description
@@ -206,6 +207,9 @@ public:
 	double GetSpeedMul();
 	/** @brief is player dead? */
 	bool IsDead();
+
+	/** @brief should play sound? (related to pacemaker) */
+	void Silent(bool silent = true);
 };
 
 /*
@@ -215,7 +219,6 @@ public:
  */
 class PlayerAuto : public Player {
 	double targetrate;
-	bool ispacemaker;
 
 public:
 	PlayerAuto(int playside = 0, int playmode = PLAYTYPE::KEY7);
@@ -225,7 +228,6 @@ public:
 	virtual void UpKey(int channel);
 
 	void SetGoal(double rate);
-	void SetAsPacemaker(bool pacemaker = true);
 };
 
 /*

@@ -339,7 +339,7 @@ namespace GamePlay {
 		 */
 		LoadBms(*Bmspath);
 		playmode = BmsResource::BMS.GetKey();
-		//BmsHelper::SetRate(0.5);
+		BmsHelper::SetRate(0.8);
 
 		/*
 		 * Bms metadata apply (switches/values)
@@ -379,8 +379,8 @@ namespace GamePlay {
 #else
 		PLAYER[0] = new Player(0, playmode);
 		PLAYER[1] = new PlayerAuto(1, playmode);
+		PLAYER[1]->Silent();
 		((PlayerAuto*)PLAYER[1])->SetGoal(7.0 / 9.0);
-		((PlayerAuto*)PLAYER[1])->SetAsPacemaker();
 #endif
 
 		// random?

@@ -20,6 +20,7 @@ Player::Player(int playside, int playmode, int playertype) {
 	this->playside = playside;
 	this->playmode = playmode;
 	this->playertype = playertype;
+	this->playsound = false;
 
 	// initalize basic variables/timers
 	pv = &PLAYERVALUE[playside];
@@ -190,6 +191,13 @@ void Player::SetGauge(double v) {
 	*pv->pGauge = newgauge_int;
 }
 
+void Player::Silent(bool b) {
+	playsound = b;
+}
+
+void Player::PlaySound(BmsWord& value) {
+	if (playsound) PLAYSOUND(value);
+}
 
 
 
@@ -723,7 +731,7 @@ void Player::PressKey(int lane) {
 		if (iter_sound_ == iter_begin_[lane]) return;
 		--iter_sound_;
 	}
-	PLAYSOUND(iter_sound_->second.value.ToInteger());
+	PlaySound(iter_sound_->second.value);
 }
 
 bool Player::IsDead() {
@@ -740,7 +748,6 @@ bool Player::IsDead() {
 PlayerAuto::PlayerAuto(int playside, int playmode)
 	: Player(playside, playmode, PLAYERTYPE::AUTO) {
 	targetrate = 1;
-	ispacemaker = false;
 }
 
 void PlayerAuto::Update() {
@@ -794,7 +801,7 @@ void PlayerAuto::Update() {
 			else {
 				// Autoplay -> Automatically play
 				if (note.type == BmsNote::NOTE_LNSTART) {
-					if (!ispacemaker) PLAYSOUND(note.value.ToInteger());
+					PlaySound(note.value);
 					MakeJudge(newjudge, currenttime, i, true);
 					// we won't judge on LNSTART
 					islongnote_[i] = true;
@@ -809,7 +816,7 @@ void PlayerAuto::Update() {
 					pv_->pLanehold[ni]->Stop();
 				}
 				else if (note.type == BmsNote::NOTE_NORMAL) {
-					if (!ispacemaker) PLAYSOUND(note.value.ToInteger());
+					PlaySound(note.value);
 					MakeJudge(newjudge, currenttime, i);
 					pv_->pLaneup[ni]->Stop();
 					pv_->pLanepress[ni]->Start();
@@ -841,10 +848,6 @@ void PlayerAuto::UpKey(int channel) {
 
 void PlayerAuto::SetGoal(double rate) {
 	targetrate = rate;
-}
-
-void PlayerAuto::SetAsPacemaker(bool pacemaker) {
-	ispacemaker = pacemaker;
 }
 
 
