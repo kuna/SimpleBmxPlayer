@@ -52,11 +52,11 @@ Image::Image(const std::wstring& filepath, bool loop) : Image() {
 }
 
 bool Image::Load(const std::wstring& filepath, bool loop) {
-	char path_utf8[1024];
-	ENCODING::wchar_to_utf8(filepath.c_str(), path_utf8, 1024);
+	RString path_utf8 = WStringToRString(filepath);
 	return Load(path_utf8, loop);
 }
 #endif
+
 Image::Image(const std::string& filepath, bool loop) : Image() {
 	Load(filepath.c_str(), loop);
 }
@@ -65,7 +65,7 @@ bool Image::Load(const std::string& filepath, bool loop) {
 	this->loop = loop;
 
 	// check is it movie or image
-	std::string ext = IO::get_fileext(filepath);	COMMON::lower(ext);
+	std::string ext = get_fileext(filepath);	MakeLower(ext);
 	if (ext == ".mpg" || ext == ".avi" || ext == ".mpeg"
 		|| ext == ".m1v") {
 		if (_movie_available) {
@@ -85,6 +85,14 @@ bool Image::Load(const std::string& filepath, bool loop) {
 			return false;
 	}
 	return true;
+}
+
+bool Image::Load(FileBasic* f, bool loop = true) {
+	// don't support movie in this case.
+	// TODO: support movie!
+	Game::RMUTEX.lock();
+	sdltex = IMG_LoadTexture_RW(Game::RENDERER, f->GetSDLRW(), 1);
+	Game::RMUTEX.unlock();
 }
 
 bool Image::LoadMovie(const char *path) {

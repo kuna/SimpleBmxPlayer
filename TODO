@@ -24,8 +24,8 @@ o Autoplay 및 정상종료.
 o black/white object 만들어주기
 o 레인에 LINE/JUDGELINE 객체 그리기
 o 타이틀폰트 fallback으로 그려지게 만들기.
-- target vs
 - button object (HIFIX/MINFIX ...) (4)
+- text stretching
 o lr2skin을 자동으로 xml로 변환 및 path 그것으로 바꾸기 & 설정파일 저장하기.
 
 o support controller
@@ -37,6 +37,8 @@ o 플레이어 오브젝트
   o 플레이어가 실제로 키입력을 받고 처리하게 할 것
   o DP 플레이 가능하도록 하기
   o PlayerPacemaker 오브젝트 만들기 (1)
+    o target vs
+    - mybest
 o fast/slow 도입
 - utf8 파일경로 제대로 못읽는 문제 해결하기.
 o freq

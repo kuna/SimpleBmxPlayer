@@ -49,5 +49,5 @@ typedef struct {
 } MD5_CTX;
 
 void MD5Init(MD5_CTX *mdContext);
-void MD5Update(MD5_CTX *mdContext, unsigned char *inBuf, unsigned int inLen);
+void MD5Update(MD5_CTX *mdContext, const char *inBuf, unsigned int inLen);
 void MD5Final(MD5_CTX *mdContext);

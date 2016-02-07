@@ -30,5 +30,31 @@ namespace GamePlay {
 		//virtual void MouseEndDrag(int x, int y);
 	};
 
+	/*
+	 * @brief
+	 * parameter for playing game
+	 */
+	struct PARAMETER {
+		/* well.. bms related part will be changed into SongInfo struct, later. */
+		RString bmspath[10];
+		// requires in case of replay
+		RString bmshash[10];
+		// if course play, then play as much as that count.
+		// if not, just count 1.
+		int courseplay;
+		int op1;
+		int op2;
+		int gauge;
+
+		// program option
+		int startmeasure;
+		int endmeasure;
+		int repeat;
+		bool bga;
+		bool replay;
+		bool autoplay;
+		int rseed;
+	} P;
+
 	extern ScenePlay*	SCENE;
 };

@@ -25,10 +25,11 @@ public:
 	virtual int ReadAll(char *p) = 0;
 	virtual int Read(RString &str, size_t size) = 0;
 	virtual int Read(char *p, size_t size) = 0;
-	virtual size_t GetFileSize() = 0;
+	virtual size_t GetSize() = 0;
 	virtual bool IsEOF() = 0;
 	virtual void Reset() = 0;
 	virtual void Seek(size_t pos) = 0;
+	virtual SDL_RWops* GetSDLRW() = 0;
 
 	/* not implemented but necessary methods */
 	bool GetCRC32(uint32_t *iRet);
@@ -40,9 +41,15 @@ public:
 class File: public FileBasic {
 private:
 	FILE *fp;
-	RString fname;
+#if _WIN32
+	std::wstring fpath_w;
+	std::wstring fmode_w;
+#endif
+	std::string fpath;
+	std::string fmode;
 public:
 	File();
+	File(const char* filename, const char* mode = "r");
 	~File();
 	bool Open(const char* filename, const char* mode = "r");
 	void Close();
@@ -52,16 +59,44 @@ public:
 	virtual int ReadAll(char *p);
 	virtual int Read(RString &str, size_t size);
 	virtual int Read(char *p, size_t size);
-	virtual size_t GetFileSize();
+	virtual size_t GetSize();
 	virtual bool IsEOF();
 	virtual void Reset();
 	virtual void Seek(size_t pos);
+	virtual SDL_RWops* GetSDLRW();
 
 	RString& GetFilePath();
 };
 
+class FileMemory : public FileBasic {
+public:
+	/*
+	 * returns memory object used for SDL
+	 * (dont modify file data during SDL works with this handle)
+	 */
+	FileMemory();
+	FileMemory(const char* data, size_t size);
+	void Set(const char* data, size_t size);
+	void Close();
+	virtual int ReadLine(RString &str);
+	virtual int ReadAll(RString &str);
+	virtual int ReadAll(char *p);
+	virtual int Read(RString &str, size_t size);
+	virtual int Read(char *p, size_t size);
+	virtual bool IsEOF();
+	virtual void Reset();
+	virtual void Seek(size_t pos);
+	virtual size_t GetSize();
+	virtual SDL_RWops* GetSDLRW();
+private:
+	std::vector<char> m_data;
+	size_t m_pos;
+};
+
 namespace FileHelper {
-	/** @brief set basepath. useful for ConvertPathToAbsolute()
+	/*
+	 * @brief
+	 * set basepath. useful for ConvertPathToAbsolute()
 	 * TODO: if archive file given as input, then open archive file(mount).
 	 */
 	void PushBasePath(const char *path);
@@ -91,4 +126,8 @@ namespace FileHelper {
 	 * if all of these are failed, return false.
 	 */
 	bool GetAnyAvailableFilePath(RString& path);
+
+	bool LoadFile(const char *relpath, FileBasic **f);
+	bool CurrentDirectoryIsZipFile();
+	bool GetDirDate(const char* relpath);
 }

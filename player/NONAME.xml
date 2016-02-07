@@ -11,8 +11,8 @@
 
 <KeyConfig>
     <Key0>
-        <Index0>0</Index0>
-        <Index1>0</Index1>
+        <Index0>225</Index0>
+        <Index1>1100</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
         <Index4>0</Index4>
@@ -21,8 +21,8 @@
         <Index7>0</Index7>
     </Key0>
     <Key1>
-        <Index0>97</Index0>
-        <Index1>0</Index1>
+        <Index0>29</Index0>
+        <Index1>1001</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
         <Index4>0</Index4>
@@ -31,8 +31,8 @@
         <Index7>0</Index7>
     </Key1>
     <Key2>
-        <Index0>115</Index0>
-        <Index1>0</Index1>
+        <Index0>22</Index0>
+        <Index1>1002</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
         <Index4>0</Index4>
@@ -41,8 +41,8 @@
         <Index7>0</Index7>
     </Key2>
     <Key3>
-        <Index0>100</Index0>
-        <Index1>0</Index1>
+        <Index0>27</Index0>
+        <Index1>1003</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
         <Index4>0</Index4>
@@ -51,8 +51,8 @@
         <Index7>0</Index7>
     </Key3>
     <Key4>
-        <Index0>32</Index0>
-        <Index1>0</Index1>
+        <Index0>7</Index0>
+        <Index1>1004</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
         <Index4>0</Index4>
@@ -61,8 +61,8 @@
         <Index7>0</Index7>
     </Key4>
     <Key5>
-        <Index0>106</Index0>
-        <Index1>0</Index1>
+        <Index0>6</Index0>
+        <Index1>1005</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
         <Index4>0</Index4>
@@ -71,8 +71,8 @@
         <Index7>0</Index7>
     </Key5>
     <Key6>
-        <Index0>107</Index0>
-        <Index1>0</Index1>
+        <Index0>9</Index0>
+        <Index1>1006</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
         <Index4>0</Index4>
@@ -81,8 +81,8 @@
         <Index7>0</Index7>
     </Key6>
     <Key7>
-        <Index0>108</Index0>
-        <Index1>0</Index1>
+        <Index0>25</Index0>
+        <Index1>1007</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
         <Index4>0</Index4>
@@ -91,9 +91,9 @@
         <Index7>0</Index7>
     </Key7>
     <Key8>
-        <Index0>1073742049</Index0>
-        <Index1>1073742048</Index1>
-        <Index2>59</Index2>
+        <Index0>224</Index0>
+        <Index1>1101</Index1>
+        <Index2>0</Index2>
         <Index3>0</Index3>
         <Index4>0</Index4>
         <Index5>0</Index5>
@@ -111,7 +111,7 @@
         <Index7>0</Index7>
     </Key9>
     <Key10>
-        <Index0>0</Index0>
+        <Index0>229</Index0>
         <Index1>0</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
@@ -121,7 +121,7 @@
         <Index7>0</Index7>
     </Key10>
     <Key11>
-        <Index0>0</Index0>
+        <Index0>16</Index0>
         <Index1>0</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
@@ -131,7 +131,7 @@
         <Index7>0</Index7>
     </Key11>
     <Key12>
-        <Index0>0</Index0>
+        <Index0>14</Index0>
         <Index1>0</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
@@ -141,7 +141,7 @@
         <Index7>0</Index7>
     </Key12>
     <Key13>
-        <Index0>0</Index0>
+        <Index0>54</Index0>
         <Index1>0</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
@@ -151,7 +151,7 @@
         <Index7>0</Index7>
     </Key13>
     <Key14>
-        <Index0>0</Index0>
+        <Index0>15</Index0>
         <Index1>0</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
@@ -161,7 +161,7 @@
         <Index7>0</Index7>
     </Key14>
     <Key15>
-        <Index0>0</Index0>
+        <Index0>55</Index0>
         <Index1>0</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
@@ -171,7 +171,7 @@
         <Index7>0</Index7>
     </Key15>
     <Key16>
-        <Index0>0</Index0>
+        <Index0>51</Index0>
         <Index1>0</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
@@ -181,7 +181,7 @@
         <Index7>0</Index7>
     </Key16>
     <Key17>
-        <Index0>0</Index0>
+        <Index0>56</Index0>
         <Index1>0</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
@@ -191,7 +191,7 @@
         <Index7>0</Index7>
     </Key17>
     <Key18>
-        <Index0>0</Index0>
+        <Index0>228</Index0>
         <Index1>0</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
@@ -211,7 +211,7 @@
         <Index7>0</Index7>
     </Key19>
     <Key20>
-        <Index0>0</Index0>
+        <Index0>30</Index0>
         <Index1>0</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
@@ -311,7 +311,7 @@
         <Index7>0</Index7>
     </Key29>
     <Key30>
-        <Index0>0</Index0>
+        <Index0>31</Index0>
         <Index1>0</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
@@ -413,11 +413,12 @@
 </KeyConfig>
 
 <PlayConfig>
-    <speed>200.5</speed>
+    <speed>263</speed>
     <speedtype>0</speedtype>
-    <floatspeed>543.23223177908585</floatspeed>
-    <sudden>1</sudden>
-    <lift>-3</lift>
+    <floatspeed>300</floatspeed>
+    <usefloat>1</usefloat>
+    <sudden>0</sudden>
+    <lift>0</lift>
     <op_1p>0</op_1p>
     <op_2p>0</op_2p>
     <gaugetype>0</gaugetype>
@@ -426,6 +427,8 @@
     <longnote>0</longnote>
     <morenote>0</morenote>
     <judge>0</judge>
+    <judgeoffset>0</judgeoffset>
+    <judgecalibration>0</judgecalibration>
     <scratch>0</scratch>
     <freq>100</freq>
 </PlayConfig>

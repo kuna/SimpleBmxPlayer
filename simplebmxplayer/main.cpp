@@ -9,29 +9,132 @@
 #include "gameplay.h"
 #include "logger.h"
 
-namespace Parameter {
-	void help();
-	// TODO: char **argv version is necessary.
-	bool parse(int argc, _TCHAR **argv);
-}
 
 namespace Parameter {
 	void help() {
-		wprintf(L"SimpleBmxPlayer\n================\n-- How to use -- \n\n"
-			L"argument: (bmx file) (options ...)\n"
-			L"options:"
-			L"-noimage: don't load image files (ignore image channel)\n"
-			L"-ms: start from n-th measure\n"
-			L"-repeat: repeat bms for n-times\n"
-			L"keys:\n"
-			L"default key config is -\n(1P) LS Z S X D C F V (2P) M K , L . ; / RS\nyou can change it by changing preset files.\n"
-			L"Press F5 to reload BMS file only.\n"
-			L"Press F6 to reload BMS Resource file only.\n"
-			L"Press - to move -5 measures.\n"
-			L"Press + to move +5 measures.\n"
-			L"Press Up/Down to change speed.\n"
-			L"Press Right/Left to change lane.\n"
-			L"Press Shift+Right/Left to change lift.\n");
+		printf("SimpleBmxPlayer\n================\n-- How to use -- \n\n"
+			"argument: (bmx file) (options ...)\n"
+			"- .bmx(bms;bml;bme;pms) file must put in\n"
+			"- course play available (test1.bms;test2.bms;test3.bms)\n"
+			"- archive file available (ex: ./ex.zip/test.bms)\n"
+			"<options>\n"
+			"-nobga: don't load image files (ignore image channel)\n"
+			"-replay: show replay file (if no replay file, it won't turn on)\n"
+			"-auto: autoplayed by DJ\n"
+			"-op__: set op for player (RANDOM ... etc; only support int value)\n"
+			"\n"
+			"-g_: set gauge (0: GROOVE, 1: EASY, 2: HARD, 3: EXHARD, 4: HAZARD)"
+			"-n______: set user profile to play (default: NONAME)\n"
+			"-s_: start from n-th measure\n"
+			"-e_: end(cut) at n-th measure\n"
+			"-r_: repeat bms for n-times\n"
+			"\n"
+			"<keys>\n"
+			"default key config is -\n(1P) LS Z S X D C F V (2P) M K , L . ; / RS\nyou can change it by changing preset files.\n"
+			"[Up/Down]		change speed.\n"
+			"[Right/Left]	change sudden.\n"
+			"[F12]			float speed toggle\n"
+			"[Start+WB/BB]	change speed\n"
+			"[Start+SC]		(if float on) change float speed.\n"
+			"[Start+SC]		(if sudden on) change sudden.\n"
+			"[Start+SC]		(if sudden off) change lift.\n"
+			"[Start+VEFX]	float speed toggle\n"
+			"[Start double]	toggle sudden.\n"
+			"\n"
+			"(WB: white button; generally call 1,3,5,7 buttons.)\n"
+			"(BB: blue? black? btton; generally calls 2, 4, 6 buttons)\n"
+			"(SC: scratch; LShift on keyboard)\n"
+			);
+	}
+
+	bool parse(int argc, char **argv) {
+		// bmspath : must required option
+		// if not specified, return false.
+		// (TODO)
+		if (argc <= 1) {
+			help();
+			return false;
+		}
+
+		/*
+		* Relative Directory could be changed when *.bmx files are given in argv
+		* So, we need to reset CurrentDirectory in Win32
+		* (Don't know this behaviour is either occured in Linux/Mac ...)
+		*/
+		RString basepath = get_filedir(argv[0]);
+		FileHelper::PushBasePath(basepath.c_str());
+
+		/*
+		 * set default values (from option)
+		 */
+		Game::LoadOption();
+		
+		/*
+		 * first figure out what player currently is
+		 */
+		Game::P.username = Game::SETTING.username;//"NONAME";
+		for (int i = 2; i < argc; i++) {
+			if (BeginsWith(argv[i], "-n")) {
+				Game::P.username = argv[i];
+			}
+		}
+
+		/*
+		 * Load player information
+		 * This process should be made in SCENE::PLAYER originally.
+		 */
+		if (!PlayerInfoHelper::LoadPlayerInfo(PLAYERINFO[0], Game::P.username.c_str())) {
+			LOG->Warn("Cannot find userdata %s. Set default.", Game::P.username.c_str());
+			PLAYERINFO[0].name = Game::SETTING.username;
+			PlayerInfoHelper::DefaultPlayerInfo(PLAYERINFO[0]);
+		}
+
+		/*
+		 * set default value from player / program settings
+		 */
+		GamePlay::P.bmspath[0] = argv[1];
+		GamePlay::P.bmshash[0] = "abcd1234";	// (TODO)
+		GamePlay::P.courseplay = 1;
+		GamePlay::P.gauge = PLAYERINFO[0].playconfig.gaugetype;
+		GamePlay::P.op1 = PLAYERINFO[0].playconfig.op_1p;
+		GamePlay::P.op2 = PLAYERINFO[0].playconfig.op_2p;
+		
+		GamePlay::P.bga = Game::SETTING.bga;
+		GamePlay::P.startmeasure = 0;
+		GamePlay::P.endmeasure = 999;
+		GamePlay::P.repeat = 1;
+		GamePlay::P.replay = false;
+		GamePlay::P.rseed = time(0) % 65536;
+
+		// overwrite default options
+		for (int i = 2; i < argc; i++) {
+			if (BeginsWith(argv[i], "-op"))  {
+				int op = atoi(argv[i] + 2);
+				GamePlay::P.op1 = op % 10;
+				GamePlay::P.op2 = op / 10;
+			}
+			else if (BeginsWith(argv[i], "-replay")) {
+				GamePlay::P.replay = true;
+			}
+			else if (BeginsWith(argv[i], "-auto")) {
+				GamePlay::P.autoplay = true;
+			}
+			else if (BeginsWith(argv[i], "-nobga")) {
+				GamePlay::P.bga = false;
+			}
+			else if (BeginsWith(argv[i], "-g")) {
+				GamePlay::P.gauge = atoi(argv[i] + 2);
+			}
+			else if (BeginsWith(argv[i], "-s")) {
+				GamePlay::P.startmeasure = atoi(argv[i] + 2);
+			}
+			else if (BeginsWith(argv[i], "-e")) {
+				GamePlay::P.endmeasure = atoi(argv[i] + 2);
+			}
+			else if (BeginsWith(argv[i], "-r")) {
+				GamePlay::P.repeat = atoi(argv[i] + 2);
+			}
+		}
 	}
 
 	bool parse(int argc, _TCHAR **argv) {
@@ -39,25 +142,27 @@ namespace Parameter {
 		if (argc <= 1)
 			return false;
 
-		// set BMS path from argument
-		ENCODING::wchar_to_utf8(argv[1], buf, 10240);
-		STRPOOL->Set("Bmspath", buf);
+		// convert all argument to utf8 and pass it to parse(utf8)
+		char **argv_utf8 = new char*[argc];
+		for (int i = 0; i < argc; i++) {
+			RString buf = WStringToRString(argv[i]);
+			argv_utf8[i] = new char[buf.size() + 1];
+			strcpy(argv_utf8[i], buf.c_str());
+		}
+		bool r = parse(argc, argv_utf8);
+		for (int i = 0; i < argc; i++)
+			delete[] argv_utf8[i];
 
-		delete buf;
-		return true;
+		delete[] argv_utf8;
+		return r;
 	}
 }
 
+#ifdef _WIN32
 int _tmain(int argc, _TCHAR **argv) {
-	/*
-	 * Relative Directory could be changed when *.bmx files are given in argv
-	 * So, we need to reset CurrentDirectory in Win32
-	 * (Don't know this behaviour is either occured in Linux/Mac ...)
-	 */
-	char utf8path[1024];
-	ENCODING::wchar_to_utf8(IO::get_filedir(argv[0]).c_str(), utf8path, 1024);
-	FileHelper::PushBasePath(utf8path);
-
+#else
+int main(int argc, char **argv) {
+#endif
 	/*
 	 * pool is an part of game system
 	 * MUST be initalized very first
@@ -67,6 +172,7 @@ int _tmain(int argc, _TCHAR **argv) {
 	/*
 	 * Parse parameter for specific option
 	 * if failed, exit.
+	 * (sets player / program settings in here)
 	 */
 	if (!Parameter::parse(argc, argv)) {
 		LOG->Critical("Failed to parse parameter properly.");
@@ -77,19 +183,10 @@ int _tmain(int argc, _TCHAR **argv) {
 
 	/* 
 	 * Game basic initalization
+	 * (load option here)
 	 * (our start scene is playing, cause it's simple bmx player..?)
 	 */
 	Game::Initialize();
-
-	/*
-	 * This process should be made in SCENE::PLAYER, but there isn't that scene here.
-	 * so, load player information in here.
-	 */
-	if (!PlayerInfoHelper::LoadPlayerInfo(PLAYERINFO[0], Game::SETTING.username)) {
-		LOG->Warn("Cannot find userdata %s. Set default.", Game::SETTING.username.c_str());
-		PLAYERINFO[0].name = Game::SETTING.username;
-		PlayerInfoHelper::DefaultPlayerInfo(PLAYERINFO[0]);
-	}
 
 	/*
 	 * Start main scene

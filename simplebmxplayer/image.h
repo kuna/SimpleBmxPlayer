@@ -1,6 +1,7 @@
 #pragma once
 
 #include "global.h"
+#include "file.h"
 #include "SDL/SDL_image.h"
 #include "SDL/SDL_video.h"
 
@@ -46,6 +47,7 @@ public:
 #endif
 	Image(const std::string& filepath, bool loop = true);
 	bool Load(const std::string& filepath, bool loop = true);
+	bool Load(FileBasic* f, bool loop = true);
 	Image();
 	~Image();
 	void Release();

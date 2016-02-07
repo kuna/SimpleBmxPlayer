@@ -48,14 +48,17 @@ namespace BmsResource {
 		if (BMS.GetRegistArraySet()["WAV"].IsNotExists(channel))
 			return false;
 		RString wav_path = BMS.GetRegistArraySet()["WAV"][channel];
-		RString alter_ogg_path = IO::substitute_extension(BMS.GetRegistArraySet()["WAV"][channel], ".ogg");
-		FileHelper::ConvertPathToAbsolute(wav_path);
-		FileHelper::ConvertPathToAbsolute(alter_ogg_path);
-		Audio *audio = NULL;
-		if (IO::is_file_exists(alter_ogg_path))
-			audio = new Audio(alter_ogg_path, channel.ToInteger());
-		else if (IO::is_file_exists(wav_path))
-			audio = new Audio(wav_path, channel.ToInteger());
+		RString alter_ogg_path = substitute_extension(BMS.GetRegistArraySet()["WAV"][channel], ".ogg");
+		// don't use absolute path here
+		//FileHelper::ConvertPathToAbsolute(wav_path);
+		//FileHelper::ConvertPathToAbsolute(alter_ogg_path);
+		Audio *audio = new Audio();
+		FileBasic *file = 0;
+		if (FileHelper::IsFile(alter_ogg_path))
+			FileHelper::LoadFile(alter_ogg_path, &file);
+		else if (FileHelper::IsFile(wav_path))
+			FileHelper::LoadFile(wav_path, &file);
+		if (file) audio->Load(file, channel.ToInteger());
 
 		if (audio && audio->IsLoaded()) {
 			wav_table[channel.ToInteger()] = audio;
@@ -80,9 +83,24 @@ namespace BmsResource {
 		if (BMS.GetRegistArraySet()["BMP"].IsNotExists(channel))
 			return false;
 		RString bmp_path = BMS.GetRegistArraySet()["BMP"][channel];
-		FileHelper::ConvertPathToAbsolute(bmp_path);
-		Image *image = new Image(bmp_path);
+		// don't use absolute path here
+		//FileHelper::ConvertPathToAbsolute(bmp_path);
+		Image *image = new Image();
+		/*
+		 * currently reading from FileBasic doesn't support ffmpeg
+		 * so we should check if we're reading from memory or not
+		 */
+		if (FileHelper::CurrentDirectoryIsZipFile()) {
+			FileBasic *file = 0;
+			FileHelper::LoadFile(bmp_path, &file);
+			if (file) image->Load(file);
+		}
+		else {
+			image->Load(bmp_path);
+		}
+
 		if (image->IsLoaded()) {
+			FileHelper::ConvertPathToAbsolute(bmp_path);
 			bmp_table[channel.ToInteger()] = image;
 		}
 		else {
@@ -201,8 +219,11 @@ namespace BmsHelper {
 		isbmsloading = true;
 		BMSVALUE.OnSongLoadingEnd->Stop();
 
-		// load WAV/BMP
-		FileHelper::PushBasePath(IO::get_filedir(bmspath).c_str());
+		/*
+		 * load WAV/BMP
+		 * uses file class to load BMS from archived one.
+		 */
+		FileHelper::PushBasePath(get_filedir(bmspath).c_str());
 		for (unsigned int i = 0; i < BmsConst::WORD_MAX_COUNT && isbmsloading; i++) {
 			BmsWord word(i);
 			if (BMS.GetRegistArraySet()["WAV"].IsExists(word)) {

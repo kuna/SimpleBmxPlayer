@@ -186,7 +186,7 @@ namespace Game {
 		}
 	}
 
-	bool Initialize() {
+	void LoadOption() {
 		/*
 		 * Load basic setting file ...
 		 */
@@ -194,7 +194,9 @@ namespace Game {
 			LOG->Warn("Cannot load settings files... Use Default settings...");
 			GameSettingHelper::DefaultSetting(SETTING);
 		}
+	}
 
+	bool Initialize() {
 		/*
 		 * Basic instances initalization
 		 */
@@ -215,7 +217,9 @@ namespace Game {
 		}
 		Mix_AllocateChannels(1296);
 		int flag = SDL_WINDOW_SHOWN;
-		if (SETTING.fullscreen)
+		if (SETTING.fullscreen == 1)
+			flag |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+		else if (SETTING.fullscreen > 1)
 			flag |= SDL_WINDOW_FULLSCREEN;
 		if (SETTING.resizable)
 			flag |= SDL_WINDOW_RESIZABLE;

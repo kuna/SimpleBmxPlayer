@@ -56,23 +56,23 @@ void PlayerScore::Clear() {
 	maxcombo = 0;
 	fast = slow = 0;
 }
-int PlayerScore::LastNoteFinished() {
+int PlayerScore::LastNoteFinished() const {
 	return totalnote <= score[1] + score[2] + score[3] + score[4] + score[5];
 }
-int PlayerScore::GetJudgedNote() {
+int PlayerScore::GetJudgedNote() const {
 	return score[1] + score[2] + score[3] + score[4] + score[5];
 }
-int PlayerScore::CalculateEXScore() {
+int PlayerScore::CalculateEXScore() const {
 	return score[JUDGETYPE::JUDGE_PGREAT] * 2 + score[JUDGETYPE::JUDGE_GREAT];
 }
-double PlayerScore::CurrentRate() {
+double PlayerScore::CurrentRate() const {
 	return (double)CalculateEXScore() / GetJudgedNote() / 2;
 }
-int PlayerScore::CalculateScore() { return CalculateRate() * 200000; }
-double PlayerScore::CalculateRate() {
+int PlayerScore::CalculateScore() const { return CalculateRate() * 200000; }
+double PlayerScore::CalculateRate() const {
 	return (double)CalculateEXScore() / totalnote / 2;
 }
-int PlayerScore::CalculateGrade() {
+int PlayerScore::CalculateGrade() const {
 	double rate = CalculateRate();
 	if (rate >= 8.0 / 9)
 		return GRADETYPE::GRADE_AAA;
@@ -140,12 +140,14 @@ void PlayerScore::AddGrade(const int type) {
 #define QUERY_TABLE_SELECT\
 	"SELECT * FROM record WHERE songhash=?;"
 #define QUERY_TABLE_INSERT\
-	"INSERT OR REPLACE INTO record VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+	"INSERT OR REPLACE INTO record VALUES"\
+	"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
 #define QUERY_TABLE_DELETE\
 	"DELETE FROM record WHERE songhash=?"
 #define QUERY_DB_BEGIN		"BEGIN;"
 #define QUERY_DB_COMMIT		"COMMIT;"
-#define QUERY_BIND_TEXT(p)	sqlite3_bind_text(stmt, 1, p, -1, SQLITE_STATIC);
+#define QUERY_BIND_TEXT(idx, p)	sqlite3_bind_text(stmt, idx, p, -1, SQLITE_STATIC);
+#define QUERY_BIND_INT(idx, p)	sqlite3_bind_int(stmt, idx, p);
 
 #define RUNQUERY(q)\
 	bool r;\
@@ -170,8 +172,12 @@ void PlayerReplayRecord::AddPress(int time, int lane, int value) {
 	objects.push_back({ time, lane, value });
 }
 
-void PlayerReplayRecord::AddJudge(int time, int judge) {
-	objects.push_back({ time, 0xFF, judge });
+void PlayerReplayRecord::AddJudge(int time, int playside, int judge, int fastslow, int silent) {
+	objects.push_back({ 
+		time, 
+		0xA0 + playside, 
+		judge + 16 * fastslow + 256 * silent 
+	});
 }
 
 void PlayerReplayRecord::Clear() {
@@ -189,11 +195,13 @@ void PlayerReplayRecord::Serialize(RString &out) {
 	// 52 ~ 56 byte: rseed
 	// 56 ~ 72 byte: rate (float)
 	// (dummy)
+	// 116 ~ 120 byte: header size
 	// 120 byte: header end, replay body data starts
 	// (1 row per 4 * 3 = 12bytes)
 	//
 	strcpy(buf, songhash);
 
+	memcpy(buf + 116, (void*)objects.size(), 4);
 	for (int i = 0; i < objects.size(); i++) {
 		memcpy(buf + 120 + i * 12, &objects[i], 12);
 	}
@@ -210,11 +218,19 @@ void PlayerReplayRecord::Parse(const RString& in) {
 	// parse base64 data into binary
 
 	// zip uncompress
+	char *buf;
 
 	// memcpy datas
+	int isize;
+	memcpy(&isize, buf + 116, 4);
+	for (int i = 0; i < isize; i++) {
+		struct ReplayObject _tmp;
+		memcpy(buf + 120 + i * 12, &_tmp, 12);
+		objects.push_back(_tmp);
+	}
 }
 
-namespace PlayerReplayHelper {
+namespace PlayerRecordHelper {
 	/** [private] sqlite3 for querying player record */
 	namespace {
 		// private; used for load/save PlayerRecord
@@ -271,7 +287,7 @@ namespace PlayerReplayHelper {
 
 		/*
 		 * text - songhash
-		 * text - scorehash
+		 * text - scorehash (only for in/out data)
 		 * int - playcount
 		 * int - clearcount
 		 * int - failcount
@@ -279,17 +295,16 @@ namespace PlayerReplayHelper {
 		 * int - minbp
 		 * int - maxcombo
 		 * int[5] - grade [pg, gr, gd, bd, pr]
-		 * text - replay
 		 */
 		bool QueryPlayRecord(PlayerSongRecord& record, const char *songhash) {
 			RUNQUERY(QUERY_TABLE_SELECT);
-			QUERY_BIND_TEXT(songhash);
+			QUERY_BIND_TEXT(1, songhash);
 			// only get one query
 			if (sqlite3_step(stmt) == SQLITE_ROW) {
 				RString replay;
 				int op1, op2, rseed;
 				GETTEXT(0, record.hash);
-				GETTEXT(1, record.scorehash);
+				//GETTEXT(1, record.scorehash);		// TODO: load scorehash and check validation
 				GETINT(2, record.playcount);
 				GETINT(3, record.clearcount);
 				GETINT(4, record.failcount);
@@ -301,8 +316,8 @@ namespace PlayerReplayHelper {
 				GETINT(10, record.score.score[5]);
 				GETINT(11, record.score.score[2]);
 				GETINT(12, record.score.score[1]);
+				GETINT(13, record.score.score[0]);
 				// COMMENT: ÍöPOOR?
-				GETTEXT(13, replay);					// replay
 				record.replay.Parse(replay);
 				r = true;
 			}
@@ -310,9 +325,31 @@ namespace PlayerReplayHelper {
 		}
 
 		bool InsertPlayRecord(const PlayerSongRecord& record, const char* songhash) {
-			RUNQUERY(QUERY_TABLE_SELECT);
-			QUERY_BIND_TEXT(songhash);
-			Begin();
+			// before insert, get previous play record if available
+			// if exists, then set record with more higher score
+			PlayerSongRecord record_;
+			if (QueryPlayRecord(record_, songhash)) {
+				if (record.score.CalculateEXScore() >= record_.score.CalculateEXScore())
+					record_ = record;
+			}
+			else {
+				record_ = record;
+			}
+			RUNQUERY(QUERY_TABLE_INSERT);
+			QUERY_BIND_TEXT(1, songhash);
+			QUERY_BIND_TEXT(2, "");		// TODO: generate scorehash
+			QUERY_BIND_INT(3, record.playcount);
+			QUERY_BIND_INT(4, record.clearcount);
+			QUERY_BIND_INT(5, record.failcount);
+			QUERY_BIND_INT(6, record.status);
+			QUERY_BIND_INT(7, record.minbp);
+			QUERY_BIND_INT(8, record.maxcombo);
+			QUERY_BIND_INT(9, record.score.score[5]);
+			QUERY_BIND_INT(10, record.score.score[4]);
+			QUERY_BIND_INT(11, record.score.score[3]);
+			QUERY_BIND_INT(12, record.score.score[2]);
+			QUERY_BIND_INT(13, record.score.score[1]);
+			QUERY_BIND_INT(14, record.score.score[0]);
 			CHECKQUERY(SQLITE_DONE);
 			if (r) r = Commit();
 			FINISHQUERY();
@@ -320,7 +357,7 @@ namespace PlayerReplayHelper {
 
 		bool DeletePlayRecord(const char* songhash) {
 			RUNQUERY(QUERY_TABLE_DELETE);
-			QUERY_BIND_TEXT(songhash);
+			QUERY_BIND_TEXT(1, songhash);
 			CHECKQUERY(SQLITE_DONE);
 			FINISHQUERY();
 		}
@@ -329,9 +366,9 @@ namespace PlayerReplayHelper {
 	bool LoadPlayerRecord(PlayerSongRecord& record, const char* name, const char* songhash) {
 		// create & convert db path to absolute
 		RString absolute_db_path = ssprintf("../player/%s.db", name);
-		FileHelper::ConvertPathToAbsolute(absolute_db_path);
-		RString absolute_db_dir = FileHelper::GetParentDirectory(absolute_db_path);
-		FileHelper::CreateFolder(absolute_db_dir);
+		FileHelper::ConvertPathToSystem(absolute_db_path);
+		//RString absolute_db_dir = FileHelper::GetParentDirectory(absolute_db_path);
+		//FileHelper::CreateFolder(absolute_db_dir);
 		// start to query DB
 		ASSERT(sql == 0);
 		if (!OpenSQL(absolute_db_path))
@@ -342,14 +379,31 @@ namespace PlayerReplayHelper {
 		return recordfound && CloseSQL();
 	}
 
-	bool SavePlayerRecord(const PlayerSongRecord& record, const char* name) {
-		// TODO
-		return false;
+	bool SavePlayerRecord(const PlayerSongRecord& record, const char* name, const char *songhash) {
+		RString absolute_db_path = ssprintf("../player/%s.db", name);
+		FileHelper::ConvertPathToSystem(absolute_db_path);
+		RString absolute_db_dir = FileHelper::GetParentDirectory(absolute_db_path);
+		FileHelper::CreateFolder(absolute_db_dir);
+		// start to query DB
+		ASSERT(sql == 0);
+		if (!OpenSQL(absolute_db_path))
+			return false;
+		if (!IsRecordTableExist())
+			CreateRecordTable();
+		bool processrecord = InsertPlayRecord(record, songhash);
+		return processrecord && CloseSQL();
 	}
 
 	bool DeletePlayerRecord(const char* name, const char* songhash) {
-		// TODO
-		return false;
+		RString absolute_db_path = ssprintf("../player/%s.db", name);
+		FileHelper::ConvertPathToSystem(absolute_db_path);
+		//RString absolute_db_dir = FileHelper::GetParentDirectory(absolute_db_path);
+		//FileHelper::CreateFolder(absolute_db_dir);
+		ASSERT(sql == 0);
+		if (!OpenSQL(absolute_db_path))
+			return false;
+		bool processrecord = DeletePlayRecord(songhash);
+		return processrecord && CloseSQL();
 	}
 }
 

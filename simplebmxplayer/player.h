@@ -154,7 +154,7 @@ public:
 	PlayerScore*			GetScoreData() { return &score; };
 
 	// etc
-	bool					playsound;
+	bool					issilent;		// only score, don't play sound / graph / timer.
 
 	/*
 	 * @description
@@ -238,6 +238,15 @@ public:
 class PlayerReplay : public Player {
 public:
 	PlayerReplay(int playside = 0, int playmode = PLAYTYPE::KEY7);
+
+	void SetReplay(const PlayerReplayRecord &rep);
+	virtual void Update();
+	virtual void PressKey(int channel);
+	virtual void UpKey(int channel);
+
+private:
+	PlayerReplayRecord::Iterator iter_;
+	PlayerReplayRecord replay;
 };
 
 /*

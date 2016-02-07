@@ -303,8 +303,7 @@ void SkinNoteObject::Render() {
 	bool isln = false;
 	double lnprevpos;
 	for (auto it = p->GetNoteIter(lane); it != p->GetNoteEndIter(lane); ++it) {
-		double notepos = 
-			BmsResource::BMS.GetBarManager().GetPosByBar(it->first) - pos;
+		double notepos = it->second.pos - pos;
 		notepos *= speed;
 		if (notepos < 0) notepos = 0;
 		switch (it->second.type) {
@@ -335,8 +334,7 @@ void SkinNoteObject::Render() {
 	if (it_prev == p->GetNoteBeginIter(lane)) return;
 	isln = false;
 	for (--it_prev; it_prev != p->GetNoteBeginIter(lane); --it_prev) {
-		double notepos =
-			BmsResource::BMS.GetBarManager().GetPosByBar(it_prev->first) - pos;
+		double notepos = it_prev->second.pos - pos;
 		notepos *= speed;
 		// only break loop when out-of-screen
 		if (notepos < 0 && !isln) break;

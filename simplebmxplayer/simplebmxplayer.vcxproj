@@ -157,6 +157,7 @@
     <Library Include="..\lib\x86\SDL2_mixer.lib" />
     <Library Include="..\lib\x86\SDL2_ttf.lib" />
     <Library Include="..\lib\x86\SDL_FontCache.lib" />
+    <Library Include="..\lib\x86\zdll.lib" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="simplebmxplayer.rc" />

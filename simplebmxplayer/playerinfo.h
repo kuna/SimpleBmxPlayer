@@ -54,13 +54,13 @@ public:
 
 	// just a utils
 	void Clear();
-	int LastNoteFinished();
-	int GetJudgedNote();
-	double CurrentRate();
-	int CalculateEXScore();
-	int CalculateScore();
-	double CalculateRate();
-	int CalculateGrade();
+	int LastNoteFinished() const;
+	int GetJudgedNote() const;
+	double CurrentRate() const;
+	int CalculateEXScore() const;
+	int CalculateScore() const;
+	double CalculateRate() const;
+	int CalculateGrade() const;
 	void AddGrade(const int type);
 	int Slow() { slow++; }
 	int Fast() { fast++; }
@@ -70,14 +70,20 @@ public:
 * PlayRecordObject: objects consisting play record
 * PlayerReplayRecord: a record of a playing
 */
-struct PlayReplayObject {
+struct ReplayObject {
 	unsigned int time;
-	/* if judgement, then lane == 255 */
+	/*
+	 * single side: 0xAF
+	 * double side: 0xBF
+	 */
 	unsigned int lane;
 	/*
-	* note press: 1, up: 0
-	* if judge: 0 ~ 5
-	*/
+	 * note press: 1, up: 0
+	 * if judge: 0 ~ 5
+	 * fast: +0x0010 (16)
+	 * slow: +0x0020 (32)
+	 * silent: +0x0100 (256)
+	 */
 	unsigned int value;
 };
 
@@ -92,10 +98,13 @@ private:
 	int rseed;
 	float rate;
 	// store judge for each note
-	std::vector<PlayReplayObject> objects;
+	std::vector<ReplayObject> objects;
 public:
+	typedef std::vector<ReplayObject>::iterator Iterator;
+	Iterator Begin() { return objects.begin(); }
+	Iterator End() { return objects.end(); }
 	void AddPress(int time, int lane, int press);
-	void AddJudge(int time, int judge);
+	void AddJudge(int time, int playside, int judge, int fastslow, int silent = 0);
 	void Clear();
 	void Serialize(RString& out);		// Get base64 zipped string
 	void Parse(const RString& in);		// Input base64 zipped string
@@ -109,8 +118,6 @@ public:
 	// TODO: add date
 	// used for identifying song
 	RString hash;
-	// used for preventing data corruption
-	RString scorehash;
 	// records less important for game play 
 	int playcount;
 	int clearcount;
@@ -147,7 +154,7 @@ public:
 	/** @brief saves SongRecord object to sqlite db. */
 };
 
-namespace PlayerReplayHelper {
+namespace PlayerRecordHelper {
 	bool LoadPlayerRecord(PlayerSongRecord& record, const char* playername, const char* songhash);
 	bool SavePlayerRecord(const PlayerSongRecord& record, const char* playername);
 	bool DeletePlayerRecord(const char* playername, const char* songhash);

@@ -39,7 +39,9 @@ namespace GamePlay {
 	SkinRenderTree*		rtree;
 	SkinOption			skinoption;
 
+	// play related
 	int					playmode;			// PLAYTYPE..?
+	PlayerSongRecord	record;
 
 	bool LoadSkin(const char* path) {
 		// load skin (lr2skin, csv, xml)
@@ -51,11 +53,11 @@ namespace GamePlay {
 
 		// load skin (default) option, and set Environment.
 		// MUST do before loading skin resource.
-		RString skinname = IO::get_filename(path);
-		RString skinnamespace = IO::get_filename(IO::get_filedir(IO::get_filedir(path)));
+		RString skinname = get_filename(path);
+		RString skinnamespace = get_filename(get_filedir(get_filedir(path)));
 		RString optionpath = "../system/skin/" + skinnamespace + "/" + skinname + ".xml";
 		FileHelper::ConvertPathToSystem(optionpath);
-		IO::make_parent_directory_recursive(IO::get_filedir(optionpath));
+		FileHelper::CreateFolder(get_filedir(optionpath));
 		if (!skinoption.LoadSkinOption(optionpath)) {
 			playskin.GetDefaultOption(&skinoption);
 			skinoption.SaveSkinOption(optionpath);
@@ -64,7 +66,7 @@ namespace GamePlay {
 
 		// load skin resource
 		// - skin resources are relative to .xml file.
-		RString skindirpath = IO::get_filedir(path);
+		RString skindirpath = get_filedir(path);
 		FileHelper::ConvertPathToAbsolute(skindirpath);
 		FileHelper::PushBasePath(skindirpath);
 		rtree->SetObject(playskin.skinlayout
@@ -339,7 +341,7 @@ namespace GamePlay {
 		 */
 		LoadBms(*Bmspath);
 		playmode = BmsResource::BMS.GetKey();
-		BmsHelper::SetRate(0.8);
+		//BmsHelper::SetRate(0.8);
 
 		/*
 		 * Bms metadata apply (switches/values)
@@ -368,6 +370,14 @@ namespace GamePlay {
 		SWITCH_OFF("IsBACKBMP");
 
 		/*
+		 * before create play object,
+		 * load previouse play record
+		 */
+		PlayerRecordHelper::LoadPlayerRecord(record, "", "");
+
+		// TODO
+
+		/*
 		 * Create player object for playing
 		 * MUST create before load skin
 		 * MUST create after Bms loaded (rate configured)
@@ -378,17 +388,17 @@ namespace GamePlay {
 		PLAYER[1] = NULL;
 #else
 		PLAYER[0] = new Player(0, playmode);
-		PLAYER[1] = new PlayerAuto(1, playmode);
+		PLAYER[1] = new PlayerAuto(1, playmode);	// MUST always single?
 		PLAYER[1]->Silent();
-		((PlayerAuto*)PLAYER[1])->SetGoal(7.0 / 9.0);
+		((PlayerAuto*)PLAYER[1])->SetGoal(6.0 / 9.0);
 #endif
 
 		// random?
 		//int nc_1 = PLAYER[0]->GetNoteData()->GetNoteCount();
-		PLAYER[0]->GetNoteData()->Random(10);	// shuffle lanes
+		//PLAYER[0]->GetNoteData()->Random(10);	// shuffle lanes
 		//int nc_2 = PLAYER[0]->GetNoteData()->GetNoteCount();
 		//ASSERT(nc_1 == nc_2);
-		PLAYER[0]->Reset(0);					// reset iterator (MUST do it)
+		//PLAYER[0]->Reset(0);					// reset iterator (MUST do it)
 		//SWITCH_ON("");
 
 		/*

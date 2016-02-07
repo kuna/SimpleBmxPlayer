@@ -29,6 +29,11 @@ public:
 
 namespace Game {
 	// game's main 3 loop: init, mainloop, release
+	/*
+	 * @brief load game option
+	 * (must called before initalization & after argument parsing)
+	 */
+	void LoadOption();
 	/** @brief Initalize routine for game. */
 	bool Initialize();
 	/** @brief mainly, fetchs event / render */
@@ -50,4 +55,11 @@ namespace Game {
 	extern SDL_Window*		WINDOW;
 	extern GameSetting		SETTING;
 	extern std::mutex		RMUTEX;
+
+	struct PARAMETER {
+		// well, main parameter don't has much things to do
+		std::string username;
+		// SC, JUDGE, LEGACY LN,
+		// - let's set them later. there're much more significant things.
+	} P;
 }

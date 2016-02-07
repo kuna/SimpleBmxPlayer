@@ -3,13 +3,14 @@
     <width>1280</width>
     <height>720</height>
     <vsync>0</vsync>
-    <fullscreen>0</fullscreen>
+    <fullscreen>1</fullscreen>
     <resizable>0</resizable>
     <allowaddon>1</allowaddon>
     <volume>100</volume>
     <tutorial>1</tutorial>
     <soundlatency>1024</soundlatency>
     <useIR>0</useIR>
+    <bga>1</bga>
     <skin>
         <main></main>
         <player></player>
