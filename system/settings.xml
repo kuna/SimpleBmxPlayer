@@ -10,7 +10,6 @@
     <tutorial>1</tutorial>
     <soundlatency>1024</soundlatency>
     <useIR>0</useIR>
-    <bga>1</bga>
     <skin>
         <main></main>
         <player></player>

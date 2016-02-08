@@ -238,7 +238,7 @@ void PlayerReplayRecord::Parse(const RString& in) {
 	memcpy(&isize, buf + 116, 4);
 	for (int i = 0; i < isize; i++) {
 		struct ReplayObject _tmp;
-		memcpy(buf + 120 + i * 12, &_tmp, 12);
+		memcpy(&_tmp, buf + 120 + i * 12, 12);
 		objects.push_back(_tmp);
 	}
 

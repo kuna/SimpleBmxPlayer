@@ -322,10 +322,6 @@ namespace GamePlay {
 			PLAYER[1] = new PlayerAuto(1, playmode);	// MUST always single?
 			PLAYER[1]->Silent();
 			((PlayerAuto*)PLAYER[1])->SetGoal(P.pacemaker);
-
-			//
-			// TODO: mybest object?
-			//
 		}
 	}
 
@@ -432,7 +428,9 @@ namespace GamePlay {
 		/*
 		 * before create play object,
 		 * load previouse play record
+		 * (also creates mybest player)
 		 */
+		if (PLAYER[2]) SAFE_DELETE(PLAYER[2]);	// remove previous existing mybest object
 		if (PlayerRecordHelper::LoadPlayerRecord(
 			record, PLAYERINFO[0].name, "test1234"
 			)) {
@@ -440,8 +438,14 @@ namespace GamePlay {
 			// TODO
 			// set switch (hd cleared? mybest? etc ...)
 			//
+			INTPOOL->Set("SongClear", record.status);
 
-			//record.status
+			//
+			// create mybest object
+			//
+			PLAYER[1] = new PlayerAuto(1, playmode);	// MUST always single?
+			PLAYER[1]->Silent();
+			((PlayerAuto*)PLAYER[1])->SetGoal(record.score.CalculateRate());
 		}
 
 		/*

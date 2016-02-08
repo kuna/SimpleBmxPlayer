@@ -12,7 +12,11 @@
 - ```SDL_FontCache```
 - ```Zeranoe FFmpeg```
 - ```bmsbel+```
-- ```iconv```
+- ```Lua```
+- ```pthread (Win32)```
+- ```tinyxml2```
+- ```zlib```
+- ```zziplib```
 
 ##### This Project doesn't include ```libSDL 2.0```, ```FFmpeg```
   - download ```Dev Lib / Runtime Binaries``` directly from [SDL](https://www.libsdl.org/download-2.0.php), and extract file to ```include/SDL, lib/x86, Release```.
@@ -20,9 +24,43 @@
 
 ### how to use
 - drag BMS file to program.
+- archive file available (ex: ./ex.zip/test.bms)
+
+### keys
+- default key config is -
+  (1P) LS Z S X D C F V
+  (2P) RS M K , L . ; /
+  you can change it by changing preset files.
+  (also supports controller)
+- [Up/Down]      change speed.
+- [Right/Left]   change sudden.\n"
+- [F12]          float speed toggle\n"
+- [Start+WB/BB]  change speed\n"
+- [Start+SC]     (if float on) change float speed.
+- [Start+SC]     (if sudden on) change sudden.
+- [Start+SC]     (if sudden off) change lift.
+- [Start+VEFX]   float speed toggle
+- [Start double] toggle sudden.
+
+- (WB: white button; generally call 1,3,5,7 buttons.)
+- (BB: blue? black? btton; generally calls 2, 4, 6 buttons)
+- (SC: scratch; LShift on keyboard)
 
 ### available options
-- (TODO)
+-nobga: don't load image files (ignore image channel)
+-replay: show replay file (if no replay file, it won't turn on)
+-auto: autoplayed by DJ
+-op__: set op for player (RANDOM ... etc; only support int value)
+
+-g_: set gauge (0: GROOVE, 1: EASY, 2: HARD, 3: EXHARD, 4: HAZARD)
+-n______: set user profile to play (default: NONAME)
+-s_: start from n-th measure
+-e_: end(cut) at n-th measure
+-r_: repeat bms for n-times
+-rate__: song rate (1.0 is normal, lower is faster; decimal)
+-pace__: pacemaker percent (decimal)
+
+default value can be set by changing settings.xml file.
 
 ### preview (youtube link)
 - [@aaf3c68](https://www.youtube.com/watch?v=11DYI2wY4SU)

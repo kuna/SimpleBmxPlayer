@@ -23,7 +23,7 @@ namespace Parameter {
 			"-auto: autoplayed by DJ\n"
 			"-op__: set op for player (RANDOM ... etc; only support int value)\n"
 			"\n"
-			"-g_: set gauge (0: GROOVE, 1: EASY, 2: HARD, 3: EXHARD, 4: HAZARD)"
+			"-g_: set gauge (0: GROOVE, 1: EASY, 2: HARD, 3: EXHARD, 4: HAZARD)\n"
 			"-n______: set user profile to play (default: NONAME)\n"
 			"-s_: start from n-th measure\n"
 			"-e_: end(cut) at n-th measure\n"
@@ -147,6 +147,7 @@ namespace Parameter {
 				GamePlay::P.pacemaker = atof(argv[i] + 5);
 			}
 		}
+		return true;
 	}
 
 	bool parse(int argc, _TCHAR **argv) {
