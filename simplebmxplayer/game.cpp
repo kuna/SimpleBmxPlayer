@@ -58,8 +58,10 @@ namespace Game {
 	}
 
 	void ChangeScene(SceneBasic *s) {
-		if (SCENE != s)
+		if (SCENE != s) {
+			EndScene(SCENE);
 			StartScene(s);
+		}
 		SCENE = s;
 	}
 

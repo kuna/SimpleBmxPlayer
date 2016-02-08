@@ -98,6 +98,7 @@ namespace Parameter {
 		GamePlay::P.bmspath[0] = argv[1];
 		GamePlay::P.bmshash[0] = "abcd1234";	// (TODO)
 		GamePlay::P.courseplay = 1;
+		GamePlay::P.round = 1;
 		//GamePlay::P.gauge = PLAYERINFO[0].playconfig.gaugetype;
 		//GamePlay::P.op1 = PLAYERINFO[0].playconfig.op_1p;
 		//GamePlay::P.op2 = PLAYERINFO[0].playconfig.op_2p;

@@ -46,16 +46,95 @@ Player::Player(int playside, int playmode, int playertype) {
 	memset(ispress_, 0, sizeof(ispress_));
 	memset(islongnote_, 0, sizeof(islongnote_));
 
-	// initalize note/score
+	// initalize note iterator (dummy)
+	// also score / gauge.
+	bmsnote = new BmsNoteManager();
+	Reset(0);
+	InitalizeGauge();
+	InitalizeScore();
+
+	// initialize play speed
+	speed_mul = 1;
+	switch (playconfig->speedtype) {
+	case SPEEDTYPE::MAXBPM:
+		speed_mul = 120.0 / BmsResource::BMS.GetTimeManager().GetMaxBPM();
+		break;
+	case SPEEDTYPE::MINBPM:
+		speed_mul = 120.0 / BmsResource::BMS.GetTimeManager().GetMinBPM();
+		break;
+	case SPEEDTYPE::MEDIUM:
+		speed_mul = 120.0 / BmsResource::BMS.GetTimeManager().GetMediumBPM();
+		break;
+	}
+	// set sudden/lift first (floatspeed is relative to them)
+	SetSudden(playconfig->sudden);
+	SetLift(playconfig->lift);
+	if (playconfig->usefloatspeed) {
+		SetFloatSpeed(playconfig->floatspeed);
+	}
+	else {
+		SetSpeed(playconfig->speed);
+	}
+
+	// TODO: set OP switch... no, in main?
+}
+
+Player::~Player() {
+	// delete note object
+	SAFE_DELETE(bmsnote);
+}
+
+void Player::InitalizeNote() {
+	//
+	// remove note data if previously existed
+	//
+	if (bmsnote)
+		SAFE_DELETE(bmsnote);
+
+	//
+	// create note object
+	//
 	bmsnote = new BmsNoteManager();
 	BmsResource::BMS.GetNoteData(*bmsnote);
 	memset(&score, 0, sizeof(score));
-	int notecnt
-		= score.totalnote
-		= bmsnote->GetNoteCount();
-	Reset(0);
+	score.totalnote = bmsnote->GetNoteCount();
 
-	// initialize gauge
+	//
+	// before resetting iterator, modify note data
+	//
+	int seed = GamePlay::P.rseed;		// use gameplay's seed
+	switch (PLAYERINFO[playside].playconfig.op_1p) {
+	case OPTYPE::NONE:
+		break;
+	case OPTYPE::RANDOM:
+		bmsnote->Random(seed);
+		break;
+	case OPTYPE::RRANDOM:
+		bmsnote->RRandom(seed);
+		break;
+	case OPTYPE::SRANDOM:
+		bmsnote->SRandom(seed);
+		break;
+	case OPTYPE::HRANDOM:
+		// TODO: assist option should being.
+		bmsnote->HRandom(seed);
+		break;
+	case OPTYPE::MIRROR:
+		bmsnote->Mirror(seed);
+		break;
+	}
+
+	//
+	// reset iterator
+	//
+	Reset(0);
+}
+
+/*
+ * hmm little amgibuous ...
+ * - coursemode: don't initalize gauge.
+ */
+void Player::InitalizeGauge() {
 	playergaugetype
 		= *pv->pGaugeType
 		= playconfig->gaugetype;
@@ -75,6 +154,9 @@ Player::Player(int playside, int playmode, int playertype) {
 	// IIDX style gauge TOTAL
 	double total_iidx = bmsnote->GetTotalFromNoteCount();
 	double total = BmsResource::BMS.GetTotal(total_iidx);
+	int notecnt = score.totalnote;
+	if (notecnt <= 0)
+		notecnt = 1;			// div by 0
 	switch (playergaugetype) {
 	case GAUGETYPE::GROOVE:
 		notehealth[5] = total / notecnt / 100;
@@ -142,36 +224,14 @@ Player::Player(int playside, int playmode, int playertype) {
 		notehealth[0] = 0;
 		break;
 	}
-
-	// initialize play speed
-	speed_mul = 1;
-	switch (playconfig->speedtype) {
-	case SPEEDTYPE::MAXBPM:
-		speed_mul = 120.0 / BmsResource::BMS.GetTimeManager().GetMaxBPM();
-		break;
-	case SPEEDTYPE::MINBPM:
-		speed_mul = 120.0 / BmsResource::BMS.GetTimeManager().GetMinBPM();
-		break;
-	case SPEEDTYPE::MEDIUM:
-		speed_mul = 120.0 / BmsResource::BMS.GetTimeManager().GetMediumBPM();
-		break;
-	}
-	// set sudden/lift first (floatspeed is relative to them)
-	SetSudden(playconfig->sudden);
-	SetLift(playconfig->lift);
-	if (playconfig->usefloatspeed) {
-		SetFloatSpeed(playconfig->floatspeed);
-	}
-	else {
-		SetSpeed(playconfig->speed);
-	}
-
-	// TODO: set OP switch... no, in main?
 }
 
-Player::~Player() {
-	// delete note object
-	SAFE_DELETE(bmsnote);
+/*
+ * MUST reset for every game
+ */
+void Player::InitalizeScore() {
+	// clear score
+	score.Clear();
 }
 
 void Player::SetGauge(double v) {
@@ -204,7 +264,7 @@ void Player::PlaySound(BmsWord& value) {
 
 
 /*------------------------------------------------------------------*
- * Speed related
+ * Speed related (TODO: floating speed)
  *------------------------------------------------------------------*/
 
 namespace {

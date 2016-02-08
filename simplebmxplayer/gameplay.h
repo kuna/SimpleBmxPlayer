@@ -51,6 +51,8 @@ namespace GamePlay {
 		// if course play, then play as much as that count.
 		// if not, just count 1.
 		int courseplay;
+		// round of courseplay (start from 1)
+		int round;
 		int op1;	// 0x0000ABCD; RANDOM / SC / LEGACY(MORENOTE/ALL-LN) / JUDGE
 		int op2;
 		double rate;

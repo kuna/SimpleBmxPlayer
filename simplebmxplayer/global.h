@@ -127,6 +127,15 @@ namespace GAUGETYPE {
 	const int EXGRADE = 11;
 }
 
+namespace OPTYPE {
+	const int NONE = 0;
+	const int RANDOM = 1;
+	const int RRANDOM = 2;
+	const int SRANDOM = 3;
+	const int HRANDOM = 4;
+	const int MIRROR = 5;
+}
+
 namespace PACEMAKERTYPE {
 	const int PACE0 = 0;
 	const int PACE100 = 1;

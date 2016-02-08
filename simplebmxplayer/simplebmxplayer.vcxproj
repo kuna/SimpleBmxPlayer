@@ -89,6 +89,7 @@
     <ClCompile Include="bmsresource.cpp" />
     <ClCompile Include="file.cpp" />
     <ClCompile Include="font.cpp" />
+    <ClCompile Include="gameresult.cpp" />
     <ClCompile Include="globalresources.cpp" />
     <ClCompile Include="logger.cpp" />
     <ClCompile Include="md5.cpp" />
@@ -116,6 +117,7 @@
     <ClInclude Include="bmsresource.h" />
     <ClInclude Include="exception.h" />
     <ClInclude Include="file.h" />
+    <ClInclude Include="gameresult.h" />
     <ClInclude Include="globalresources.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="md5.h" />

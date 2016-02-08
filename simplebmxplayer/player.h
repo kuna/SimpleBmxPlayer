@@ -118,13 +118,14 @@ protected:
 
 	// current judge/bar/channel related information
 	double					health;						// player's health
+	int						*combo;						// combo (currently displaying) TODO
 
 	// note/time information
 	PlayerScore				score;
 	BmsNoteManager*			bmsnote;
 	BmsNoteLane::Iterator	iter_judge_[20];			// current judging iterator
 	BmsNoteLane::Iterator	iter_end_[20];				// 
-	BmsNoteLane::Iterator	iter_begin_[20];				// 
+	BmsNoteLane::Iterator	iter_begin_[20];			// 
 	bool					islongnote_[20];			// currently longnote pressing?
 	bool					ispress_[20];				// currently pressing?
 
@@ -147,6 +148,10 @@ protected:
 	/* internal function */
 	void					PlaySound(BmsWord& value);
 public:
+	void					InitalizeNote();			// create note data (must called after bms loaded)
+	void					InitalizeScore();
+	void					InitalizeGauge();
+
 	BmsNoteLane::Iterator	GetNoteIter(int lane) { return iter_judge_[lane]; };
 	BmsNoteLane::Iterator	GetNoteEndIter(int lane) { return iter_end_[lane]; };
 	BmsNoteLane::Iterator	GetNoteBeginIter(int lane) { return iter_begin_[lane]; };

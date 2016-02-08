@@ -14,6 +14,7 @@
 #include "player.h"
 #include "playerinfo.h"
 #include "game.h"
+#include "gameresult.h"
 
 namespace GamePlay {
 	// scene
@@ -280,6 +281,52 @@ namespace GamePlay {
 				PLAYERVALUE[1].pLanejudgeokay[i] = TIMERPOOL->Get(ssprintf("OnP2Judge%dOkay", i));
 			}
 		}
+
+		void InitalizePlayer() {
+			/*
+			 * delete player if previouse existed
+			 */
+			if (PLAYER[0]) SAFE_DELETE(PLAYER[0]);
+			if (PLAYER[1]) SAFE_DELETE(PLAYER[1]);
+
+			/*
+			 * Create player object for playing
+			 * MUST create before load skin
+			 * MUST create after Bms loaded (rate configured)
+			 */
+			// gauge rseed op1 op2 setting (in player)
+			// in courseplay, player object shouldn't be created many times
+			// so, before scene start, check round, and decide to create player.
+			if (P.autoplay) {
+				PLAYER[0] = new PlayerAuto(0, playmode);
+			}
+			else if (P.replay) {
+				/*
+				 * in case of course mode,
+				 * replay will be stored in course folder
+				 * (TODO)
+				 */
+				PlayerReplayRecord rep;
+				if (!PlayerReplayHelper::LoadReplay(rep, PLAYERINFO[0].name, P.bmshash[0])) {
+					LOG->Critical("Failed to load replay file.");
+					return;		// ??
+				}
+				PlayerReplay *pRep = new PlayerReplay(0, playmode);
+				PLAYER[0] = pRep;
+				pRep->SetReplay(rep);
+			}
+			else {
+				PLAYER[0] = new Player(0, playmode);
+			}
+			// other side is pacemaker
+			PLAYER[1] = new PlayerAuto(1, playmode);	// MUST always single?
+			PLAYER[1]->Silent();
+			((PlayerAuto*)PLAYER[1])->SetGoal(P.pacemaker);
+
+			//
+			// TODO: mybest object?
+			//
+		}
 	}
 
 	// sceneplay part
@@ -302,6 +349,7 @@ namespace GamePlay {
 		Bmspath = STRPOOL->Get("Bmspath");
 
 		// initalize player rendering values
+		// (don't initalize player object. initialize it when start scene.)
 		Initalize_commonValue();
 		Initalize_BmsValue();
 		Initalize_P1_RenderValue();
@@ -343,8 +391,13 @@ namespace GamePlay {
 		playmode = BmsResource::BMS.GetKey();
 		BmsHelper::SetRate(P.rate);
 
-		// TODO no bga set
-		// TODO in case of courseplay?
+		/*
+		 * if no bga, then remove Bga channel from Bms
+		 */
+		if (!P.bga) {
+			BmsResource::BMS.GetChannelManager().DeleteChannel(BmsWord("01"));
+			SWITCH_OFF("IsBGA");
+		}
 
 		/*
 		 * Bms metadata apply (switches/values)
@@ -370,62 +423,66 @@ namespace GamePlay {
 		STRPOOL->Set("Genre", genre);
 		STRPOOL->Set("Artist", artist);
 		STRPOOL->Set("SubArtist", subartist);
+
+		//
+		// TODO: load backbmp
+		//
 		SWITCH_OFF("IsBACKBMP");
 
 		/*
 		 * before create play object,
 		 * load previouse play record
 		 */
-		PlayerRecordHelper::LoadPlayerRecord(record, "", "");
+		if (PlayerRecordHelper::LoadPlayerRecord(
+			record, PLAYERINFO[0].name, "test1234"
+			)) {
+			//
+			// TODO
+			// set switch (hd cleared? mybest? etc ...)
+			//
 
-		// TODO
+			//record.status
+		}
 
 		/*
-		 * Create player object for playing
-		 * MUST create before load skin
-		 * MUST create after Bms loaded (rate configured)
+		 * if round 1, then create(reset) player object
 		 */
-		// gauge rseed op1 op2 setting (in player)
-		// TODO autoplay replay set
-#ifdef SECONDRUN//_DEBUG
-		PLAYER[0] = new PlayerAuto(0, playmode);
-		((PlayerAuto*)PLAYER[0])->SetGoal(8.0/9.0);
-		PLAYER[1] = NULL;
-#else
-		if (P.autoplay) {
-			PLAYER[0] = new PlayerAuto(0, playmode);
-		}
-		else if (P.replay) {
-			/*
-			 * in case of course mode,
-			 * replay will be stored in course folder
-			 * (TODO)
-			 */
-			PlayerReplayRecord rep;
-			if (!PlayerReplayHelper::LoadReplay(rep, PLAYERINFO[0].name, P.bmshash[0])) {
-				LOG->Critical("Failed to load replay file.");
-				return;		// ??
-			}
-			PlayerReplay *pRep = new PlayerReplay(0, playmode);
-			PLAYER[0] = pRep;
-			pRep->SetReplay(rep);
-		}
-		else {
-			PLAYER[0] = new Player(0, playmode);
-		}
-		// other side is pacemaker
-		PLAYER[1] = new PlayerAuto(1, playmode);	// MUST always single?
-		PLAYER[1]->Silent();
-		((PlayerAuto*)PLAYER[1])->SetGoal(P.pacemaker);
-#endif
+		if (P.round == 1)
+			InitalizePlayer();
 
-		// TODO training mode set
-		//int nc_1 = PLAYER[0]->GetNoteData()->GetNoteCount();
-		//PLAYER[0]->GetNoteData()->Random(10);	// shuffle lanes
-		//int nc_2 = PLAYER[0]->GetNoteData()->GetNoteCount();
-		//ASSERT(nc_1 == nc_2);
-		//PLAYER[0]->Reset(0);					// reset iterator (MUST do it)
-		//SWITCH_ON("");
+		//
+		// before create note object, 
+		// if cut/repeat option exists, then process them.
+		//
+		if (GamePlay::P.startmeasure != 0 || GamePlay::P.endmeasure != 999)
+		BmsResource::BMS.Cut(GamePlay::P.startmeasure, GamePlay::P.endmeasure);
+		if (GamePlay::P.repeat) {
+			BmsResource::BMS.Repeat(GamePlay::P.repeat);
+		}
+
+		//
+		// bms note should be created, 
+		// when creating note data, cautions:
+		// - MUST Bms file is loaded
+		// - ONLY rseed is argument. op is setted in player information.
+		// - each player has its own note data.
+		//
+		// COMMENT: gauge must be updated after note is created
+		//          so process it after InitalizeNote()
+		//
+		if (PLAYER[0]) {
+			PLAYER[0]->InitalizeNote();
+			PLAYER[0]->InitalizeScore();
+		}
+		if (PLAYER[1]) {
+			PLAYER[1]->InitalizeNote();
+			PLAYER[1]->InitalizeScore();
+		}
+
+		if (P.round == 1) {
+			if (PLAYER[0]) PLAYER[0]->InitalizeGauge();
+			if (PLAYER[1]) PLAYER[1]->InitalizeGauge();
+		}
 
 		/*
 		 * Load skin
@@ -467,10 +524,11 @@ namespace GamePlay {
 		if (close && PLAYER[1]) close = close && PLAYER[1]->IsDead();
 		OnClose->Trigger(close);
 		// OnFadeout is called when endtime is over
-		OnFadeOut->Trigger(BmsHelper::GetEndTime() < OnGameStart->GetTick());
-		// If OnClose/OnFadeout has enough time, then go to next scene (End here)
+		// COMMENT: EndTime == lastnote + 2 sec.
+		OnFadeOut->Trigger(BmsHelper::GetEndTime() + 2000 < OnGameStart->GetTick());
+		// If OnClose/OnFadeout has enough time, then go to next scene
 		if (OnClose->GetTick() > 3000 || OnFadeOut->GetTick() > 3000)
-			Game::End();
+			Game::ChangeScene(&GameResult::SCENE);
 
 		/*
 		 * BMS update
