@@ -185,21 +185,26 @@ void PlayerReplayRecord::Clear() {
 }
 
 #define MAX_REPLAY_BUFFER 1024000	// about 1000kb
-void PlayerReplayRecord::Serialize(RString &out) {
-	char *buf = new char[MAX_REPLAY_BUFFER];
+void PlayerReplayRecord::Serialize(RString &out) const {
+	char *buf = (char*)malloc(MAX_REPLAY_BUFFER);
 	// 
 	//  0 ~ 32 byte: songhash
 	// 40 ~ 44 byte: op1 code
 	// 44 ~ 48 byte: op2 code
 	// 48 ~ 52 byte: gauge 
 	// 52 ~ 56 byte: rseed
-	// 56 ~ 72 byte: rate (float)
+	// 56 ~ 72 byte: rate (double)
 	// (dummy)
 	// 116 ~ 120 byte: header size
 	// 120 byte: header end, replay body data starts
 	// (1 row per 4 * 3 = 12bytes)
 	//
 	strcpy(buf, songhash);
+	memcpy(buf+40, &op_1p, sizeof(int));
+	memcpy(buf+44, &op_2p, sizeof(int));
+	memcpy(buf+48, &gauge, sizeof(int));
+	memcpy(buf+52, &rseed, sizeof(int));
+	memcpy(buf+56, &rate, sizeof(int));
 
 	memcpy(buf + 116, (void*)objects.size(), 4);
 	for (int i = 0; i < objects.size(); i++) {
@@ -207,18 +212,26 @@ void PlayerReplayRecord::Serialize(RString &out) {
 	}
 
 	// zip compress
+	// (TODO)
 
 	// serialize compressed data to base64
+	char *b64;
+	base64encode(buf, 120 + objects.size() * 12, &b64);
 
 	// delete original data
-	delete buf;
+	out = b64;
+	free(b64);
+	free(buf);
 }
 
 void PlayerReplayRecord::Parse(const RString& in) {
 	// parse base64 data into binary
+	char *repdata = (char*)malloc(in.size());
+	int rep_len = base64decode(in, in.size(), repdata);
 
 	// zip uncompress
-	char *buf;
+	// (TODO)
+	char *buf = repdata;
 
 	// memcpy datas
 	int isize;
@@ -227,6 +240,68 @@ void PlayerReplayRecord::Parse(const RString& in) {
 		struct ReplayObject _tmp;
 		memcpy(buf + 120 + i * 12, &_tmp, 12);
 		objects.push_back(_tmp);
+	}
+
+	// cleanup
+	free(repdata);
+}
+
+
+
+
+
+/*
+ * Helpers
+ */
+
+namespace PlayerReplayHelper {
+	bool LoadReplay(
+		PlayerReplayRecord& rep, 
+		const char* playername, 
+		const char* songhash, 
+		const char* course) {
+		RString path;
+		if (course) {
+			path = ssprintf("../replay/%s/%s/%s.rep", playername, course, songhash);
+		}
+		else {
+			path = ssprintf("../replay/%s/%s.rep", playername, songhash);
+		}
+		RString repdata;
+		if (GetFileContents(path, repdata)) {
+			rep.Parse(repdata);
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	bool SaveReplay(
+		const PlayerReplayRecord& rep, 
+		const char* playername, 
+		const char* songhash, 
+		const char* course) {
+
+		RString path;
+		if (course) {
+			path = ssprintf("../replay/%s/%s/%s.rep", playername, course, songhash);
+		}
+		else {
+			path = ssprintf("../replay/%s/%s.rep", playername, songhash);
+		}
+		RString repdata;
+		rep.Serialize(repdata);
+		FileHelper::ConvertPathToSystem(path);
+		FileHelper::CreateFolder(path);
+		File f;
+		if (f.Open(path, "w")) {
+			f.Write(repdata);
+			f.Close();
+			return true;
+		} else {
+			return false;
+		}
 	}
 }
 

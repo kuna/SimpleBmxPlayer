@@ -43,6 +43,7 @@ RString FileBasic::GetMD5Hash() {
  */
 
 File::File() : fp(0) {}
+File::File(const char* filename, const char* mode) { Open(filename, mode); }
 File::~File() {
 	Close();
 }
@@ -112,6 +113,14 @@ int File::ReadAll(RString &str) {
 	str = p;
 	delete p;
 	return r;
+}
+
+int File::Write(const RString &in) {
+	return Write(in.c_str(), in.size());
+}
+
+int File::Write(const char* in, int len) {
+	return fwrite(in, 1, len, fp);
 }
 
 SDL_RWops* File::GetSDLRW() {
@@ -221,12 +230,27 @@ int FileMemory::ReadAll(RString &str) {
 	for (int i = 0; i < m_data.size(); i++) {
 		str[i] = m_data[i];
 	}
+	return m_data.size();
 }
 
 int FileMemory::ReadAll(char *p) {
 	for (int i = 0; i < m_data.size(); i++) {
 		p[i] = m_data[i];
 	}
+	return m_data.size();
+}
+
+int FileMemory::Write(const RString& in) {
+	return Write(in.c_str(), in.size());
+}
+
+int FileMemory::Write(const char* in, int len) {
+	if (m_pos + len > m_data.size()) {
+		m_data.resize(m_pos + len);
+	}
+	for (int i = 0; i < len; i++)
+		m_data[m_pos++] = *in++;
+	return len;
 }
 
 bool FileMemory::IsEOF() { return GetSize() == m_pos + 1; }

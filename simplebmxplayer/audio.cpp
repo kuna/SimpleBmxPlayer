@@ -18,7 +18,7 @@ Audio::~Audio() {
 	Close();
 }
 
-bool Audio::Load(const char* filepath, int channel = -1) {
+bool Audio::Load(const char* filepath, int channel) {
 	Close();
 	File *f = new File(filepath, "rb");
 	bool r = Load(f, channel);
@@ -26,7 +26,7 @@ bool Audio::Load(const char* filepath, int channel = -1) {
 	return r;
 }
 
-bool Audio::Load(FileBasic* f, int channel = -1) {
+bool Audio::Load(FileBasic* f, int channel) {
 	Close();
 	sdlaudio = Mix_LoadWAV_RW(f->GetSDLRW(), 1);
 	this->channel = channel;

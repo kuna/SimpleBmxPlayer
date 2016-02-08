@@ -87,12 +87,13 @@ bool Image::Load(const std::string& filepath, bool loop) {
 	return true;
 }
 
-bool Image::Load(FileBasic* f, bool loop = true) {
+bool Image::Load(FileBasic* f, bool loop) {
 	// don't support movie in this case.
 	// TODO: support movie!
 	Game::RMUTEX.lock();
 	sdltex = IMG_LoadTexture_RW(Game::RENDERER, f->GetSDLRW(), 1);
 	Game::RMUTEX.unlock();
+	if (!sdltex) return false; else return true;
 }
 
 bool Image::LoadMovie(const char *path) {

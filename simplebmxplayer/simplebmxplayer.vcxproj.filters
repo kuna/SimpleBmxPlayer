@@ -200,6 +200,7 @@
     <Library Include="..\lib\x86\SDL2main.lib" />
     <Library Include="..\lib\x86\pthreadVC2.lib" />
     <Library Include="..\lib\x86\zdll.lib" />
+    <Library Include="..\lib\x86\zziplib-Release.lib" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="simplebmxplayer.rc">

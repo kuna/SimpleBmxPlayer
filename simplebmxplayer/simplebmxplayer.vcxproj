@@ -158,6 +158,7 @@
     <Library Include="..\lib\x86\SDL2_ttf.lib" />
     <Library Include="..\lib\x86\SDL_FontCache.lib" />
     <Library Include="..\lib\x86\zdll.lib" />
+    <Library Include="..\lib\x86\zziplib-Release.lib" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="simplebmxplayer.rc" />

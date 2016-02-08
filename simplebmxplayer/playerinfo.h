@@ -90,13 +90,11 @@ struct ReplayObject {
 class PlayerReplayRecord {
 private:
 	// about chart
-	// (TODO: assist? how to include ...)
-	char songhash[32];
+	RString songhash;
 	int op_1p, op_2p;
-	int scratch, longnote, morenote, judge;
 	int gauge;
 	int rseed;
-	float rate;
+	double rate;
 	// store judge for each note
 	std::vector<ReplayObject> objects;
 public:
@@ -106,8 +104,8 @@ public:
 	void AddPress(int time, int lane, int press);
 	void AddJudge(int time, int playside, int judge, int fastslow, int silent = 0);
 	void Clear();
-	void Serialize(RString& out);		// Get base64 zipped string
-	void Parse(const RString& in);		// Input base64 zipped string
+	void Serialize(RString& out) const;		// Get base64 zipped string
+	void Parse(const RString& in);			// Input base64 zipped string
 };
 
 /*
@@ -153,6 +151,11 @@ public:
 	/** @brief returns SongRecord object from sqlite db. returns false if not found. */
 	/** @brief saves SongRecord object to sqlite db. */
 };
+
+namespace PlayerReplayHelper {
+	bool LoadReplay(PlayerReplayRecord& rep, const char* playername, const char* songhash, const char* course = 0);
+	bool SaveReplay(const PlayerReplayRecord& rep, const char* playername, const char* songhash, const char* course = 0);
+}
 
 namespace PlayerRecordHelper {
 	bool LoadPlayerRecord(PlayerSongRecord& record, const char* playername, const char* songhash);

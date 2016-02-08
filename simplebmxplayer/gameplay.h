@@ -2,6 +2,15 @@
  * GamePlay
  *
  * resources about playing game
+ *
+ * input:
+ * (global; game setting)
+ * (global; player setting)
+ *
+ * output:
+ * (global; player setting)
+ * (global; player score result)
+ *
  */
 
 #pragma once
@@ -42,19 +51,21 @@ namespace GamePlay {
 		// if course play, then play as much as that count.
 		// if not, just count 1.
 		int courseplay;
-		int op1;
+		int op1;	// 0x0000ABCD; RANDOM / SC / LEGACY(MORENOTE/ALL-LN) / JUDGE
 		int op2;
-		int gauge;
+		double rate;
+		int rseed;
 
-		// program option
+		// program option (not included in replay)
 		int startmeasure;
 		int endmeasure;
 		int repeat;
 		bool bga;
 		bool replay;
 		bool autoplay;
-		int rseed;
-	} P;
+		double pacemaker;
+	};
+	extern PARAMETER	P;
 
 	extern ScenePlay*	SCENE;
 };

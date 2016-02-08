@@ -369,8 +369,8 @@ bool SkinRenderHelper::LoadSkin(const char* path, Skin& skin) {
 	bool r = false;
 	if (EndsWith(abspath, ".lr2skin")) {
 		RString newpath = abspath;
-		newpath = IO::substitute_extension(newpath, ".main.xml");
-		if (IO::is_file_exists(newpath)) {
+		newpath = substitute_extension(newpath, ".main.xml");
+		if (FileHelper::IsFile(newpath)) {
 			abspath = newpath;
 		}
 		else {
@@ -382,8 +382,8 @@ bool SkinRenderHelper::LoadSkin(const char* path, Skin& skin) {
 	}
 	else if (EndsWith(abspath, ".csv")) {
 		RString newpath = abspath;
-		newpath = IO::substitute_extension(newpath, ".xml");
-		if (IO::is_file_exists(newpath)) {
+		newpath = substitute_extension(newpath, ".xml");
+		if (FileHelper::IsFile(newpath)) {
 			abspath = newpath;
 		}
 		else {

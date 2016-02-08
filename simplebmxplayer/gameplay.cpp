@@ -18,6 +18,7 @@
 namespace GamePlay {
 	// scene
 	ScenePlay*			SCENE;
+	PARAMETER			P;
 	
 	// global resources
 	Timer*				OnGameStart;
@@ -326,7 +327,6 @@ namespace GamePlay {
 		SWITCH_OFF("IsAutoPlay");
 		SWITCH_ON("IsBGA");
 		SWITCH_ON("IsExtraMode");
-		//SWITCH_ON("OnP1SuddenChange");
 		DOUBLEPOOL->Set("TargetExScore", 0.5);
 		DOUBLEPOOL->Set("TargetExScore", 0.5);
 		OnSongLoadingEnd->Stop();
@@ -341,7 +341,10 @@ namespace GamePlay {
 		 */
 		LoadBms(*Bmspath);
 		playmode = BmsResource::BMS.GetKey();
-		//BmsHelper::SetRate(0.8);
+		BmsHelper::SetRate(P.rate);
+
+		// TODO no bga set
+		// TODO in case of courseplay?
 
 		/*
 		 * Bms metadata apply (switches/values)
@@ -382,18 +385,41 @@ namespace GamePlay {
 		 * MUST create before load skin
 		 * MUST create after Bms loaded (rate configured)
 		 */
+		// gauge rseed op1 op2 setting (in player)
+		// TODO autoplay replay set
 #ifdef SECONDRUN//_DEBUG
 		PLAYER[0] = new PlayerAuto(0, playmode);
 		((PlayerAuto*)PLAYER[0])->SetGoal(8.0/9.0);
 		PLAYER[1] = NULL;
 #else
-		PLAYER[0] = new Player(0, playmode);
+		if (P.autoplay) {
+			PLAYER[0] = new PlayerAuto(0, playmode);
+		}
+		else if (P.replay) {
+			/*
+			 * in case of course mode,
+			 * replay will be stored in course folder
+			 * (TODO)
+			 */
+			PlayerReplayRecord rep;
+			if (!PlayerReplayHelper::LoadReplay(rep, PLAYERINFO[0].name, P.bmshash[0])) {
+				LOG->Critical("Failed to load replay file.");
+				return;		// ??
+			}
+			PlayerReplay *pRep = new PlayerReplay(0, playmode);
+			PLAYER[0] = pRep;
+			pRep->SetReplay(rep);
+		}
+		else {
+			PLAYER[0] = new Player(0, playmode);
+		}
+		// other side is pacemaker
 		PLAYER[1] = new PlayerAuto(1, playmode);	// MUST always single?
 		PLAYER[1]->Silent();
-		((PlayerAuto*)PLAYER[1])->SetGoal(6.0 / 9.0);
+		((PlayerAuto*)PLAYER[1])->SetGoal(P.pacemaker);
 #endif
 
-		// random?
+		// TODO training mode set
 		//int nc_1 = PLAYER[0]->GetNoteData()->GetNoteCount();
 		//PLAYER[0]->GetNoteData()->Random(10);	// shuffle lanes
 		//int nc_2 = PLAYER[0]->GetNoteData()->GetNoteCount();

@@ -24,6 +24,7 @@ namespace Game {
 	SceneBasic*		SCENE = NULL;
 	bool			bRunning = false;	// is game running?
 	std::mutex		RMUTEX;
+	PARAMETER		P;
 
 	// SDL
 	SDL_Window*		WINDOW = NULL;

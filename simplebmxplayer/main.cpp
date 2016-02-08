@@ -28,6 +28,8 @@ namespace Parameter {
 			"-s_: start from n-th measure\n"
 			"-e_: end(cut) at n-th measure\n"
 			"-r_: repeat bms for n-times\n"
+			"-rate__: song rate (1.0 is normal, lower is faster; decimal)\n"
+			"-pace__: pacemaker percent (decimal)\n"
 			"\n"
 			"<keys>\n"
 			"default key config is -\n(1P) LS Z S X D C F V (2P) M K , L . ; / RS\nyou can change it by changing preset files.\n"
@@ -91,13 +93,15 @@ namespace Parameter {
 
 		/*
 		 * set default value from player / program settings
+		 * TODO: depart bmspath / get bmshash here??
 		 */
 		GamePlay::P.bmspath[0] = argv[1];
 		GamePlay::P.bmshash[0] = "abcd1234";	// (TODO)
 		GamePlay::P.courseplay = 1;
-		GamePlay::P.gauge = PLAYERINFO[0].playconfig.gaugetype;
-		GamePlay::P.op1 = PLAYERINFO[0].playconfig.op_1p;
-		GamePlay::P.op2 = PLAYERINFO[0].playconfig.op_2p;
+		//GamePlay::P.gauge = PLAYERINFO[0].playconfig.gaugetype;
+		//GamePlay::P.op1 = PLAYERINFO[0].playconfig.op_1p;
+		//GamePlay::P.op2 = PLAYERINFO[0].playconfig.op_2p;
+		GamePlay::P.rate = 1;
 		
 		GamePlay::P.bga = Game::SETTING.bga;
 		GamePlay::P.startmeasure = 0;
@@ -105,13 +109,14 @@ namespace Parameter {
 		GamePlay::P.repeat = 1;
 		GamePlay::P.replay = false;
 		GamePlay::P.rseed = time(0) % 65536;
+		GamePlay::P.pacemaker = 6.0 / 9.0;	// A rank
 
 		// overwrite default options
 		for (int i = 2; i < argc; i++) {
 			if (BeginsWith(argv[i], "-op"))  {
 				int op = atoi(argv[i] + 2);
-				GamePlay::P.op1 = op % 10;
-				GamePlay::P.op2 = op / 10;
+				PLAYERINFO[0].playconfig.op_1p = op % 10;
+				PLAYERINFO[0].playconfig.op_2p = op / 10;
 			}
 			else if (BeginsWith(argv[i], "-replay")) {
 				GamePlay::P.replay = true;
@@ -123,7 +128,7 @@ namespace Parameter {
 				GamePlay::P.bga = false;
 			}
 			else if (BeginsWith(argv[i], "-g")) {
-				GamePlay::P.gauge = atoi(argv[i] + 2);
+				PLAYERINFO[0].playconfig.gaugetype = atoi(argv[i] + 2);
 			}
 			else if (BeginsWith(argv[i], "-s")) {
 				GamePlay::P.startmeasure = atoi(argv[i] + 2);
@@ -133,6 +138,12 @@ namespace Parameter {
 			}
 			else if (BeginsWith(argv[i], "-r")) {
 				GamePlay::P.repeat = atoi(argv[i] + 2);
+			}
+			else if (BeginsWith(argv[i], "-rate")) {
+				GamePlay::P.rate = atof(argv[i] + 5);
+			}
+			else if (BeginsWith(argv[i], "-pace")) {
+				GamePlay::P.pacemaker = atof(argv[i] + 5);
 			}
 		}
 	}

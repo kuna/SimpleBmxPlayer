@@ -61,5 +61,6 @@ namespace Game {
 		std::string username;
 		// SC, JUDGE, LEGACY LN,
 		// - let's set them later. there're much more significant things.
-	} P;
+	};
+	extern PARAMETER		P;
 }

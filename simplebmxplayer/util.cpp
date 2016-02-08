@@ -920,8 +920,6 @@ bool compress(const char *in, int in_len, char *out, int level) {
 	int ret, flush;
 	unsigned have;
 	z_stream strm;
-	unsigned char in[ZLIB_CHUNK];
-	unsigned char out[ZLIB_CHUNK];
 
 	/* allocate deflate state */
 	strm.zalloc = Z_NULL;
@@ -968,8 +966,6 @@ bool decompress(const char *in, int in_len, char* out) {
 	int ret;
 	unsigned have;
 	z_stream strm;
-	unsigned char in[ZLIB_CHUNK];
-	unsigned char out[ZLIB_CHUNK];
 
 	/* allocate inflate state */
 	strm.zalloc = Z_NULL;
@@ -1180,6 +1176,7 @@ bool GetFileContents(const RString &sPath, RString &sOut, bool bOneLine)
 	return true;
 }
 
+/* read per line */
 bool GetFileContents(const RString &sFile, vector<RString> &asOut)
 {
 	File file;

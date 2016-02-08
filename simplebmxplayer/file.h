@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include "SDL/SDL.h"
 #include "global.h"
 #include <vector>
 
@@ -25,6 +26,8 @@ public:
 	virtual int ReadAll(char *p) = 0;
 	virtual int Read(RString &str, size_t size) = 0;
 	virtual int Read(char *p, size_t size) = 0;
+	virtual int Write(const RString &in) = 0;
+	virtual int Write(const char* in, int size) = 0;
 	virtual size_t GetSize() = 0;
 	virtual bool IsEOF() = 0;
 	virtual void Reset() = 0;
@@ -52,6 +55,7 @@ public:
 	File(const char* filename, const char* mode = "r");
 	~File();
 	bool Open(const char* filename, const char* mode = "r");
+	bool IsOpened() { return fp != 0; }
 	void Close();
 
 	virtual int ReadLine(RString &str);
@@ -59,6 +63,8 @@ public:
 	virtual int ReadAll(char *p);
 	virtual int Read(RString &str, size_t size);
 	virtual int Read(char *p, size_t size);
+	virtual int Write(const RString &in);
+	virtual int Write(const char* in, int size);
 	virtual size_t GetSize();
 	virtual bool IsEOF();
 	virtual void Reset();
@@ -83,6 +89,8 @@ public:
 	virtual int ReadAll(char *p);
 	virtual int Read(RString &str, size_t size);
 	virtual int Read(char *p, size_t size);
+	virtual int Write(const RString &in);
+	virtual int Write(const char* in, int size);
 	virtual bool IsEOF();
 	virtual void Reset();
 	virtual void Seek(size_t pos);
