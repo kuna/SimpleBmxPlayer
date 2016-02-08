@@ -39,6 +39,9 @@ Player::Player(int playside, int playmode, int playertype) {
 			pLanehold[i + 10] = pv_dp->pLanehold[i];
 			pLanejudgeokay[i + 10] = pv_dp->pLanejudgeokay[i];
 		}
+		else {
+			pLanehold[i + 10] = 0;
+		}
 	}
 	judgeoffset = playconfig->judgeoffset;
 	judgecalibration = playconfig->judgecalibration;
@@ -100,58 +103,9 @@ void Player::InitalizeNote() {
 	score.totalnote = bmsnote->GetNoteCount();
 
 	//
-	// before resetting iterator, modify note data
+	// reset TOTAL with note object
+	// (IIDX style gauge TOTAL)
 	//
-	int seed = GamePlay::P.rseed;		// use gameplay's seed
-	switch (PLAYERINFO[playside].playconfig.op_1p) {
-	case OPTYPE::NONE:
-		break;
-	case OPTYPE::RANDOM:
-		bmsnote->Random(seed);
-		break;
-	case OPTYPE::RRANDOM:
-		bmsnote->RRandom(seed);
-		break;
-	case OPTYPE::SRANDOM:
-		bmsnote->SRandom(seed);
-		break;
-	case OPTYPE::HRANDOM:
-		// TODO: assist option should being.
-		bmsnote->HRandom(seed);
-		break;
-	case OPTYPE::MIRROR:
-		bmsnote->Mirror(seed);
-		break;
-	}
-
-	//
-	// reset iterator
-	//
-	Reset(0);
-}
-
-/*
- * hmm little amgibuous ...
- * - coursemode: don't initalize gauge.
- */
-void Player::InitalizeGauge() {
-	playergaugetype
-		= *pv->pGaugeType
-		= playconfig->gaugetype;
-	switch (playergaugetype) {
-	case GAUGETYPE::GROOVE:
-	case GAUGETYPE::EASY:
-	case GAUGETYPE::ASSISTEASY:
-		SetGauge(0.2);
-		dieonnohealth = false;
-		break;
-	default:
-		SetGauge(1.0);
-		dieonnohealth = true;
-		break;
-	}
-	memset(notehealth, 0, sizeof(notehealth));
-	// IIDX style gauge TOTAL
 	double total_iidx = bmsnote->GetTotalFromNoteCount();
 	double total = BmsResource::BMS.GetTotal(total_iidx);
 	int notecnt = score.totalnote;
@@ -224,6 +178,59 @@ void Player::InitalizeGauge() {
 		notehealth[0] = 0;
 		break;
 	}
+
+	//
+	// before resetting iterator, modify note data
+	//
+	int seed = GamePlay::P.rseed;		// use gameplay's seed
+	switch (PLAYERINFO[playside].playconfig.op_1p) {
+	case OPTYPE::NONE:
+		break;
+	case OPTYPE::RANDOM:
+		bmsnote->Random(seed);
+		break;
+	case OPTYPE::RRANDOM:
+		bmsnote->RRandom(seed);
+		break;
+	case OPTYPE::SRANDOM:
+		bmsnote->SRandom(seed);
+		break;
+	case OPTYPE::HRANDOM:
+		// TODO: assist option should being.
+		bmsnote->HRandom(seed);
+		break;
+	case OPTYPE::MIRROR:
+		bmsnote->Mirror(seed);
+		break;
+	}
+
+	//
+	// reset iterator
+	//
+	Reset(0);
+}
+
+/*
+ * hmm little amgibuous ...
+ * - coursemode: don't initalize gauge.
+ */
+void Player::InitalizeGauge() {
+	playergaugetype
+		= *pv->pGaugeType
+		= playconfig->gaugetype;
+	switch (playergaugetype) {
+	case GAUGETYPE::GROOVE:
+	case GAUGETYPE::EASY:
+	case GAUGETYPE::ASSISTEASY:
+		SetGauge(0.2);
+		dieonnohealth = false;
+		break;
+	default:
+		SetGauge(1.0);
+		dieonnohealth = true;
+		break;
+	}
+	memset(notehealth, 0, sizeof(notehealth));
 }
 
 /*
@@ -413,7 +420,9 @@ void Player::MakeJudge(int judgetype, int time, int channel, int fastslow, bool 
 	*pv->pNoteBad = score.score[2];
 	*pv->pNotePoor = score.score[1] + score.score[0];
 
+	//
 	// if currently slient mode, then don't process timers / values.
+	//
 	if (issilent) return;
 
 	/*
@@ -438,6 +447,10 @@ void Player::MakeJudge(int judgetype, int time, int channel, int fastslow, bool 
 				pv->pOnSlow->Start();
 			}
 		}
+		else {
+			pv->pOnFast->Stop();
+			pv->pOnSlow->Stop();
+		}
 		break;
 	case 2:
 		if (judgetype >= JUDGETYPE::JUDGE_GREAT)
@@ -455,6 +468,10 @@ void Player::MakeJudge(int judgetype, int time, int channel, int fastslow, bool 
 				pv_dp->pOnFast->Stop();
 				pv_dp->pOnSlow->Start();
 			}
+		}
+		else {
+			pv->pOnFast->Stop();
+			pv->pOnSlow->Stop();
 		}
 		break;
 	}
@@ -607,7 +624,6 @@ void Player::Update() {
 
 	// get time
 	Uint32 currenttime = pBmstimer->GetTick() + judgeoffset;
-	double time_sec = currenttime / 1000.0;
 
 	// check for note judgement
 	// COMMENT: `int i` means lane index, NOT channel number.
@@ -619,7 +635,7 @@ void Player::Update() {
 			// skip hidden note
 			BmsNote& note = iter_judge_[i]->second;
 			if ((note.type == BmsNote::NOTE_HIDDEN && 
-				note.time - BmsJudgeTiming::POOR / 1000.0 < currenttime) ||
+				note.time - BmsJudgeTiming::POOR < currenttime) ||
 				note.type == BmsNote::NOTE_NONE)
 				NextNote(i);
 			else break;
@@ -643,9 +659,8 @@ void Player::Update() {
 				NextNote(i);
 			}
 			// if not autoplay, check timing for poor
-			else if (CheckJudgeByTiming(
-				(note.time - time_sec) * 1000 + judgeoffset
-				) == JUDGETYPE::JUDGE_POOR) {
+			else if (CheckJudgeByTiming(note.time - currenttime + judgeoffset)
+				== JUDGETYPE::JUDGE_POOR) {
 				//
 				// if late, POOR judgement is always occured
 				// but we need to take care of in case of LongNote
@@ -696,8 +711,7 @@ void Player::UpKey(int lane) {
 	// but works only if you pressing longnote
 	if (islongnote_[lane] && GetCurrentNote(lane)->type == BmsNote::NOTE_LNEND) {
 		// get judge
-		double t = pBmstimer->GetTick() / 1000.0;
-		int delta = (GetTimeFromBar(iter_judge_[lane]->first) - t) * 1000 + judgeoffset;
+		int delta = iter_judge_[lane]->second.time - currenttime + judgeoffset;
 		int judge = CheckJudgeByTiming(delta);
 		if (judge == JUDGETYPE::JUDGE_EARLY || judge == JUDGETYPE::JUDGE_NPOOR)
 			judge = JUDGETYPE::JUDGE_POOR;
@@ -757,8 +771,7 @@ void Player::PressKey(int lane) {
 	// make judge
 	//
 	if (IsNoteAvailable(lane)) {
-		double t = pBmstimer->GetTick() / 1000.0;
-		int delta = (GetTimeFromBar(iter_judge_[lane]->first) - t) * 1000 + judgeoffset;
+		int delta = iter_judge_[lane]->second.time - currenttime + judgeoffset;
 		int fastslow = delta > 0 ? 1 : 2;
 		int judge = CheckJudgeByTiming(delta);
 		// only continue judging if judge isn't too fast (no judge)
@@ -839,7 +852,6 @@ void PlayerAuto::Update() {
 
 	// check for note judgement
 	for (int i = 0; i < 20; i++) {
-
 		/*
 		 * If (next note exists && note is at the bottom; hit timing)
 		 */
@@ -895,6 +907,7 @@ void PlayerAuto::Update() {
 		 * pressing lane is automatically up-ped
 		 * about after 50ms.
 		 */
+		if (!pLanehold[i]) continue;
 		if (pLanehold[i]->IsStarted())
 			pLanepress[i]->Start();
 		if (pLaneup[i]->Trigger(pLanepress[i]->GetTick() > 50))

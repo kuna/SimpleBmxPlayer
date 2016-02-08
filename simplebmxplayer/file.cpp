@@ -15,6 +15,7 @@ RString FileBasic::GetMD5Hash() {
 	char* data = new char[MD5HASH_BLOCKSIZE];
 	MD5Init(&mdContext);
 	int bytes;
+	Seek(0);
 	while ((bytes = Read(data, MD5HASH_BLOCKSIZE)) != 0) {
 		MD5Update(&mdContext, data, bytes);
 	}
@@ -43,7 +44,7 @@ RString FileBasic::GetMD5Hash() {
  */
 
 File::File() : fp(0) {}
-File::File(const char* filename, const char* mode) { Open(filename, mode); }
+File::File(const char* filename, const char* mode) { fp = 0; Open(filename, mode); }
 File::~File() {
 	Close();
 }
@@ -484,7 +485,6 @@ namespace FileHelper {
 			const wstring full_file_name = directory_w + L"/" + file_name;
 			RString full_file_name_utf8 = WStringToRString(full_file_name);
 			out.push_back(full_file_name_utf8);
-			delete full_file_name_utf8;
 		} while (FindNextFile(dir, &file_data));
 
 		FindClose(dir);
@@ -532,8 +532,30 @@ namespace FileHelper {
 		}
 	}
 
-	bool IsFile(const RString& path) {
+	/*
+	 * uses relative file path (supports zip)
+	 */
+	bool IsRelativeFile(const RString& path) {
 		if (EndsWith(path, ".zip")) return false;
+		RString relpath = path;
+		ConvertPathToAbsolute(relpath);
+		if (IsFile(relpath)) return true;
+		//
+		// still not exists, then search archive if it does.
+		//
+		if (CurrentDirectoryIsZipFile()) {
+			std::vector<RString> files;
+			GetFileList(files);
+			for (int i = 0; i < files.size(); i++) {
+				if (files[i] == path) return true;
+			}
+		}
+
+		return false;
+	}
+
+	bool IsFile(const RString& path) {
+		//if (EndsWith(path, ".zip")) return false;
 #ifdef _WIN32
 		std::wstring path_w = RStringToWstring(path);
 		struct _stat64i32 s;
@@ -549,7 +571,7 @@ namespace FileHelper {
 	}
 
 	bool IsFolder(const RString& path) {
-		if (EndsWith(path, ".zip")) return true;
+		//if (EndsWith(path, ".zip")) return true;
 #ifdef _WIN32
 		std::wstring path_w = RStringToWstring(path);
 		struct _stat64i32 s;

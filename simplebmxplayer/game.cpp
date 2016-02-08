@@ -1,5 +1,6 @@
 #include "game.h"
 #include "gameplay.h"
+#include "gameresult.h"
 
 #include "luamanager.h"
 #include "util.h"
@@ -59,7 +60,7 @@ namespace Game {
 
 	void ChangeScene(SceneBasic *s) {
 		if (SCENE != s) {
-			EndScene(SCENE);
+			if (SCENE) EndScene(SCENE);
 			StartScene(s);
 		}
 		SCENE = s;
@@ -269,8 +270,8 @@ namespace Game {
 		* Scene instance initalization
 		* (MUST after graphic initalization finished)
 		*/
-		GamePlay::SCENE = new GamePlay::ScenePlay();
-		InitalizeScene(GamePlay::SCENE);
+		InitalizeScene(&GamePlay::SCENE);
+		InitalizeScene(&GameResult::SCENE);
 
 		/*
 		 * FPS timer start
@@ -382,7 +383,8 @@ namespace Game {
 		GameSettingHelper::SaveSetting(SETTING);
 
 		// other scenes
-		ReleaseScene(GamePlay::SCENE);
+		ReleaseScene(&GamePlay::SCENE);
+		ReleaseScene(&GameResult::SCENE);
 
 		// release basic instances
 		delete LUA;

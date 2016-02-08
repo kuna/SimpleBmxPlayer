@@ -54,11 +54,13 @@ namespace BmsResource {
 		//FileHelper::ConvertPathToAbsolute(alter_ogg_path);
 		Audio *audio = new Audio();
 		FileBasic *file = 0;
-		if (FileHelper::IsFile(alter_ogg_path))
-			FileHelper::LoadFile(alter_ogg_path, &file);
-		else if (FileHelper::IsFile(wav_path))
+		if (!FileHelper::LoadFile(alter_ogg_path, &file))
 			FileHelper::LoadFile(wav_path, &file);
-		if (file) audio->Load(file, channel.ToInteger());
+		if (file) {
+			audio->Load(file, channel.ToInteger());
+			file->Close();
+			delete file;
+		}
 
 		if (audio && audio->IsLoaded()) {
 			wav_table[channel.ToInteger()] = audio;
@@ -93,7 +95,11 @@ namespace BmsResource {
 		if (FileHelper::CurrentDirectoryIsZipFile()) {
 			FileBasic *file = 0;
 			FileHelper::LoadFile(bmp_path, &file);
-			if (file) image->Load(file);
+			if (file) {
+				image->Load(file);
+				file->Close();
+				delete file;
+			}
 		}
 		else {
 			image->Load(bmp_path);

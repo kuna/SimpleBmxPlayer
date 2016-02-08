@@ -18,7 +18,7 @@
 
 namespace GamePlay {
 	// scene
-	ScenePlay*			SCENE;
+	ScenePlay			SCENE;
 	PARAMETER			P;
 	
 	// global resources
@@ -31,8 +31,6 @@ namespace GamePlay {
 	Timer*				OnFadeOut;			// when game end
 	Timer*				On1PMiss;			// just for missing image
 	Timer*				On2PMiss;			// just for missing image
-
-	RString*			Bmspath;
 
 	// bms skin resource
 	// skin resource will be loaded in GlobalResource, 
@@ -342,7 +340,6 @@ namespace GamePlay {
 		OnFadeOut = SWITCH_OFF("OnFadeOut");
 		On1PMiss = SWITCH_OFF("On1PMiss");
 		On2PMiss = SWITCH_OFF("On2PMiss");
-		Bmspath = STRPOOL->Get("Bmspath");
 
 		// initalize player rendering values
 		// (don't initalize player object. initialize it when start scene.)
@@ -382,8 +379,9 @@ namespace GamePlay {
 		 * Load bms first
 		 * (bms resource is loaded with thread)
 		 * (load bms first to find out what key skin is proper)
+		 * COMMENT: if bms load failed, then continue with empty bms file.
 		 */
-		LoadBms(*Bmspath);
+		LoadBms(P.bmspath[P.round - 1]);
 		playmode = BmsResource::BMS.GetKey();
 		BmsHelper::SetRate(P.rate);
 
@@ -432,7 +430,7 @@ namespace GamePlay {
 		 */
 		if (PLAYER[2]) SAFE_DELETE(PLAYER[2]);	// remove previous existing mybest object
 		if (PlayerRecordHelper::LoadPlayerRecord(
-			record, PLAYERINFO[0].name, "test1234"
+			record, PLAYERINFO[0].name, P.bmshash[P.round - 1]
 			)) {
 			//
 			// TODO
@@ -446,6 +444,13 @@ namespace GamePlay {
 			PLAYER[1] = new PlayerAuto(1, playmode);	// MUST always single?
 			PLAYER[1]->Silent();
 			((PlayerAuto*)PLAYER[1])->SetGoal(record.score.CalculateRate());
+
+			//
+			// in courseplay, gauge shouldn't be cleared
+			// after sequential round
+			//
+			if (PLAYER[0]) PLAYER[0]->InitalizeGauge();
+			if (PLAYER[1]) PLAYER[1]->InitalizeGauge();
 		}
 
 		/*
@@ -471,9 +476,6 @@ namespace GamePlay {
 		// - ONLY rseed is argument. op is setted in player information.
 		// - each player has its own note data.
 		//
-		// COMMENT: gauge must be updated after note is created
-		//          so process it after InitalizeNote()
-		//
 		if (PLAYER[0]) {
 			PLAYER[0]->InitalizeNote();
 			PLAYER[0]->InitalizeScore();
@@ -481,11 +483,6 @@ namespace GamePlay {
 		if (PLAYER[1]) {
 			PLAYER[1]->InitalizeNote();
 			PLAYER[1]->InitalizeScore();
-		}
-
-		if (P.round == 1) {
-			if (PLAYER[0]) PLAYER[0]->InitalizeGauge();
-			if (PLAYER[1]) PLAYER[1]->InitalizeGauge();
 		}
 
 		/*
@@ -531,8 +528,12 @@ namespace GamePlay {
 		// COMMENT: EndTime == lastnote + 2 sec.
 		OnFadeOut->Trigger(BmsHelper::GetEndTime() + 2000 < OnGameStart->GetTick());
 		// If OnClose/OnFadeout has enough time, then go to next scene
-		if (OnClose->GetTick() > 3000 || OnFadeOut->GetTick() > 3000)
+		if (OnClose->GetTick() > 3000 || OnFadeOut->GetTick() > 3000) {
+			GameResult::P.roundcnt = P.courseplay;
+			GameResult::P.round = P.round;
 			Game::ChangeScene(&GameResult::SCENE);
+			return;
+		}
 
 		/*
 		 * BMS update

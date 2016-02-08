@@ -67,7 +67,7 @@ namespace GamePlay {
 		bool autoplay;
 		double pacemaker;
 	};
-	extern PARAMETER	P;
 
-	extern ScenePlay*	SCENE;
+	extern PARAMETER	P;
+	extern ScenePlay	SCENE;
 };

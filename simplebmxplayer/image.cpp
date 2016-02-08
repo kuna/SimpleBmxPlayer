@@ -62,14 +62,15 @@ Image::Image(const std::string& filepath, bool loop) : Image() {
 }
 
 bool Image::Load(const std::string& filepath, bool loop) {
-	this->loop = loop;
+	RString abspath = filepath;
+	FileHelper::ConvertPathToAbsolute(abspath);
 
 	// check is it movie or image
 	std::string ext = get_fileext(filepath);	MakeLower(ext);
 	if (ext == ".mpg" || ext == ".avi" || ext == ".mpeg"
 		|| ext == ".m1v") {
 		if (_movie_available) {
-			if (!LoadMovie(filepath.c_str())) {
+			if (!LoadMovie(abspath)) {
 				ReleaseMovie();
 				return false;
 			}
@@ -79,11 +80,12 @@ bool Image::Load(const std::string& filepath, bool loop) {
 		// MUST new context, or block renderer.
 		//SDL_GLContext c = SDL_GL_CreateContext(Game::WINDOW);
 		Game::RMUTEX.lock();
-		sdltex = IMG_LoadTexture(Game::RENDERER, filepath.c_str());
+		sdltex = IMG_LoadTexture(Game::RENDERER, abspath);
 		Game::RMUTEX.unlock();
 		if (!sdltex)
 			return false;
 	}
+	this->loop = loop;
 	return true;
 }
 

@@ -28,6 +28,7 @@ public:
 	virtual int Read(char *p, size_t size) = 0;
 	virtual int Write(const RString &in) = 0;
 	virtual int Write(const char* in, int size) = 0;
+	virtual void Close() = 0;
 	virtual size_t GetSize() = 0;
 	virtual bool IsEOF() = 0;
 	virtual void Reset() = 0;
@@ -56,7 +57,7 @@ public:
 	~File();
 	bool Open(const char* filename, const char* mode = "r");
 	bool IsOpened() { return fp != 0; }
-	void Close();
+	virtual void Close();
 
 	virtual int ReadLine(RString &str);
 	virtual int ReadAll(RString &str);
@@ -83,7 +84,6 @@ public:
 	FileMemory();
 	FileMemory(const char* data, size_t size);
 	void Set(const char* data, size_t size);
-	void Close();
 	virtual int ReadLine(RString &str);
 	virtual int ReadAll(RString &str);
 	virtual int ReadAll(char *p);
@@ -91,6 +91,7 @@ public:
 	virtual int Read(char *p, size_t size);
 	virtual int Write(const RString &in);
 	virtual int Write(const char* in, int size);
+	virtual void Close();
 	virtual bool IsEOF();
 	virtual void Reset();
 	virtual void Seek(size_t pos);
@@ -117,6 +118,8 @@ namespace FileHelper {
 	bool IsFile(const RString& path);
 	/** @brief is path exists & folder? */
 	bool IsFolder(const RString& path);
+
+	bool IsRelativeFile(const RString& relpath);
 	/** @brief create folder (recursively), return false if failed. */
 	bool CreateFolder(const RString& path);
 	/** @brief just get parent directory path. no IO function. */

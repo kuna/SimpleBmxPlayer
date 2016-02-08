@@ -112,3 +112,4 @@ void md5(const char *in, int in_len, char *out);
 /* IO Related */
 bool GetFileContents(const RString &sPath, RString &sOut, bool bOneLine = false);
 bool GetFileContents(const RString &sFile, vector<RString> &asOut);
+bool GetHash(const RString &sPath);

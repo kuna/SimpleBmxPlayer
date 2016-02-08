@@ -95,9 +95,13 @@ namespace Parameter {
 		 * set default value from player / program settings
 		 * TODO: depart bmspath / get bmshash here??
 		 */
-		GamePlay::P.bmspath[0] = argv[1];
-		GamePlay::P.bmshash[0] = "abcd1234";	// (TODO)
-		GamePlay::P.courseplay = 1;
+		std::vector<RString> courses;
+		split(argv[1], ";", courses);
+		for (int i = 0; i < courses.size(); i++) {
+			GamePlay::P.bmspath[i] = courses[i];
+			GamePlay::P.bmshash[i] = GetHash(courses[i]);
+		}
+		GamePlay::P.courseplay = courses.size();
 		GamePlay::P.round = 1;
 		//GamePlay::P.gauge = PLAYERINFO[0].playconfig.gaugetype;
 		//GamePlay::P.op1 = PLAYERINFO[0].playconfig.op_1p;
@@ -204,7 +208,7 @@ int main(int argc, char **argv) {
 	/*
 	 * Start main scene
 	 */
-	Game::ChangeScene(GamePlay::SCENE);
+	Game::ChangeScene(&GamePlay::SCENE);
 	
 	/* 
 	 * Game main loop started

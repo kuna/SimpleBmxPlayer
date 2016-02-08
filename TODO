@@ -50,6 +50,8 @@ o play/program setting
 - ID attribute 도입
 - survival/exhard gauge 지원 (5)
 - course mode 지원 (6)
+  - 코스모드 리플레이
+- 트레이닝 모드
 <플레이 프로젝트 끝. 다음 프로젝트에서 계속 ...>
 
 - Animated Value change(double/int) 도입하기.
