@@ -298,6 +298,22 @@ namespace Game {
 		}
 	}
 
+	//
+	// for checking joystick input
+	//
+	namespace {
+		std::map<int, bool> pressing;
+		void Press(int code) {
+			pressing[code] = true;
+		}
+		bool IsPressing(int code) {
+			return pressing[code];
+		}
+		void Up(int code) {
+
+		}
+	}
+
 	void MainLoop() {
 		while (bRunning) {
 			if (!SCENE) continue;
@@ -334,10 +350,51 @@ namespace Game {
 					}
 				}
 				else if (e.type == SDL_JOYBUTTONDOWN) {
-					SCENE->KeyDown(1000 + e.jbutton.button, 0);
+					//e.jbutton.which
+					int id = 1001 + e.jbutton.button;
+					SCENE->KeyDown(id, IsPressing(id));
+					Press(id);
 				}
 				else if (e.type == SDL_JOYBUTTONUP) {
-					SCENE->KeyUp(1000 + e.jbutton.button);
+					int id = 1001 + e.jbutton.button;
+					SCENE->KeyUp(id);
+					Up(id);
+				}
+				else if (e.type == SDL_JOYAXISMOTION) {
+					// 0: left / right
+					// - 1020: left
+					// - 1021: right
+					// 1/2: up / down
+					// - 1022: up
+					// - 1023: down
+#define JOYSTICKPRESS(id)\
+	SCENE->KeyDown(id, IsPressing(id)); Press(id);
+#define JOYSTICKUP(id)\
+	if (IsPressing(id)) { SCENE->KeyUp(id); Up(id); }
+					if (e.jaxis.axis == 0) {
+						if (e.jaxis.value >= 8000) {
+							JOYSTICKPRESS(1020);
+						}
+						else if (e.jaxis.value <= -8000) {
+							JOYSTICKPRESS(1021);
+						}
+						else {
+							JOYSTICKUP(1020);
+							JOYSTICKUP(1021);
+						}
+					}
+					else {
+						if (e.jaxis.value >= 8000) {
+							JOYSTICKPRESS(1022);
+						}
+						else if (e.jaxis.value <= -8000) {
+							JOYSTICKPRESS(1023);
+						}
+						else {
+							JOYSTICKUP(1022);
+							JOYSTICKUP(1023);
+						}
+					}
 				}
 				else if (e.type == SDL_MOUSEBUTTONDOWN) {
 					// TODO

@@ -12,7 +12,7 @@
 <KeyConfig>
     <Key0>
         <Index0>225</Index0>
-        <Index1>0</Index1>
+        <Index1>1022</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
         <Index4>0</Index4>
@@ -22,7 +22,7 @@
     </Key0>
     <Key1>
         <Index0>4</Index0>
-        <Index1>0</Index1>
+        <Index1>1001</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
         <Index4>0</Index4>
@@ -32,7 +32,7 @@
     </Key1>
     <Key2>
         <Index0>22</Index0>
-        <Index1>0</Index1>
+        <Index1>1002</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
         <Index4>0</Index4>
@@ -42,7 +42,7 @@
     </Key2>
     <Key3>
         <Index0>7</Index0>
-        <Index1>0</Index1>
+        <Index1>1003</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
         <Index4>0</Index4>
@@ -52,7 +52,7 @@
     </Key3>
     <Key4>
         <Index0>44</Index0>
-        <Index1>0</Index1>
+        <Index1>1004</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
         <Index4>0</Index4>
@@ -62,7 +62,7 @@
     </Key4>
     <Key5>
         <Index0>13</Index0>
-        <Index1>0</Index1>
+        <Index1>1005</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
         <Index4>0</Index4>
@@ -72,7 +72,7 @@
     </Key5>
     <Key6>
         <Index0>14</Index0>
-        <Index1>0</Index1>
+        <Index1>1006</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
         <Index4>0</Index4>
@@ -82,7 +82,7 @@
     </Key6>
     <Key7>
         <Index0>15</Index0>
-        <Index1>0</Index1>
+        <Index1>1007</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
         <Index4>0</Index4>
@@ -92,7 +92,7 @@
     </Key7>
     <Key8>
         <Index0>51</Index0>
-        <Index1>0</Index1>
+        <Index1>1023</Index1>
         <Index2>0</Index2>
         <Index3>0</Index3>
         <Index4>0</Index4>
@@ -413,7 +413,7 @@
 </KeyConfig>
 
 <PlayConfig>
-    <speed>212</speed>
+    <speed>226</speed>
     <speedtype>0</speedtype>
     <floatspeed>290</floatspeed>
     <usefloat>1</usefloat>
