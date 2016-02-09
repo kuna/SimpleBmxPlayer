@@ -1,0 +1,17 @@
+﻿Build started 2015-12-28 오후 4:48:15.
+     1>Project "C:\Users\kbuser\Documents\Visual Studio 2013\Projects\bmx2wav_remake\tinyxml2\tinyxml2\test.vcxproj" on node 2 (Build target(s)).
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(388,5): warning MSB8028: The intermediate directory (C:\Users\kbuser\Documents\Visual Studio 2013\Projects\bmx2wav_remake\tinyxml2\tinyxml2\temp\Win32-Release-Lib\) contains files shared from another project (tinyxml2.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /Zi /nologo /W4 /WX- /O2 /Oi /Oy- /GL /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"C:\Users\kbuser\Documents\Visual Studio 2013\Projects\bmx2wav_remake\tinyxml2\tinyxml2\temp\Win32-Release-Lib\\" /Fd"C:\Users\kbuser\Documents\Visual Studio 2013\Projects\bmx2wav_remake\tinyxml2\tinyxml2\temp\Win32-Release-Lib\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt ..\xmltest.cpp
+         xmltest.cpp
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\kbuser\Documents\Visual Studio 2013\Projects\bmx2wav_remake\tinyxml2\tinyxml2\bin\Win32-Release-Lib\test.exe" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\kbuser\Documents\Visual Studio 2013\Projects\bmx2wav_remake\tinyxml2\tinyxml2\bin\Win32-Release-Lib\test.pdb" /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\kbuser\Documents\Visual Studio 2013\Projects\bmx2wav_remake\tinyxml2\tinyxml2\bin\Win32-Release-Lib\test.lib" /MACHINE:X86 /SAFESEH "C:\Users\kbuser\Documents\Visual Studio 2013\Projects\bmx2wav_remake\tinyxml2\tinyxml2\temp\Win32-Release-Lib\xmltest.obj"
+         "C:\Users\kbuser\Documents\Visual Studio 2013\Projects\bmx2wav_remake\tinyxml2\tinyxml2\bin\Win32-Release-Lib\tinyxml2.lib"
+         Generating code
+         Finished generating code
+         test.vcxproj -> C:\Users\kbuser\Documents\Visual Studio 2013\Projects\bmx2wav_remake\tinyxml2\tinyxml2\bin\Win32-Release-Lib\test.exe
+     1>Done Building Project "C:\Users\kbuser\Documents\Visual Studio 2013\Projects\bmx2wav_remake\tinyxml2\tinyxml2\test.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:03.28
