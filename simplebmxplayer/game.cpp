@@ -374,8 +374,10 @@ namespace Game {
 					if (e.jaxis.axis == 0) {
 						if (e.jaxis.value >= 8000) {
 							JOYSTICKPRESS(1020);
+							JOYSTICKUP(1021);
 						}
 						else if (e.jaxis.value <= -8000) {
+							JOYSTICKUP(1020);
 							JOYSTICKPRESS(1021);
 						}
 						else {
@@ -386,8 +388,10 @@ namespace Game {
 					else {
 						if (e.jaxis.value >= 8000) {
 							JOYSTICKPRESS(1022);
+							JOYSTICKUP(1023);
 						}
 						else if (e.jaxis.value <= -8000) {
+							JOYSTICKUP(1022);
 							JOYSTICKPRESS(1023);
 						}
 						else {

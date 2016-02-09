@@ -88,6 +88,11 @@ namespace BmsResource {
 		// don't use absolute path here
 		//FileHelper::ConvertPathToAbsolute(bmp_path);
 		Image *image = new Image();
+		// if that image is used as layer,
+		// then use colorkey 
+		if (BMS.GetChannelManager()[7].Contains(channel) ||
+			BMS.GetChannelManager()[10].Contains(channel))
+			image->SetColorKey(true, 0xFF000000);
 		/*
 		 * currently reading from FileBasic doesn't support ffmpeg
 		 * so we should check if we're reading from memory or not
@@ -161,7 +166,7 @@ namespace BmsHelper {
 		// just reset bar position & bgm/bga iterator
 		currentbar = barindex;
 		BmsChannel& bgmchannel = BmsResource::BMS.GetChannelManager()[BmsWord(1)];
-		BmsBuffer& missbgachannel = BmsResource::BMS.GetChannelManager()[BmsWord(4)].GetBuffer();
+		BmsBuffer& missbgachannel = BmsResource::BMS.GetChannelManager()[BmsWord(6)].GetBuffer();
 		BmsBuffer& bgachannel = BmsResource::BMS.GetChannelManager()[BmsWord(4)].GetBuffer();
 		BmsBuffer& bgachannel2 = BmsResource::BMS.GetChannelManager()[BmsWord(7)].GetBuffer();
 		BmsBuffer& bgachannel3 = BmsResource::BMS.GetChannelManager()[BmsWord(10)].GetBuffer();
@@ -409,6 +414,9 @@ namespace BmsHelper {
 		 */
 		if (currentbga.mainbga != 0) {
 			Image* img = BmsResource::IMAGE.Get(currentbga.mainbga);
+			/*
+			 * only sync in main BGA
+			 */
 			if (img) img->Sync(BMSVALUE.OnBgaMain->GetTick() / BmsResource::soundrate);
 			return img;
 		}
@@ -427,7 +435,7 @@ namespace BmsHelper {
 		*/
 		if (currentbga.layer1bga != 0) {
 			Image* img = BmsResource::IMAGE.Get(currentbga.layer1bga);
-			if (img) img->Sync(BMSVALUE.OnBgaLayer1->GetTick() / BmsResource::soundrate);
+			//if (img) img->Sync(BMSVALUE.OnBgaLayer1->GetTick() / BmsResource::soundrate);
 			return img;
 		}
 		else {
@@ -441,7 +449,7 @@ namespace BmsHelper {
 		*/
 		if (currentbga.layer2bga != 0) {
 			Image* img = BmsResource::IMAGE.Get(currentbga.layer2bga);
-			if (img) img->Sync(BMSVALUE.OnBgaLayer2->GetTick() / BmsResource::soundrate);
+			//if (img) img->Sync(BMSVALUE.OnBgaLayer2->GetTick() / BmsResource::soundrate);
 			return img;
 		}
 		else {
@@ -456,9 +464,13 @@ namespace BmsHelper {
 		using namespace BmsResource;
 		BMS.GetTimeManager().SetRate(r);
 		soundrate = r;
-		/*for (unsigned int i = 0; i < BmsConst::WORD_MAX_COUNT; i++) {
+		/*
+		 * we do resample when load sound, so don't do resample in here.
+		 *
+		for (unsigned int i = 0; i < BmsConst::WORD_MAX_COUNT; i++) {
 			Audio *audio = SOUND.Get(i);
 			if (audio) audio->Resample(1 / r);
-		}*/
+		}
+		*/
 	}
 }

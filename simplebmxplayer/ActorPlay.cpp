@@ -429,7 +429,6 @@ void SkinBgaObject::Render() {
 	 * but one thing should be taken care of - 
 	 * Miss timer is different from player.
 	 */
-	// TODO: layer1/2 transparent #000000 color
 	RenderBGA(BmsHelper::GetMainBGA());
 	RenderBGA(BmsHelper::GetLayer1BGA());
 	RenderBGA(BmsHelper::GetLayer2BGA());

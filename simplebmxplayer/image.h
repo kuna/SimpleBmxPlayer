@@ -23,6 +23,9 @@ private:
 protected:
 	// also includes movie!
 	SDL_Texture *sdltex;
+	Uint32 colorkey;
+	bool usecolorkey;
+
 	AVFormatContext *moviectx;			// movie context (handle)
 	AVStream *stream;					// current movie stream
 	int moviestream;
@@ -53,6 +56,8 @@ public:
 	void Release();
 	int GetWidth();
 	int GetHeight();
+
+	void SetColorKey(bool usecolorkey, Uint32 colorkey);
 
 	bool IsLoaded();
 	void Reset();				// reset pos to first one

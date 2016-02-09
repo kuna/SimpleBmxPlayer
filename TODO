@@ -40,7 +40,7 @@ o 플레이어 오브젝트
     o target vs
     - mybest
 o fast/slow 도입
-- utf8 파일경로 제대로 못읽는 문제 해결하기.
+o utf8 파일경로 제대로 못읽는 문제 해결하기.
 o freq
 o skin include (DeepCopy or XMLNode - append)
 o play/program setting
@@ -48,10 +48,12 @@ o play/program setting
   - bms 파일 hash / base64 테스트
   - zlib 연동 및 base64 인코딩 테스트
 - ID attribute 도입
+  - 스킨 구조 리펙토링...?
 - survival/exhard gauge 지원 (5)
 - course mode 지원 (6)
   - 코스모드 리플레이
 - 트레이닝 모드
+- back-spin scratch
 <플레이 프로젝트 끝. 다음 프로젝트에서 계속 ...>
 
 - Animated Value change(double/int) 도입하기.

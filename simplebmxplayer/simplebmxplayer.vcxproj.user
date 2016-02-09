@@ -5,7 +5,7 @@
     <LocalDebuggerCommandArguments>"D:\LR2\BMS\CHMR\[CRYSTAL TECHNOLOGY]CHMR[SP ANOTHER].bme"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments>"D:\LR2\BMS_iidx\18033 Raise your hands\a7.bme"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\BMS_test\夢人形 [techno pop]\yumeningyo.bms"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_2|Win32'">
