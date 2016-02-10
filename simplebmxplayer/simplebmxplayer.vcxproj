@@ -196,6 +196,7 @@
     <Library Include="..\lib\pthreadVC2.lib" />
     <Library Include="..\lib\Release-Lib\tinyxml2.lib" />
     <Library Include="..\lib\Release\bmsbel.lib" />
+    <Library Include="..\lib\Release\libiconv.lib" />
     <Library Include="..\lib\Release\Lua.lib" />
     <Library Include="..\lib\Release\SDL2_image.lib" />
     <Library Include="..\lib\Release\SDL2_mixer.lib" />

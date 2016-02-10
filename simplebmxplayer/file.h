@@ -112,7 +112,9 @@ namespace FileHelper {
 	void PopBasePath();
 	RString& GetBasePath();
 	RString& GetSystemPath();
+	/* returns absolute file path */
 	void GetFileList(const char *folderpath, std::vector<RString>& filelist, bool getfileonly = true);
+	/* returns relative file path */
 	void GetFileList(std::vector<RString>& filelist);
 	void FilterFileList(const char *extfilters, std::vector<RString>& filelist);
 	/** @brief is path exists & file? */

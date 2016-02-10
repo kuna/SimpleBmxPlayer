@@ -102,6 +102,7 @@ namespace Parameter {
 			 * before loading Bms file, check argument is folder
 			 * if it does, get valid path from player
 			 */
+			RString hash = "";
 			if (FileHelper::IsFolder(courses[i])) {
 				FileHelper::PushBasePath(courses[i]);
 				std::vector<RString> filelist;
@@ -115,10 +116,19 @@ namespace Parameter {
 				int r = atoi(buf_);
 				if (r >= filelist.size()) r = filelist.size() - 1;
 				courses[i] = filelist[r];
+				FileHelper::ConvertPathToAbsolute(courses[i]);
+				FileBasic *f;
+				FileHelper::LoadFile(filelist[r], &f);
+				hash = f->GetMD5Hash();
+				f->Close();
+				delete f;
 				FileHelper::PopBasePath();
 			}
+			else {
+				hash = GetHash(courses[i]);
+			}
 			GamePlay::P.bmspath[i] = courses[i];
-			GamePlay::P.bmshash[i] = GetHash(courses[i]);
+			GamePlay::P.bmshash[i] = hash;
 		}
 		GamePlay::P.courseplay = courses.size();
 		GamePlay::P.round = 1;

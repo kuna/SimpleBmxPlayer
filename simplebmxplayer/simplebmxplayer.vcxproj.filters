@@ -211,6 +211,7 @@
     <Library Include="..\lib\Release\SDL_FontCache.lib" />
     <Library Include="..\lib\Release\sqlite.lib" />
     <Library Include="..\lib\Release\zziplib.lib" />
+    <Library Include="..\lib\Release\libiconv.lib" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="simplebmxplayer.rc">

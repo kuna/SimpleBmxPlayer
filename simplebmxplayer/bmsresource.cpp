@@ -193,6 +193,9 @@ namespace BmsHelper {
 	 */
 	bool isbmsloading = false;
 
+	/*
+	 * absolute path, please.
+	 */
 	bool LoadBms(const RString& path) {
 		bool succeed = true;
 		// lock first, so LoadBmsResource() can wait 
@@ -207,6 +210,8 @@ namespace BmsHelper {
 
 		// load bms file & create time table
 		// if current folder is archive, read file fully and parse it
+		RString dir = get_filedir(path);
+		FileHelper::PushBasePath(dir);
 		if (FileHelper::CurrentDirectoryIsZipFile()) {
 			FileBasic *f = 0;
 			RString relpath = get_filename(path);
@@ -231,6 +236,7 @@ namespace BmsHelper {
 				succeed = false;
 			}
 		}
+		FileHelper::PopBasePath();
 
 		mutex_bmsresource.unlock();
 

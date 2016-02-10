@@ -162,9 +162,10 @@ size_t File::GetSize() {
  * (compatible with SDL_)
  */
 
-FileMemory::FileMemory() { }
+FileMemory::FileMemory() { m_pos = 0; }
 
-FileMemory::FileMemory(const char* data, size_t size) {
+FileMemory::FileMemory(const char* data, size_t size)
+: FileMemory() {
 	Set(data, size);
 }
 
@@ -202,14 +203,14 @@ int FileMemory::Read(char *p, size_t size) {
 	int totsize = GetSize();
 	if (totsize == 0)
 		return 0;
-	for (int i = 0; i < size; i++) {
+	int i = 0;
+	for (; i < size; i++) {
 		if (m_pos >= totsize) {
-			m_pos = totsize - 1;
-			return i + 1;
+			break;
 		}
 		p[i] = m_data[m_pos++];
 	}
-	return totsize;
+	return i;
 }
 
 int FileMemory::ReadLine(RString &str) {
@@ -254,7 +255,7 @@ int FileMemory::Write(const char* in, int len) {
 	return len;
 }
 
-bool FileMemory::IsEOF() { return GetSize() == m_pos + 1; }
+bool FileMemory::IsEOF() { return GetSize() < m_pos; }
 
 void FileMemory::Reset() {
 	m_pos = 0;
@@ -265,7 +266,7 @@ void FileMemory::Seek(size_t pos) {
 }
 
 SDL_RWops* FileMemory::GetSDLRW() {
-	return SDL_RWFromConstMem(&m_data.begin(), m_data.size());
+	return SDL_RWFromConstMem(&m_data.front(), m_data.size());
 }
 
 
@@ -299,7 +300,7 @@ namespace FileHelper {
 		RString basepath = path;
 
 		mount_status_ stat_;
-			if (EndsWith(basepath, ".zip")) {
+		if (EndsWith(basepath, ".zip")) {
 			stat_.zipdir_ = zzip_opendir(basepath);
 			ASSERT(stat_.zipdir_ != 0);
 			stat_.iszipfile_ = true;
@@ -332,24 +333,29 @@ namespace FileHelper {
 	*    basepath normalfile & target zipfile.
 	* use it at own risk..
 	* COMMENT: path should be relative. (suggest)
+	*          if not relative, then this code will convert path into relative one.
 	*/
 	bool LoadFile(const char *relpath, FileBasic **f) {
+		RString path_ = relpath;
 		mount_status_ stat_ = basepath_stack.back();
 		if (stat_.iszipfile_) {
+			if (CheckIsAbsolutePath(path_)) {
+				path_ = get_filename(path_);
+			}
 			// memory file return
-			ZZIP_FILE *zfp = zzip_file_open(stat_.zipdir_, relpath, 0);
+			ZZIP_FILE *zfp = zzip_file_open(stat_.zipdir_, path_, 0);
 			if (!zfp) return false;
 			ZZIP_STAT zstat;
 			zzip_file_stat(zfp, &zstat);
 			int orgsize = zstat.st_size;
 			char *buf_tmp_ = new char[orgsize];
+			zzip_file_read(zfp, buf_tmp_, orgsize);
 			*f = new FileMemory(buf_tmp_, orgsize);
 			delete[] buf_tmp_;
 			zzip_file_close(zfp);
 		}
 		else {
 			// normal file return
-			RString path_ = relpath;
 			ConvertPathToAbsolute(path_);
 			if (!IsFile(path_)) return false;
 			*f = new File(path_, "rb");
