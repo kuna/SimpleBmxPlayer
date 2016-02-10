@@ -116,24 +116,28 @@ void PlayerScore::AddGrade(const int type) {
 * text - replay
 */
 #define QUERY_TABLE_CREATE\
-	"CREATE TABLE record("\
-	"songhash TEXT PRIMARY KEY NOT NULL,"\
-	"scorehash TEXT,"\
-	"playcount INT,"\
-	"clearcount INT,"\
-	"failcount INT,"\
-	"status INT,"\
-	"minbp INT,"\
-	"maxcombo INT,"\
-	"perfect INT,"\
-	"great INT,"\
-	"good INT,"\
-	"bad INT,"\
-	"poor INT,"\
-	"replay TEXT,"\
-	"op1 INT,"\
-	"op2 INT,"\
-	"rseed INT,"\
+	"CREATE TABLE `record` ("\
+	"`songhash` TEXT NOT NULL,"\
+	"`scorehash` TEXT,"\
+	"`playcount` INT,"\
+	"`clearcount` INT,"\
+	"`failcount` INT,"\
+	"`status` INT,"\
+	"`minbp` INT,"\
+	"`maxcombo` INT,"\
+	"`perfect` INT,"\
+	"`great` INT,"\
+	"`good` INT,"\
+	"`bad` INT,"\
+	"`poor` INT,"\
+	"`poor` INT,"\
+	"`fast` INT,"\
+	"`slow` INT,"\
+	"`op1` INT,"\
+	"`op2` INT,"\
+	"`rseed` INT,"\
+	"`type` INT,"\
+	"PRIMARY KEY(songhash)"\
 	");"
 #define QUERY_TABLE_EXIST\
 	"SELECT name FROM sqlite_master WHERE type='table' and name='record';"
@@ -141,7 +145,7 @@ void PlayerScore::AddGrade(const int type) {
 	"SELECT * FROM record WHERE songhash=?;"
 #define QUERY_TABLE_INSERT\
 	"INSERT OR REPLACE INTO record VALUES"\
-	"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+	"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
 #define QUERY_TABLE_DELETE\
 	"DELETE FROM record WHERE songhash=?"
 #define QUERY_DB_BEGIN		"BEGIN;"
@@ -153,14 +157,14 @@ void PlayerScore::AddGrade(const int type) {
 	bool r;\
 	sqlite3_stmt *stmt;\
 	ASSERT(sql != 0);\
-	r = false;\
+	r = true;\
 	sqlite3_prepare_v2(sql, q, -1, &stmt, 0);
 #define FINISHQUERY()\
 	sqlite3_reset(stmt);\
 	sqlite3_finalize(stmt);\
 	return r;
 #define CHECKQUERY(type)\
-	if (sqlite3_step(stmt) == type) r = true;
+	if (sqlite3_step(stmt) != type) r = false;
 #define CHECKTYPE(col, type)\
 	ASSERT(sqlite3_column_type(stmt, col) == type)
 #define GETTEXT(col, v)\
@@ -363,9 +367,12 @@ namespace PlayerRecordHelper {
 
 		// private
 		bool CreateRecordTable() {
+#ifdef _WIN32
+			const char *p = QUERY_TABLE_CREATE;
+#endif
 			if (!Begin()) return false;
 			RUNQUERY(QUERY_TABLE_CREATE);
-			CHECKQUERY(SQLITE_ROW);
+			CHECKQUERY(SQLITE_DONE);
 			if (r) r = Commit();
 			FINISHQUERY();
 		}
@@ -418,9 +425,12 @@ namespace PlayerRecordHelper {
 			else {
 				record_ = record;
 			}
+#ifdef _WIN32
+			const char *p = QUERY_TABLE_INSERT;
+#endif
 			RUNQUERY(QUERY_TABLE_INSERT);
 			QUERY_BIND_TEXT(1, record.hash);
-			QUERY_BIND_TEXT(2, "");		// TODO: generate scorehash
+			QUERY_BIND_TEXT(2, "");					// TODO: generate scorehash
 			QUERY_BIND_INT(3, record.playcount);
 			QUERY_BIND_INT(4, record.clearcount);
 			QUERY_BIND_INT(5, record.failcount);
@@ -431,8 +441,13 @@ namespace PlayerRecordHelper {
 			QUERY_BIND_INT(10, record.score.score[4]);
 			QUERY_BIND_INT(11, record.score.score[3]);
 			QUERY_BIND_INT(12, record.score.score[2]);
-			QUERY_BIND_INT(13, record.score.score[1]);
-			QUERY_BIND_INT(14, record.score.score[0]);
+			QUERY_BIND_INT(13, record.score.score[1] + record.score.score[0]);
+			QUERY_BIND_INT(14, record.score.fast);
+			QUERY_BIND_INT(15, record.score.slow);
+			QUERY_BIND_INT(16, record.op1);
+			QUERY_BIND_INT(17, record.op2);
+			QUERY_BIND_INT(18, record.rseed);
+			QUERY_BIND_INT(19, record.type);
 			CHECKQUERY(SQLITE_DONE);
 			if (r) r = Commit();
 			FINISHQUERY();

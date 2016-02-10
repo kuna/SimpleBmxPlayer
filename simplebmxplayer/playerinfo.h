@@ -114,10 +114,13 @@ public:
  */
 class PlayerSongRecord {
 public:
-	// TODO: add date
 	// used for identifying song
 	RString hash;
-	// records less important for game play 
+	// game play options
+	int op1, op2;			// decides note chart
+	int rseed;				// decides note chart
+	int type;				// kb? beatcon?
+	// game play statics
 	int playcount;
 	int clearcount;
 	int failcount;

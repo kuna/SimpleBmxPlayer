@@ -565,7 +565,10 @@ void Player::MakeJudge(int judgetype, int time, int channel, int fastslow, bool 
 }
 
 void Player::Save() {
-	// TODO
+	//
+	// (TODO)
+	// fill record data more
+	//
 	RString current_hash = GamePlay::P.bmshash[GamePlay::P.round - 1];
 	RString player_name = PLAYERINFO[0].name;
 
