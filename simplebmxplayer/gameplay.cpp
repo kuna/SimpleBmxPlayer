@@ -512,18 +512,21 @@ namespace GamePlay {
 	}
 
 	void ScenePlay::Update() {
-		/*
+		/* *******************************************************
 		 * check timers (game flow related)
-		 */
+		 * *******************************************************/
 		if (OnReady->Trigger(OnSongLoadingEnd->IsStarted() && OnSongLoading->GetTick() >= 3000))
 			OnSongLoading->Stop();
 		if (OnGameStart->Trigger(OnReady->GetTick() >= 1000))
 			OnSongLoadingEnd->Stop();
 		// OnClose is called when all player is dead
 		bool close = true;
-		if (close && PLAYER[0]) close = close && PLAYER[0]->IsDead();
-		if (close && PLAYER[1]) close = close && PLAYER[1]->IsDead();
-		OnClose->Trigger(close);
+		if (close && PLAYER[0] && !PLAYER[0]->IsSilent()) close = close && PLAYER[0]->IsDead();
+		if (close && PLAYER[1] && !PLAYER[1]->IsSilent()) close = close && PLAYER[1]->IsDead();
+		if (OnClose->Trigger(close)) {
+			// stop all sound
+			BmsHelper::StopAllSound();
+		}
 		// OnFadeout is called when endtime is over
 		// COMMENT: EndTime == lastnote + 2 sec.
 		OnFadeOut->Trigger(BmsHelper::GetEndTime() + 2000 < OnGameStart->GetTick());
@@ -534,6 +537,12 @@ namespace GamePlay {
 			Game::ChangeScene(&GameResult::SCENE);
 			return;
 		}
+
+		/* *********************************************************
+		 * under are part of playing
+		 * if dead, no need to update.
+		 * *********************************************************/
+		if (OnClose->IsStarted()) return;
 
 		/*
 		 * BMS update

@@ -95,6 +95,10 @@ namespace BmsHelper {
 	double GetEndTime();
 	/** MUST call AFTER load bms & BEFORE load bms audios */
 	void SetRate(double length);
+
+
+
+	void StopAllSound();
 }
 
 typedef struct {

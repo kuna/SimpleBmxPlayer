@@ -501,4 +501,9 @@ namespace BmsHelper {
 		}
 		*/
 	}
+
+	void StopAllSound() {
+		for (int i = 0; i < BmsConst::WORD_MAX_COUNT; i++)
+			BmsResource::SOUND.Stop(i);
+	}
 }

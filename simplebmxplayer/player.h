@@ -215,6 +215,7 @@ public:
 
 	/** @brief should play sound? (related to pacemaker) */
 	void Silent(bool silent = true);
+	bool IsSilent() { return issilent; };
 };
 
 /*
