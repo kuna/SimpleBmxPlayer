@@ -354,22 +354,6 @@ namespace GamePlay {
 		 * initalize timers
 		 */
 		GameTimer::Tick();
-		// TODO
-		SWITCH_OFF("IsGhostOff");
-		SWITCH_ON ("IsGhostA");
-		SWITCH_OFF("IsGhostB");
-		SWITCH_OFF("IsGhostC");
-		SWITCH_OFF("OnDiffBeginner");
-		SWITCH_OFF("OnDiffNormal");
-		SWITCH_OFF("OnDiffHyper");
-		SWITCH_ON ("OnDiffAnother");
-		SWITCH_OFF("OnDiffInsane");
-		SWITCH_ON("IsScoreGraph");
-		SWITCH_OFF("IsAutoPlay");
-		SWITCH_ON("IsBGA");
-		SWITCH_ON("IsExtraMode");
-		DOUBLEPOOL->Set("TargetExScore", 0.5);
-		DOUBLEPOOL->Set("TargetExScore", 0.5);
 		OnSongLoadingEnd->Stop();
 		OnReady->Stop();
 		OnGameStart->Stop();
@@ -480,6 +464,69 @@ namespace GamePlay {
 			PLAYER[1]->InitalizeScore();
 		}
 
+		//
+		// gameplay setting
+		// depends on :
+		// - Game global setting
+		// - PLAYER1
+		// - BMS
+		// these elements should prepared.
+		//
+		SWITCH_OFF("IsGhostOff");
+		SWITCH_OFF("IsGhostA");
+		SWITCH_OFF("IsGhostB");
+		SWITCH_OFF("IsGhostC");
+		switch (PLAYERINFO[0].playconfig.ghost_type) {
+		case GHOSTTYPE::OFF:
+			SWITCH_ON("IsGhostOff");
+			break;
+		case GHOSTTYPE::TYPEA:
+			SWITCH_ON("IsGhostA");
+			break;
+		case GHOSTTYPE::TYPEB:
+			SWITCH_ON("IsGhostB");
+			break;
+		case GHOSTTYPE::TYPEC:
+			SWITCH_ON("IsGhostC");
+			break;
+		}
+		SWITCH_OFF("IsJudgeOff");
+		SWITCH_OFF("IsJudgeA");
+		SWITCH_OFF("IsJudgeB");
+		SWITCH_OFF("IsJudgeC");
+		switch (PLAYERINFO[0].playconfig.judge_type) {
+		case JUDGETYPE::OFF:
+			SWITCH_ON("IsJudgeOff");
+			break;
+		case JUDGETYPE::TYPEA:
+			SWITCH_ON("IsJudgeA");
+			break;
+		case JUDGETYPE::TYPEB:
+			SWITCH_ON("IsJudgeB");
+			break;
+		case JUDGETYPE::TYPEC:
+			SWITCH_ON("IsJudgeC");
+			break;
+		}
+		switch (PLAYERINFO[0].playconfig.pacemaker_type) {
+		case PACEMAKERTYPE::PACE0:
+			break;
+		}
+		// TODO
+		SWITCH_OFF("OnDiffBeginner");
+		SWITCH_OFF("OnDiffNormal");
+		SWITCH_OFF("OnDiffHyper");
+		SWITCH_ON("OnDiffAnother");
+		SWITCH_OFF("OnDiffInsane");
+		SWITCH_ON("IsScoreGraph");
+		SWITCH_OFF("IsAutoPlay");
+		SWITCH_ON("IsBGA");
+		SWITCH_ON("IsExtraMode");
+		DOUBLEPOOL->Set("TargetExScore", 0.5);
+		DOUBLEPOOL->Set("TargetExScore", 0.5);
+		INTPOOL->Set("PlayLevel", 12);	// TODO
+		INTPOOL->Set("MyBest", 12);		// TODO
+
 		/*
 		 * Load skin
 		 */
@@ -569,9 +616,17 @@ namespace GamePlay {
 
 	void ScenePlay::End() {
 		/*
-		 * just save player properties when game goes end
+		 * save player properties when game goes end
 		 */
 		PlayerInfoHelper::SavePlayerInfo(PLAYERINFO[0]);
+
+		/*
+		 * if you hit note (not gave up) and recordable, then save record
+		 * (TODO)
+		 */
+		if (GamePlay::P.isrecordable && PLAYER[0]) {
+			PLAYER[0]->Save();
+		}
 	}
 
 	void ScenePlay::Release() {

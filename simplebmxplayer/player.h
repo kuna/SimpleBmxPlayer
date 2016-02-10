@@ -90,7 +90,7 @@ typedef struct {
 class Player {
 protected:
 	PlayerPlayConfig*	playconfig;
-	PlayerReplayRecord	playrecord;
+	PlayerReplayRecord	replay_cur;
 	int					playside;
 	int					playmode;
 	int					playertype;
@@ -216,6 +216,9 @@ public:
 	/** @brief should play sound? (related to pacemaker) */
 	void Silent(bool silent = true);
 	bool IsSilent() { return issilent; };
+
+	/** @brief save play record & replay data */
+	void Save();
 };
 
 /*

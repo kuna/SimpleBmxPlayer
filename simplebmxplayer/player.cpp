@@ -531,7 +531,7 @@ void Player::MakeJudge(int judgetype, int time, int channel, int fastslow, bool 
 	pv->pOnlastnote->Trigger(score.LastNoteFinished());
 
 	// record into playrecord
-	playrecord.AddJudge(time, judgeside, judgetype, fastslow, silent);
+	replay_cur.AddJudge(time, judgeside, judgetype, fastslow, silent);
 	
 	if (!silent) {
 		switch (judgeside) {
@@ -562,6 +562,35 @@ void Player::MakeJudge(int judgetype, int time, int channel, int fastslow, bool 
 		// TODO: make judge event
 		//Handler::CallHandler(OnGamePlayJudge, &judgearg);
 	}
+}
+
+void Player::Save() {
+	// TODO
+	RString current_hash = GamePlay::P.bmshash[GamePlay::P.round - 1];
+	RString player_name = PLAYERINFO[0].name;
+
+	// create new record with current playdata
+	PlayerSongRecord record;
+	record.hash = current_hash;
+	if (!PlayerRecordHelper::LoadPlayerRecord(record, PLAYERINFO[0].name, current_hash)) {
+		record.clearcount = 0;
+		record.failcount = 0;
+	}
+	if (IsDead() || (!dieonnohealth && playergauge < 0.8))
+		record.failcount++;
+	else
+		record.clearcount++;
+	record.maxcombo = score.maxcombo;
+	record.minbp = score.score[0] + score.score[1] + score.score[2];
+	record.score = score;
+
+	// save
+	PlayerRecordHelper::SavePlayerRecord(record, player_name);
+	PlayerReplayHelper::SaveReplay(
+		replay_cur,
+		player_name,
+		current_hash
+	);
 }
 
 
@@ -698,7 +727,7 @@ void Player::UpKey(int lane) {
 
 	// record to replay
 	Uint32 currenttime = pBmstimer->GetTick();
-	playrecord.AddPress(currenttime, lane, 0);
+	replay_cur.AddPress(currenttime, lane, 0);
 
 	// if scratch, then set timer
 	// (TODO)
@@ -743,7 +772,7 @@ void Player::PressKey(int lane) {
 	// record to replay
 	//
 	Uint32 currenttime = pBmstimer->GetTick();
-	playrecord.AddPress(currenttime, lane, 1);
+	replay_cur.AddPress(currenttime, lane, 1);
 
 	// if scratch, then set timer
 	// (TODO)

@@ -153,6 +153,20 @@ namespace PACEMAKERTYPE {
 	const int PACERIVAL5 = 13;
 }
 
+namespace GHOSTTYPE {
+	const int OFF = 0;
+	const int TYPEA = 1;
+	const int TYPEB = 2;
+	const int TYPEC = 3;
+}
+
+namespace JUDGETYPE {
+	const int OFF = 0;
+	const int TYPEA = 1;
+	const int TYPEB = 2;
+	const int TYPEC = 3;
+}
+
 namespace PLAYTYPE {
 	const int KEY5 = 5;
 	const int KEY7 = 7;

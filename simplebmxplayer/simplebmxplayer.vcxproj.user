@@ -5,7 +5,7 @@
     <LocalDebuggerCommandArguments>"D:\LR2\BMS\Lewisia.zip"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments>"D:\BMS_test\☆ さくらなみきのかぜ ☆ [kirby pop]\_nekoko14_TML7.bml" -s3</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\BMS_test\☆ さくらなみきのかぜ ☆ [kirby pop]\_nekoko14_TML7.bml"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

@@ -144,6 +144,7 @@ namespace Parameter {
 		GamePlay::P.replay = false;
 		GamePlay::P.rseed = time(0) % 65536;
 		GamePlay::P.pacemaker = 6.0 / 9.0;	// A rank
+		GamePlay::P.isrecordable = true;
 
 		// overwrite default options
 		for (int i = 2; i < argc; i++) {
@@ -154,15 +155,18 @@ namespace Parameter {
 			}
 			else if (BeginsWith(argv[i], "-replay")) {
 				GamePlay::P.replay = true;
+				GamePlay::P.isrecordable = false;
 			}
 			else if (BeginsWith(argv[i], "-auto")) {
 				GamePlay::P.autoplay = true;
+				GamePlay::P.isrecordable = false;
 			}
 			else if (BeginsWith(argv[i], "-bgaoff")) {
 				GamePlay::P.bga = false;
 			}
 			else if (BeginsWith(argv[i], "-rate")) {
 				GamePlay::P.rate = atof(argv[i] + 5);
+				GamePlay::P.isrecordable = false;
 			}
 			else if (BeginsWith(argv[i], "-pace")) {
 				GamePlay::P.pacemaker = atof(argv[i] + 5);
@@ -172,12 +176,15 @@ namespace Parameter {
 			}
 			else if (BeginsWith(argv[i], "-s")) {
 				GamePlay::P.startmeasure = atoi(argv[i] + 2);
+				GamePlay::P.isrecordable = false;
 			}
 			else if (BeginsWith(argv[i], "-e")) {
 				GamePlay::P.endmeasure = atoi(argv[i] + 2);
+				GamePlay::P.isrecordable = false;
 			}
 			else if (BeginsWith(argv[i], "-r")) {
 				GamePlay::P.repeat = atoi(argv[i] + 2);
+				GamePlay::P.isrecordable = false;
 			}
 		}
 		return true;

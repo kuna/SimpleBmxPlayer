@@ -1281,7 +1281,7 @@ RString vssprintf(const char *szFormat, va_list argList)
 	return sStr;
 }
 
-bool GetHash(const RString &sPath) {
+RString GetHash(const RString &sPath) {
 	File f;
 	f.Open(sPath, "rb");
 	RString hash = f.GetMD5Hash();

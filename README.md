@@ -1,10 +1,10 @@
 # SimpleBmxPlayer
 
-### abstract
-- just plays \*.bmx(bms, bme, bml, etc.) file.
-- good to use when editing \*.bmx files.
+### Abstract
+- Just plays \*.bmx(bms, bme, bml, etc.) file.
+- Actually, This program is close to emulator rather then player, as this program has options & supports options for player. HoweveA, as this program is demo project, I won't support other scenes like song selection. that will be implemented in other later project.
 
-### dependency
+### Dependency
 - ```SDL2```
 - ```SDL2_image```
 - ```SDL2_mixer```
@@ -22,23 +22,27 @@
   - download ```Dev Lib / Runtime Binaries``` directly from [SDL](https://www.libsdl.org/download-2.0.php), and extract file to ```include/SDL, lib/x86, Release```.
   - download ffmpeg from [Zeranoe FFmpeg](http://ffmpeg.zeranoe.com/builds/), and extract to ```include/ffmpeg, lib/ffmpeg, Release```
 
-### how to use
-- drag BMS file to program.
-- archive file available (ex: ./ex.zip/test.bms)
+### How to use
+- Drag BMS file to program.
+- Archive file available (ex: ./ex.zip/test.bms)
 
-### keys
+### Keys
 - default key config is -
+
   (1P) LS Z S X D C F V
+
   (2P) RS M K , L . ; /
+
   you can change it by changing preset files.
+
   (also supports controller)
 - [Up/Down]      change speed.
 - [Right/Left]   change sudden.\n"
 - [F12]          float speed toggle\n"
 - [Start+WB/BB]  change speed\n"
-- [Start+SC]     (if float on) change float speed.
-- [Start+SC]     (if sudden on) change sudden.
-- [Start+SC]     (if sudden off) change lift.
+- [Start+SC]     change float speed. (if float on)
+- [Start+SC]     change sudden. (if sudden on)
+- [Start+SC]     change lift. (if sudden off)
 - [Start+VEFX]   float speed toggle
 - [Start double] toggle sudden.
 
@@ -46,27 +50,35 @@
 - (BB: blue? black? btton; generally calls 2, 4, 6 buttons)
 - (SC: scratch; LShift on keyboard)
 
-### available options
--bgaoff: don't load image files (ignore image channel)
--replay: show replay file (if no replay file, it won't turn on)
--auto: autoplayed by DJ
--op__: set op for player (RANDOM ... etc; only support int value)
+### Available options
+- -bgaoff: don't load image files (ignore image channel)
+- -replay: show replay file (if no replay file, it won't turn on)
+- -auto: autoplayed by DJ
+- -op__: set op for player (RANDOM ... etc; only support int value)
 
--g_: set gauge (0: GROOVE, 1: EASY, 2: HARD, 3: EXHARD, 4: HAZARD)
--n______: set user profile to play (default: NONAME)
--s_: start from n-th measure
--e_: end(cut) at n-th measure
--r_: repeat bms for n-times
--rate__: song rate (1.0 is normal, lower is faster; decimal)
--pace__: pacemaker percent (decimal)
+- -g_: set gauge (0: GROOVE, 1: EASY, 2: HARD, 3: EXHARD, 4: HAZARD)
+- -n______: set user profile to play (default: NONAME)
+- -s_: start from n-th measure
+- -e_: end(cut) at n-th measure
+- -r_: repeat bms for n-times
+- -rate__: song rate (1.0 is normal, lower is faster; decimal)
+- -pace__: pacemaker percent (decimal)
 
 default value can be set by changing settings.xml file.
 
-### preview (youtube link)
+### Preview (youtube link)
 - [@aaf3c68](https://www.youtube.com/watch?v=11DYI2wY4SU)
+- [@b731324](https://www.youtube.com/watch?v=8fhnrE0w0_Q)
+
+### Skin
+- This program will use new skin format, which is ID/event-based and xml-formatted. but I'll try to convert lr2skin to this skin format automatically.
+- You can use lr2skin itself, and program will convert it.
+- Actually, program's skin model is stepmania, but this program will still have compatibility with LR2 with it's structure. detailed explanation will be added later.
 
 ### known issue / etc
-- This program will use new skin format, which is ID/event-based and xml-formatted. but I'll try to convert lr2skin to this skin format automatically.
+- Read BUGS / TODO file.
+- Any help(bug report, code review, algorithm suggestion, etc ...) would be welcome.
+- Not yet, but going to support Android/Mac/Linux (cross-platform)
 
 ### Additional standard suggestion
 - Supporting UTF8 file format

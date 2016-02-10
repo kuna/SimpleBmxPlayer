@@ -28,6 +28,8 @@ struct PlayerPlayConfig {
 	int usefloatspeed;	// should we use float speed?
 	int gaugetype;		// off, assist, ...
 	// pacemaker
+	int ghost_type;		// 
+	int judge_type;		// fastslow
 	int pacemaker_type;	// 0%, 90%, 100%, rival, mybest, A, AA, AAA, custom
 	int pacemaker_goal;	// custom goal
 	// assists/additional option
@@ -90,7 +92,6 @@ struct ReplayObject {
 class PlayerReplayRecord {
 private:
 	// about chart
-	RString songhash;
 	int op_1p, op_2p;
 	int gauge;
 	int rseed;
@@ -126,9 +127,8 @@ public:
 	int maxcombo;			// CAUTION: it's different fram grade.
 	// records used for game play
 	PlayerScore score;		// we only store high-score
-	PlayerReplayRecord replay;	//
 public:
-	// used for hashing
+	// used for hashing (scorehash)
 	RString Serialize();
 };
 

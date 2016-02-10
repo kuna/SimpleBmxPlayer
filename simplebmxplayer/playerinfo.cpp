@@ -154,7 +154,7 @@ void PlayerScore::AddGrade(const int type) {
 	sqlite3_stmt *stmt;\
 	ASSERT(sql != 0);\
 	r = false;\
-	sqlite3_prepare16_v2(sql, q, -1, &stmt, 0);
+	sqlite3_prepare_v2(sql, q, -1, &stmt, 0);
 #define FINISHQUERY()\
 	sqlite3_reset(stmt);\
 	sqlite3_finalize(stmt);\
@@ -164,7 +164,7 @@ void PlayerScore::AddGrade(const int type) {
 #define CHECKTYPE(col, type)\
 	ASSERT(sqlite3_column_type(stmt, col) == type)
 #define GETTEXT(col, v)\
-	CHECKTYPE(col, SQLITE_TEXT), v = (char*)sqlite3_column_text16(stmt, col)
+	CHECKTYPE(col, SQLITE_TEXT), v = (char*)sqlite3_column_text(stmt, col)
 #define GETINT(col, v)\
 	CHECKTYPE(col, SQLITE_INTEGER), v = sqlite3_column_int(stmt, col)
 
@@ -199,15 +199,15 @@ void PlayerReplayRecord::Serialize(RString &out) const {
 	// 120 byte: header end, replay body data starts
 	// (1 row per 4 * 3 = 12bytes)
 	//
-	strcpy(buf, songhash);
 	memcpy(buf+40, &op_1p, sizeof(int));
 	memcpy(buf+44, &op_2p, sizeof(int));
 	memcpy(buf+48, &gauge, sizeof(int));
 	memcpy(buf+52, &rseed, sizeof(int));
 	memcpy(buf+56, &rate, sizeof(int));
 
-	memcpy(buf + 116, (void*)objects.size(), 4);
-	for (int i = 0; i < objects.size(); i++) {
+	int record_cnt = objects.size();
+	memcpy(buf + 116, (void*)&record_cnt, 4);
+	for (int i = 0; i < record_cnt; i++) {
 		memcpy(buf + 120 + i * 12, &objects[i], 12);
 	}
 
@@ -216,7 +216,7 @@ void PlayerReplayRecord::Serialize(RString &out) const {
 
 	// serialize compressed data to base64
 	char *b64;
-	base64encode(buf, 120 + objects.size() * 12, &b64);
+	base64encode(buf, 120 + record_cnt * 12, &b64);
 
 	// delete original data
 	out = b64;
@@ -267,6 +267,7 @@ namespace PlayerReplayHelper {
 		else {
 			path = ssprintf("../replay/%s/%s.rep", playername, songhash);
 		}
+		FileHelper::ConvertPathToSystem(path);
 		RString repdata;
 		if (GetFileContents(path, repdata)) {
 			rep.Parse(repdata);
@@ -290,10 +291,11 @@ namespace PlayerReplayHelper {
 		else {
 			path = ssprintf("../replay/%s/%s.rep", playername, songhash);
 		}
+		FileHelper::ConvertPathToSystem(path);
+		RString dir = get_filedir(path);
 		RString repdata;
 		rep.Serialize(repdata);
-		FileHelper::ConvertPathToSystem(path);
-		FileHelper::CreateFolder(path);
+		FileHelper::CreateFolder(dir);
 		File f;
 		if (f.Open(path, "w")) {
 			f.Write(repdata);
@@ -307,16 +309,24 @@ namespace PlayerReplayHelper {
 
 namespace PlayerRecordHelper {
 	/** [private] sqlite3 for querying player record */
+	sqlite3 *sql = 0;
 	namespace {
-		// private; used for load/save PlayerRecord
-		sqlite3 *sql = 0;
-
 		// private
-		bool OpenSQL(const char* path) {
+		bool OpenSQL(const RString& path) {
 			ASSERT(sql == 0);
-			int rc = sqlite3_open16(path, &sql);
+			/*
+			 * MUST convert \\ -> /
+			 */
+#ifdef ASF
+			RString path_con = path;
+			replace(path_con.begin(), path_con.end(), '/', '\\');
+			int rc = sqlite3_open(path_con, &sql);
+#else
+			int rc = sqlite3_open(path, &sql);
+#endif
 			if (rc != SQLITE_OK) {
 				sqlite3_close(sql);
+				sql = 0;
 				return false;
 			}
 			return true;
@@ -392,18 +402,16 @@ namespace PlayerRecordHelper {
 				GETINT(11, record.score.score[2]);
 				GETINT(12, record.score.score[1]);
 				GETINT(13, record.score.score[0]);
-				// COMMENT: ÍöPOOR?
-				record.replay.Parse(replay);
 				r = true;
 			}
 			FINISHQUERY();
 		}
 
-		bool InsertPlayRecord(const PlayerSongRecord& record, const char* songhash) {
+		bool InsertPlayRecord(const PlayerSongRecord& record) {
 			// before insert, get previous play record if available
 			// if exists, then set record with more higher score
 			PlayerSongRecord record_;
-			if (QueryPlayRecord(record_, songhash)) {
+			if (QueryPlayRecord(record_, record_.hash)) {
 				if (record.score.CalculateEXScore() >= record_.score.CalculateEXScore())
 					record_ = record;
 			}
@@ -411,7 +419,7 @@ namespace PlayerRecordHelper {
 				record_ = record;
 			}
 			RUNQUERY(QUERY_TABLE_INSERT);
-			QUERY_BIND_TEXT(1, songhash);
+			QUERY_BIND_TEXT(1, record.hash);
 			QUERY_BIND_TEXT(2, "");		// TODO: generate scorehash
 			QUERY_BIND_INT(3, record.playcount);
 			QUERY_BIND_INT(4, record.clearcount);
@@ -451,10 +459,11 @@ namespace PlayerRecordHelper {
 		if (!IsRecordTableExist())
 			CreateRecordTable();
 		bool recordfound = QueryPlayRecord(record, songhash);
-		return recordfound && CloseSQL();
+		bool sql = CloseSQL();
+		return recordfound && sql;
 	}
 
-	bool SavePlayerRecord(const PlayerSongRecord& record, const char* name, const char *songhash) {
+	bool SavePlayerRecord(const PlayerSongRecord& record, const char* name) {
 		RString absolute_db_path = ssprintf("../player/%s.db", name);
 		FileHelper::ConvertPathToSystem(absolute_db_path);
 		RString absolute_db_dir = FileHelper::GetParentDirectory(absolute_db_path);
@@ -465,8 +474,9 @@ namespace PlayerRecordHelper {
 			return false;
 		if (!IsRecordTableExist())
 			CreateRecordTable();
-		bool processrecord = InsertPlayRecord(record, songhash);
-		return processrecord && CloseSQL();
+		bool processrecord = InsertPlayRecord(record);
+		bool sql = CloseSQL();
+		return processrecord && sql;
 	}
 
 	bool DeletePlayerRecord(const char* name, const char* songhash) {
@@ -478,7 +488,8 @@ namespace PlayerRecordHelper {
 		if (!OpenSQL(absolute_db_path))
 			return false;
 		bool processrecord = DeletePlayRecord(songhash);
-		return processrecord && CloseSQL();
+		bool sql = CloseSQL();
+		return processrecord && sql;
 	}
 }
 

@@ -50,12 +50,13 @@ namespace Game {
 
 	void StartScene(SceneBasic *s) {
 		/*
-		* inputstart/scene timer is a little different;
-		* sometimes input blocking is necessary during scene rendering.
-		*/
+		 * inputstart/scene timer is a little different;
+		 * sometimes input blocking is necessary during scene rendering.
+		 * COMMENT: after initization finished, reset scene timer.
+		 */
+		s->Start();
 		oninputstart->Start();
 		onscene->Start();
-		s->Start();
 	}
 
 	void ChangeScene(SceneBasic *s) {
@@ -310,7 +311,7 @@ namespace Game {
 			return pressing[code];
 		}
 		void Up(int code) {
-
+			pressing[code] = false;
 		}
 	}
 
