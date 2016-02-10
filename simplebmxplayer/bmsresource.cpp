@@ -146,6 +146,15 @@ namespace BmsHelper {
 	BGAInformation	currentbga;
 	Uint32			bmslength;		// bms length in msec
 	Uint32			bmsbar_index;	// only for `OnBeat`
+	int				m_start = 0;	// bms start measure
+	int				m_end = 1000;	// bms end measure
+	int				repeat_cnt = 1;	// bms repeat count
+
+	void SetLoadOption(int ms, int me, int r) {
+		m_start = ms;
+		m_end = me;
+		repeat_cnt = r;
+	}
 
 	// current iter
 	int bgm_channel_cnt_;
@@ -238,14 +247,31 @@ namespace BmsHelper {
 		}
 		FileHelper::PopBasePath();
 
+		//
+		// modify bms if necessary
+		//
+
+		if (m_start != 0 || m_end != 1000) {
+			BmsResource::BMS.Cut(m_start, m_end);
+		}
+		if (repeat_cnt > 1) {
+			BmsResource::BMS.Repeat(repeat_cnt);
+		}
+		if (BmsResource::BMS.GetObjectExistsFirstMeasure() == 0) {
+			// object at very first measure is too fast for us
+			// so push 1 measure for player
+			BmsResource::BMS.Push(BmsResource::BMS.GetBarManager().GetResolution());
+		}
+
 		mutex_bmsresource.unlock();
 
-		// reset all values
+		//
+		// reset all iterators
+		//
 		Reset();
 
 		return succeed;
 	}
-
 
 	bool LoadBmsResource() {
 		using namespace BmsResource;

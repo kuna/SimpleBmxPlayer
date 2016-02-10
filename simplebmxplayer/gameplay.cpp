@@ -381,6 +381,11 @@ namespace GamePlay {
 		 * (load bms first to find out what key skin is proper)
 		 * COMMENT: if bms load failed, then continue with empty bms file.
 		 */
+		BmsHelper::SetLoadOption(
+			GamePlay::P.startmeasure,
+			GamePlay::P.endmeasure,
+			GamePlay::P.repeat
+		);
 		LoadBms(P.bmspath[P.round - 1]);
 		playmode = BmsResource::BMS.GetKey();
 		BmsHelper::SetRate(P.rate);
@@ -458,16 +463,6 @@ namespace GamePlay {
 		 */
 		if (P.round == 1)
 			InitalizePlayer();
-
-		//
-		// before create note object, 
-		// if cut/repeat option exists, then process them.
-		//
-		if (GamePlay::P.startmeasure != 0 || GamePlay::P.endmeasure != 999)
-		BmsResource::BMS.Cut(GamePlay::P.startmeasure, GamePlay::P.endmeasure);
-		if (GamePlay::P.repeat) {
-			BmsResource::BMS.Repeat(GamePlay::P.repeat);
-		}
 
 		//
 		// bms note should be created, 

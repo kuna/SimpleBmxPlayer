@@ -139,7 +139,7 @@ namespace Parameter {
 		
 		GamePlay::P.bga = Game::SETTING.bga;
 		GamePlay::P.startmeasure = 0;
-		GamePlay::P.endmeasure = 999;
+		GamePlay::P.endmeasure = 1000;
 		GamePlay::P.repeat = 1;
 		GamePlay::P.replay = false;
 		GamePlay::P.rseed = time(0) % 65536;

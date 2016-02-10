@@ -62,6 +62,7 @@ namespace BmsHelper {
 	void LoadBmsOnThread(const RString &bmspath);
 	/** @brief LoadBmsResource() on multithread. callback by OnBmsLoadingEnd */
 	void LoadBmsResourceOnThread();
+	void SetLoadOption(int ms, int me, int r);
 	/** @brief Release all bms resources & automatically stops bms loading. include note data. */
 	void ReleaseAll();
 

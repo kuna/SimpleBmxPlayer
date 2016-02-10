@@ -66,6 +66,10 @@ namespace GamePlay {
 		bool replay;
 		bool autoplay;
 		double pacemaker;
+
+		// record disabled
+		// in case of training mode / replay
+		bool isrecordable;
 	};
 
 	extern PARAMETER	P;
