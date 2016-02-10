@@ -1,0 +1,3476 @@
+<!--Auto-generated code.
+Converted from LR2Skin.
+LR2 project origins from lavalse, All rights reserved.-->
+<skin>
+    <texturefont name="11" type="1">
+# Auto-generated texture font data by SkinParser
+[info]
+image0=$(JUDGE)
+imagecnt=1
+cycle=100
+fallback_width=44
+timer=OnP1Combo
+[glyphs]
+48=0,247,13,44,75;0,247,88,44,75;0,247,163,44,75
+49=0,291,13,44,75;0,291,88,44,75;0,291,163,44,75
+50=0,335,13,44,75;0,335,88,44,75;0,335,163,44,75
+51=0,379,13,44,75;0,379,88,44,75;0,379,163,44,75
+52=0,423,13,44,75;0,423,88,44,75;0,423,163,44,75
+53=0,467,13,44,75;0,467,88,44,75;0,467,163,44,75
+54=0,511,13,44,75;0,511,88,44,75;0,511,163,44,75
+55=0,555,13,44,75;0,555,88,44,75;0,555,163,44,75
+56=0,599,13,44,75;0,599,88,44,75;0,599,163,44,75
+57=0,643,13,44,75;0,643,88,44,75;0,643,163,44,75
+</texturefont>
+    <texturefont name="10" type="1">
+# Auto-generated texture font data by SkinParser
+[info]
+image0=$(JUDGE)
+imagecnt=1
+cycle=80
+fallback_width=44
+timer=OnP1Combo
+[glyphs]
+48=0,247,238,44,75;0,247,313,44,75
+49=0,291,238,44,75;0,291,313,44,75
+50=0,335,238,44,75;0,335,313,44,75
+51=0,379,238,44,75;0,379,313,44,75
+52=0,423,238,44,75;0,423,313,44,75
+53=0,467,238,44,75;0,467,313,44,75
+54=0,511,238,44,75;0,511,313,44,75
+55=0,555,238,44,75;0,555,313,44,75
+56=0,599,238,44,75;0,599,313,44,75
+57=0,643,238,44,75;0,643,313,44,75
+</texturefont>
+    <texturefont name="9" type="1">
+# Auto-generated texture font data by SkinParser
+[info]
+image0=./parts/number/gauge/*.png
+imagecnt=1
+fallback_width=29
+[glyphs]
+48=0,0,0,29,22
+49=0,29,0,29,22
+50=0,58,0,29,22
+51=0,87,0,29,22
+52=0,116,0,29,22
+53=0,145,0,29,22
+54=0,174,0,29,22
+55=0,203,0,29,22
+56=0,232,0,29,22
+57=0,261,0,29,22
+</texturefont>
+    <texturefont name="8" type="1">
+# Auto-generated texture font data by SkinParser
+[info]
+image0=./parts/system/mainparts.png
+imagecnt=1
+fallback_width=15
+[glyphs]
+48=0,0,227,15,18
+49=0,15,227,15,18
+50=0,30,227,15,18
+51=0,45,227,15,18
+52=0,60,227,15,18
+53=0,75,227,15,18
+54=0,90,227,15,18
+55=0,105,227,15,18
+56=0,120,227,15,18
+57=0,135,227,15,18
+</texturefont>
+    <texturefont name="7" type="1">
+# Auto-generated texture font data by SkinParser
+[info]
+image0=./parts/number/bpm/*.png
+imagecnt=1
+fallback_width=19
+[glyphs]
+42=0,190,28,19,16
+48=0,0,28,19,16
+49=0,19,28,19,16
+50=0,38,28,19,16
+51=0,57,28,19,16
+52=0,76,28,19,16
+53=0,95,28,19,16
+54=0,114,28,19,16
+55=0,133,28,19,16
+56=0,152,28,19,16
+57=0,171,28,19,16
+</texturefont>
+    <texturefont name="6" type="1">
+# Auto-generated texture font data by SkinParser
+[info]
+image0=./parts/number/score/*.png
+imagecnt=1
+fallback_width=29
+[glyphs]
+42=0,290,0,29,22
+48=0,0,0,29,22
+49=0,29,0,29,22
+50=0,58,0,29,22
+51=0,87,0,29,22
+52=0,116,0,29,22
+53=0,145,0,29,22
+54=0,174,0,29,22
+55=0,203,0,29,22
+56=0,232,0,29,22
+57=0,261,0,29,22
+</texturefont>
+    <texturefont name="5" type="1">
+# Auto-generated texture font data by SkinParser
+[info]
+image0=./parts/system/mainparts.png
+imagecnt=1
+fallback_width=15
+[glyphs]
+35=0,150,160,15,18
+42=0,150,142,15,18
+43=0,165,142,15,18
+45=0,165,160,15,18
+48=0,0,142,15,18
+49=0,15,142,15,18
+50=0,30,142,15,18
+51=0,45,142,15,18
+52=0,60,142,15,18
+53=0,75,142,15,18
+54=0,90,142,15,18
+55=0,105,142,15,18
+56=0,120,142,15,18
+57=0,135,142,15,18
+65=0,0,160,15,18
+66=0,15,160,15,18
+67=0,30,160,15,18
+68=0,45,160,15,18
+69=0,60,160,15,18
+70=0,75,160,15,18
+71=0,90,160,15,18
+72=0,105,160,15,18
+73=0,120,160,15,18
+74=0,135,160,15,18
+</texturefont>
+    <texturefont name="4" type="1">
+# Auto-generated texture font data by SkinParser
+[info]
+image0=./parts/system/mainparts.png
+imagecnt=1
+fallback_width=15
+[glyphs]
+42=0,150,227,15,18
+48=0,0,227,15,18
+49=0,15,227,15,18
+50=0,30,227,15,18
+51=0,45,227,15,18
+52=0,60,227,15,18
+53=0,75,227,15,18
+54=0,90,227,15,18
+55=0,105,227,15,18
+56=0,120,227,15,18
+57=0,135,227,15,18
+</texturefont>
+    <font name="3" path="default" size="15" border="1"/>
+    <font name="2" path="default" size="18" border="1"/>
+    <font name="1" path="default" size="18" border="1"/>
+    <font name="0" path="default" texturepath="default" size="42" border="3"/>
+    <image name="27" path="CONTINUE"/>
+    <image name="26" path=".dummy"/>
+    <image name="25" path=".dummy"/>
+    <image name="24" path="$(GAUGE_COLOR)"/>
+    <image name="23" path="./parts/ClearData/NOPLAY.png"/>
+    <image name="22" path=".dummy"/>
+    <image name="21" path=".dummy"/>
+    <image name="20" path=".dummy"/>
+    <image name="19" path=".dummy"/>
+    <image name="18" path="./parts/number/bpm/*.png"/>
+    <image name="17" path="./parts/number/gauge/*.png"/>
+    <image name="16" path="./parts/number/score/*.png"/>
+    <image name="15" path="$(LASER)"/>
+    <image name="14" path="$(BG)"/>
+    <image name="13" path="$(JUDGE)"/>
+    <image name="12" path="./parts/system/mainparts.png"/>
+    <image name="11" path="$(CLOSE)"/>
+    <image name="10" path="$(progress_bar)"/>
+    <image name="9" path="$(keyflash)"/>
+    <image name="8" path="$(NOTES)"/>
+    <image name="7" path="$(Turntable)"/>
+    <image name="6" path="$(FRAME_BG)"/>
+    <image name="5" path="$(LANECOVER)"/>
+    <image name="4" path=".dummy"/>
+    <image name="3" path="$(FC_effect)"/>
+    <image name="2" path="./parts/system/frame_dp.png"/>
+    <image name="1" path="./parts/system/mainparts.png"/>
+    <image name="0" path="$(BOMB)"/>
+    <if condition="ExpertCourse">
+        <lua>
+SetTimer("982")
+SetTimer("IsSelectBarFolder")
+</lua>
+    </if>
+    <if condition="ClassCourse">
+        <lua>
+SetTimer("982")
+SetTimer("IsSelectBarFolder")
+</lua>
+    </if>
+    <if condition="950,IsScoreGraph">
+        <lua>
+SetTimer("983")
+SetTimer("IsSelectBarFolder")
+</lua>
+    </if>
+    <if condition="951,IsScoreGraph">
+        <lua>
+SetTimer("984")
+SetTimer("IsSelectBarFolder")
+</lua>
+    </if>
+    <if condition=""/>
+    <if condition=""/>
+    <if condition=""/>
+    <if condition=""/>
+    <if condition=""/>
+    <if condition=""/>
+    <ifnot condition=""/>
+    <sprite resid="0" x="0" y="0">
+        <DST acc="0" loop="0">
+            <frame x="0" y="0" w="1" h="1" time="0" r="0" g="0" b="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="14" x="0" y="0">
+        <DST acc="0" loop="100">
+            <frame x="0" y="0" w="1280" h="720" time="0" a="0"/>
+            <frame x="0" y="0" w="1280" h="720" time="100" a="230"/>
+        </DST>
+    </sprite>
+    <sprite resid="6" x="0" y="0" w="895" h="720">
+        <DST acc="0" loop="700">
+            <frame x="196" y="0" w="895" h="720" time="200" a="0"/>
+            <frame x="196" y="0" w="895" h="720" time="700"/>
+        </DST>
+    </sprite>
+    <sprite resid="6" x="0" y="0" w="895" h="720">
+        <DST acc="0" blend="2" loop="1500">
+            <frame x="196" y="0" w="895" h="720" time="1300"/>
+            <frame x="196" y="0" w="895" h="720" time="1500" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="2" x="991" y="684" w="226" h="720">
+        <DST acc="0" loop="200">
+            <frame x="-226" y="0" w="226" h="720" time="0"/>
+            <frame x="0" y="0" w="226" h="720" time="200"/>
+        </DST>
+    </sprite>
+    <sprite resid="2" x="1226" y="684" w="190" h="720">
+        <DST acc="0" loop="200">
+            <frame x="1280" y="0" w="190" h="720" time="0"/>
+            <frame x="1090" y="0" w="190" h="720" time="200"/>
+        </DST>
+    </sprite>
+    <sprite resid="2" x="0" y="0" w="895" h="720">
+        <DST acc="0" loop="700">
+            <frame x="196" y="0" w="895" h="720" time="200" a="0"/>
+            <frame x="196" y="0" w="895" h="720" time="700"/>
+        </DST>
+    </sprite>
+    <if condition="IsAutoPlay">
+        <sprite resid="2" x="1374" y="0" w="186" h="586" condition="IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="3" y="94" w="186" h="586" time="200" a="0"/>
+                <frame x="3" y="94" w="186" h="586" time="600"/>
+            </DST>
+        </sprite>
+        <bga x="0" y="0" side="0">
+            <DST acc="0" loop="0">
+                <frame x="6" y="97" w="180" h="180" time="0"/>
+            </DST>
+        </bga>
+        <bga x="0" y="0" side="0">
+            <DST acc="0" loop="0">
+                <frame x="6" y="297" w="180" h="180" time="0"/>
+            </DST>
+        </bga>
+        <bga x="0" y="0" side="0">
+            <DST acc="0" loop="0">
+                <frame x="6" y="497" w="180" h="180" time="0"/>
+            </DST>
+        </bga>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="926,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="6" y="97" w="180" h="180" time="600" a="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="927,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="6" y="97" w="180" h="180" time="600" a="122"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="926,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="6" y="297" w="180" h="180" time="600" a="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="927,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="6" y="297" w="180" h="180" time="600" a="122"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="926,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="6" y="497" w="180" h="180" time="600" a="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="927,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="6" y="497" w="180" h="180" time="600" a="122"/>
+            </DST>
+        </sprite>
+        <sprite resid="2" x="1374" y="0" w="186" h="586" condition="IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1094" y="76" w="186" h="586" time="200" a="0"/>
+                <frame x="1094" y="76" w="186" h="586" time="600"/>
+            </DST>
+        </sprite>
+        <bga x="0" y="0" side="0">
+            <DST acc="0" loop="0">
+                <frame x="1097" y="79" w="180" h="180" time="0"/>
+            </DST>
+        </bga>
+        <bga x="0" y="0" side="0">
+            <DST acc="0" loop="0">
+                <frame x="1097" y="279" w="180" h="180" time="0"/>
+            </DST>
+        </bga>
+        <bga x="0" y="0" side="0">
+            <DST acc="0" loop="0">
+                <frame x="1097" y="479" w="180" h="180" time="0"/>
+            </DST>
+        </bga>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="926,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1097" y="79" w="180" h="180" time="600" a="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="927,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1097" y="79" w="180" h="180" time="600" a="122"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="926,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1097" y="297" w="180" h="180" time="600" a="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="927,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1097" y="279" w="180" h="180" time="600" a="122"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="926,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1097" y="479" w="180" h="180" time="600" a="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="927,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1097" y="479" w="180" h="180" time="600" a="122"/>
+            </DST>
+        </sprite>
+    </if>
+    <if condition="!IsAutoPlay,!IsScoreGraph">
+        <sprite resid="2" x="1374" y="0" w="186" h="586" condition="IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="3" y="94" w="186" h="586" time="200" a="0"/>
+                <frame x="3" y="94" w="186" h="586" time="600"/>
+            </DST>
+        </sprite>
+        <bga x="0" y="0" side="0">
+            <DST acc="0" loop="0">
+                <frame x="6" y="97" w="180" h="180" time="0"/>
+            </DST>
+        </bga>
+        <bga x="0" y="0" side="0">
+            <DST acc="0" loop="0">
+                <frame x="6" y="297" w="180" h="180" time="0"/>
+            </DST>
+        </bga>
+        <bga x="0" y="0" side="0">
+            <DST acc="0" loop="0">
+                <frame x="6" y="497" w="180" h="180" time="0"/>
+            </DST>
+        </bga>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="926,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="6" y="97" w="180" h="180" time="600" a="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="927,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="6" y="97" w="180" h="180" time="600" a="122"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="926,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="6" y="297" w="180" h="180" time="600" a="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="927,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="6" y="297" w="180" h="180" time="600" a="122"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="926,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="6" y="497" w="180" h="180" time="600" a="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="927,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="6" y="497" w="180" h="180" time="600" a="122"/>
+            </DST>
+        </sprite>
+        <sprite resid="2" x="1374" y="0" w="186" h="586" condition="IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1094" y="76" w="186" h="586" time="200" a="0"/>
+                <frame x="1094" y="76" w="186" h="586" time="600"/>
+            </DST>
+        </sprite>
+        <bga x="0" y="0" side="0">
+            <DST acc="0" loop="0">
+                <frame x="1097" y="79" w="180" h="180" time="0"/>
+            </DST>
+        </bga>
+        <bga x="0" y="0" side="0">
+            <DST acc="0" loop="0">
+                <frame x="1097" y="279" w="180" h="180" time="0"/>
+            </DST>
+        </bga>
+        <bga x="0" y="0" side="0">
+            <DST acc="0" loop="0">
+                <frame x="1097" y="479" w="180" h="180" time="0"/>
+            </DST>
+        </bga>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="926,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1097" y="79" w="180" h="180" time="600" a="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="927,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1097" y="79" w="180" h="180" time="600" a="122"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="926,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1097" y="297" w="180" h="180" time="600" a="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="927,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1097" y="279" w="180" h="180" time="600" a="122"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="926,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1097" y="479" w="180" h="180" time="600" a="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="927,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1097" y="479" w="180" h="180" time="600" a="122"/>
+            </DST>
+        </sprite>
+    </if>
+    <if condition="!IsAutoPlay,983">
+        <sprite resid="2" x="1374" y="0" w="186" h="586" condition="IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="3" y="94" w="186" h="586" time="200" a="0"/>
+                <frame x="3" y="94" w="186" h="586" time="600"/>
+            </DST>
+        </sprite>
+        <bga x="0" y="0" side="0">
+            <DST acc="0" loop="0">
+                <frame x="6" y="97" w="180" h="180" time="0"/>
+            </DST>
+        </bga>
+        <bga x="0" y="0" side="0">
+            <DST acc="0" loop="0">
+                <frame x="6" y="297" w="180" h="180" time="0"/>
+            </DST>
+        </bga>
+        <bga x="0" y="0" side="0">
+            <DST acc="0" loop="0">
+                <frame x="6" y="497" w="180" h="180" time="0"/>
+            </DST>
+        </bga>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="926,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="6" y="97" w="180" h="180" time="600" a="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="927,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="6" y="97" w="180" h="180" time="600" a="122"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="926,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="6" y="297" w="180" h="180" time="600" a="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="927,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="6" y="297" w="180" h="180" time="600" a="122"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="926,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="6" y="497" w="180" h="180" time="600" a="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="927,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="6" y="497" w="180" h="180" time="600" a="122"/>
+            </DST>
+        </sprite>
+        <sprite resid="2" x="1447" y="690" w="172" h="516" condition="!IsAutoPlay,IsScoreGraph">
+            <DST acc="0" loop="800">
+                <frame x="1280" y="53" w="172" h="516" time="600" a="0"/>
+                <frame x="1103" y="53" w="172" h="516" time="800"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="6" y="119" w="1" h="1" condition="!IsAutoPlay,IsScoreGraph">
+            <DST acc="0" loop="800">
+                <frame x="1105" y="133" w="168" h="1" time="800" a="200"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="6" y="119" w="1" h="1" condition="!IsAutoPlay,IsScoreGraph">
+            <DST acc="0" loop="800">
+                <frame x="1105" y="169" w="168" h="1" time="800"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="6" y="119" w="1" h="1" condition="!IsAutoPlay,IsScoreGraph">
+            <DST acc="0" loop="800">
+                <frame x="1105" y="205" w="168" h="1" time="800"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="5" y="119" w="1" h="1" timer="OnReady" condition="!IsAutoPlay,IsP1ReachAAA,IsScoreGraph">
+            <DST acc="0" loop="0" timer="OnReady">
+                <frame x="1105" y="133" w="168" h="1" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="5" y="119" w="1" h="1" timer="OnReady" condition="!IsAutoPlay,IsP1ReachAA,IsScoreGraph">
+            <DST acc="0" loop="0" timer="OnReady">
+                <frame x="1105" y="169" w="168" h="1" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="5" y="119" w="1" h="1" timer="OnReady" condition="!IsAutoPlay,IsP1ReachA,IsScoreGraph">
+            <DST acc="0" loop="0" timer="OnReady">
+                <frame x="1105" y="205" w="168" h="1" time="0"/>
+            </DST>
+        </sprite>
+        <graph resid="1" x="476" y="0" w="1" h="327" condition="!IsAutoPlay,IsScoreGraph" value="P1HighScoreEsti" direction="1">
+            <DST acc="2" loop="1850">
+                <frame x="1168" y="424" w="42" h="0" time="1350" a="100" r="150" g="150" b="150"/>
+                <frame x="1168" y="424" w="42" h="-327" time="1850" a="100" r="150" g="150" b="150"/>
+            </DST>
+        </graph>
+        <graph resid="1" x="480" y="0" w="1" h="327" condition="!IsAutoPlay,IsScoreGraph" value="P2ExScoreEsti" direction="1">
+            <DST acc="2" loop="1850">
+                <frame x="1221" y="424" w="42" h="0" time="1350" a="100" r="150" g="150" b="150"/>
+                <frame x="1221" y="424" w="42" h="-327" time="1850" a="100" r="150" g="150" b="150"/>
+            </DST>
+        </graph>
+        <graph resid="1" x="488" y="0" w="44" h="327" condition="!IsAutoPlay,IsScoreGraph" value="P1HighScoreEsti" direction="1">
+            <DST acc="2" loop="1850">
+                <frame x="1167" y="424" w="44" h="0" time="1350"/>
+                <frame x="1167" y="424" w="44" h="-327" time="1850"/>
+            </DST>
+        </graph>
+        <graph resid="1" x="488" y="0" w="44" h="327" condition="!IsAutoPlay,IsScoreGraph" value="P2ExScoreEsti" direction="1">
+            <DST acc="2" loop="1850">
+                <frame x="1220" y="424" w="44" h="0" time="1350"/>
+                <frame x="1220" y="424" w="44" h="-327" time="1850"/>
+            </DST>
+        </graph>
+        <graph resid="1" x="471" y="0" w="1" h="327" condition="!IsAutoPlay,IsScoreGraph" value="P1ExScore" direction="1">
+            <DST acc="2" loop="1850">
+                <frame x="1116" y="424" w="42" h="0" time="1350"/>
+                <frame x="1116" y="424" w="42" h="-327" time="1850"/>
+            </DST>
+        </graph>
+        <graph resid="1" x="476" y="0" w="1" h="327" condition=",!IsAutoPlay,IsScoreGraph" value="P1ExScore" direction="1">
+            <DST acc="2" loop="1850">
+                <frame x="1168" y="424" w="42" h="0" time="1350"/>
+                <frame x="1168" y="424" w="42" h="-327" time="1850"/>
+            </DST>
+        </graph>
+        <graph resid="1" x="476" y="0" w="1" h="327" condition="!IsAutoPlay,IsScoreGraph" value="P1HighScore" direction="1">
+            <DST acc="2" loop="1850">
+                <frame x="1168" y="424" w="42" h="0" time="1350"/>
+                <frame x="1168" y="424" w="42" h="-327" time="1850"/>
+            </DST>
+        </graph>
+        <graph resid="1" x="480" y="0" w="1" h="327" condition="!IsAutoPlay,IsScoreGraph" value="P2ExScore" direction="1">
+            <DST acc="2" loop="1850">
+                <frame x="1221" y="424" w="42" h="0" time="1350"/>
+                <frame x="1221" y="424" w="42" h="-327" time="1850"/>
+            </DST>
+        </graph>
+        <number resid="4" condition="!IsAutoPlay,IsScoreGraph" value="P1ExScore" align="0" length="4">
+            <DST acc="0" loop="1550">
+                <frame x="1205" y="439" w="15" h="18" time="1350" a="0"/>
+                <frame x="1205" y="439" w="15" h="18" time="1550"/>
+            </DST>
+        </number>
+        <number resid="4" condition="!IsAutoPlay,IsScoreGraph" align="0" length="4">
+            <DST acc="0" loop="1550">
+                <frame x="1205" y="474" w="15" h="18" time="1350" a="0"/>
+                <frame x="1205" y="474" w="15" h="18" time="1550"/>
+            </DST>
+        </number>
+        <number resid="4" condition="!IsAutoPlay,IsScoreGraph" value="P2ExScore" align="0" length="4">
+            <DST acc="0" loop="1550">
+                <frame x="1205" y="525" w="15" h="18" time="1350" a="0"/>
+                <frame x="1205" y="525" w="15" h="18" time="1550"/>
+            </DST>
+        </number>
+        <number resid="5" condition="!IsAutoPlay,IsScoreGraph" mode24="1" align="0" length="4">
+            <DST acc="0" loop="1550">
+                <frame x="1190" y="499" w="15" h="18" time="1350" a="0"/>
+                <frame x="1190" y="499" w="15" h="18" time="1550"/>
+            </DST>
+        </number>
+        <number resid="5" condition="!IsAutoPlay,IsScoreGraph" mode24="1" value="P1RivalDiff" align="0" length="4">
+            <DST acc="0" loop="1550">
+                <frame x="1190" y="550" w="15" h="18" time="1350" a="0"/>
+                <frame x="1190" y="550" w="15" h="18" time="1550"/>
+            </DST>
+        </number>
+    </if>
+    <if condition="!IsAutoPlay,984">
+        <sprite resid="2" x="1374" y="0" w="186" h="586" condition="IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1094" y="76" w="186" h="586" time="200" a="0"/>
+                <frame x="1094" y="76" w="186" h="586" time="600"/>
+            </DST>
+        </sprite>
+        <bga x="0" y="0" side="0">
+            <DST acc="0" loop="0">
+                <frame x="1097" y="79" w="180" h="180" time="0"/>
+            </DST>
+        </bga>
+        <bga x="0" y="0" side="0">
+            <DST acc="0" loop="0">
+                <frame x="1097" y="279" w="180" h="180" time="0"/>
+            </DST>
+        </bga>
+        <bga x="0" y="0" side="0">
+            <DST acc="0" loop="0">
+                <frame x="1097" y="479" w="180" h="180" time="0"/>
+            </DST>
+        </bga>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="926,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1097" y="79" w="180" h="180" time="600" a="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="927,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1097" y="79" w="180" h="180" time="600" a="122"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="926,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1097" y="297" w="180" h="180" time="600" a="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="927,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1097" y="279" w="180" h="180" time="600" a="122"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="926,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1097" y="479" w="180" h="180" time="600" a="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="_black" x="0" y="0" w="1" h="1" condition="927,IsBGA">
+            <DST acc="0" loop="600">
+                <frame x="1097" y="479" w="180" h="180" time="600" a="122"/>
+            </DST>
+        </sprite>
+        <sprite resid="2" x="1447" y="690" w="172" h="516" condition="!IsAutoPlay,IsScoreGraph">
+            <DST acc="0" loop="800">
+                <frame x="-172" y="77" w="172" h="516" time="600" a="0"/>
+                <frame x="14" y="77" w="172" h="516" time="800"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="6" y="119" w="1" h="1" condition="!IsAutoPlay,IsScoreGraph">
+            <DST acc="0" loop="800">
+                <frame x="16" y="157" w="168" h="1" time="800" a="200"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="6" y="119" w="1" h="1" condition="!IsAutoPlay,IsScoreGraph">
+            <DST acc="0" loop="800">
+                <frame x="16" y="193" w="168" h="1" time="800"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="6" y="119" w="1" h="1" condition="!IsAutoPlay,IsScoreGraph">
+            <DST acc="0" loop="800">
+                <frame x="16" y="229" w="168" h="1" time="800"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="5" y="119" w="1" h="1" timer="OnReady" condition="!IsAutoPlay,IsP1ReachAAA,IsScoreGraph">
+            <DST acc="0" loop="0" timer="OnReady">
+                <frame x="16" y="157" w="168" h="1" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="5" y="119" w="1" h="1" timer="OnReady" condition="!IsAutoPlay,IsP1ReachAA,IsScoreGraph">
+            <DST acc="0" loop="0" timer="OnReady">
+                <frame x="16" y="193" w="168" h="1" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="5" y="119" w="1" h="1" timer="OnReady" condition="!IsAutoPlay,IsP1ReachA,IsScoreGraph">
+            <DST acc="0" loop="0" timer="OnReady">
+                <frame x="16" y="229" w="168" h="1" time="0"/>
+            </DST>
+        </sprite>
+        <graph resid="1" x="476" y="0" w="1" h="327" condition="!IsAutoPlay,IsScoreGraph" value="P1HighScoreEsti" direction="1">
+            <DST acc="2" loop="1850">
+                <frame x="79" y="448" w="42" h="0" time="1350" a="100" r="150" g="150" b="150"/>
+                <frame x="79" y="448" w="42" h="-327" time="1850" a="100" r="150" g="150" b="150"/>
+            </DST>
+        </graph>
+        <graph resid="1" x="480" y="0" w="1" h="327" condition="!IsAutoPlay,IsScoreGraph" value="P2ExScoreEsti" direction="1">
+            <DST acc="2" loop="1850">
+                <frame x="26" y="448" w="42" h="0" time="1350" a="100" r="150" g="150" b="150"/>
+                <frame x="26" y="448" w="42" h="-327" time="1850" a="100" r="150" g="150" b="150"/>
+            </DST>
+        </graph>
+        <graph resid="1" x="488" y="0" w="44" h="327" condition="!IsAutoPlay,IsScoreGraph" value="P1HighScoreEsti" direction="1">
+            <DST acc="2" loop="1850">
+                <frame x="78" y="448" w="44" h="0" time="1350"/>
+                <frame x="78" y="448" w="44" h="-327" time="1850"/>
+            </DST>
+        </graph>
+        <graph resid="1" x="488" y="0" w="44" h="327" condition="!IsAutoPlay,IsScoreGraph" value="P2ExScoreEsti" direction="1">
+            <DST acc="2" loop="1850">
+                <frame x="25" y="448" w="44" h="0" time="1350"/>
+                <frame x="25" y="448" w="44" h="-327" time="1850"/>
+            </DST>
+        </graph>
+        <graph resid="1" x="471" y="0" w="1" h="327" condition="!IsAutoPlay,IsScoreGraph" value="P1ExScore" direction="1">
+            <DST acc="2" loop="1850">
+                <frame x="131" y="448" w="42" h="0" time="1350"/>
+                <frame x="131" y="448" w="42" h="-327" time="1850"/>
+            </DST>
+        </graph>
+        <graph resid="1" x="476" y="0" w="1" h="327" condition=",!IsAutoPlay,IsScoreGraph" value="P1ExScore" direction="1">
+            <DST acc="2" loop="1850">
+                <frame x="79" y="448" w="42" h="0" time="1350"/>
+                <frame x="79" y="448" w="42" h="-327" time="1850"/>
+            </DST>
+        </graph>
+        <graph resid="1" x="476" y="0" w="1" h="327" condition="!IsAutoPlay,IsScoreGraph" value="P1HighScore" direction="1">
+            <DST acc="2" loop="1850">
+                <frame x="79" y="448" w="42" h="0" time="1350"/>
+                <frame x="79" y="448" w="42" h="-327" time="1850"/>
+            </DST>
+        </graph>
+        <graph resid="1" x="480" y="0" w="1" h="327" condition="!IsAutoPlay,IsScoreGraph" value="P2ExScore" direction="1">
+            <DST acc="2" loop="1850">
+                <frame x="26" y="448" w="42" h="0" time="1350"/>
+                <frame x="26" y="448" w="42" h="-327" time="1850"/>
+            </DST>
+        </graph>
+        <number resid="4" condition="!IsAutoPlay,IsScoreGraph" value="P1ExScore" align="0" length="4">
+            <DST acc="0" loop="1550">
+                <frame x="115" y="463" w="15" h="18" time="1350" a="0"/>
+                <frame x="115" y="463" w="15" h="18" time="1550"/>
+            </DST>
+        </number>
+        <number resid="4" condition="!IsAutoPlay,IsScoreGraph" align="0" length="4">
+            <DST acc="0" loop="1550">
+                <frame x="115" y="498" w="15" h="18" time="1350" a="0"/>
+                <frame x="115" y="498" w="15" h="18" time="1550"/>
+            </DST>
+        </number>
+        <number resid="4" condition="!IsAutoPlay,IsScoreGraph" value="P2ExScore" align="0" length="4">
+            <DST acc="0" loop="1550">
+                <frame x="115" y="549" w="15" h="18" time="1350" a="0"/>
+                <frame x="115" y="549" w="15" h="18" time="1550"/>
+            </DST>
+        </number>
+        <number resid="5" condition="!IsAutoPlay,IsScoreGraph" mode24="1" align="0" length="4">
+            <DST acc="0" loop="1550">
+                <frame x="100" y="523" w="15" h="18" time="1350" a="0"/>
+                <frame x="100" y="523" w="15" h="18" time="1550"/>
+            </DST>
+        </number>
+        <number resid="5" condition="!IsAutoPlay,IsScoreGraph" mode24="1" value="P1RivalDiff" align="0" length="4">
+            <DST acc="0" loop="1550">
+                <frame x="100" y="574" w="15" h="18" time="1350" a="0"/>
+                <frame x="100" y="574" w="15" h="18" time="1550"/>
+            </DST>
+        </number>
+    </if>
+    <text resid="3" value="Title" align="1" edit="0">
+        <DST acc="0" loop="1200">
+            <frame x="102" y="40" w="190" h="24" time="850" a="0"/>
+            <frame x="102" y="40" w="190" h="24" time="1200"/>
+        </DST>
+    </text>
+    <sprite resid="2" x="0" y="807" w="273" h="41">
+        <DST acc="0" loop="1300" rotatecenter="1">
+            <frame x="234" y="641" w="273" h="41" time="700" a="0" angle="90"/>
+            <frame x="234" y="641" w="273" h="41" time="1300"/>
+        </DST>
+    </sprite>
+    <sprite resid="2" x="0" y="763" w="273" h="41">
+        <DST acc="0" loop="1300" rotatecenter="3">
+            <frame x="800" y="641" w="273" h="41" time="700" a="0" angle="-90"/>
+            <frame x="800" y="641" w="273" h="41" time="1300"/>
+        </DST>
+    </sprite>
+    <number resid="6" value="P1ExScore" align="0" length="4">
+        <DST acc="0" loop="1500">
+            <frame x="378" y="650" w="29" h="22" time="1300" a="0"/>
+            <frame x="378" y="650" w="29" h="22" time="1500"/>
+        </DST>
+    </number>
+    <sprite resid="1" x="222" y="122" w="91" h="15">
+        <DST acc="0" loop="1500">
+            <frame x="258" y="653" w="91" h="15" time="1300" a="0"/>
+            <frame x="258" y="653" w="91" h="15" time="1500"/>
+        </DST>
+    </sprite>
+    <number resid="6" value="P1MaxCombo" align="0" length="4">
+        <DST acc="0" loop="1500">
+            <frame x="816" y="650" w="29" h="22" time="1300" a="0"/>
+            <frame x="816" y="650" w="29" h="22" time="1500"/>
+        </DST>
+    </number>
+    <sprite resid="1" x="315" y="122" w="114" h="15">
+        <DST acc="0" loop="1500">
+            <frame x="952" y="653" w="114" h="15" time="1300" a="0"/>
+            <frame x="952" y="653" w="114" h="15" time="1500"/>
+        </DST>
+    </sprite>
+    <sprite resid="2" x="0" y="869" w="246" h="59">
+        <DST acc="0" loop="1200">
+            <frame x="532" y="622" w="246" h="59" time="600" a="0"/>
+            <frame x="532" y="622" w="246" h="59" time="1200"/>
+        </DST>
+    </sprite>
+    <number resid="6" value="PlayBPM" align="0" length="3">
+        <DST acc="0" loop="1500">
+            <frame x="609" y="631" w="29" h="22" time="1300" a="0"/>
+            <frame x="609" y="631" w="29" h="22" time="1500"/>
+        </DST>
+    </number>
+    <sprite resid="1" x="308" y="140" w="58" h="17">
+        <DST acc="0" loop="1500">
+            <frame x="624" y="660" w="58" h="17" time="1300" a="0"/>
+            <frame x="624" y="660" w="58" h="17" time="1500"/>
+        </DST>
+    </sprite>
+    <number resid="7" condition="!IsBpmChange" value="BPMMin" align="0" length="3">
+        <DST acc="0" loop="1500">
+            <frame x="545" y="637" w="19" h="16" time="1300" a="0"/>
+            <frame x="545" y="637" w="19" h="16" time="1500"/>
+        </DST>
+    </number>
+    <number resid="7" condition="!IsBpmChange" value="BPMMax" align="0" length="3">
+        <DST acc="0" loop="1500">
+            <frame x="703" y="637" w="19" h="16" time="1300" a="0"/>
+            <frame x="703" y="637" w="19" h="16" time="1500"/>
+        </DST>
+    </number>
+    <sprite resid="1" x="264" y="143" w="38" h="14" condition="!IsBpmChange">
+        <DST acc="0" loop="1500">
+            <frame x="558" y="663" w="38" h="14" time="1300" a="0"/>
+            <frame x="558" y="663" w="38" h="14" time="1500"/>
+        </DST>
+    </sprite>
+    <sprite resid="1" x="222" y="143" w="38" h="14" condition="!IsBpmChange">
+        <DST acc="0" loop="1500">
+            <frame x="708" y="663" w="38" h="14" time="1300" a="0"/>
+            <frame x="708" y="663" w="38" h="14" time="1500"/>
+        </DST>
+    </sprite>
+    <number resid="8" value="PlayRemainMinute" align="0" length="2">
+        <DST acc="0" loop="1000">
+            <frame x="1207" y="16" w="15" h="18" time="800"/>
+            <frame x="1207" y="16" w="15" h="18" time="1000"/>
+        </DST>
+    </number>
+    <number resid="4" value="PlayRemainSecond" align="0" length="2">
+        <DST acc="0" loop="1000">
+            <frame x="1246" y="16" w="15" h="18" time="800"/>
+            <frame x="1246" y="16" w="15" h="18" time="1000"/>
+        </DST>
+    </number>
+    <sprite resid="1" x="3" y="124" w="7" h="14">
+        <DST acc="0" loop="1000">
+            <frame x="1238" y="18" w="7" h="14" time="800" a="0"/>
+            <frame x="1238" y="18" w="7" h="14" time="1000"/>
+            <frame x="1238" y="18" w="7" h="14" time="2000" a="200"/>
+        </DST>
+    </sprite>
+    <sprite resid="1" x="16" y="121" w="109" h="16">
+        <DST acc="0" loop="1000">
+            <frame x="1094" y="16" w="109" h="16" time="800" a="0"/>
+            <frame x="1094" y="16" w="109" h="16" time="1000"/>
+        </DST>
+    </sprite>
+    <if condition="982">
+        <sprite resid="1" x="283" y="710" w="262" h="22" condition="IsCourse1Stage">
+            <DST acc="0" loop="1000">
+                <frame x="-10" y="10" w="240" h="22" time="800" a="0"/>
+                <frame x="-10" y="10" w="240" h="22" time="1000"/>
+                <frame x="-10" y="10" w="240" h="22" time="2000" a="180"/>
+                <frame x="-10" y="10" w="240" h="22" time="3000"/>
+                <frame x="-10" y="10" w="240" h="22" time="4000"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="283" y="732" w="262" h="22" condition="IsCourse2Stage">
+            <DST acc="0" loop="1000">
+                <frame x="-10" y="10" w="240" h="22" time="800" a="0"/>
+                <frame x="-10" y="10" w="240" h="22" time="1000"/>
+                <frame x="-10" y="10" w="240" h="22" time="2000" a="180"/>
+                <frame x="-10" y="10" w="240" h="22" time="3000"/>
+                <frame x="-10" y="10" w="240" h="22" time="4000"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="283" y="754" w="262" h="22" condition="IsCourse3Stage">
+            <DST acc="0" loop="1000">
+                <frame x="-10" y="10" w="240" h="22" time="800" a="0"/>
+                <frame x="-10" y="10" w="240" h="22" time="1000"/>
+                <frame x="-10" y="10" w="240" h="22" time="2000" a="180"/>
+                <frame x="-10" y="10" w="240" h="22" time="3000"/>
+                <frame x="-10" y="10" w="240" h="22" time="4000"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="283" y="776" w="262" h="22" condition="IsCourse4Stage">
+            <DST acc="0" loop="1000">
+                <frame x="-10" y="10" w="240" h="22" time="800" a="0"/>
+                <frame x="-10" y="10" w="240" h="22" time="1000"/>
+                <frame x="-10" y="10" w="240" h="22" time="2000" a="180"/>
+                <frame x="-10" y="10" w="240" h="22" time="3000"/>
+                <frame x="-10" y="10" w="240" h="22" time="4000"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="283" y="798" w="262" h="22" condition="IsCourseFinal">
+            <DST acc="0" loop="1000">
+                <frame x="-10" y="10" w="240" h="22" time="800" a="0"/>
+                <frame x="-10" y="10" w="240" h="22" time="1000"/>
+                <frame x="-10" y="10" w="240" h="22" time="2000" a="180"/>
+                <frame x="-10" y="10" w="240" h="22" time="3000"/>
+                <frame x="-10" y="10" w="240" h="22" time="4000"/>
+            </DST>
+        </sprite>
+    </if>
+    <if condition="!IsAutoPlay">
+        <sprite resid="1" x="283" y="688" w="262" h="22" condition="!IsAutoPlay,982">
+            <DST acc="0" loop="1000">
+                <frame x="-10" y="10" w="240" h="22" time="800" a="0"/>
+                <frame x="-10" y="10" w="240" h="22" time="1000"/>
+                <frame x="-10" y="10" w="240" h="22" time="2000" a="180"/>
+                <frame x="-10" y="10" w="240" h="22" time="3000"/>
+                <frame x="-10" y="10" w="240" h="22" time="4000"/>
+            </DST>
+        </sprite>
+    </if>
+    <if condition="IsAutoPlay">
+        <sprite resid="1" x="283" y="820" w="262" h="22" condition="982,IsAutoPlay">
+            <DST acc="0" loop="1000">
+                <frame x="-10" y="10" w="240" h="22" time="800" a="0"/>
+                <frame x="-10" y="10" w="240" h="22" time="1000"/>
+                <frame x="-10" y="10" w="240" h="22" time="2000" a="180"/>
+                <frame x="-10" y="10" w="240" h="22" time="3000"/>
+                <frame x="-10" y="10" w="240" h="22" time="4000"/>
+            </DST>
+        </sprite>
+    </if>
+    <ifnot condition="IsAutoPlay">
+        <sprite resid="1" x="283" y="688" w="262" h="22" condition="!IsAutoPlay,982">
+            <DST acc="0" loop="1000">
+                <frame x="-10" y="10" w="240" h="22" time="800" a="0"/>
+                <frame x="-10" y="10" w="240" h="22" time="1000"/>
+                <frame x="-10" y="10" w="240" h="22" time="2000" a="180"/>
+                <frame x="-10" y="10" w="240" h="22" time="3000"/>
+                <frame x="-10" y="10" w="240" h="22" time="4000"/>
+            </DST>
+        </sprite>
+    </ifnot>
+    <sprite resid="2" x="905" y="51" w="377" h="2">
+        <DST acc="0" loop="1800">
+            <frame x="229" y="480" w="377" h="2" time="1400" a="0"/>
+            <frame x="229" y="0" w="377" h="482" time="1800"/>
+        </DST>
+    </sprite>
+    <if condition="921">
+        <sprite resid="_black" x="0" y="0" w="1" h="1">
+            <DST acc="0" loop="1900">
+                <frame x="229" y="0" w="377" h="482" time="1400" a="0"/>
+                <frame x="229" y="0" w="377" h="482" time="1900"/>
+            </DST>
+        </sprite>
+    </if>
+    <if condition="922">
+        <sprite resid="_black" x="0" y="0" w="1" h="1">
+            <DST acc="0" loop="1900">
+                <frame x="229" y="0" w="377" h="482" time="1400" a="0"/>
+                <frame x="229" y="0" w="377" h="482" time="1900" a="180"/>
+            </DST>
+        </sprite>
+    </if>
+    <if condition="923">
+        <sprite resid="_black" x="0" y="0" w="1" h="1">
+            <DST acc="0" loop="1900">
+                <frame x="229" y="0" w="377" h="482" time="1400" a="0"/>
+                <frame x="229" y="0" w="377" h="482" time="1900" a="127"/>
+            </DST>
+        </sprite>
+    </if>
+    <if condition="924">
+        <sprite resid="_black" x="0" y="0" w="1" h="1">
+            <DST acc="0" loop="1900">
+                <frame x="229" y="0" w="377" h="482" time="1400" a="0"/>
+                <frame x="229" y="0" w="377" h="482" time="1900" a="76"/>
+            </DST>
+        </sprite>
+    </if>
+    <sprite resid="2" x="905" y="0" w="377" h="2">
+        <DST acc="0" loop="1800">
+            <frame x="702" y="480" w="377" h="2" time="1400" a="0"/>
+            <frame x="702" y="0" w="377" h="482" time="1800"/>
+        </DST>
+    </sprite>
+    <if condition="921">
+        <sprite resid="_black" x="0" y="0" w="1" h="1">
+            <DST acc="0" loop="1900">
+                <frame x="702" y="0" w="377" h="482" time="1400" a="0"/>
+                <frame x="702" y="0" w="377" h="482" time="1900"/>
+            </DST>
+        </sprite>
+    </if>
+    <if condition="922">
+        <sprite resid="_black" x="0" y="0" w="1" h="1">
+            <DST acc="0" loop="1900">
+                <frame x="702" y="0" w="377" h="482" time="1400" a="0"/>
+                <frame x="702" y="0" w="377" h="482" time="1900" a="180"/>
+            </DST>
+        </sprite>
+    </if>
+    <if condition="923">
+        <sprite resid="_black" x="0" y="0" w="1" h="1">
+            <DST acc="0" loop="1900">
+                <frame x="702" y="0" w="377" h="482" time="1400" a="0"/>
+                <frame x="702" y="0" w="377" h="482" time="1900" a="127"/>
+            </DST>
+        </sprite>
+    </if>
+    <if condition="924">
+        <sprite resid="_black" x="0" y="0" w="1" h="1">
+            <DST acc="0" loop="1900">
+                <frame x="702" y="0" w="377" h="482" time="1400" a="0"/>
+                <frame x="702" y="0" w="377" h="482" time="1900" a="76"/>
+            </DST>
+        </sprite>
+    </if>
+    <sprite resid="1" x="0" y="54" w="377" h="63" timer="OnBeat">
+        <DST acc="0" blend="2" loop="0" timer="OnBeat">
+            <frame x="229" y="419" w="377" h="63" time="0"/>
+            <frame x="229" y="419" w="377" h="63" time="700" a="0" r="0" g="255" b="255"/>
+            <frame x="229" y="419" w="377" h="63" time="1000" a="0" r="0" g="255" b="255"/>
+        </DST>
+    </sprite>
+    <sprite resid="1" x="0" y="54" w="377" h="63" timer="OnBeat">
+        <DST acc="0" blend="2" loop="2000">
+            <frame x="229" y="419" w="377" h="63" time="1700" a="0"/>
+            <frame x="229" y="419" w="377" h="63" time="2000" a="75"/>
+        </DST>
+    </sprite>
+    <sprite resid="1" x="0" y="54" w="377" h="63" timer="OnBeat">
+        <DST acc="0" blend="2" loop="0" timer="OnBeat">
+            <frame x="702" y="419" w="377" h="63" time="0"/>
+            <frame x="702" y="419" w="377" h="63" time="700" a="0" r="0" g="255" b="255"/>
+            <frame x="702" y="419" w="377" h="63" time="1000" a="0" r="0" g="255" b="255"/>
+        </DST>
+    </sprite>
+    <sprite resid="1" x="0" y="54" w="377" h="63" timer="OnBeat">
+        <DST acc="0" blend="2" loop="2000">
+            <frame x="702" y="419" w="377" h="63" time="1700" a="0"/>
+            <frame x="702" y="419" w="377" h="63" time="2000" a="75"/>
+        </DST>
+    </sprite>
+    <notefield side="0" x="229" y="0" w="377" h="482">
+        <DST>
+            <frame x="229" y="0" w="377" h="482"/>
+        </DST>
+        <judgeline resid="12" x="0" y="119" w="1" h="1">
+            <DST acc="0" loop="2000">
+                <frame x="0" y="482" w="377" h="0" time="1800"/>
+                <frame x="0" y="472" w="377" h="10" time="2000"/>
+            </DST>
+        </judgeline>
+        <sprite resid="15" x="84" y="0" w="78" h="482" timer="OnP1KeySCPress" condition="!IsAutoPlay">
+            <DST acc="0" timer="OnP1KeySCPress">
+                <frame x="0" y="482" w="78" h="0" time="0"/>
+                <frame x="0" y="482" w="78" h="-482" time="50"/>
+                <frame x="0" y="482" w="78" h="-482" time="83"/>
+                <frame x="40" y="482" w="0" h="-482" time="167" a="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="84" y="0" w="78" h="482" timer="OnP1KeySCPress" condition="IsAutoPlay">
+            <DST acc="0" loop="50" timer="OnP1KeySCPress">
+                <frame x="0" y="482" w="78" h="0" time="0"/>
+                <frame x="0" y="482" w="78" h="-482" time="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="84" y="0" w="78" h="455" timer="OnP1KeySCUp" condition="IsAutoPlay">
+            <DST acc="0" timer="OnP1KeySCUp">
+                <frame x="0" y="482" w="78" h="-482" time="0"/>
+                <frame x="40" y="482" w="0" h="-482" time="83" a="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="37" y="0" w="44" h="482" timer="OnP1Key1Press">
+            <DST acc="0" loop="0" timer="OnP1Key1Press">
+                <frame x="81" y="482" w="44" h="-482" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="37" y="0" w="44" h="482" timer="OnP1Key1Up">
+            <DST acc="0" timer="OnP1Key1Up">
+                <frame x="81" y="482" w="44" h="-482" time="0"/>
+                <frame x="103" y="482" w="0" h="-482" time="83" a="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="0" y="0" w="34" h="482" timer="OnP1Key2Press">
+            <DST acc="0" loop="0" timer="OnP1Key2Press">
+                <frame x="128" y="482" w="34" h="-482" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="0" y="0" w="34" h="482" timer="OnP1Key2Up">
+            <DST acc="0" timer="OnP1Key2Up">
+                <frame x="128" y="482" w="34" h="-482" time="0"/>
+                <frame x="145" y="482" w="0" h="-482" time="83" a="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="37" y="0" w="44" h="482" timer="OnP1Key3Press">
+            <DST acc="0" loop="0" timer="OnP1Key3Press">
+                <frame x="165" y="482" w="44" h="-482" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="37" y="0" w="44" h="482" timer="OnP1Key3Up">
+            <DST acc="0" timer="OnP1Key3Up">
+                <frame x="165" y="482" w="44" h="-482" time="0"/>
+                <frame x="187" y="482" w="0" h="-482" time="83" a="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="0" y="0" w="34" h="482" timer="OnP1Key4Press">
+            <DST acc="0" loop="0" timer="OnP1Key4Press">
+                <frame x="212" y="482" w="34" h="-482" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="0" y="0" w="34" h="482" timer="OnP1Key4Up">
+            <DST acc="0" timer="OnP1Key4Up">
+                <frame x="212" y="482" w="34" h="-482" time="0"/>
+                <frame x="229" y="482" w="0" h="-482" time="83" a="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="37" y="0" w="44" h="482" timer="OnP1Key5Press">
+            <DST acc="0" loop="0" timer="OnP1Key5Press">
+                <frame x="249" y="482" w="44" h="-482" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="37" y="0" w="44" h="482" timer="OnP1Key5Up">
+            <DST acc="0" timer="OnP1Key5Up">
+                <frame x="249" y="482" w="44" h="-482" time="0"/>
+                <frame x="271" y="482" w="0" h="-482" time="83" a="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="0" y="0" w="34" h="482" timer="OnP1Key6Press">
+            <DST acc="0" loop="0" timer="OnP1Key6Press">
+                <frame x="296" y="482" w="34" h="-482" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="0" y="0" w="34" h="482" timer="OnP1Key6Up">
+            <DST acc="0" timer="OnP1Key6Up">
+                <frame x="296" y="482" w="34" h="-482" time="0"/>
+                <frame x="313" y="482" w="0" h="-482" time="83" a="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="37" y="0" w="44" h="482" timer="OnP1Key7Press">
+            <DST acc="0" loop="0" timer="OnP1Key7Press">
+                <frame x="333" y="482" w="44" h="-482" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="37" y="0" w="44" h="482" timer="OnP1Key7Up">
+            <DST acc="0" timer="OnP1Key7Up">
+                <frame x="333" y="482" w="44" h="-482" time="0"/>
+                <frame x="355" y="482" w="0" h="-482" time="83" a="0"/>
+            </DST>
+        </sprite>
+        <line resid="12" x="2" y="119" w="1" h="1">
+            <DST acc="0" loop="0">
+                <frame x="0" y="480" w="377" h="2" time="0"/>
+            </DST>
+        </line>
+        <note index="0" resid="8" x="0" y="466" w="78" h="24">
+            <SRC_NOTE x="81" y="0" w="78" h="24"/>
+            <SRC_AUTO_NOTE x="0" y="0" w="78" h="24"/>
+            <SRC_LN_END x="81" y="51" w="78" h="24"/>
+            <SRC_AUTO_LN_END x="0" y="51" w="78" h="24"/>
+            <SRC_LN_START x="81" y="76" w="78" h="24"/>
+            <SRC_AUTO_LN_START x="0" y="76" w="78" h="24"/>
+            <SRC_LN_BODY x="81" y="101" w="78" h="24" divx="1" divy="24" cycle="266" timer="OnP1JudgeSCHold"/>
+            <SRC_AUTO_LN_BODY x="0" y="101" w="78" h="24" divx="1" divy="24" cycle="266" timer="OnP1JudgeSCHold"/>
+            <SRC_MINE x="81" y="25" w="78" h="24"/>
+            <SRC_AUTO_MINE x="0" y="25" w="78" h="24"/>
+        </note>
+        <note index="1" resid="8" x="81" y="466" w="44" h="24">
+            <SRC_NOTE x="162" y="0" w="44" h="24"/>
+            <SRC_LN_END x="162" y="51" w="44" h="24"/>
+            <SRC_LN_START x="162" y="76" w="44" h="24"/>
+            <SRC_LN_BODY x="162" y="101" w="44" h="24" divx="1" divy="24" cycle="266" timer="OnP1Judge1Hold"/>
+            <SRC_MINE x="162" y="25" w="44" h="24"/>
+        </note>
+        <note index="2" resid="8" x="128" y="466" w="34" h="24">
+            <SRC_NOTE x="209" y="0" w="34" h="24"/>
+            <SRC_LN_END x="209" y="51" w="34" h="24"/>
+            <SRC_LN_START x="209" y="76" w="34" h="24"/>
+            <SRC_LN_BODY x="209" y="101" w="34" h="24" divx="1" divy="24" cycle="266" timer="OnP1Judge2Hold"/>
+            <SRC_MINE x="209" y="25" w="34" h="24"/>
+        </note>
+        <note index="3" resid="8" x="165" y="466" w="44" h="24">
+            <SRC_NOTE x="162" y="0" w="44" h="24"/>
+            <SRC_LN_END x="162" y="51" w="44" h="24"/>
+            <SRC_LN_START x="162" y="76" w="44" h="24"/>
+            <SRC_LN_BODY x="162" y="101" w="44" h="24" divx="1" divy="24" cycle="266" timer="OnP1Judge3Hold"/>
+            <SRC_MINE x="162" y="25" w="44" h="24"/>
+        </note>
+        <note index="4" resid="8" x="212" y="466" w="34" h="24">
+            <SRC_NOTE x="209" y="0" w="34" h="24"/>
+            <SRC_LN_END x="209" y="51" w="34" h="24"/>
+            <SRC_LN_START x="209" y="76" w="34" h="24"/>
+            <SRC_LN_BODY x="209" y="101" w="34" h="24" divx="1" divy="24" cycle="266" timer="OnP1Judge4Hold"/>
+            <SRC_MINE x="209" y="25" w="34" h="24"/>
+        </note>
+        <note index="5" resid="8" x="249" y="466" w="44" h="24">
+            <SRC_NOTE x="162" y="0" w="44" h="24"/>
+            <SRC_LN_END x="162" y="51" w="44" h="24"/>
+            <SRC_LN_START x="162" y="76" w="44" h="24"/>
+            <SRC_LN_BODY x="162" y="101" w="44" h="24" divx="1" divy="24" cycle="266" timer="OnP1Judge5Hold"/>
+            <SRC_MINE x="162" y="25" w="44" h="24"/>
+        </note>
+        <note index="6" resid="8" x="296" y="466" w="34" h="24">
+            <SRC_NOTE x="209" y="0" w="34" h="24"/>
+            <SRC_LN_END x="209" y="51" w="34" h="24"/>
+            <SRC_LN_START x="209" y="76" w="34" h="24"/>
+            <SRC_LN_BODY x="209" y="101" w="34" h="24" divx="1" divy="24" cycle="266" timer="OnP1Judge6Hold"/>
+            <SRC_MINE x="209" y="25" w="34" h="24"/>
+        </note>
+        <note index="7" resid="8" x="333" y="466" w="44" h="24">
+            <SRC_NOTE x="162" y="0" w="44" h="24"/>
+            <SRC_LN_END x="162" y="51" w="44" h="24"/>
+            <SRC_LN_START x="162" y="76" w="44" h="24"/>
+            <SRC_LN_BODY x="162" y="101" w="44" h="24" divx="1" divy="24" cycle="266" timer="OnP1Judge7Hold"/>
+            <SRC_MINE x="162" y="25" w="44" h="24"/>
+        </note>
+        <sprite resid="0" x="0" y="576" w="1448" h="192" divx="8" divy="1" cycle="160" timer="OnP1JudgeSCHold">
+            <DST acc="0" blend="2" loop="0" timer="OnP1JudgeSCHold">
+                <frame x="-109" y="326" w="336" h="362" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="0" x="0" y="192" w="1448" h="192" divx="8" divy="1" cycle="160" timer="OnP1Judge1Hold">
+            <DST acc="0" blend="2" loop="0" timer="OnP1Judge1Hold">
+                <frame x="-46" y="326" w="336" h="362" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="0" x="0" y="384" w="1448" h="192" divx="8" divy="1" cycle="160" timer="OnP1Judge2Hold">
+            <DST acc="0" blend="2" loop="0" timer="OnP1Judge2Hold">
+                <frame x="-4" y="326" w="341" h="362" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="0" x="0" y="192" w="1448" h="192" divx="8" divy="1" cycle="160" timer="OnP1Judge3Hold">
+            <DST acc="0" blend="2" loop="0" timer="OnP1Judge3Hold">
+                <frame x="38" y="326" w="341" h="362" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="0" x="0" y="384" w="1448" h="192" divx="8" divy="1" cycle="160" timer="OnP1Judge4Hold">
+            <DST acc="0" blend="2" loop="0" timer="OnP1Judge4Hold">
+                <frame x="80" y="326" w="341" h="362" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="0" x="0" y="192" w="1448" h="192" divx="8" divy="1" cycle="160" timer="OnP1Judge5Hold">
+            <DST acc="0" blend="2" loop="0" timer="OnP1Judge5Hold">
+                <frame x="122" y="326" w="341" h="362" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="0" x="0" y="384" w="1448" h="192" divx="8" divy="1" cycle="160" timer="OnP1Judge6Hold">
+            <DST acc="0" blend="2" loop="0" timer="OnP1Judge6Hold">
+                <frame x="164" y="326" w="341" h="362" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="0" x="0" y="192" w="1448" h="192" divx="8" divy="1" cycle="160" timer="OnP1Judge7Hold">
+            <DST acc="0" blend="2" loop="0" timer="OnP1Judge7Hold">
+                <frame x="206" y="326" w="341" h="362" time="0"/>
+            </DST>
+        </sprite>
+    </notefield>
+    <notefield side="1" x="702" y="0" w="377" h="482">
+        <DST>
+            <frame x="702" y="0" w="377" h="482"/>
+        </DST>
+        <judgeline resid="12" x="0" y="119" w="1" h="1">
+            <DST acc="0" loop="2000">
+                <frame x="0" y="482" w="377" h="0" time="1800"/>
+                <frame x="0" y="472" w="377" h="10" time="2000"/>
+            </DST>
+        </judgeline>
+        <sprite resid="15" x="84" y="0" w="78" h="482" timer="OnP1KeySCPress" condition="!IsAutoPlay">
+            <DST acc="0" timer="OnP2KeySCPress">
+                <frame x="299" y="482" w="78" h="0" time="0"/>
+                <frame x="299" y="482" w="78" h="-482" time="50"/>
+                <frame x="299" y="482" w="78" h="-482" time="83"/>
+                <frame x="339" y="482" w="0" h="-482" time="167" a="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="84" y="0" w="78" h="482" timer="OnP2KeySCPress" condition="IsAutoPlay">
+            <DST acc="0" loop="50" timer="OnP2KeySCPress">
+                <frame x="299" y="482" w="78" h="0" time="0"/>
+                <frame x="299" y="482" w="78" h="-482" time="50"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="84" y="0" w="78" h="455" timer="OnP2KeySCUp" condition="IsAutoPlay">
+            <DST acc="0" timer="OnP2KeySCUp">
+                <frame x="299" y="482" w="78" h="-482" time="0"/>
+                <frame x="339" y="482" w="0" h="-482" time="83" a="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="37" y="0" w="44" h="482" timer="OnP2Key1Press">
+            <DST acc="0" loop="0" timer="OnP2Key1Press">
+                <frame x="0" y="482" w="44" h="-482" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="37" y="0" w="44" h="482" timer="OnP2Key1Up">
+            <DST acc="0" timer="OnP2Key1Up">
+                <frame x="0" y="482" w="44" h="-482" time="0"/>
+                <frame x="22" y="482" w="0" h="-482" time="83" a="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="0" y="0" w="34" h="482" timer="OnP2Key2Press">
+            <DST acc="0" loop="0" timer="OnP2Key2Press">
+                <frame x="47" y="482" w="34" h="-482" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="0" y="0" w="34" h="482" timer="OnP2Key2Up">
+            <DST acc="0" timer="OnP2Key2Up">
+                <frame x="47" y="482" w="34" h="-482" time="0"/>
+                <frame x="64" y="482" w="0" h="-482" time="83" a="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="37" y="0" w="44" h="482" timer="OnP2Key3Press">
+            <DST acc="0" loop="0" timer="OnP2Key3Press">
+                <frame x="84" y="482" w="44" h="-482" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="37" y="0" w="44" h="482" timer="OnP2Key3Up">
+            <DST acc="0" timer="OnP2Key3Up">
+                <frame x="84" y="482" w="44" h="-482" time="0"/>
+                <frame x="106" y="482" w="0" h="-482" time="83" a="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="0" y="0" w="34" h="482" timer="OnP2Key4Press">
+            <DST acc="0" loop="0" timer="OnP2Key4Press">
+                <frame x="131" y="482" w="34" h="-482" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="0" y="0" w="34" h="482" timer="OnP2Key4Up">
+            <DST acc="0" timer="OnP2Key4Up">
+                <frame x="131" y="482" w="34" h="-482" time="0"/>
+                <frame x="148" y="482" w="0" h="-482" time="83" a="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="37" y="0" w="44" h="482" timer="OnP2Key5Press">
+            <DST acc="0" loop="0" timer="OnP2Key5Press">
+                <frame x="168" y="482" w="44" h="-482" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="37" y="0" w="44" h="482" timer="OnP2Key5Up">
+            <DST acc="0" timer="OnP2Key5Up">
+                <frame x="168" y="482" w="44" h="-482" time="0"/>
+                <frame x="190" y="482" w="0" h="-482" time="83" a="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="0" y="0" w="34" h="482" timer="OnP2Key6Press">
+            <DST acc="0" loop="0" timer="OnP2Key6Press">
+                <frame x="215" y="482" w="34" h="-482" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="0" y="0" w="34" h="482" timer="OnP2Key6Up">
+            <DST acc="0" timer="OnP2Key6Up">
+                <frame x="215" y="482" w="34" h="-482" time="0"/>
+                <frame x="232" y="482" w="0" h="-482" time="83" a="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="37" y="0" w="44" h="482" timer="OnP2Key7Press">
+            <DST acc="0" loop="0" timer="OnP2Key7Press">
+                <frame x="252" y="482" w="44" h="-482" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="15" x="37" y="0" w="44" h="482" timer="OnP2Key7Up">
+            <DST acc="0" timer="OnP2Key7Up">
+                <frame x="252" y="482" w="44" h="-482" time="0"/>
+                <frame x="274" y="482" w="0" h="-482" time="83" a="0"/>
+            </DST>
+        </sprite>
+        <line resid="12" x="2" y="119" w="1" h="1">
+            <DST acc="0" loop="0">
+                <frame x="0" y="480" w="377" h="2" time="0"/>
+            </DST>
+        </line>
+        <note index="10" resid="8" x="299" y="466" w="78" h="24">
+            <SRC_NOTE x="81" y="0" w="78" h="24"/>
+            <SRC_AUTO_NOTE x="0" y="0" w="78" h="24"/>
+            <SRC_LN_END x="81" y="51" w="78" h="24"/>
+            <SRC_AUTO_LN_END x="0" y="51" w="78" h="24"/>
+            <SRC_LN_START x="81" y="76" w="78" h="24"/>
+            <SRC_AUTO_LN_START x="0" y="76" w="78" h="24"/>
+            <SRC_LN_BODY x="81" y="101" w="78" h="24" divx="1" divy="24" cycle="266" timer="OnP2JudgeSCHold"/>
+            <SRC_AUTO_LN_BODY x="0" y="101" w="78" h="24" divx="1" divy="24" cycle="266" timer="OnP2JudgeSCHold"/>
+            <SRC_MINE x="81" y="25" w="78" h="24"/>
+            <SRC_AUTO_MINE x="0" y="25" w="78" h="24"/>
+        </note>
+        <note index="11" resid="8" x="0" y="466" w="44" h="24">
+            <SRC_NOTE x="162" y="0" w="44" h="24"/>
+            <SRC_LN_END x="162" y="51" w="44" h="24"/>
+            <SRC_LN_START x="162" y="76" w="44" h="24"/>
+            <SRC_LN_BODY x="162" y="101" w="44" h="24" divx="1" divy="24" cycle="266" timer="OnP2Judge1Hold"/>
+            <SRC_MINE x="162" y="25" w="44" h="24"/>
+        </note>
+        <note index="12" resid="8" x="47" y="466" w="34" h="24">
+            <SRC_NOTE x="209" y="0" w="34" h="24"/>
+            <SRC_LN_END x="209" y="51" w="34" h="24"/>
+            <SRC_LN_START x="209" y="76" w="34" h="24"/>
+            <SRC_LN_BODY x="209" y="101" w="34" h="24" divx="1" divy="24" cycle="266" timer="OnP2Judge2Hold"/>
+            <SRC_MINE x="209" y="25" w="34" h="24"/>
+        </note>
+        <note index="13" resid="8" x="84" y="466" w="44" h="24">
+            <SRC_NOTE x="162" y="0" w="44" h="24"/>
+            <SRC_LN_END x="162" y="51" w="44" h="24"/>
+            <SRC_LN_START x="162" y="76" w="44" h="24"/>
+            <SRC_LN_BODY x="162" y="101" w="44" h="24" divx="1" divy="24" cycle="266" timer="OnP2Judge3Hold"/>
+            <SRC_MINE x="162" y="25" w="44" h="24"/>
+        </note>
+        <note index="14" resid="8" x="131" y="466" w="34" h="24">
+            <SRC_NOTE x="209" y="0" w="34" h="24"/>
+            <SRC_LN_END x="209" y="51" w="34" h="24"/>
+            <SRC_LN_START x="209" y="76" w="34" h="24"/>
+            <SRC_LN_BODY x="209" y="101" w="34" h="24" divx="1" divy="24" cycle="266" timer="OnP2Judge4Hold"/>
+            <SRC_MINE x="209" y="25" w="34" h="24"/>
+        </note>
+        <note index="15" resid="8" x="168" y="466" w="44" h="24">
+            <SRC_NOTE x="162" y="0" w="44" h="24"/>
+            <SRC_LN_END x="162" y="51" w="44" h="24"/>
+            <SRC_LN_START x="162" y="76" w="44" h="24"/>
+            <SRC_LN_BODY x="162" y="101" w="44" h="24" divx="1" divy="24" cycle="266" timer="OnP2Judge5Hold"/>
+            <SRC_MINE x="162" y="25" w="44" h="24"/>
+        </note>
+        <note index="16" resid="8" x="215" y="466" w="34" h="24">
+            <SRC_NOTE x="209" y="0" w="34" h="24"/>
+            <SRC_LN_END x="209" y="51" w="34" h="24"/>
+            <SRC_LN_START x="209" y="76" w="34" h="24"/>
+            <SRC_LN_BODY x="209" y="101" w="34" h="24" divx="1" divy="24" cycle="266" timer="OnP2Judge6Hold"/>
+            <SRC_MINE x="209" y="25" w="34" h="24"/>
+        </note>
+        <note index="17" resid="8" x="252" y="466" w="44" h="24">
+            <SRC_NOTE x="162" y="0" w="44" h="24"/>
+            <SRC_LN_END x="162" y="51" w="44" h="24"/>
+            <SRC_LN_START x="162" y="76" w="44" h="24"/>
+            <SRC_LN_BODY x="162" y="101" w="44" h="24" divx="1" divy="24" cycle="266" timer="OnP2Judge7Hold"/>
+            <SRC_MINE x="162" y="25" w="44" h="24"/>
+        </note>
+        <sprite resid="0" x="0" y="576" w="1448" h="192" divx="8" divy="1" cycle="160" timer="OnP2JudgeSCHold">
+            <DST acc="0" blend="2" loop="0" timer="OnP2JudgeSCHold">
+                <frame x="193" y="326" w="336" h="362" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="0" x="0" y="192" w="1448" h="192" divx="8" divy="1" cycle="160" timer="OnP2Judge1Hold">
+            <DST acc="0" blend="2" loop="0" timer="OnP2Judge1Hold">
+                <frame x="-125" y="326" w="336" h="362" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="0" x="0" y="384" w="1448" h="192" divx="8" divy="1" cycle="160" timer="OnP2Judge2Hold">
+            <DST acc="0" blend="2" loop="0" timer="OnP2Judge2Hold">
+                <frame x="-83" y="326" w="341" h="362" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="0" x="0" y="192" w="1448" h="192" divx="8" divy="1" cycle="160" timer="OnP2Judge3Hold">
+            <DST acc="0" blend="2" loop="0" timer="OnP2Judge3Hold">
+                <frame x="-41" y="326" w="341" h="362" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="0" x="0" y="384" w="1448" h="192" divx="8" divy="1" cycle="160" timer="OnP2Judge4Hold">
+            <DST acc="0" blend="2" loop="0" timer="OnP2Judge4Hold">
+                <frame x="0" y="326" w="341" h="362" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="0" x="0" y="192" w="1448" h="192" divx="8" divy="1" cycle="160" timer="OnP2Judge5Hold">
+            <DST acc="0" blend="2" loop="0" timer="OnP2Judge5Hold">
+                <frame x="43" y="326" w="341" h="362" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="0" x="0" y="384" w="1448" h="192" divx="8" divy="1" cycle="160" timer="OnP2Judge6Hold">
+            <DST acc="0" blend="2" loop="0" timer="OnP2Judge6Hold">
+                <frame x="85" y="326" w="341" h="362" time="0"/>
+            </DST>
+        </sprite>
+        <sprite resid="0" x="0" y="192" w="1448" h="192" divx="8" divy="1" cycle="160" timer="OnP2Judge7Hold">
+            <DST acc="0" blend="2" loop="0" timer="OnP2Judge7Hold">
+                <frame x="127" y="326" w="341" h="362" time="0"/>
+            </DST>
+        </sprite>
+    </notefield>
+    <button resid="12" x="0" y="685" w="240" h="360" divx="1" divy="9">
+        <DST acc="0" loop="1000">
+            <frame x="534" y="681" w="240" h="40" time="800" a="0"/>
+            <frame x="534" y="681" w="240" h="40" time="1000" a="185"/>
+        </DST>
+    </button>
+    <button resid="12" x="0" y="685" w="240" h="360" divx="1" divy="9" timer="OnBeat">
+        <DST acc="0" blend="2" loop="0" timer="OnBeat">
+            <frame x="534" y="681" w="240" h="40" time="0" a="0" r="85" g="255" b="255"/>
+            <frame x="534" y="681" w="240" h="40" time="1000" a="85"/>
+        </DST>
+    </button>
+    <if condition="954">
+        <sprite resid="5" x="0" y="0" w="377" h="482" condition="OnSongLoading">
+            <DST acc="2" loop="1800">
+                <frame x="229" y="-482" w="377" h="482" time="1000"/>
+                <frame x="229" y="0" w="377" h="482" time="1800"/>
+            </DST>
+        </sprite>
+        <slider resid="5" x="0" y="0" w="377" h="482" direction="2" range="482" value="P1Sudden">
+            <DST acc="2" loop="1000" timer="OnReady">
+                <frame x="229" y="0" w="377" h="482" time="0"/>
+                <frame x="229" y="-482" w="377" h="482" time="1000"/>
+            </DST>
+        </slider>
+    </if>
+    <if condition="955">
+        <sprite resid="5" x="0" y="0" w="377" h="482" condition="OnSongLoading">
+            <DST acc="2" loop="1800">
+                <frame x="229" y="-482" w="377" h="482" time="1000"/>
+                <frame x="229" y="0" w="377" h="482" time="1800"/>
+            </DST>
+        </sprite>
+        <slider resid="5" x="0" y="0" w="377" h="482" direction="2" range="482" value="P1Sudden">
+            <DST acc="2" loop="800" timer="OnReady">
+                <frame x="229" y="-482" w="377" h="482" time="0" a="0"/>
+                <frame x="229" y="-482" w="377" h="482" time="800"/>
+            </DST>
+        </slider>
+        <sprite resid="5" x="0" y="0" w="377" h="482" condition="OnSongLoadingEnd">
+            <DST acc="2" timer="OnReady">
+                <frame x="229" y="0" w="377" h="482" time="0"/>
+                <frame x="229" y="-482" w="377" h="482" time="800" a="0"/>
+            </DST>
+        </sprite>
+    </if>
+    <if condition="956">
+        <slider resid="5" x="0" y="0" w="377" h="482" direction="2" range="482" value="P1Sudden">
+            <DST acc="2" loop="1800">
+                <frame x="229" y="-964" w="377" h="482" time="1000"/>
+                <frame x="229" y="-482" w="377" h="482" time="1800"/>
+            </DST>
+        </slider>
+    </if>
+    <if condition="954">
+        <sprite resid="5" x="378" y="0" w="377" h="482" condition="OnSongLoading">
+            <DST acc="2" loop="1800">
+                <frame x="702" y="-482" w="377" h="482" time="1000"/>
+                <frame x="702" y="0" w="377" h="482" time="1800"/>
+            </DST>
+        </sprite>
+        <slider resid="5" x="378" y="0" w="377" h="482" direction="2" range="482" value="P1Sudden">
+            <DST acc="2" loop="1000" timer="OnReady">
+                <frame x="702" y="0" w="377" h="482" time="0"/>
+                <frame x="702" y="-482" w="377" h="482" time="1000"/>
+            </DST>
+        </slider>
+    </if>
+    <if condition="955">
+        <sprite resid="5" x="378" y="0" w="377" h="482" condition="OnSongLoading">
+            <DST acc="2" loop="1800">
+                <frame x="702" y="-482" w="377" h="482" time="1000"/>
+                <frame x="702" y="0" w="377" h="482" time="1800"/>
+            </DST>
+        </sprite>
+        <slider resid="5" x="378" y="0" w="377" h="482" direction="2" range="482" value="P1Sudden">
+            <DST acc="2" loop="800" timer="OnReady">
+                <frame x="702" y="-482" w="377" h="482" time="0" a="0"/>
+                <frame x="702" y="-482" w="377" h="482" time="800"/>
+            </DST>
+        </slider>
+        <sprite resid="5" x="378" y="0" w="377" h="482" condition="OnSongLoadingEnd">
+            <DST acc="2" timer="OnReady">
+                <frame x="702" y="0" w="377" h="482" time="0"/>
+                <frame x="702" y="-482" w="377" h="482" time="800" a="0"/>
+            </DST>
+        </sprite>
+    </if>
+    <if condition="956">
+        <slider resid="5" x="378" y="0" w="377" h="482" direction="2" range="482" value="P1Sudden">
+            <DST acc="2" loop="1800">
+                <frame x="702" y="-964" w="377" h="482" time="1000"/>
+                <frame x="702" y="-482" w="377" h="482" time="1800"/>
+            </DST>
+        </slider>
+    </if>
+    <sprite resid="2" x="0" y="1028" w="415" h="138">
+        <DST acc="0" loop="1000" rotatecenter="1">
+            <frame x="316" y="720" w="415" h="138" time="400" angle="-90"/>
+            <frame x="316" y="484" w="415" h="138" time="600" angle="-90"/>
+            <frame x="316" y="484" w="415" h="138" time="700" angle="-90"/>
+            <frame x="196" y="484" w="415" h="138" time="1000"/>
+        </DST>
+    </sprite>
+    <sprite resid="2" x="0" y="1028" w="414" h="138">
+        <DST acc="0" blend="2" loop="1300">
+            <frame x="196" y="484" w="415" h="138" time="1000"/>
+            <frame x="196" y="484" w="415" h="138" time="1300" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="2" x="500" y="1028" w="394" h="138">
+        <DST acc="0" loop="1000" rotatecenter="3">
+            <frame x="577" y="720" w="394" h="138" time="400" angle="90"/>
+            <frame x="577" y="484" w="394" h="138" time="600" angle="90"/>
+            <frame x="577" y="484" w="394" h="138" time="700" angle="90"/>
+            <frame x="697" y="484" w="394" h="138" time="1000"/>
+        </DST>
+    </sprite>
+    <sprite resid="2" x="500" y="1028" w="394" h="138">
+        <DST acc="0" blend="2" loop="1300">
+            <frame x="697" y="484" w="394" h="138" time="1000"/>
+            <frame x="697" y="484" w="394" h="138" time="1300" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="2" x="1597" y="0" w="84" h="533" condition="Is10Keys">
+        <DST acc="0" loop="1000" timer="OnReady">
+            <frame x="522" y="0" w="84" h="533" time="0" a="0"/>
+            <frame x="522" y="0" w="84" h="533" time="1000"/>
+        </DST>
+    </sprite>
+    <sprite resid="2" x="1597" y="0" w="84" h="533" condition="Is10Keys">
+        <DST acc="0" loop="1000" timer="OnReady">
+            <frame x="702" y="0" w="84" h="533" time="0" a="0"/>
+            <frame x="702" y="0" w="84" h="533" time="1000"/>
+        </DST>
+    </sprite>
+    <sprite resid="7" x="0" y="0" w="30" h="30">
+        <DST acc="2" loop="1200">
+            <frame x="231" y="520" w="30" h="30" time="1000" a="0"/>
+            <frame x="231" y="520" w="30" h="30" time="1200"/>
+        </DST>
+    </sprite>
+    <sprite resid="7" x="31" y="0" w="30" h="30">
+        <DST acc="0" loop="1200">
+            <frame x="231" y="520" w="30" h="30" time="1000" a="0"/>
+            <frame x="231" y="520" w="30" h="30" time="1200"/>
+        </DST>
+    </sprite>
+    <sprite resid="2" x="0" y="1230" w="261" h="121">
+        <DST acc="0" blend="2" loop="1200">
+            <frame x="145" y="475" w="261" h="121" time="1000" a="0"/>
+            <frame x="115" y="475" w="261" h="121" time="1100"/>
+            <frame x="105" y="536" w="261" h="2" time="1200" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="2" x="266" y="1230" w="428" h="382">
+        <DST acc="0" blend="2" loop="1200">
+            <frame x="52" y="345" w="428" h="382" time="1000"/>
+            <frame x="52" y="345" w="428" h="382" time="1200" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="7" x="0" y="0" w="30" h="30">
+        <DST acc="2" loop="1200">
+            <frame x="1047" y="520" w="30" h="30" time="1000" a="0"/>
+            <frame x="1047" y="520" w="30" h="30" time="1200"/>
+        </DST>
+    </sprite>
+    <sprite resid="7" x="31" y="0" w="30" h="30">
+        <DST acc="0" loop="1200">
+            <frame x="1047" y="520" w="30" h="30" time="1000" a="0"/>
+            <frame x="1047" y="520" w="30" h="30" time="1200"/>
+        </DST>
+    </sprite>
+    <sprite resid="2" x="0" y="1230" w="261" h="121">
+        <DST acc="0" blend="2" loop="1200">
+            <frame x="905" y="475" w="261" h="121" time="1000" a="0"/>
+            <frame x="925" y="475" w="261" h="121" time="1100"/>
+            <frame x="945" y="536" w="261" h="2" time="1200" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="2" x="266" y="1230" w="428" h="382">
+        <DST acc="0" blend="2" loop="1200">
+            <frame x="840" y="345" w="428" h="382" time="1000"/>
+            <frame x="840" y="345" w="428" h="382" time="1200" a="0"/>
+        </DST>
+    </sprite>
+    <number resid="8" condition="OnDiffBeginner" value="BeginnerLevel" align="1" length="2">
+        <DST acc="0" loop="1500">
+            <frame x="369" y="579" w="15" h="18" time="1200" a="0" r="14" g="193" b="85"/>
+            <frame x="369" y="579" w="15" h="18" time="1500" a="185" r="14" g="193" b="85"/>
+        </DST>
+    </number>
+    <number resid="8" condition="OnDiffNormal" value="NormalLevel" align="1" length="2">
+        <DST acc="0" loop="1500">
+            <frame x="369" y="579" w="15" h="18" time="1200" a="0" r="74" g="112" b="255"/>
+            <frame x="369" y="579" w="15" h="18" time="1500" a="185" r="74" g="112" b="255"/>
+        </DST>
+    </number>
+    <number resid="8" condition="OnDiffHyper" value="HyperLevel" align="1" length="2">
+        <DST acc="0" loop="1500">
+            <frame x="369" y="579" w="15" h="18" time="1200" a="0" r="255" g="200" b="50"/>
+            <frame x="369" y="579" w="15" h="18" time="1500" a="185" r="255" g="200" b="50"/>
+        </DST>
+    </number>
+    <number resid="8" condition="OnDiffAnother" value="AnotherLevel" align="1" length="2">
+        <DST acc="0" loop="1500">
+            <frame x="369" y="579" w="15" h="18" time="1200" a="0" r="255" g="0" b="0"/>
+            <frame x="369" y="579" w="15" h="18" time="1500" a="185" r="255" g="0" b="0"/>
+        </DST>
+    </number>
+    <number resid="8" condition="OnDiffInsane" value="InsaneLevel" align="1" length="2">
+        <DST acc="0" loop="1500">
+            <frame x="369" y="579" w="15" h="18" time="1200" a="0" r="233" g="68" b="235"/>
+            <frame x="369" y="579" w="15" h="18" time="1500" a="185" r="233" g="68" b="235"/>
+        </DST>
+    </number>
+    <number resid="8" condition="OnDiffBeginner" value="BeginnerLevel" align="1" length="2">
+        <DST acc="0" blend="2" loop="0" timer="OnBeat">
+            <frame x="369" y="579" w="15" h="18" time="0" a="0" r="14" g="193" b="85"/>
+            <frame x="369" y="579" w="15" h="18" time="2000" a="85" r="14" g="193" b="85"/>
+            <frame x="369" y="579" w="15" h="18" time="4000" a="0" r="14" g="193" b="85"/>
+        </DST>
+    </number>
+    <number resid="8" condition="OnDiffNormal" value="NormalLevel" align="1" length="2">
+        <DST acc="0" blend="2" loop="0" timer="OnBeat">
+            <frame x="369" y="579" w="15" h="18" time="0" a="0" r="74" g="112" b="255"/>
+            <frame x="369" y="579" w="15" h="18" time="2000" a="85" r="74" g="112" b="255"/>
+            <frame x="369" y="579" w="15" h="18" time="4000" a="0" r="74" g="112" b="255"/>
+        </DST>
+    </number>
+    <number resid="8" condition="OnDiffHyper" value="HyperLevel" align="1" length="2">
+        <DST acc="0" blend="2" loop="0" timer="OnBeat">
+            <frame x="369" y="579" w="15" h="18" time="0" a="0" r="255" g="200" b="50"/>
+            <frame x="369" y="579" w="15" h="18" time="2000" a="85" r="255" g="200" b="50"/>
+            <frame x="369" y="579" w="15" h="18" time="4000" a="0" r="255" g="200" b="50"/>
+        </DST>
+    </number>
+    <number resid="8" condition="OnDiffAnother" value="AnotherLevel" align="1" length="2">
+        <DST acc="0" blend="2" loop="0" timer="OnBeat">
+            <frame x="369" y="579" w="15" h="18" time="0" a="0" r="255" g="0" b="0"/>
+            <frame x="369" y="579" w="15" h="18" time="2000" a="85" r="255" g="0" b="0"/>
+            <frame x="369" y="579" w="15" h="18" time="4000" a="0" r="255" g="0" b="0"/>
+        </DST>
+    </number>
+    <number resid="8" condition="OnDiffInsane" value="InsaneLevel" align="1" length="2">
+        <DST acc="0" blend="2" loop="0" timer="OnBeat">
+            <frame x="369" y="579" w="15" h="18" time="0" a="0" r="233" g="68" b="235"/>
+            <frame x="369" y="579" w="15" h="18" time="2000" a="85" r="233" g="68" b="235"/>
+            <frame x="369" y="579" w="15" h="18" time="4000" a="0" r="233" g="68" b="235"/>
+        </DST>
+    </number>
+    <if condition="OnDiffNone">
+        <sprite resid="1" x="237" y="633" w="195" h="41">
+            <DST acc="0" loop="0"/>
+        </sprite>
+    </if>
+    <if condition="OnDiffBeginner">
+        <sprite resid="1" x="237" y="418" w="195" h="41">
+            <DST acc="0" loop="0"/>
+        </sprite>
+    </if>
+    <if condition="OnDiffNormal">
+        <sprite resid="1" x="237" y="461" w="195" h="41">
+            <DST acc="0" loop="0"/>
+        </sprite>
+    </if>
+    <if condition="OnDiffHyper">
+        <sprite resid="1" x="237" y="504" w="195" h="41">
+            <DST acc="0" loop="0"/>
+        </sprite>
+    </if>
+    <if condition="OnDiffAnother">
+        <sprite resid="1" x="237" y="547" w="195" h="41">
+            <DST acc="0" loop="0"/>
+        </sprite>
+    </if>
+    <if condition="OnDiffInsane">
+        <sprite resid="1" x="237" y="590" w="195" h="41">
+            <DST acc="0" loop="0"/>
+        </sprite>
+    </if>
+    <if condition="OnDiffNone">
+        <sprite resid="1" x="237" y="633" w="195" h="41">
+            <DST acc="0" loop="0"/>
+        </sprite>
+    </if>
+    <if condition="OnDiffBeginner">
+        <sprite resid="1" x="237" y="418" w="195" h="41">
+            <DST acc="0" loop="0"/>
+        </sprite>
+    </if>
+    <if condition="OnDiffNormal">
+        <sprite resid="1" x="237" y="461" w="195" h="41">
+            <DST acc="0" loop="0"/>
+        </sprite>
+    </if>
+    <if condition="OnDiffHyper">
+        <sprite resid="1" x="237" y="504" w="195" h="41">
+            <DST acc="0" loop="0"/>
+        </sprite>
+    </if>
+    <if condition="OnDiffAnother">
+        <sprite resid="1" x="237" y="547" w="195" h="41">
+            <DST acc="0" loop="0"/>
+        </sprite>
+    </if>
+    <if condition="OnDiffInsane">
+        <sprite resid="1" x="237" y="590" w="195" h="41">
+            <DST acc="0" loop="0"/>
+        </sprite>
+    </if>
+    <sprite resid="9" x="0" y="0" w="34" h="41" timer="OnP1Key1Press">
+        <DST acc="0" blend="2" loop="0" timer="OnP1Key1Press">
+            <frame x="315" y="491" w="34" h="41" time="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="9" x="46" y="0" w="26" h="41" timer="OnP1Key2Press">
+        <DST acc="0" blend="2" loop="0" timer="OnP1Key2Press">
+            <frame x="361" y="491" w="26" h="41" time="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="9" x="0" y="0" w="34" h="41" timer="OnP1Key3Press">
+        <DST acc="0" blend="2" loop="0" timer="OnP1Key3Press">
+            <frame x="399" y="491" w="34" h="41" time="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="9" x="46" y="0" w="26" h="41" timer="OnP1Key4Press">
+        <DST acc="0" blend="2" loop="0" timer="OnP1Key4Press">
+            <frame x="445" y="491" w="26" h="41" time="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="9" x="0" y="0" w="34" h="41" timer="OnP1Key5Press">
+        <DST acc="0" blend="2" loop="0" timer="OnP1Key5Press">
+            <frame x="483" y="491" w="34" h="41" time="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="9" x="46" y="0" w="26" h="41" timer="OnP1Key6Press">
+        <DST acc="0" blend="2" loop="0" timer="OnP1Key6Press">
+            <frame x="529" y="491" w="26" h="41" time="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="9" x="0" y="0" w="34" h="41" timer="OnP1Key7Press">
+        <DST acc="0" blend="2" loop="0" timer="OnP1Key7Press">
+            <frame x="567" y="491" w="34" h="41" time="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="9" x="0" y="0" w="34" h="41" timer="OnP2Key1Press">
+        <DST acc="0" blend="2" loop="0" timer="OnP2Key1Press">
+            <frame x="707" y="491" w="34" h="41" time="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="9" x="46" y="0" w="26" h="41" timer="OnP2Key2Press">
+        <DST acc="0" blend="2" loop="0" timer="OnP2Key2Press">
+            <frame x="753" y="491" w="26" h="41" time="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="9" x="0" y="0" w="34" h="41" timer="OnP2Key3Press">
+        <DST acc="0" blend="2" loop="0" timer="OnP2Key3Press">
+            <frame x="791" y="491" w="34" h="41" time="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="9" x="46" y="0" w="26" h="41" timer="OnP2Key4Press">
+        <DST acc="0" blend="2" loop="0" timer="OnP2Key4Press">
+            <frame x="837" y="491" w="26" h="41" time="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="9" x="0" y="0" w="34" h="41" timer="OnP2Key5Press">
+        <DST acc="0" blend="2" loop="0" timer="OnP2Key5Press">
+            <frame x="875" y="491" w="34" h="41" time="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="9" x="46" y="0" w="26" h="41" timer="OnP2Key6Press">
+        <DST acc="0" blend="2" loop="0" timer="OnP2Key6Press">
+            <frame x="921" y="491" w="26" h="41" time="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="9" x="0" y="0" w="34" h="41" timer="OnP2Key7Press">
+        <DST acc="0" blend="2" loop="0" timer="OnP2Key7Press">
+            <frame x="959" y="491" w="34" h="41" time="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="10" x="36" y="11" w="1" h="1">
+        <DST acc="2" loop="2000">
+            <frame x="204" y="81" w="6" h="374" time="1000"/>
+            <frame x="204" y="81" w="6" h="374" time="2000" a="0"/>
+        </DST>
+    </sprite>
+    <slider resid="10" x="25" y="0" w="24" h="30" direction="2" range="358" value="PlayProgress">
+        <DST acc="2" blend="2" loop="2250">
+            <frame x="195" y="432" w="24" h="30" time="1000"/>
+            <frame x="195" y="74" w="24" h="30" time="2000"/>
+            <frame x="195" y="74" w="24" h="30" time="2250" a="128"/>
+        </DST>
+    </slider>
+    <slider resid="10" x="25" y="0" w="24" h="30" timer="OnBeat" direction="2" range="358" value="PlayProgress">
+        <DST acc="0" blend="2" loop="140" timer="OnReady">
+            <frame x="195" y="74" w="24" h="30" time="0" a="128"/>
+            <frame x="195" y="74" w="24" h="30" time="1000" a="0"/>
+        </DST>
+    </slider>
+    <number resid="9" value="P1Gauge" align="0" length="3">
+        <DST acc="0" loop="1600">
+            <frame x="603" y="491" w="29" h="22" time="1300" a="0"/>
+            <frame x="603" y="491" w="29" h="22" time="1600"/>
+        </DST>
+    </number>
+    <sprite resid="17" x="290" y="0" w="29" h="22">
+        <DST acc="0" loop="1600">
+            <frame x="660" y="509" w="29" h="22" time="1300" a="0"/>
+            <frame x="660" y="509" w="29" h="22" time="1600"/>
+        </DST>
+    </sprite>
+    <sprite resid="2" x="0" y="957" w="370" h="56">
+        <DST acc="0" loop="1300">
+            <frame x="653" y="550" w="1" h="56" time="1100" a="0"/>
+            <frame x="469" y="550" w="370" h="56" time="1300"/>
+        </DST>
+    </sprite>
+    <sprite resid="1" x="8" y="406" w="348" h="2">
+        <DST acc="0" loop="1800">
+            <frame x="479" y="568" w="349" h="0" time="1300" a="0"/>
+            <frame x="479" y="568" w="349" h="2" time="1800" a="150"/>
+        </DST>
+    </sprite>
+    <sprite resid="1" x="0" y="402" w="365" h="10">
+        <DST acc="0" blend="2" loop="0" timer="OnReady">
+            <frame x="648" y="564" w="0" h="10" time="0" a="0"/>
+            <frame x="648" y="564" w="0" h="10" time="50" a="0"/>
+            <frame x="633" y="564" w="30" h="10" time="83"/>
+            <frame x="633" y="564" w="30" h="10" time="100" a="0"/>
+            <frame x="603" y="564" w="91" h="10" time="150"/>
+            <frame x="603" y="564" w="91" h="10" time="200" a="0"/>
+            <frame x="562" y="564" w="182" h="10" time="250"/>
+            <frame x="562" y="564" w="182" h="10" time="300" a="0"/>
+            <frame x="516" y="564" w="274" h="10" time="350"/>
+            <frame x="516" y="564" w="274" h="10" time="400" a="0"/>
+            <frame x="471" y="564" w="365" h="10" time="450"/>
+            <frame x="471" y="564" w="365" h="10" time="500" a="0"/>
+            <frame x="471" y="564" w="365" h="10" time="550"/>
+            <frame x="471" y="564" w="365" h="10" time="600" a="0"/>
+            <frame x="471" y="564" w="365" h="10" time="650"/>
+            <frame x="471" y="564" w="365" h="10" time="700" a="0"/>
+            <frame x="471" y="564" w="365" h="10" time="750"/>
+            <frame x="471" y="564" w="365" h="10" time="800" a="0"/>
+            <frame x="471" y="564" w="365" h="10" time="850"/>
+            <frame x="471" y="564" w="365" h="10" time="900" a="0"/>
+            <frame x="471" y="564" w="365" h="10" time="950"/>
+            <frame x="471" y="564" w="365" h="10" time="1000" a="0"/>
+        </DST>
+    </sprite>
+    <if condition="900">
+        <groovegauge resid="24" side="0" addx="7" addy="0">
+            <DST acc="0" loop="1800">
+                <frame x="479" y="572" w="1" h="28" time="1300" a="0"/>
+                <frame x="479" y="572" w="7" h="28" time="1800"/>
+            </DST>
+            <SRC_GROOVE_ACTIVE x="7" y="0" w="7" h="28"/>
+            <SRC_GROOVE_INACTIVE x="21" y="0" w="7" h="28"/>
+            <SRC_HARD_ACTIVE x="0" y="0" w="7" h="28"/>
+            <SRC_HARD_INACTIVE x="14" y="0" w="7" h="28"/>
+            <SRC_EX_ACTIVE x="0" y="0" w="7" h="28"/>
+            <SRC_EX_INACTIVE x="14" y="0" w="7" h="28"/>
+        </groovegauge>
+    </if>
+    <if condition="901">
+        <groovegauge resid="24" side="0" addx="-7" addy="0">
+            <DST acc="0" loop="1800">
+                <frame x="828" y="572" w="1" h="28" time="1300" a="0"/>
+                <frame x="822" y="572" w="7" h="28" time="1800"/>
+            </DST>
+            <SRC_GROOVE_ACTIVE x="7" y="0" w="7" h="28"/>
+            <SRC_GROOVE_INACTIVE x="21" y="0" w="7" h="28"/>
+            <SRC_HARD_ACTIVE x="0" y="0" w="7" h="28"/>
+            <SRC_HARD_INACTIVE x="14" y="0" w="7" h="28"/>
+            <SRC_EX_ACTIVE x="0" y="0" w="7" h="28"/>
+            <SRC_EX_INACTIVE x="14" y="0" w="7" h="28"/>
+        </groovegauge>
+    </if>
+    <sprite resid="_black" x="0" y="0" w="1" h="1">
+        <DST acc="0" timer="OnP1GaugeUp">
+            <frame x="479" y="572" w="350" h="28" time="0" a="0"/>
+            <frame x="479" y="572" w="350" h="28" time="1" a="60"/>
+            <frame x="479" y="572" w="350" h="28" time="100" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="_black" x="0" y="0" w="1" h="1">
+        <DST acc="0" loop="0" timer="OnP1GaugeMax">
+            <frame x="479" y="572" w="350" h="28" time="0" a="0"/>
+            <frame x="479" y="572" w="350" h="28" time="300" a="60"/>
+            <frame x="479" y="572" w="350" h="28" time="600" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="0" x="0" y="0" w="2896" h="192" divx="16" divy="0" cycle="251" timer="OnP1JudgeSCOkay" loop="0">
+        <DST acc="0" blend="2" timer="OnP1JudgeSCOkay">
+            <frame x="120" y="326" w="336" h="362" time="0"/>
+            <frame x="120" y="326" w="336" h="362" time="250"/>
+        </DST>
+    </sprite>
+    <sprite resid="0" x="0" y="0" w="2896" h="192" divx="16" divy="0" cycle="251" timer="OnP1Judge1Okay" loop="0">
+        <DST acc="0" blend="2" timer="OnP1Judge1Okay">
+            <frame x="183" y="326" w="336" h="362" time="0"/>
+            <frame x="183" y="326" w="336" h="362" time="250"/>
+        </DST>
+    </sprite>
+    <sprite resid="0" x="0" y="0" w="2896" h="192" divx="16" divy="0" cycle="251" timer="OnP1Judge2Okay" loop="0">
+        <DST acc="0" blend="2" timer="OnP1Judge2Okay">
+            <frame x="225" y="326" w="336" h="362" time="0"/>
+            <frame x="225" y="326" w="336" h="362" time="250"/>
+        </DST>
+    </sprite>
+    <sprite resid="0" x="0" y="0" w="2896" h="192" divx="16" divy="0" cycle="251" timer="OnP1Judge3Okay" loop="0">
+        <DST acc="0" blend="2" timer="OnP1Judge3Okay">
+            <frame x="267" y="326" w="336" h="362" time="0"/>
+            <frame x="267" y="326" w="336" h="362" time="250"/>
+        </DST>
+    </sprite>
+    <sprite resid="0" x="0" y="0" w="2896" h="192" divx="16" divy="0" cycle="251" timer="OnP1Judge4Okay" loop="0">
+        <DST acc="0" blend="2" timer="OnP1Judge4Okay">
+            <frame x="309" y="326" w="336" h="362" time="0"/>
+            <frame x="309" y="326" w="336" h="362" time="250"/>
+        </DST>
+    </sprite>
+    <sprite resid="0" x="0" y="0" w="2896" h="192" divx="16" divy="0" cycle="251" timer="OnP1Judge5Okay" loop="0">
+        <DST acc="0" blend="2" timer="OnP1Judge5Okay">
+            <frame x="351" y="326" w="336" h="362" time="0"/>
+            <frame x="351" y="326" w="336" h="362" time="250"/>
+        </DST>
+    </sprite>
+    <sprite resid="0" x="0" y="0" w="2896" h="192" divx="16" divy="0" cycle="251" timer="OnP1Judge6Okay" loop="0">
+        <DST acc="0" blend="2" timer="OnP1Judge6Okay">
+            <frame x="393" y="326" w="336" h="362" time="0"/>
+            <frame x="393" y="326" w="336" h="362" time="250"/>
+        </DST>
+    </sprite>
+    <sprite resid="0" x="0" y="0" w="2896" h="192" divx="16" divy="0" cycle="251" timer="OnP1Judge7Okay" loop="0">
+        <DST acc="0" blend="2" timer="OnP1Judge7Okay">
+            <frame x="435" y="326" w="336" h="362" time="0"/>
+            <frame x="435" y="326" w="336" h="362" time="250"/>
+        </DST>
+    </sprite>
+    <sprite resid="0" x="0" y="0" w="2896" h="192" divx="16" divy="0" cycle="251" timer="OnP2JudgeSCOkay" loop="0">
+        <DST acc="0" blend="2" timer="OnP2JudgeSCOkay">
+            <frame x="895" y="326" w="336" h="362" time="0"/>
+            <frame x="895" y="326" w="336" h="362" time="250"/>
+        </DST>
+    </sprite>
+    <sprite resid="0" x="0" y="0" w="2896" h="192" divx="16" divy="0" cycle="251" timer="OnP2Judge1Okay" loop="0">
+        <DST acc="0" blend="2" timer="OnP2Judge1Okay">
+            <frame x="577" y="326" w="336" h="362" time="0"/>
+            <frame x="577" y="326" w="336" h="362" time="250"/>
+        </DST>
+    </sprite>
+    <sprite resid="0" x="0" y="0" w="2896" h="192" divx="16" divy="0" cycle="251" timer="OnP2Judge2Okay" loop="0">
+        <DST acc="0" blend="2" timer="OnP2Judge2Okay">
+            <frame x="619" y="326" w="336" h="362" time="0"/>
+            <frame x="619" y="326" w="336" h="362" time="250"/>
+        </DST>
+    </sprite>
+    <sprite resid="0" x="0" y="0" w="2896" h="192" divx="16" divy="0" cycle="251" timer="OnP2Judge3Okay" loop="0">
+        <DST acc="0" blend="2" timer="OnP2Judge3Okay">
+            <frame x="661" y="326" w="336" h="362" time="0"/>
+            <frame x="661" y="326" w="336" h="362" time="250"/>
+        </DST>
+    </sprite>
+    <sprite resid="0" x="0" y="0" w="2896" h="192" divx="16" divy="0" cycle="251" timer="OnP2Judge4Okay" loop="0">
+        <DST acc="0" blend="2" timer="OnP2Judge4Okay">
+            <frame x="702" y="326" w="336" h="362" time="0"/>
+            <frame x="702" y="326" w="336" h="362" time="250"/>
+        </DST>
+    </sprite>
+    <sprite resid="0" x="0" y="0" w="2896" h="192" divx="16" divy="0" cycle="251" timer="OnP2Judge5Okay" loop="0">
+        <DST acc="0" blend="2" timer="OnP2Judge5Okay">
+            <frame x="745" y="326" w="336" h="362" time="0"/>
+            <frame x="745" y="326" w="336" h="362" time="250"/>
+        </DST>
+    </sprite>
+    <sprite resid="0" x="0" y="0" w="2896" h="192" divx="16" divy="0" cycle="251" timer="OnP2Judge6Okay" loop="0">
+        <DST acc="0" blend="2" timer="OnP2Judge6Okay">
+            <frame x="787" y="326" w="336" h="362" time="0"/>
+            <frame x="787" y="326" w="336" h="362" time="250"/>
+        </DST>
+    </sprite>
+    <sprite resid="0" x="0" y="0" w="2896" h="192" divx="16" divy="0" cycle="251" timer="OnP2Judge7Okay" loop="0">
+        <DST acc="0" blend="2" timer="OnP2Judge7Okay">
+            <frame x="829" y="326" w="336" h="362" time="0"/>
+            <frame x="829" y="326" w="336" h="362" time="250"/>
+        </DST>
+    </sprite>
+    <number resid="4" value="P1Speed" align="0" length="3">
+        <DST acc="0" loop="1400">
+            <frame x="976" y="590" w="15" h="18" time="1150" a="0"/>
+            <frame x="976" y="590" w="15" h="18" time="1400"/>
+        </DST>
+    </number>
+    <button resid="12" x="0" y="244" w="48" h="95" divx="1" divy="5">
+        <DST acc="0" loop="1400">
+            <frame x="926" y="588" w="48" h="19" time="1150" a="0"/>
+            <frame x="926" y="588" w="48" h="19" time="1400"/>
+        </DST>
+    </button>
+    <sprite resid="1" x="130" y="121" w="86" h="17">
+        <DST acc="0" loop="1400">
+            <frame x="946" y="571" w="86" h="17" time="1150" a="0"/>
+            <frame x="946" y="571" w="86" h="17" time="1400"/>
+        </DST>
+    </sprite>
+    <number resid="8" condition="OnP1SuddenChange" value="P1Sudden" align="0" length="3">
+        <DST acc="0" loop="1000">
+            <frame x="400" y="9" w="15" h="18" time="0"/>
+            <frame x="400" y="9" w="15" h="18" time="1000"/>
+        </DST>
+    </number>
+    <number resid="8" condition="OnP1SuddenChange" value="P1Sudden" align="0" length="3">
+        <DST acc="0" loop="1000">
+            <frame x="854" y="9" w="15" h="18" time="0"/>
+            <frame x="854" y="9" w="15" h="18" time="1000"/>
+        </DST>
+    </number>
+    <if condition="!IsAutoPlay,983">
+        <sprite resid="2" x="307" y="800" w="162" h="130" condition="981">
+            <DST acc="0" loop="1200">
+                <frame x="1102" y="615" w="162" h="2" time="1000" a="185"/>
+                <frame x="1102" y="558" w="162" h="130" time="1200" a="185"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="321" y="162" w="145" h="107" condition="981">
+            <DST acc="0" loop="1500">
+                <frame x="1111" y="573" w="145" h="107" time="1200" a="0"/>
+                <frame x="1111" y="573" w="145" h="107" time="1500"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="325" y="284" w="58" h="36" divx="1" divy="3" cycle="120" condition="981">
+            <DST acc="0" loop="1500">
+                <frame x="1115" y="576" w="58" h="12" time="1500" a="0"/>
+                <frame x="1115" y="576" w="58" h="12" time="1600"/>
+            </DST>
+        </sprite>
+        <number resid="8" condition="981" value="P1PerfectCount" align="0" length="4">
+            <DST acc="0" loop="1500">
+                <frame x="1193" y="574" w="15" h="18" time="1500"/>
+            </DST>
+        </number>
+        <number resid="8" condition="981" value="P1GreatCount" align="0" length="4">
+            <DST acc="0" loop="1500">
+                <frame x="1193" y="592" w="15" h="18" time="1500"/>
+            </DST>
+        </number>
+        <number resid="8" condition="981" value="P1GoodCount" align="0" length="4">
+            <DST acc="0" loop="1500">
+                <frame x="1193" y="610" w="15" h="18" time="1500"/>
+            </DST>
+        </number>
+        <number resid="8" condition="981" value="P1BadCount" align="0" length="4">
+            <DST acc="0" loop="1500">
+                <frame x="1193" y="628" w="15" h="18" time="1500"/>
+            </DST>
+        </number>
+        <number resid="8" condition="981" value="P1PoorCount" align="0" length="4">
+            <DST acc="0" loop="1500">
+                <frame x="1193" y="646" w="15" h="18" time="1500"/>
+            </DST>
+        </number>
+        <number resid="8" condition="981" value="P1Rate" align="0" length="3">
+            <DST acc="0" loop="1500">
+                <frame x="1193" y="664" w="15" h="18" time="1500"/>
+            </DST>
+        </number>
+    </if>
+    <if condition="!IsAutoPlay,984">
+        <sprite resid="2" x="307" y="800" w="162" h="130" condition="981">
+            <DST acc="0" loop="1200">
+                <frame x="13" y="642" w="162" h="2" time="1000" a="185"/>
+                <frame x="13" y="582" w="162" h="130" time="1200" a="185"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="321" y="162" w="145" h="107" condition="981">
+            <DST acc="0" loop="1500">
+                <frame x="24" y="597" w="145" h="107" time="1200" a="0"/>
+                <frame x="24" y="597" w="145" h="107" time="1500"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="325" y="284" w="58" h="36" divx="1" divy="3" cycle="120" condition="981">
+            <DST acc="0" loop="1500">
+                <frame x="28" y="600" w="58" h="12" time="1500" a="0"/>
+                <frame x="28" y="600" w="58" h="12" time="1600"/>
+            </DST>
+        </sprite>
+        <number resid="8" condition="981" value="P1PerfectCount" align="0" length="4">
+            <DST acc="0" loop="1500">
+                <frame x="106" y="598" w="15" h="18" time="1500"/>
+            </DST>
+        </number>
+        <number resid="8" condition="981" value="P1GreatCount" align="0" length="4">
+            <DST acc="0" loop="1500">
+                <frame x="106" y="616" w="15" h="18" time="1500"/>
+            </DST>
+        </number>
+        <number resid="8" condition="981" value="P1GoodCount" align="0" length="4">
+            <DST acc="0" loop="1500">
+                <frame x="106" y="634" w="15" h="18" time="1500"/>
+            </DST>
+        </number>
+        <number resid="8" condition="981" value="P1BadCount" align="0" length="4">
+            <DST acc="0" loop="1500">
+                <frame x="106" y="652" w="15" h="18" time="1500"/>
+            </DST>
+        </number>
+        <number resid="8" condition="981" value="P1PoorCount" align="0" length="4">
+            <DST acc="0" loop="1500">
+                <frame x="106" y="670" w="15" h="18" time="1500"/>
+            </DST>
+        </number>
+        <number resid="8" condition="981" value="P1Rate" align="0" length="3">
+            <DST acc="0" loop="1500">
+                <frame x="106" y="688" w="15" h="18" time="1500"/>
+            </DST>
+        </number>
+    </if>
+    <ifnot condition="!IsAutoPlay,984">
+        <sprite resid="2" x="480" y="811" w="111" h="115" condition="981">
+            <DST acc="0" loop="1200">
+                <frame x="41" y="600" w="111" h="2" time="1000" a="185"/>
+                <frame x="41" y="540" w="111" h="115" time="1200" a="185"/>
+            </DST>
+        </sprite>
+        <sprite resid="1" x="222" y="163" w="98" h="106" condition="981">
+            <DST acc="0" loop="1500">
+                <frame x="48" y="545" w="98" h="106" time="1200" a="0"/>
+                <frame x="48" y="545" w="98" h="106" time="1500"/>
+            </DST>
+        </sprite>
+        <number resid="8" condition="981" value="P1PerfectCount" align="0" length="4">
+            <DST acc="0" loop="1500">
+                <frame x="84" y="545" w="15" h="18" time="1500"/>
+            </DST>
+        </number>
+        <number resid="8" condition="981" value="P1GreatCount" align="0" length="4">
+            <DST acc="0" loop="1500">
+                <frame x="84" y="563" w="15" h="18" time="1500"/>
+            </DST>
+        </number>
+        <number resid="8" condition="981" value="P1GoodCount" align="0" length="4">
+            <DST acc="0" loop="1500">
+                <frame x="84" y="581" w="15" h="18" time="1500"/>
+            </DST>
+        </number>
+        <number resid="8" condition="981" value="P1BadCount" align="0" length="4">
+            <DST acc="0" loop="1500">
+                <frame x="84" y="599" w="15" h="18" time="1500"/>
+            </DST>
+        </number>
+        <number resid="8" condition="981" value="P1PoorCount" align="0" length="4">
+            <DST acc="0" loop="1500">
+                <frame x="84" y="617" w="15" h="18" time="1500"/>
+            </DST>
+        </number>
+        <number resid="8" condition="981" value="P1Rate" align="0" length="3">
+            <DST acc="0" loop="1500">
+                <frame x="84" y="635" w="15" h="18" time="1500"/>
+            </DST>
+        </number>
+    </ifnot>
+    <if condition="952">
+        <sprite resid="5" x="0" y="0" w="377" h="482">
+            <DST acc="2" loop="1000" timer="OnP1LastNote">
+                <frame x="229" y="-482" w="377" h="482" time="0"/>
+                <frame x="229" y="0" w="377" h="482" time="1000"/>
+            </DST>
+        </sprite>
+        <sprite resid="5" x="378" y="0" w="377" h="482">
+            <DST acc="2" loop="1000" timer="OnP1LastNote">
+                <frame x="702" y="-482" w="377" h="482" time="0"/>
+                <frame x="702" y="0" w="377" h="482" time="1000"/>
+            </DST>
+        </sprite>
+    </if>
+    <sprite resid="3" x="0" y="513" w="377" h="687">
+        <DST acc="0" timer="OnP1FullCombo">
+            <frame x="228" y="482" w="377" h="-482" time="16" a="200"/>
+            <frame x="228" y="482" w="377" h="-687" time="2500" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="0" y="0" w="377" h="482">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="228" y="0" w="377" h="482" time="0"/>
+            <frame x="228" y="0" w="377" h="482" time="2400" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="823" y="0" w="377" h="482">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="228" y="0" w="377" h="482" time="0"/>
+            <frame x="411" y="0" w="10" h="482" time="1000" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="806" w="428" h="188">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="124" y="384" w="605" h="188" time="0"/>
+            <frame x="124" y="294" w="605" h="360" time="2000" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="417" w="428" h="383">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="203" y="267" w="428" h="383" time="0"/>
+            <frame x="-223" y="-112" w="1284" h="1149" time="1500" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="823" y="900" w="380" h="301">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="236" y="295" w="380" h="301" time="0" a="205"/>
+            <frame x="236" y="214" w="380" h="301" time="2400" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="823" y="900" w="380" h="602" divx="1" divy="2" cycle="160">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="236" y="295" w="380" h="301" time="0"/>
+            <frame x="236" y="214" w="380" h="301" time="2400" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="269" y="449" w="18" h="18" time="16"/>
+            <frame x="269" y="360" w="18" h="18" time="800"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="507" y="449" w="18" h="18" time="150"/>
+            <frame x="507" y="317" w="18" h="18" time="833"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="431" y="449" w="18" h="18" time="183"/>
+            <frame x="431" y="110" w="18" h="18" time="1016"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="465" y="449" w="18" h="18" time="233"/>
+            <frame x="465" y="249" w="18" h="18" time="916"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="325" y="449" w="18" h="18" time="250"/>
+            <frame x="325" y="263" w="18" h="18" time="933"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="496" y="449" w="18" h="18" time="266"/>
+            <frame x="496" y="270" w="18" h="18" time="1050"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="158" y="451" w="18" h="18" time="283"/>
+            <frame x="158" y="127" w="18" h="18" time="900"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="360" y="449" w="18" h="18" time="350"/>
+            <frame x="360" y="297" w="18" h="18" time="1133"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="470" y="449" w="18" h="18" time="350"/>
+            <frame x="470" y="312" w="18" h="18" time="1100"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="336" y="451" w="18" h="18" time="383"/>
+            <frame x="336" y="186" w="18" h="18" time="1166"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="476" y="451" w="18" h="18" time="383"/>
+            <frame x="476" y="245" w="18" h="18" time="1166"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="455" y="451" w="18" h="18" time="433"/>
+            <frame x="455" y="391" w="18" h="18" time="783"/>
+            <frame x="455" y="291" w="18" h="18" time="1033"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="512" y="451" w="18" h="18" time="483"/>
+            <frame x="512" y="322" w="18" h="18" time="833"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="520" y="449" w="18" h="18" time="500"/>
+            <frame x="520" y="-12" w="18" h="18" time="1183"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="451" y="449" w="18" h="18" time="500"/>
+            <frame x="451" y="40" w="18" h="18" time="1283"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="466" y="449" w="18" h="18" time="500"/>
+            <frame x="466" y="-15" w="18" h="18" time="1266"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="328" y="451" w="18" h="18" time="533"/>
+            <frame x="328" y="413" w="18" h="18" time="1316"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="486" y="451" w="18" h="18" time="566"/>
+            <frame x="486" y="352" w="18" h="18" time="1266"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="340" y="451" w="18" h="18" time="616"/>
+            <frame x="340" y="384" w="18" h="18" time="1266"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="388" y="451" w="18" h="18" time="683"/>
+            <frame x="388" y="354" w="18" h="18" time="1216"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="343" y="451" w="18" h="18" time="700"/>
+            <frame x="343" y="426" w="18" h="18" time="1050"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="443" y="451" w="18" h="18" time="750"/>
+            <frame x="443" y="279" w="18" h="18" time="1283"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="510" y="451" w="18" h="18" time="866"/>
+            <frame x="510" y="387" w="18" h="18" time="1216"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="1000" w="113" h="80">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="253" y="444" w="113" h="80" time="700" a="205"/>
+            <frame x="253" y="-50" w="113" h="80" time="900"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="1000" w="113" h="80">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="502" y="444" w="113" h="80" time="825" a="205"/>
+            <frame x="502" y="-50" w="113" h="80" time="1025"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="1000" w="113" h="80">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="181" y="444" w="113" h="80" time="750" a="205"/>
+            <frame x="181" y="-50" w="113" h="80" time="950"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="1000" w="113" h="80">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="181" y="444" w="113" h="80" time="850" a="205"/>
+            <frame x="181" y="-50" w="113" h="80" time="1050" a="205"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="1000" w="113" h="80">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="253" y="444" w="113" h="80" time="700" a="205"/>
+            <frame x="253" y="132" w="113" h="80" time="900" a="205"/>
+            <frame x="253" y="120" w="113" h="80" time="1200" a="205"/>
+            <frame x="253" y="-50" w="113" h="80" time="1300" a="205"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="1000" w="113" h="80">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="502" y="444" w="113" h="80" time="1300" a="205"/>
+            <frame x="502" y="110" w="113" h="80" time="1400" a="205"/>
+            <frame x="502" y="80" w="113" h="80" time="1600" a="205"/>
+            <frame x="502" y="-50" w="113" h="80" time="1700" a="205"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="610" y="1000" w="115" h="115">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="253" y="444" w="115" h="115" time="700" a="205"/>
+            <frame x="253" y="-50" w="115" h="115" time="1400" a="0" angle="40"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="610" y="1000" w="115" h="115">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="502" y="444" w="115" h="115" time="825" a="205" angle="60"/>
+            <frame x="502" y="-50" w="115" h="115" time="1625" a="0" angle="80"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="610" y="1000" w="115" h="115">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="181" y="444" w="115" h="115" time="750" a="205" angle="150"/>
+            <frame x="181" y="-50" w="115" h="115" time="1700" a="0" angle="170"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="610" y="1000" w="115" h="115">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="181" y="444" w="115" h="115" time="850" a="205" angle="210"/>
+            <frame x="181" y="-50" w="115" h="115" time="1850" a="0" angle="250"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="610" y="1000" w="115" h="115">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="254" y="444" w="115" h="115" time="700" a="205"/>
+            <frame x="254" y="132" w="115" h="115" time="900" a="205" angle="20"/>
+            <frame x="254" y="120" w="115" h="115" time="1400" a="205" angle="30"/>
+            <frame x="254" y="-50" w="115" h="115" time="2000" a="0" angle="40"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="610" y="1000" w="115" h="115">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="502" y="444" w="115" h="115" time="1300" a="205" angle="80"/>
+            <frame x="502" y="110" w="115" h="115" time="1400" a="205" angle="90"/>
+            <frame x="502" y="80" w="115" h="115" time="1600" a="205" angle="100"/>
+            <frame x="502" y="-50" w="115" h="115" time="2200" a="0" angle="110"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="823" y="485" w="377" h="408">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="228" y="64" w="377" h="408" time="1100" a="0"/>
+            <frame x="228" y="64" w="377" h="408" time="1400"/>
+            <frame x="228" y="64" w="377" h="408" time="1600" a="155"/>
+            <frame x="228" y="64" w="377" h="408" time="1800" a="205"/>
+            <frame x="228" y="64" w="377" h="408" time="2400" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="0" w="395" h="410">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="217" y="276" w="395" h="410" time="0"/>
+            <frame x="-373" y="-332" w="1580" h="1640" time="400" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="0" w="395" h="410">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="217" y="276" w="395" h="410" time="0"/>
+            <frame x="15" y="67" w="790" h="820" time="600" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="1221" y="0" w="107" h="121">
+        <DST acc="0" timer="OnP1FullCombo">
+            <frame x="138" y="-39" w="107" h="121" time="375" a="0"/>
+            <frame x="229" y="17" w="107" h="121" time="575" a="155"/>
+            <frame x="229" y="17" w="107" h="121" time="1700" a="155"/>
+            <frame x="229" y="17" w="107" h="121" time="1750" a="0"/>
+            <frame x="229" y="17" w="107" h="121" time="1800" a="155"/>
+            <frame x="229" y="17" w="107" h="121" time="1850" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="1221" y="126" w="180" h="183">
+        <DST acc="0" timer="OnP1FullCombo">
+            <frame x="63" y="-124" w="180" h="183" time="425" a="0"/>
+            <frame x="229" y="51" w="180" h="183" time="575" a="155"/>
+            <frame x="229" y="51" w="180" h="183" time="1250" a="155"/>
+            <frame x="229" y="51" w="180" h="183" time="1300" a="0"/>
+            <frame x="229" y="51" w="180" h="183" time="1350" a="155"/>
+            <frame x="229" y="51" w="180" h="183" time="1400" a="0"/>
+            <frame x="229" y="51" w="180" h="183" time="1450" a="155"/>
+            <frame x="229" y="51" w="180" h="183" time="1500" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="1221" y="318" w="176" h="200">
+        <DST acc="0" timer="OnP1FullCombo">
+            <frame x="79" y="-1" w="176" h="200" time="350" a="0"/>
+            <frame x="229" y="125" w="176" h="200" time="550" a="155"/>
+            <frame x="229" y="125" w="176" h="200" time="700" a="155"/>
+            <frame x="229" y="125" w="176" h="200" time="1350" a="155"/>
+            <frame x="229" y="125" w="176" h="200" time="1400" a="0"/>
+            <frame x="229" y="125" w="176" h="200" time="1450" a="155"/>
+            <frame x="229" y="125" w="176" h="200" time="1550" a="0"/>
+            <frame x="229" y="125" w="176" h="200" time="1600" a="155"/>
+            <frame x="229" y="125" w="176" h="200" time="1700" a="0"/>
+            <frame x="229" y="125" w="176" h="200" time="1750" a="155"/>
+            <frame x="229" y="125" w="176" h="200" time="1800" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="1221" y="521" w="295" h="298">
+        <DST acc="0" timer="OnP1FullCombo">
+            <frame x="-576" y="-54" w="295" h="298" time="300" a="0"/>
+            <frame x="229" y="181" w="295" h="298" time="500" a="155"/>
+            <frame x="229" y="181" w="295" h="298" time="1000" a="155"/>
+            <frame x="229" y="181" w="295" h="298" time="1050" a="0"/>
+            <frame x="229" y="181" w="295" h="298" time="1100" a="155"/>
+            <frame x="229" y="181" w="295" h="298" time="1150" a="0"/>
+            <frame x="229" y="181" w="295" h="298" time="1200" a="155"/>
+            <frame x="229" y="181" w="295" h="298" time="1250" a="0"/>
+            <frame x="229" y="181" w="295" h="298" time="1300" a="155"/>
+            <frame x="229" y="181" w="295" h="298" time="1350" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="1452" y="896" w="120" h="138">
+        <DST acc="0" timer="OnP1FullCombo">
+            <frame x="387" y="-119" w="120" h="138" time="500" a="0"/>
+            <frame x="286" y="141" w="120" h="138" time="600"/>
+            <frame x="286" y="141" w="120" h="138" time="1300"/>
+            <frame x="84" y="-119" w="120" h="138" time="1400" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="1201" y="896" w="210" h="210">
+        <DST acc="0" timer="OnP1FullCombo">
+            <frame x="545" y="432" w="210" h="210" time="600" a="0"/>
+            <frame x="251" y="187" w="210" h="210" time="700"/>
+            <frame x="251" y="187" w="210" h="210" time="1350"/>
+            <frame x="515" y="432" w="210" h="210" time="1450" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="1452" y="896" w="120" h="138">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="286" y="141" w="120" h="138" time="800" a="0"/>
+            <frame x="286" y="141" w="120" h="138" time="900"/>
+            <frame x="286" y="141" w="120" h="138" time="1000" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="1201" y="896" w="210" h="210">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="251" y="187" w="210" h="210" time="900" a="0"/>
+            <frame x="251" y="187" w="210" h="210" time="1000"/>
+            <frame x="251" y="187" w="210" h="210" time="1100" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="0" y="513" w="377" h="687">
+        <DST acc="0" timer="OnP1FullCombo">
+            <frame x="702" y="482" w="377" h="-482" time="16" a="200"/>
+            <frame x="702" y="482" w="377" h="-687" time="2500" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="0" y="0" w="377" h="482">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="702" y="0" w="377" h="482" time="0"/>
+            <frame x="702" y="0" w="377" h="482" time="2400" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="823" y="0" w="377" h="482">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="702" y="0" w="377" h="482" time="0"/>
+            <frame x="885" y="0" w="10" h="482" time="1000" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="806" w="428" h="188">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="598" y="384" w="605" h="188" time="0"/>
+            <frame x="598" y="294" w="605" h="360" time="2000" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="417" w="428" h="383">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="677" y="267" w="428" h="383" time="0"/>
+            <frame x="251" y="-112" w="1284" h="1149" time="1500" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="823" y="900" w="380" h="301">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="710" y="295" w="380" h="301" time="0" a="205"/>
+            <frame x="710" y="214" w="380" h="301" time="2400" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="823" y="900" w="380" h="602" divx="1" divy="2" cycle="160">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="710" y="295" w="380" h="301" time="0"/>
+            <frame x="710" y="214" w="380" h="301" time="2400" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="743" y="449" w="18" h="18" time="16"/>
+            <frame x="743" y="360" w="18" h="18" time="800"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="981" y="449" w="18" h="18" time="150"/>
+            <frame x="981" y="317" w="18" h="18" time="833"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="905" y="449" w="18" h="18" time="183"/>
+            <frame x="905" y="110" w="18" h="18" time="1016"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="939" y="449" w="18" h="18" time="233"/>
+            <frame x="939" y="249" w="18" h="18" time="916"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="774" y="449" w="18" h="18" time="250"/>
+            <frame x="774" y="263" w="18" h="18" time="933"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="970" y="449" w="18" h="18" time="266"/>
+            <frame x="970" y="270" w="18" h="18" time="1050"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="732" y="451" w="18" h="18" time="283"/>
+            <frame x="732" y="127" w="18" h="18" time="900"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="833" y="449" w="18" h="18" time="350"/>
+            <frame x="833" y="297" w="18" h="18" time="1133"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="1097" y="449" w="18" h="18" time="350"/>
+            <frame x="1097" y="312" w="18" h="18" time="1100"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="830" y="451" w="18" h="18" time="383"/>
+            <frame x="830" y="186" w="18" h="18" time="1166"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="950" y="451" w="18" h="18" time="383"/>
+            <frame x="950" y="245" w="18" h="18" time="1166"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="929" y="451" w="18" h="18" time="433"/>
+            <frame x="929" y="391" w="18" h="18" time="783"/>
+            <frame x="929" y="291" w="18" h="18" time="1033"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="986" y="451" w="18" h="18" time="483"/>
+            <frame x="986" y="322" w="18" h="18" time="833"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="894" y="449" w="18" h="18" time="500"/>
+            <frame x="894" y="-12" w="18" h="18" time="1183"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="925" y="449" w="18" h="18" time="500"/>
+            <frame x="925" y="40" w="18" h="18" time="1283"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="940" y="449" w="18" h="18" time="500"/>
+            <frame x="940" y="-15" w="18" h="18" time="1266"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="802" y="451" w="18" h="18" time="533"/>
+            <frame x="802" y="413" w="18" h="18" time="1316"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="960" y="451" w="18" h="18" time="566"/>
+            <frame x="960" y="352" w="18" h="18" time="1266"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="814" y="451" w="18" h="18" time="616"/>
+            <frame x="814" y="384" w="18" h="18" time="1266"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="862" y="451" w="18" h="18" time="683"/>
+            <frame x="862" y="354" w="18" h="18" time="1216"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="817" y="451" w="18" h="18" time="700"/>
+            <frame x="817" y="426" w="18" h="18" time="1050"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="917" y="451" w="18" h="18" time="750"/>
+            <frame x="917" y="279" w="18" h="18" time="1283"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="588" y="1000" w="18" h="36" divx="1" divy="2" cycle="120" timer="OnP1FullCombo">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="984" y="451" w="18" h="18" time="866"/>
+            <frame x="984" y="387" w="18" h="18" time="1216"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="1000" w="113" h="80">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="726" y="444" w="113" h="80" time="700" a="205"/>
+            <frame x="726" y="-50" w="113" h="80" time="900"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="1000" w="113" h="80">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="976" y="444" w="113" h="80" time="825" a="205"/>
+            <frame x="976" y="-50" w="113" h="80" time="1025"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="1000" w="113" h="80">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="655" y="444" w="113" h="80" time="750" a="205"/>
+            <frame x="655" y="-50" w="113" h="80" time="950"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="1000" w="113" h="80">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="655" y="444" w="113" h="80" time="850" a="205"/>
+            <frame x="655" y="-50" w="113" h="80" time="1050" a="205"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="1000" w="113" h="80">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="726" y="444" w="113" h="80" time="700" a="205"/>
+            <frame x="726" y="132" w="113" h="80" time="900" a="205"/>
+            <frame x="726" y="120" w="113" h="80" time="1200" a="205"/>
+            <frame x="726" y="-50" w="113" h="80" time="1300" a="205"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="1000" w="113" h="80">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="976" y="444" w="113" h="80" time="1300" a="205"/>
+            <frame x="976" y="110" w="113" h="80" time="1400" a="205"/>
+            <frame x="976" y="80" w="113" h="80" time="1600" a="205"/>
+            <frame x="976" y="-50" w="113" h="80" time="1700" a="205"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="610" y="1000" w="115" h="115">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="726" y="444" w="115" h="115" time="700" a="205"/>
+            <frame x="726" y="-50" w="115" h="115" time="1400" a="0" angle="40"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="610" y="1000" w="115" h="115">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="976" y="444" w="115" h="115" time="825" a="205" angle="60"/>
+            <frame x="976" y="-50" w="115" h="115" time="1625" a="0" angle="80"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="610" y="1000" w="115" h="115">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="655" y="444" w="115" h="115" time="750" a="205" angle="150"/>
+            <frame x="655" y="-50" w="115" h="115" time="1700" a="0" angle="170"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="610" y="1000" w="115" h="115">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="655" y="444" w="115" h="115" time="850" a="205" angle="210"/>
+            <frame x="655" y="-50" w="115" h="115" time="1850" a="0" angle="250"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="610" y="1000" w="115" h="115">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="726" y="444" w="115" h="115" time="700" a="205"/>
+            <frame x="726" y="132" w="115" h="115" time="900" a="205" angle="20"/>
+            <frame x="726" y="120" w="115" h="115" time="1400" a="205" angle="30"/>
+            <frame x="726" y="-50" w="115" h="115" time="2000" a="0" angle="40"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="610" y="1000" w="115" h="115">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="976" y="444" w="115" h="115" time="1300" a="205" angle="80"/>
+            <frame x="976" y="110" w="115" h="115" time="1400" a="205" angle="90"/>
+            <frame x="976" y="80" w="115" h="115" time="1600" a="205" angle="100"/>
+            <frame x="976" y="-50" w="115" h="115" time="2200" a="0" angle="110"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="823" y="485" w="377" h="408">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="702" y="64" w="377" h="408" time="1100" a="0"/>
+            <frame x="702" y="64" w="377" h="408" time="1400"/>
+            <frame x="702" y="64" w="377" h="408" time="1600" a="155"/>
+            <frame x="702" y="64" w="377" h="408" time="1800" a="205"/>
+            <frame x="702" y="64" w="377" h="408" time="2400" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="0" w="395" h="410">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="691" y="276" w="395" h="410" time="0"/>
+            <frame x="101" y="-332" w="1580" h="1640" time="400" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="377" y="0" w="395" h="410">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="691" y="276" w="395" h="410" time="0"/>
+            <frame x="489" y="67" w="790" h="820" time="600" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="1221" y="0" w="107" h="121">
+        <DST acc="0" timer="OnP1FullCombo">
+            <frame x="612" y="-39" w="107" h="121" time="375" a="0"/>
+            <frame x="703" y="17" w="107" h="121" time="575" a="155"/>
+            <frame x="703" y="17" w="107" h="121" time="1700" a="155"/>
+            <frame x="703" y="17" w="107" h="121" time="1750" a="0"/>
+            <frame x="703" y="17" w="107" h="121" time="1800" a="155"/>
+            <frame x="703" y="17" w="107" h="121" time="1850" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="1221" y="126" w="180" h="183">
+        <DST acc="0" timer="OnP1FullCombo">
+            <frame x="537" y="-124" w="180" h="183" time="425" a="0"/>
+            <frame x="703" y="51" w="180" h="183" time="575" a="155"/>
+            <frame x="703" y="51" w="180" h="183" time="1250" a="155"/>
+            <frame x="703" y="51" w="180" h="183" time="1300" a="0"/>
+            <frame x="703" y="51" w="180" h="183" time="1350" a="155"/>
+            <frame x="703" y="51" w="180" h="183" time="1400" a="0"/>
+            <frame x="703" y="51" w="180" h="183" time="1450" a="155"/>
+            <frame x="703" y="51" w="180" h="183" time="1500" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="1221" y="318" w="176" h="200">
+        <DST acc="0" timer="OnP1FullCombo">
+            <frame x="553" y="-1" w="176" h="200" time="350" a="0"/>
+            <frame x="703" y="125" w="176" h="200" time="550" a="155"/>
+            <frame x="703" y="125" w="176" h="200" time="700" a="155"/>
+            <frame x="703" y="125" w="176" h="200" time="1350" a="155"/>
+            <frame x="703" y="125" w="176" h="200" time="1400" a="0"/>
+            <frame x="703" y="125" w="176" h="200" time="1450" a="155"/>
+            <frame x="703" y="125" w="176" h="200" time="1550" a="0"/>
+            <frame x="703" y="125" w="176" h="200" time="1600" a="155"/>
+            <frame x="703" y="125" w="176" h="200" time="1700" a="0"/>
+            <frame x="703" y="125" w="176" h="200" time="1750" a="155"/>
+            <frame x="703" y="125" w="176" h="200" time="1800" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="1221" y="521" w="295" h="298">
+        <DST acc="0" timer="OnP1FullCombo">
+            <frame x="428" y="-54" w="295" h="298" time="300" a="0"/>
+            <frame x="703" y="181" w="295" h="298" time="500" a="155"/>
+            <frame x="703" y="181" w="295" h="298" time="1000" a="155"/>
+            <frame x="703" y="181" w="295" h="298" time="1050" a="0"/>
+            <frame x="703" y="181" w="295" h="298" time="1100" a="155"/>
+            <frame x="703" y="181" w="295" h="298" time="1150" a="0"/>
+            <frame x="703" y="181" w="295" h="298" time="1200" a="155"/>
+            <frame x="703" y="181" w="295" h="298" time="1250" a="0"/>
+            <frame x="703" y="181" w="295" h="298" time="1300" a="155"/>
+            <frame x="703" y="181" w="295" h="298" time="1350" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="1452" y="896" w="120" h="138">
+        <DST acc="0" timer="OnP1FullCombo">
+            <frame x="861" y="-119" w="120" h="138" time="500" a="0"/>
+            <frame x="760" y="141" w="120" h="138" time="600"/>
+            <frame x="760" y="141" w="120" h="138" time="1300"/>
+            <frame x="558" y="-119" w="120" h="138" time="1400" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="1201" y="896" w="210" h="210">
+        <DST acc="0" timer="OnP1FullCombo">
+            <frame x="1019" y="432" w="210" h="210" time="600" a="0"/>
+            <frame x="725" y="187" w="210" h="210" time="700"/>
+            <frame x="725" y="187" w="210" h="210" time="1350"/>
+            <frame x="1019" y="432" w="210" h="210" time="1450" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="1452" y="896" w="120" h="138">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="760" y="141" w="120" h="138" time="800" a="0"/>
+            <frame x="760" y="141" w="120" h="138" time="900"/>
+            <frame x="760" y="141" w="120" h="138" time="1000" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="3" x="1201" y="896" w="210" h="210">
+        <DST acc="0" blend="2" timer="OnP1FullCombo">
+            <frame x="725" y="187" w="210" h="210" time="900" a="0"/>
+            <frame x="725" y="187" w="210" h="210" time="1000"/>
+            <frame x="725" y="187" w="210" h="210" time="1100" a="0"/>
+        </DST>
+    </sprite>
+    <combo condition="OnP1JudgeNPoor">
+        <sprite resid="13" x="490" y="388" w="245" h="150" divx="1" divy="2" cycle="80" timer="OnP1Combo">
+            <DST acc="0" timer="OnP1Combo">
+                <frame x="305" y="317" w="245" h="75" time="0"/>
+                <frame x="305" y="317" w="245" h="75" time="500"/>
+            </DST>
+        </sprite>
+    </combo>
+    <combo condition="OnP1JudgePoor">
+        <sprite resid="13" x="490" y="388" w="245" h="150" divx="1" divy="2" cycle="80" timer="OnP1Combo">
+            <DST acc="0" timer="OnP1Combo">
+                <frame x="305" y="317" w="245" h="75" time="0"/>
+                <frame x="305" y="317" w="245" h="75" time="500"/>
+            </DST>
+        </sprite>
+    </combo>
+    <combo condition="OnP1JudgeBad">
+        <sprite resid="13" x="245" y="388" w="245" h="150" divx="1" divy="2" cycle="80" timer="OnP1Combo">
+            <DST acc="0" timer="OnP1Combo">
+                <frame x="305" y="317" w="245" h="75" time="0"/>
+                <frame x="305" y="317" w="245" h="75" time="500"/>
+            </DST>
+        </sprite>
+    </combo>
+    <combo condition="OnP1JudgeGood">
+        <sprite resid="13" x="0" y="388" w="245" h="150" divx="1" divy="2" cycle="80" timer="OnP1Combo">
+            <DST acc="0" timer="OnP1Combo">
+                <frame x="305" y="317" w="245" h="75" time="0"/>
+                <frame x="305" y="317" w="245" h="75" time="500"/>
+            </DST>
+        </sprite>
+        <number resid="10" timer="OnP1Combo" align="1" value="P1Combo">
+            <DST acc="0" timer="OnP1Combo">
+                <frame x="513" y="317" w="0" h="75" time="0"/>
+                <frame x="513" y="317" w="0" h="75" time="500"/>
+            </DST>
+        </number>
+    </combo>
+    <combo condition="OnP1JudgeGreat">
+        <sprite resid="13" x="0" y="238" w="245" h="150" divx="1" divy="2" cycle="80" timer="OnP1Combo">
+            <DST acc="0" timer="OnP1Combo">
+                <frame x="305" y="317" w="245" h="75" time="0"/>
+                <frame x="305" y="317" w="245" h="75" time="500"/>
+            </DST>
+        </sprite>
+        <number resid="10" timer="OnP1Combo" align="1" value="P1Combo">
+            <DST acc="0" timer="OnP1Combo">
+                <frame x="513" y="317" w="0" h="75" time="0"/>
+                <frame x="513" y="317" w="0" h="75" time="500"/>
+            </DST>
+        </number>
+    </combo>
+    <combo condition="OnP1JudgePerfect">
+        <sprite resid="13" x="0" y="13" w="245" h="225" divx="1" divy="3" cycle="100" timer="OnP1Combo">
+            <DST acc="0" timer="OnP1Combo">
+                <frame x="305" y="317" w="245" h="75" time="0"/>
+                <frame x="305" y="317" w="245" h="75" time="500"/>
+            </DST>
+        </sprite>
+        <number resid="11" timer="OnP1Combo" align="1" value="P1Combo">
+            <DST acc="0" timer="OnP1Combo">
+                <frame x="513" y="317" w="0" h="75" time="0"/>
+                <frame x="513" y="317" w="0" h="75" time="500"/>
+            </DST>
+        </number>
+    </combo>
+    <combo condition="OnP2JudgeNPoor">
+        <sprite resid="13" x="490" y="388" w="245" h="150" divx="1" divy="2" cycle="80" timer="OnP2Combo">
+            <DST acc="0" timer="OnP2Combo">
+                <frame x="776" y="317" w="245" h="75" time="0"/>
+                <frame x="776" y="317" w="245" h="75" time="500"/>
+            </DST>
+        </sprite>
+    </combo>
+    <combo condition="OnP2JudgePoor">
+        <sprite resid="13" x="490" y="388" w="245" h="150" divx="1" divy="2" cycle="80" timer="OnP2Combo">
+            <DST acc="0" timer="OnP2Combo">
+                <frame x="776" y="317" w="245" h="75" time="0"/>
+                <frame x="776" y="317" w="245" h="75" time="500"/>
+            </DST>
+        </sprite>
+    </combo>
+    <combo condition="OnP2JudgeBad">
+        <sprite resid="13" x="245" y="388" w="245" h="150" divx="1" divy="2" cycle="80" timer="OnP2Combo">
+            <DST acc="0" timer="OnP2Combo">
+                <frame x="776" y="317" w="245" h="75" time="0"/>
+                <frame x="776" y="317" w="245" h="75" time="500"/>
+            </DST>
+        </sprite>
+    </combo>
+    <combo condition="OnP2JudgeGood">
+        <sprite resid="13" x="0" y="388" w="245" h="150" divx="1" divy="2" cycle="80" timer="OnP2Combo">
+            <DST acc="0" timer="OnP2Combo">
+                <frame x="776" y="317" w="245" h="75" time="0"/>
+                <frame x="776" y="317" w="245" h="75" time="500"/>
+            </DST>
+        </sprite>
+        <number resid="10" timer="OnP2Combo" align="1" value="P2Combo">
+            <DST acc="0" timer="OnP2Combo">
+                <frame x="984" y="317" w="0" h="75" time="0"/>
+                <frame x="984" y="317" w="0" h="75" time="500"/>
+            </DST>
+        </number>
+    </combo>
+    <combo condition="OnP2JudgeGreat">
+        <sprite resid="13" x="0" y="238" w="245" h="150" divx="1" divy="2" cycle="80" timer="OnP2Combo">
+            <DST acc="0" timer="OnP2Combo">
+                <frame x="776" y="317" w="245" h="75" time="0"/>
+                <frame x="776" y="317" w="245" h="75" time="500"/>
+            </DST>
+        </sprite>
+        <number resid="10" timer="OnP2Combo" align="1" value="P2Combo">
+            <DST acc="0" timer="OnP2Combo">
+                <frame x="984" y="317" w="0" h="75" time="0"/>
+                <frame x="984" y="317" w="0" h="75" time="500"/>
+            </DST>
+        </number>
+    </combo>
+    <combo condition="OnP2JudgePerfect">
+        <sprite resid="13" x="0" y="13" w="245" h="225" divx="1" divy="3" cycle="100" timer="OnP2Combo">
+            <DST acc="0" timer="OnP2Combo">
+                <frame x="776" y="317" w="245" h="75" time="0"/>
+                <frame x="776" y="317" w="245" h="75" time="500"/>
+            </DST>
+        </sprite>
+        <number resid="11" timer="OnP2Combo" align="1" value="P2Combo">
+            <DST acc="0" timer="OnP2Combo">
+                <frame x="984" y="317" w="0" h="75" time="0"/>
+                <frame x="984" y="317" w="0" h="75" time="500"/>
+            </DST>
+        </number>
+    </combo>
+    <number resid="5" condition="!IsAutoPlay,IsGhostA" mode24="1" value="P1RivalDiff" align="0" length="4">
+        <DST acc="0" timer="OnP1Combo">
+            <frame x="376" y="301" w="15" h="18" time="0"/>
+            <frame x="376" y="301" w="15" h="18" time="500"/>
+        </DST>
+    </number>
+    <number resid="5" condition="!IsAutoPlay,IsGhostA" mode24="1" value="P1RivalDiff" align="0" length="4">
+        <DST acc="0" timer="OnP2Combo">
+            <frame x="847" y="301" w="15" h="18" time="0"/>
+            <frame x="847" y="301" w="15" h="18" time="500"/>
+        </DST>
+    </number>
+    <number resid="5" condition="!IsAutoPlay,IsGhostB" mode24="1" value="P1RivalDiff" align="0" length="4">
+        <DST acc="0" loop="0" timer="OnReady">
+            <frame x="110" y="338" w="15" h="18" time="0"/>
+            <frame x="110" y="338" w="15" h="18" time="1000"/>
+        </DST>
+    </number>
+    <number resid="5" condition="!IsAutoPlay,IsGhostB" mode24="1" value="P1RivalDiff" align="0" length="4">
+        <DST acc="0" loop="0" timer="OnReady">
+            <frame x="1105" y="338" w="15" h="18" time="0"/>
+            <frame x="1105" y="338" w="15" h="18" time="1000"/>
+        </DST>
+    </number>
+    <number resid="5" condition="!IsAutoPlay,IsGhostC" mode24="1" value="P1RivalDiff" align="0" length="4">
+        <DST acc="0" loop="1000" timer="OnReady">
+            <frame x="616" y="459" w="15" h="18" time="1000"/>
+        </DST>
+    </number>
+    <if condition="986">
+        <number resid="5" condition="!IsAutoPlay" mode24="1" value="JudgeTiming" align="0" length="3">
+            <DST acc="0" loop="0" timer="OnReady">
+                <frame x="622" y="338" w="15" h="18" time="0"/>
+                <frame x="622" y="338" w="15" h="18" time="1000"/>
+            </DST>
+        </number>
+    </if>
+    <if condition="987">
+        <number resid="5" condition="!IsAutoPlay,!IsGhostC" mode24="1" value="JudgeTiming" align="0" length="3">
+            <DST acc="0" loop="1000" timer="OnReady">
+                <frame x="622" y="459" w="15" h="18" time="1000"/>
+            </DST>
+        </number>
+        <number resid="5" condition="!IsAutoPlay,IsGhostC" mode24="1" value="JudgeTiming" align="0" length="3">
+            <DST acc="0" loop="1000" timer="OnReady">
+                <frame x="622" y="439" w="15" h="18" time="1000"/>
+            </DST>
+        </number>
+    </if>
+    <text resid="1" condition="!IsBACKBMP,OnSongLoading" value="Genre" align="1" edit="0">
+        <DST acc="0" loop="750">
+            <frame x="650" y="100" w="600" h="38" time="0" a="0"/>
+            <frame x="650" y="100" w="600" h="38" time="500" a="0"/>
+            <frame x="650" y="100" w="600" h="38" time="750"/>
+        </DST>
+    </text>
+    <text resid="1" condition="!IsBACKBMP,OnSongLoadingEnd" value="Genre" align="1" edit="0">
+        <DST acc="0" timer="OnReady">
+            <frame x="650" y="100" w="600" h="38" time="0"/>
+            <frame x="650" y="100" w="600" h="38" time="500"/>
+            <frame x="650" y="100" w="600" h="38" time="750" a="0"/>
+        </DST>
+    </text>
+    <text resid="0" condition="!IsBACKBMP,OnSongLoading" value="Title" align="1" edit="0">
+        <DST acc="0" loop="750">
+            <frame x="650" y="150" w="600" h="84" time="0" a="0"/>
+            <frame x="650" y="150" w="600" h="84" time="500" a="0"/>
+            <frame x="650" y="150" w="600" h="84" time="750"/>
+        </DST>
+    </text>
+    <text resid="0" condition="!IsBACKBMP,OnSongLoadingEnd" value="Title" align="1" edit="0">
+        <DST acc="0" timer="OnReady">
+            <frame x="650" y="150" w="600" h="84" time="0"/>
+            <frame x="650" y="150" w="600" h="84" time="500"/>
+            <frame x="650" y="150" w="600" h="84" time="750" a="0"/>
+        </DST>
+    </text>
+    <text resid="2" condition="!IsBACKBMP,OnSongLoading" value="Subtitle" align="1" edit="0">
+        <DST acc="0" loop="750">
+            <frame x="650" y="241" w="600" h="40" time="0" a="0"/>
+            <frame x="650" y="241" w="600" h="40" time="500" a="0"/>
+            <frame x="650" y="241" w="600" h="40" time="750"/>
+        </DST>
+    </text>
+    <text resid="2" condition="!IsBACKBMP,OnSongLoadingEnd" value="Subtitle" align="1" edit="0">
+        <DST acc="0" timer="OnReady">
+            <frame x="650" y="241" w="600" h="40" time="0"/>
+            <frame x="650" y="241" w="600" h="40" time="500"/>
+            <frame x="650" y="241" w="600" h="40" time="750" a="0"/>
+        </DST>
+    </text>
+    <text resid="2" condition="!IsBACKBMP,OnSongLoading" value="Artist" align="1" edit="0">
+        <DST acc="0" loop="750">
+            <frame x="650" y="375" w="600" h="40" time="0" a="0"/>
+            <frame x="650" y="375" w="600" h="40" time="500" a="0"/>
+            <frame x="650" y="375" w="600" h="40" time="750"/>
+        </DST>
+    </text>
+    <text resid="2" condition="!IsBACKBMP,OnSongLoadingEnd" value="Artist" align="1" edit="0">
+        <DST acc="0" timer="OnReady">
+            <frame x="650" y="375" w="600" h="40" time="0"/>
+            <frame x="650" y="375" w="600" h="40" time="500"/>
+            <frame x="650" y="375" w="600" h="40" time="750" a="0"/>
+        </DST>
+    </text>
+    <text resid="2" condition="!IsBACKBMP,OnSongLoading" value="SubArtist" align="1" edit="0">
+        <DST acc="0" loop="750">
+            <frame x="650" y="420" w="600" h="40" time="0" a="0"/>
+            <frame x="650" y="420" w="600" h="40" time="500" a="0"/>
+            <frame x="650" y="420" w="600" h="40" time="750"/>
+        </DST>
+    </text>
+    <text resid="2" condition="!IsBACKBMP,OnSongLoadingEnd" value="SubArtist" align="1" edit="0">
+        <DST acc="0" timer="OnReady">
+            <frame x="650" y="420" w="600" h="40" time="0"/>
+            <frame x="650" y="420" w="600" h="40" time="500"/>
+            <frame x="650" y="420" w="600" h="40" time="750" a="0"/>
+        </DST>
+    </text>
+    <sprite resid="_backbmp" x="0" y="0" condition="IsBACKBMP,OnSongLoading">
+        <DST acc="0" blend="3" loop="750">
+            <frame x="449" y="55" w="411" h="480" time="0" a="0"/>
+            <frame x="449" y="55" w="411" h="480" time="500" a="0"/>
+            <frame x="449" y="55" w="411" h="480" time="750"/>
+        </DST>
+    </sprite>
+    <sprite resid="_backbmp" x="0" y="0" condition="IsBACKBMP,OnSongLoadingEnd">
+        <DST acc="0" blend="3" timer="OnReady">
+            <frame x="449" y="55" w="411" h="480" time="0"/>
+            <frame x="449" y="55" w="411" h="480" time="500"/>
+            <frame x="449" y="55" w="411" h="480" time="750" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="_backbmp" x="0" y="0" condition="IsBACKBMP,OnSongLoading">
+        <DST acc="0" blend="3" loop="750">
+            <frame x="447" y="53" w="411" h="480" time="0" a="0"/>
+            <frame x="447" y="53" w="411" h="480" time="500" a="0"/>
+            <frame x="447" y="53" w="411" h="480" time="750"/>
+        </DST>
+    </sprite>
+    <sprite resid="_backbmp" x="0" y="0" condition="IsBACKBMP,OnSongLoadingEnd">
+        <DST acc="0" blend="3" timer="OnReady">
+            <frame x="447" y="53" w="411" h="480" time="0"/>
+            <frame x="447" y="53" w="411" h="480" time="500"/>
+            <frame x="447" y="53" w="411" h="480" time="750" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="_backbmp" x="0" y="0" condition="IsBACKBMP,OnSongLoading">
+        <DST acc="0" blend="2" loop="750">
+            <frame x="447" y="53" w="411" h="480" time="0" a="0"/>
+            <frame x="447" y="53" w="411" h="480" time="500" a="0"/>
+            <frame x="447" y="53" w="411" h="480" time="750"/>
+        </DST>
+    </sprite>
+    <sprite resid="_backbmp" x="0" y="0" condition="IsBACKBMP,OnSongLoadingEnd">
+        <DST acc="0" blend="2" timer="OnReady">
+            <frame x="447" y="53" w="411" h="480" time="0"/>
+            <frame x="447" y="53" w="411" h="480" time="500"/>
+            <frame x="447" y="53" w="411" h="480" time="750" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="1" x="314" y="346" w="307" h="24" condition="OnSongLoading">
+        <DST acc="0" loop="2000">
+            <frame x="269" y="333" w="307" h="24" time="1800" a="0"/>
+            <frame x="269" y="333" w="307" h="24" time="2000"/>
+            <frame x="269" y="333" w="307" h="24" time="2400" a="125"/>
+        </DST>
+    </sprite>
+    <sprite resid="1" x="0" y="346" w="310" h="25">
+        <DST acc="0" timer="OnReady">
+            <frame x="269" y="333" w="310" h="25" time="0" a="0"/>
+            <frame x="269" y="333" w="310" h="25" time="600"/>
+            <frame x="269" y="333" w="310" h="25" time="900"/>
+            <frame x="269" y="343" w="310" h="25" time="1000" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="1" x="0" y="346" w="310" h="25">
+        <DST acc="0" timer="OnReady">
+            <frame x="269" y="333" w="310" h="25" time="0" a="0"/>
+            <frame x="269" y="333" w="310" h="25" time="500" a="0"/>
+            <frame x="269" y="333" w="310" h="25" time="600"/>
+            <frame x="269" y="333" w="310" h="25" time="900" a="0"/>
+            <frame x="269" y="343" w="310" h="25" time="1000" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="1" x="0" y="373" w="304" h="18" divx="1" divy="2" cycle="120">
+        <DST acc="0" timer="OnReady">
+            <frame x="415" y="360" w="0" h="9" time="0" a="0"/>
+            <frame x="265" y="360" w="310" h="9" time="600"/>
+            <frame x="265" y="360" w="310" h="9" time="900"/>
+            <frame x="265" y="370" w="310" h="9" time="1000" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="1" x="314" y="346" w="307" h="24" condition="OnSongLoading">
+        <DST acc="0" loop="2000">
+            <frame x="742" y="333" w="307" h="24" time="1800" a="0"/>
+            <frame x="742" y="333" w="307" h="24" time="2000"/>
+            <frame x="742" y="333" w="307" h="24" time="2400" a="125"/>
+        </DST>
+    </sprite>
+    <sprite resid="1" x="0" y="346" w="310" h="25">
+        <DST acc="0" timer="OnReady">
+            <frame x="742" y="333" w="310" h="25" time="0" a="0"/>
+            <frame x="742" y="333" w="310" h="25" time="600"/>
+            <frame x="742" y="333" w="310" h="25" time="900"/>
+            <frame x="742" y="343" w="310" h="25" time="1000" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="1" x="0" y="346" w="310" h="25">
+        <DST acc="0" timer="OnReady">
+            <frame x="742" y="333" w="310" h="25" time="0" a="0"/>
+            <frame x="742" y="333" w="310" h="25" time="500" a="0"/>
+            <frame x="742" y="333" w="310" h="25" time="600"/>
+            <frame x="742" y="333" w="310" h="25" time="900" a="0"/>
+            <frame x="742" y="343" w="310" h="25" time="1000" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="1" x="0" y="373" w="304" h="18" divx="1" divy="2" cycle="120">
+        <DST acc="0" timer="OnReady">
+            <frame x="893" y="360" w="0" h="9" time="0" a="0"/>
+            <frame x="738" y="360" w="310" h="9" time="600"/>
+            <frame x="738" y="360" w="310" h="9" time="900"/>
+            <frame x="738" y="370" w="310" h="9" time="1000" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="_black" x="0" y="0" w="1" h="1" timer="OnClose">
+        <DST acc="0" loop="250">
+            <frame x="0" y="0" w="1280" h="720" time="0"/>
+            <frame x="0" y="0" w="1280" h="720" time="250" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="_black" x="0" y="0" w="1" h="1" timer="OnClose">
+        <DST acc="0" loop="500" timer="OnFadeOut">
+            <frame x="0" y="0" w="1280" h="720" time="0" a="0"/>
+            <frame x="0" y="0" w="1280" h="720" time="500"/>
+        </DST>
+    </sprite>
+    <sprite resid="_black" x="0" y="0" w="1" h="1" timer="OnClose">
+        <DST acc="0" loop="1000" timer="OnClose">
+            <frame x="0" y="0" w="1280" h="720" time="0" a="0"/>
+            <frame x="0" y="1280" w="720" h="0" time="0" r="255" g="255" b="1"/>
+        </DST>
+    </sprite>
+    <sprite resid="11" x="0" y="0" w="1280" h="720">
+        <DST acc="0" loop="300" timer="OnClose">
+            <frame x="0" y="-720" w="1280" h="720" time="0"/>
+            <frame x="0" y="0" w="1280" h="720" time="300"/>
+        </DST>
+    </sprite>
+    <sprite resid="11" x="0" y="1121" w="1" h="1">
+        <DST acc="0" loop="600" timer="OnClose">
+            <frame x="0" y="0" w="1280" h="720" time="300"/>
+            <frame x="0" y="0" w="1280" h="720" time="600" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="11" x="0" y="1150" w="1280" h="450">
+        <DST acc="0" loop="1500" timer="OnClose">
+            <frame x="0" y="270" w="1280" h="450" time="300" a="105"/>
+            <frame x="-50" y="270" w="1380" h="450" time="2300" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="11" x="0" y="924" w="1280" h="195">
+        <DST acc="0" blend="2" loop="800" timer="OnClose">
+            <frame x="0" y="720" w="1280" h="195" time="250"/>
+            <frame x="0" y="-250" w="1280" h="195" time="800" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="11" x="0" y="1610" w="1280" h="290">
+        <DST acc="0" blend="2" loop="1800" timer="OnClose">
+            <frame x="0" y="246" w="1280" h="290" time="300" a="0"/>
+            <frame x="-50" y="246" w="1380" h="290" time="800"/>
+            <frame x="-100" y="246" w="1480" h="290" time="1800" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="11" x="0" y="735" w="1280" h="174">
+        <DST acc="0" blend="2" loop="800" timer="OnClose">
+            <frame x="0" y="267" w="1280" h="174" time="300" a="0"/>
+            <frame x="0" y="267" w="1280" h="174" time="800"/>
+        </DST>
+    </sprite>
+    <sprite resid="11" x="0" y="735" w="1280" h="174">
+        <DST acc="0" blend="2" loop="1300" timer="OnClose">
+            <frame x="0" y="267" w="1280" h="174" time="600" a="0"/>
+            <frame x="0" y="267" w="1280" h="174" time="800"/>
+            <frame x="0" y="267" w="1280" h="174" time="1300" a="0"/>
+        </DST>
+    </sprite>
+    <sprite resid="_black" x="0" y="0" w="1" h="1" timer="OnClose">
+        <DST acc="0" loop="2200" timer="OnClose">
+            <frame x="0" y="0" w="1280" h="720" time="1000" a="0"/>
+            <frame x="0" y="0" w="1280" h="720" time="2200"/>
+        </DST>
+    </sprite>
+    <sprite resid="27" x="0" y="720" w="748" h="720">
+        <DST acc="0" loop="500" rotatecenter="5">
+            <frame x="532" y="0" w="748" h="720" time="0"/>
+            <frame x="532" y="0" w="748" h="720" time="100"/>
+            <frame x="1251" y="720" w="748" h="720" time="500"/>
+        </DST>
+    </sprite>
+    <sprite resid="27" x="0" y="0" w="899" h="720">
+        <DST acc="0" loop="500" rotatecenter="5">
+            <frame x="0" y="0" w="899" h="720" time="0"/>
+            <frame x="0" y="0" w="899" h="720" time="100"/>
+            <frame x="-719" y="-719" w="899" h="720" time="500"/>
+        </DST>
+    </sprite>
+</skin>

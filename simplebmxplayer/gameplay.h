@@ -2,56 +2,21 @@
  * GamePlay
  *
  * resources about playing game
+ *
+ * input:
+ * (global; game setting)
+ * (global; player setting)
+ *
+ * output:
+ * (global; player setting)
+ * (global; player score result)
+ *
  */
 
 #pragma once
 #include "SDL/SDL.h"
 #include "game.h"
 #include "timer.h"
-
-/*
-* @describes
-* stores all variables about player skin rendering value
-* initalized at ScenePlay::Initialize()
-*/
-typedef struct {
-	Timer*				pOnMiss;			// timer used when miss occured (DP)
-	Timer*				pOnCombo;
-	Timer*				pOnJudge[6];		// pf/gr/gd/bd/pr
-	Timer*				pOnfullcombo;		// needless to say?
-	Timer*				pOnlastnote;		// when last note ends
-	Timer*				pOnGameover;		// game is over! (different from OnClose)
-	Timer*				pOnGaugeMax;		// guage max?
-	Timer*				pOnGaugeUp;
-	Timer*				pLanepress[10];
-	Timer*				pLanehold[10];
-	Timer*				pLaneup[10];
-	Timer*				pLanejudgeokay[10];
-	double*				pExscore_d;
-	double*				pHighscore_d;
-	int*				pScore;
-	int*				pExscore;
-	int*				pCombo;
-	int*				pMaxCombo;
-	int*				pTotalnotes;
-	int*				pRivaldiff;		// TODO where to process it?
-	double*				pGauge_d;
-	int*				pGaugeType;
-	int*				pGauge;
-	double*				pRate_d;
-	int*				pRate;
-	double*				pTotalRate_d;
-	int*				pTotalRate;
-	int*				pNoteSpeed;
-	int*				pFloatSpeed;
-	int*				pSudden;
-	int*				pLift;
-	double*				pSudden_d;
-	double*				pLift_d;
-} PlayerRenderValue;
-
-/** @brief stores rendering variables related to Players */
-extern PlayerRenderValue	 PLAYERVALUE[4];
 
 namespace GamePlay {
 	class ScenePlay : public SceneBasic {
@@ -74,5 +39,35 @@ namespace GamePlay {
 		//virtual void MouseEndDrag(int x, int y);
 	};
 
-	extern ScenePlay*	SCENE;
+	/*
+	 * @brief
+	 * parameter for playing game
+	 */
+	struct PARAMETER {
+		/* well.. bms related part will be changed into SongInfo struct, later. */
+		RString bmspath[10];
+		// requires in case of replay
+		RString bmshash[10];
+		// if course play, then play as much as that count.
+		// if not, just count 1.
+		int courseplay;
+		// round of courseplay (start from 1)
+		int round;
+		int op1;	// 0x0000ABCD; RANDOM / SC / LEGACY(MORENOTE/ALL-LN) / JUDGE
+		int op2;
+		double rate;
+		int rseed;
+
+		// program option (not included in replay)
+		int startmeasure;
+		int endmeasure;
+		int repeat;
+		bool bga;
+		bool replay;
+		bool autoplay;
+		double pacemaker;
+	};
+
+	extern PARAMETER	P;
+	extern ScenePlay	SCENE;
 };

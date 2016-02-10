@@ -1,0 +1,12 @@
+[submodule "extern/SDL_FontCache"]
+	path = extern/SDL_FontCache
+	url = https://github.com/kuna/SDL_FontCache
+[submodule "extern/SDL_image-2.0.0"]
+	path = extern/SDL2_image-2.0.0
+	url = https://github.com/kuna/SDL2_image
+[submodule "extern/SDL2_mixer-2.0.0"]
+	path = extern/SDL2_mixer-2.0.0
+	url = https://github.com/kuna/SDL2_mixer
+[submodule "extern/bmsbelplus"]
+	path = extern/bmsbelplus
+	url = ./bmsbelplus

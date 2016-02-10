@@ -18,28 +18,42 @@ o 폰트
 o 키 인풋
 o Lane에 DST 없애기 -> 직접 속성으로 바꿔서 처리 더 수월하게 하기.
 o 기본 SRC 타이머는 loop -> 몇개만 loop=0 속성 추가해놓기.
-o 리프트/서든/배속설정 작업.
-  - 플로팅스피드
 o Autoplay 및 정상종료.
   o 끝나는 시간: max(노트시간 + 키음길이) 으로 계산하기.
   o BGA별 타이머 생성 & position reset
 o black/white object 만들어주기
 o 레인에 LINE/JUDGELINE 객체 그리기
-- 타이틀폰트 fallback으로 그려지게 만들기.
-- target vs
-- button object (HIFIX/MINFIX ...)
+o 타이틀폰트 fallback으로 그려지게 만들기.
+- button object (HIFIX/MINFIX ...) (4)
+- text stretching
+o lr2skin을 자동으로 xml로 변환 및 path 그것으로 바꾸기 & 설정파일 저장하기.
 
-- support controller
-- 채보 옵션
-- 플레이어 오브젝트
-  - 플레이어가 실제로 키입력을 받고 처리하게 할 것
-  - DP 플레이 가능하도록 하기
-  - PlayerPacemaker 오브젝트 만들기
-- freq
-- skin include (DeepCopy or XMLNode - append)
+o support controller
+o 채보 옵션
+o 리프트/서든/배속설정 작업.
+  o 플로팅스피드
+  - constant speed (3)
+o 플레이어 오브젝트
+  o 플레이어가 실제로 키입력을 받고 처리하게 할 것
+  o DP 플레이 가능하도록 하기
+  o PlayerPacemaker 오브젝트 만들기 (1)
+    o target vs
+    - mybest
+o fast/slow 도입
+o utf8 파일경로 제대로 못읽는 문제 해결하기.
+o freq
+o skin include (DeepCopy or XMLNode - append)
 o play/program setting
-- playrecord save/load
+- playrecord save/load (2)
+  - bms 파일 hash / base64 테스트
+  - zlib 연동 및 base64 인코딩 테스트
 - ID attribute 도입
+  - 스킨 구조 리펙토링...?
+- survival/exhard gauge 지원 (5)
+- course mode 지원 (6)
+  - 코스모드 리플레이
+- 트레이닝 모드
+- back-spin scratch
 <플레이 프로젝트 끝. 다음 프로젝트에서 계속 ...>
 
 - Animated Value change(double/int) 도입하기.

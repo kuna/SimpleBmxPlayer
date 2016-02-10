@@ -1,5 +1,6 @@
 #include "game.h"
 #include "gameplay.h"
+#include "gameresult.h"
 
 #include "luamanager.h"
 #include "util.h"
@@ -24,10 +25,13 @@ namespace Game {
 	SceneBasic*		SCENE = NULL;
 	bool			bRunning = false;	// is game running?
 	std::mutex		RMUTEX;
+	PARAMETER		P;
 
 	// SDL
 	SDL_Window*		WINDOW = NULL;
 	SDL_Renderer*	RENDERER = NULL;
+	SDL_Joystick*	JOYSTICK[10] = { 0, };
+	int				nJoystickCnt = 0;
 
 	// FPS
 	Timer			fpstimer;
@@ -55,8 +59,10 @@ namespace Game {
 	}
 
 	void ChangeScene(SceneBasic *s) {
-		if (SCENE != s)
+		if (SCENE != s) {
+			if (SCENE) EndScene(SCENE);
 			StartScene(s);
+		}
 		SCENE = s;
 	}
 
@@ -184,7 +190,7 @@ namespace Game {
 		}
 	}
 
-	bool Initialize() {
+	void LoadOption() {
 		/*
 		 * Load basic setting file ...
 		 */
@@ -192,7 +198,9 @@ namespace Game {
 			LOG->Warn("Cannot load settings files... Use Default settings...");
 			GameSettingHelper::DefaultSetting(SETTING);
 		}
+	}
 
+	bool Initialize() {
 		/*
 		 * Basic instances initalization
 		 */
@@ -203,7 +211,7 @@ namespace Game {
 		/*
 		 * Game engine initalize
 		 */
-		if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) != 0) {
 			LOG->Critical("Failed to SDL_Init() ...");
 			return -1;
 		}
@@ -213,7 +221,9 @@ namespace Game {
 		}
 		Mix_AllocateChannels(1296);
 		int flag = SDL_WINDOW_SHOWN;
-		if (SETTING.fullscreen)
+		if (SETTING.fullscreen == 1)
+			flag |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+		else if (SETTING.fullscreen > 1)
 			flag |= SDL_WINDOW_FULLSCREEN;
 		if (SETTING.resizable)
 			flag |= SDL_WINDOW_RESIZABLE;
@@ -231,12 +241,24 @@ namespace Game {
 			LOG->Critical("Failed to create Renderer");
 			return -1;
 		}
+		nJoystickCnt = SDL_NumJoysticks();
+		if (nJoystickCnt > 10) nJoystickCnt = 10;
+		for (int i = 0; i < nJoystickCnt; i++) {
+			JOYSTICK[i] = SDL_JoystickOpen(i);
+		}
 
 		/*
 		 * prepare game basic resource
 		 */
 		IMAGEPOOL->Register("_black", new ImageColor(0x000000FF));
 		IMAGEPOOL->Register("_white", new ImageColor(0xFFFFFFFF));
+		RString path;
+		path = "../system/resource/fastslow.png";
+		FileHelper::ConvertPathToSystem(path);
+		IMAGEPOOL->Register("_fastslow", new Image(path));
+		path = "../system/resource/number_float.png";
+		FileHelper::ConvertPathToSystem(path);
+		IMAGEPOOL->Register("_number_float", new Image(path));
 		oninputstart = TIMERPOOL->Get("OnInputStart");
 		onscene = TIMERPOOL->Get("OnScene");
 		font = FONTPOOL->LoadTTFFont("_system", 
@@ -248,8 +270,8 @@ namespace Game {
 		* Scene instance initalization
 		* (MUST after graphic initalization finished)
 		*/
-		GamePlay::SCENE = new GamePlay::ScenePlay();
-		InitalizeScene(GamePlay::SCENE);
+		InitalizeScene(&GamePlay::SCENE);
+		InitalizeScene(&GameResult::SCENE);
 
 		/*
 		 * FPS timer start
@@ -276,6 +298,22 @@ namespace Game {
 		}
 	}
 
+	//
+	// for checking joystick input
+	//
+	namespace {
+		std::map<int, bool> pressing;
+		void Press(int code) {
+			pressing[code] = true;
+		}
+		bool IsPressing(int code) {
+			return pressing[code];
+		}
+		void Up(int code) {
+
+		}
+	}
+
 	void MainLoop() {
 		while (bRunning) {
 			if (!SCENE) continue;
@@ -294,21 +332,72 @@ namespace Game {
 					End();
 				}
 				else if (e.type == SDL_KEYDOWN) {
-					switch (e.key.keysym.sym) {
-					case SDLK_ESCAPE:
+					switch (e.key.keysym.scancode) {
+					case SDL_SCANCODE_ESCAPE:
 						End();
 						break;
-					case SDLK_F7:
+					case SDL_SCANCODE_F7:
 						showfps = !showfps;
 						break;
 					default:
-						SCENE->KeyDown(e.key.keysym.sym, e.key.repeat);
+						SCENE->KeyDown(e.key.keysym.scancode, e.key.repeat);
 					}
 				}
 				else if (e.type == SDL_KEYUP) {
-					switch (e.key.keysym.sym) {
+					switch (e.key.keysym.scancode) {
 					default:
-						SCENE->KeyUp(e.key.keysym.sym);
+						SCENE->KeyUp(e.key.keysym.scancode);
+					}
+				}
+				else if (e.type == SDL_JOYBUTTONDOWN) {
+					//e.jbutton.which
+					int id = 1001 + e.jbutton.button;
+					SCENE->KeyDown(id, IsPressing(id));
+					Press(id);
+				}
+				else if (e.type == SDL_JOYBUTTONUP) {
+					int id = 1001 + e.jbutton.button;
+					SCENE->KeyUp(id);
+					Up(id);
+				}
+				else if (e.type == SDL_JOYAXISMOTION) {
+					// 0: left / right
+					// - 1020: left
+					// - 1021: right
+					// 1/2: up / down
+					// - 1022: up
+					// - 1023: down
+#define JOYSTICKPRESS(id)\
+	SCENE->KeyDown(id, IsPressing(id)); Press(id);
+#define JOYSTICKUP(id)\
+	if (IsPressing(id)) { SCENE->KeyUp(id); Up(id); }
+					if (e.jaxis.axis == 0) {
+						if (e.jaxis.value >= 8000) {
+							JOYSTICKPRESS(1020);
+							JOYSTICKUP(1021);
+						}
+						else if (e.jaxis.value <= -8000) {
+							JOYSTICKUP(1020);
+							JOYSTICKPRESS(1021);
+						}
+						else {
+							JOYSTICKUP(1020);
+							JOYSTICKUP(1021);
+						}
+					}
+					else {
+						if (e.jaxis.value >= 8000) {
+							JOYSTICKPRESS(1022);
+							JOYSTICKUP(1023);
+						}
+						else if (e.jaxis.value <= -8000) {
+							JOYSTICKUP(1022);
+							JOYSTICKPRESS(1023);
+						}
+						else {
+							JOYSTICKUP(1022);
+							JOYSTICKUP(1023);
+						}
 					}
 				}
 				else if (e.type == SDL_MOUSEBUTTONDOWN) {
@@ -355,12 +444,15 @@ namespace Game {
 		GameSettingHelper::SaveSetting(SETTING);
 
 		// other scenes
-		ReleaseScene(GamePlay::SCENE);
+		ReleaseScene(&GamePlay::SCENE);
+		ReleaseScene(&GameResult::SCENE);
 
 		// release basic instances
 		delete LUA;
 
-		// finally, game engine (audio/renderer) release
+		// finally, game engine (audio/renderer/joystick/etc...) release
+		for (int i = 0; i < nJoystickCnt; i++)
+			SDL_JoystickClose(JOYSTICK[i]);
 		Mix_CloseAudio();
 		SDL_DestroyRenderer(RENDERER);
 		SDL_DestroyWindow(WINDOW);

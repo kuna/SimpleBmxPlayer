@@ -47,7 +47,6 @@ namespace BmsResource {
 	extern SoundPool		SOUND;
 	extern ImagePool		IMAGE;
 	extern BmsBms			BMS;
-	extern BmsTimeManager	BMSTIME;
 }
 
 //
@@ -68,10 +67,8 @@ namespace BmsHelper {
 
 	/** @brief Update time. BGA/BGM is automatically setted by progressed time. */
 	void Update(uint32_t time);
-	/** @brief Is song finished? */
-	bool IsFinished(uint32_t time);
 	/** @brief Reset time. BGA/BGM is resetted to pointing time. */
-	void ResetTime(uint32_t time);
+	void Reset(uint32_t barindex = 0);
 
 	struct BGAInformation {
 		BmsWord missbga;
@@ -80,29 +77,24 @@ namespace BmsHelper {
 		BmsWord layer2bga;
 	};
 
-	Image* GetMissBGA(int player = 0);
+	Image* GetMissBGA();
 	Image* GetMainBGA();
 	Image* GetLayer1BGA();
 	Image* GetLayer2BGA();
 
-	/** @brief get current bar(not measure). not in general use; for Player object. */
-	uint32_t GetCurrentBar();
-
-	uint32_t GetEndTime();
-
-	double GetCurrentPosFromTime(double time_sec);
-
-	double GetCurrentPosFromBar(int bar);
-
-	double GetCurrentTimeFromBar(int bar);
+	/** @brief get cached scroll bar value. */
+	double GetCurrentBar();
+	/** @brief get cached scroll pos value. */
+	double GetCurrentPos();
 
 	double GetCurrentBPM();
-	
-	double GetMaxBPM();
-
-	double GetMinBPM();
-
-	double GetMediumBPM();
+	/*
+	 * @brief get end time of song. 
+	 * different from BmsBms::GetEndTime(). this method considers audio length.
+	 */
+	double GetEndTime();
+	/** MUST call AFTER load bms & BEFORE load bms audios */
+	void SetRate(double length);
 }
 
 typedef struct {

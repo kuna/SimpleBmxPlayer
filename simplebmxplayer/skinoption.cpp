@@ -23,9 +23,9 @@ bool SkinOption::LoadSkinOption(const char *filepath) {
 	}
 
 	XMLElement *ele_fileh = options->FirstChildElement("File");
-	while (ele_switch) {
-		files.push_back({ ele_switch->Attribute("name"), ele_switch->Attribute("value") });
-		ele_switch = ele_switch->NextSiblingElement("File");
+	while (ele_fileh) {
+		files.push_back({ ele_fileh->Attribute("name"), ele_fileh->Attribute("path") });
+		ele_fileh = ele_fileh->NextSiblingElement("File");
 	}
 
 	delete doc;

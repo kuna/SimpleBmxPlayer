@@ -29,38 +29,53 @@ void Image::_init() {
 	_movie_available = true;
 }
 
-Image::Image() : sdltex(0), moviectx(0) {
+Image::Image() : sdltex(0), moviectx(0),
+usecolorkey(false), colorkey(0xFF000000) {
 	// initalize ffmpeg first
 	try {
 		_init();
 	}
 	catch (...) {
 	}
+
+	frame = 0;
+	uPlane = 0;
+	vPlane = 0;
+	yPlane = 0;
+	codecctxorig = 0;
+	codecctx = 0;
+	moviectx = 0;
 }
 
-Image::Image(std::wstring& filepath, bool loop) : Image() {
-	Load(filepath.c_str(), loop);
-}
-
-Image::Image(std::string& filepath, bool loop) : Image() {
+#ifdef _WIN32
+Image::Image(const std::wstring& filepath, bool loop) : Image() {
 	Load(filepath.c_str(), loop);
 }
 
 bool Image::Load(const std::wstring& filepath, bool loop) {
-	char path_utf8[1024];
-	ENCODING::wchar_to_utf8(filepath.c_str(), path_utf8, 1024);
+	RString path_utf8 = WStringToRString(filepath);
 	return Load(path_utf8, loop);
 }
+#endif
+
+Image::Image(const std::string& filepath, bool loop) : Image() {
+	Load(filepath.c_str(), loop);
+}
+
+#define R(x) ((x) >> 16 & 0x000000FF)
+#define G(x) ((x) >> 8 & 0x000000FF)
+#define B(x) ((x) & 0x000000FF)
 
 bool Image::Load(const std::string& filepath, bool loop) {
-	this->loop = loop;
+	RString abspath = filepath;
+	FileHelper::ConvertPathToAbsolute(abspath);
 
 	// check is it movie or image
-	std::string ext = IO::get_fileext(filepath);	COMMON::lower(ext);
+	std::string ext = get_fileext(filepath);	MakeLower(ext);
 	if (ext == ".mpg" || ext == ".avi" || ext == ".mpeg"
 		|| ext == ".m1v") {
 		if (_movie_available) {
-			if (!LoadMovie(filepath.c_str())) {
+			if (!LoadMovie(abspath)) {
 				ReleaseMovie();
 				return false;
 			}
@@ -69,13 +84,33 @@ bool Image::Load(const std::string& filepath, bool loop) {
 	else {
 		// MUST new context, or block renderer.
 		//SDL_GLContext c = SDL_GL_CreateContext(Game::WINDOW);
+		SDL_Surface *surf = IMG_Load(abspath);
+		if (!surf) return false;
+		if (usecolorkey) SDL_SetColorKey(surf, SDL_TRUE, 
+			SDL_MapRGB(surf->format, R(colorkey), G(colorkey), B(colorkey)));
 		Game::RMUTEX.lock();
-		sdltex = IMG_LoadTexture(Game::RENDERER, filepath.c_str());
+		sdltex = SDL_CreateTextureFromSurface(Game::RENDERER, surf);
 		Game::RMUTEX.unlock();
+		SDL_FreeSurface(surf);
 		if (!sdltex)
 			return false;
 	}
+	this->loop = loop;
 	return true;
+}
+
+bool Image::Load(FileBasic* f, bool loop) {
+	// don't support movie in this case.
+	// TODO: support movie!
+	SDL_Surface *surf = IMG_Load_RW(f->GetSDLRW(), 1);
+	if (!surf) return false;
+	if (usecolorkey) SDL_SetColorKey(surf, SDL_TRUE,
+		SDL_MapRGB(surf->format, R(colorkey), G(colorkey), B(colorkey)));
+	Game::RMUTEX.lock();
+	sdltex = SDL_CreateTextureFromSurface(Game::RENDERER, surf);
+	Game::RMUTEX.unlock();
+	SDL_FreeSurface(surf);
+	if (!sdltex) return false; else return true;
 }
 
 bool Image::LoadMovie(const char *path) {
@@ -250,6 +285,11 @@ int Image::GetHeight() {
 	int h;
 	SDL_QueryTexture(sdltex, 0, 0, 0, &h);
 	return h;
+}
+
+void Image::SetColorKey(bool use, Uint32 clr) {
+	usecolorkey = use;
+	colorkey = clr;
 }
 
 Image::~Image() {

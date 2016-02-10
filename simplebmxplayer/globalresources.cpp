@@ -196,13 +196,13 @@ bool ImagePool::Release(Image *img) {
 namespace {
 	// private
 	// if filename == '*', then get any file in that directory
-	void CheckFilenameValid(RString &_path) {
-		if (IO::substitute_extension(IO::get_filename(_path), "") == "*") {
-			RString _directory = IO::get_filedir(_path);
+	void GetAnyProperFile(RString &_path) {
+		if (substitute_extension(get_filename(_path), "") == "*") {
+			RString _directory = get_filedir(_path);
 			std::vector<RString> filelist;
 			FileHelper::GetFileList(_directory, filelist);
 			if (filelist.size() > 0)
-				_path = filelist[0];
+				_path = filelist[rand() % filelist.size()];
 		}
 	}
 }
@@ -219,7 +219,7 @@ Image* ImagePool::Load(const RString &path) {
 	FileHelper::GetAnyAvailableFilePath(_path);
 	if (!IsExists(_path)) {
 		Image *img = new Image();
-		CheckFilenameValid(_path);
+		GetAnyProperFile(_path);
 		img->Load(_path.c_str());
 		if (img->IsLoaded()) {
 			Register(_path, img);
@@ -317,7 +317,7 @@ Font* FontPool::LoadTTFFont(const char* id, const RString &path,
 	int style, int thickness, const char* texturepath) {
 	RString _path = path;
 	FileHelper::ConvertPathToAbsolute(_path);
-	CheckFilenameValid(_path);
+	GetAnyProperFile(_path);
 	Font *f = new Font();
 	f->LoadTTFFont(_path, size, color, border, bordercolor, style, thickness, texturepath);
 	if (f->IsLoaded() && RegisterFont(id, f)) {
@@ -333,7 +333,7 @@ Font* FontPool::LoadTextureFont(const char* id, const RString &path) {
 	// first convert path in easy way
 	RString _path = path;
 	FileHelper::ConvertPathToAbsolute(_path);
-	CheckFilenameValid(_path);
+	GetAnyProperFile(_path);
 	RString content;
 	if (GetFileContents(_path, content)) {
 		return LoadTextureFontFromTextData(_path, content);
@@ -411,13 +411,7 @@ Audio* SoundPool::Load(const RString &path) {
 	FileHelper::ConvertPathToAbsolute(_path);
 	if (!IsExists(_path)) {
 		// if filename == '*', then get any file in that directory
-		if (IO::substitute_extension(IO::get_filename(_path), "") == "*") {
-			RString _directory = IO::get_filedir(_path);
-			std::vector<RString> filelist;
-			FileHelper::GetFileList(_directory, filelist);
-			if (filelist.size() > 0)
-				_path = filelist[0];
-		}
+		GetAnyProperFile(_path);
 		Audio *audio = new Audio(_path);
 		_soundpool.insert(pair<RString, Audio*>(_path, audio));
 		_loadcount.insert(pair<Audio*, int>(audio, 1));

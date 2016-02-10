@@ -63,6 +63,7 @@ namespace GameSettingHelper {
 		setting.tutorial = GetIntSafe(settings, "tutorial", 1);
 		setting.soundlatency = GetIntSafe(settings, "soundlatency", 1024);
 		setting.useIR = GetIntSafe(settings, "useIR", 0);
+		setting.bga = GetIntSafe(settings, "bga", 1);
 
 		XMLElement *skin = settings->FirstChildElement("skin");
 		if (skin) {
@@ -117,6 +118,7 @@ namespace GameSettingHelper {
 		AddElement(settings, "tutorial", setting.tutorial);
 		AddElement(settings, "soundlatency", setting.soundlatency);
 		AddElement(settings, "useIR", setting.useIR);
+		AddElement(settings, "bga", setting.bga);
 
 		XMLElement *skin = doc->NewElement("skin");
 		settings->LinkEndChild(skin);
@@ -162,6 +164,7 @@ namespace GameSettingHelper {
 		setting.tutorial = 1;
 		setting.soundlatency = 1024;
 		setting.useIR = 0;
+		setting.bga = 1;
 
 		// TODO
 		setting.skin_play_7key = "../skin/Wisp_HD/play/HDPLAY_W.lr2skin";

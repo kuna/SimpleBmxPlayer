@@ -1,0 +1,31 @@
+160209
+
+>- 하드게 죽어도 샷다쾅 안되는 문제 수정
+o -nobga가 `obga` 유저로 인식되는 문제 수정
+o 매개변수로 rate 안먹는 문제 수정
+o 파일이름에 유니코드 들어갈시 제대로 안 되는 문제 수정
+>- bms cut 문제 수정 (end) -> bms load할때 아예 잘라버리도록 구조를 바꾸기
+>- bms repeat 문제 수정
+>- bms push 메서드 추가 -> training 모드에서도 1measure씩 올려서 플레이 편하도록 하기.
+o bms 아카이브로 로드하게 수정 -> loadbms에서 file메서드로 읽어들일 수 있도록 수정.
+- 리플레이 파일 제대로 생성 안 되는 문제 수정.
+- 플레이레코드 기록되게 + 읽어들이게 수정.
+- 프로필 데이터 잘못 열었을때 실제 프로필 이름이 바뀌지 않아서 덮어씌워 저장되는 문제 수정.
+o 32000Hz wav decoding error
+- Bmsbms 객체 다시 로딩에 실패할 때, time signature이 empty 해지는 버그 (iterator null; 이 경우 GetBpm에서 DEFAULT_BPM을 리턴하도록 함)
+o 레이어 black을 transparent하도록 함
+  - 일부 bms의 이미지는 transparent에 실패함 (ex: litmus_slotmachine_foon)
+  o miss 이미지의 경우, transparent하지 않도록 함.
+o 레이어 miss 이미지 제대로 뜨는지 확인
+o 스크래치를 빨리 돌릴 때 입력이 일부 씹히는 버그
+o 24bit wav 파일 재생 불능
+o rate 옵션 걸 시 BGA속도가 음악과 싱크되지않음.
+
+o bmsbel _ASSERT 부분 수정 (_ASSERT on linux?)
+o lvalue 대입 안되는 문제 보고 수정
+
+- text scale 기능 추가
+- BACKBMP 등 로드하기
+- 1st stage 2st stage 만들기
+- course play 테스트해보기
+- insane 난이도(difficulty) / level 인식되게 하기.

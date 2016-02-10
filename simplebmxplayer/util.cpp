@@ -6,8 +6,10 @@
 #include <wchar.h>
 #include <array>
 #include <algorithm>
+#include "md5.h"
 #include "logger.h"
 #include "file.h"
+#include "zlib.h"		// to use compress / decompress function
 
 using namespace std;
 
@@ -54,158 +56,169 @@ unsigned char g_LowerCase[256] =
 };
 
 
-std::wstring to_wstring (int i) { std::wostringstream wss; wss << i; return wss.str(); }
+std::string get_fileext(const std::string& filepath) {
+	auto i = filepath.find_last_of('.');
+	if (i == std::wstring::npos)
+		return "";
+	return filepath.substr(i);
+}
 
-namespace IO {
-	std::string get_fileext(const std::string& filepath) {
-		auto i = filepath.find_last_of('.');
-		if (i == std::wstring::npos)
-			return "";
-		return filepath.substr(i);
-	}
+std::string get_filedir(const std::string& filepath) {
+	return filepath.substr(0, filepath.find_last_of("/\\"));
+}
 
-	std::string get_filedir(const std::string& filepath) {
-		return filepath.substr(0, filepath.find_last_of("/\\"));
-	}
+std::string substitute_extension(const std::string& filepath, const std::string& newext) {
+	auto i = filepath.find_last_of('.');
+	if (i == std::wstring::npos)
+		return filepath + newext;
+	return filepath.substr(0, i) + newext;
+}
 
-	std::string substitute_extension(const std::string& filepath, const std::string& newext) {
-		auto i = filepath.find_last_of('.');
-		if (i == std::wstring::npos)
-			return filepath + newext;
-		return filepath.substr(0, i) + newext;
-	}
+std::string substitute_filename(const std::string& filepath, const std::string& newname) {
+	auto i_start = filepath.find_last_of("/\\");
+	if (i_start == std::wstring::npos)
+		i_start = 0;
+	auto i_end = filepath.find_last_of('.');
+	if (i_end == std::wstring::npos)
+		i_end = filepath.size() - 1;
+	return filepath.substr(0, i_start) + PATH_SEPARATOR + newname + filepath.substr(i_end);
+}
 
-	std::string substitute_filename(const std::string& filepath, const std::string& newname) {
-		auto i_start = filepath.find_last_of("/\\");
-		if (i_start == std::wstring::npos)
-			i_start = 0;
-		auto i_end = filepath.find_last_of('.');
-		if (i_end == std::wstring::npos)
-			i_end = filepath.size() - 1;
-		return filepath.substr(0, i_start) + PATH_SEPARATOR + newname + filepath.substr(i_end);
-	}
+std::string get_filename(const std::string& filepath) {
+	auto i = filepath.find_last_of("/\\");
+	if (i == std::wstring::npos)
+		return "";
+	return filepath.substr(i + 1);
+}
 
-	bool is_file_exists(const std::string& filename) {
-		FILE *f;
-		fopen_s(&f, filename.c_str(), "r");
-		if (!f)
-			return false;
-		fclose(f);
-		return true;
-	}
-
-	std::string get_filename(const std::string& filepath) {
-		auto i = filepath.find_last_of("/\\");
-		if (i == std::wstring::npos)
-			return "";
-		return filepath.substr(i + 1);
-	}
-
-#ifdef USE_MBCS
-	std::wstring substitute_extension(const std::wstring& filepath, const std::wstring& newext) {
-		auto i = filepath.find_last_of(L'.');
-		if (i == std::wstring::npos)
-			return filepath + newext;
-		return filepath.substr(0, i) + newext;
-	}
-
-	std::wstring substitute_filename(const std::wstring& filepath, const std::wstring& newname) {
-		auto i_start = filepath.find_last_of(L"/\\");
-		if (i_start == std::wstring::npos)
-			i_start = 0;
-		auto i_end = filepath.find_last_of(L'.');
-		if (i_end == std::wstring::npos)
-			i_end = filepath.size() - 1;
-		return filepath.substr(0, i_start) + PATH_SEPARATORW + newname + filepath.substr(i_end);
-	}
-
-	std::wstring get_fileext(const std::wstring& filepath) {
-		auto i = filepath.find_last_of(L'.');
-		if (i == std::wstring::npos)
-			return L"";
-		return filepath.substr(i);
-	}
-
-	std::wstring get_filedir(const std::wstring& filepath) {
-		return filepath.substr(0, filepath.find_last_of(L"/\\"));
-	}
-
-	std::wstring get_filename(const std::wstring& filepath) {
-		auto i = filepath.find_last_of(L"/\\");
-		if (i == std::wstring::npos)
-			return L"";
-		return filepath.substr(i + 1);
-	}
-
-	bool is_file_exists(const std::wstring& filename) {
-		FILE *f;
-		_wfopen_s(&f, filename.c_str(), L"r");
-		if (!f)
-			return false;
-		fclose(f);
-		return true;
-	}
-
-	bool is_directory_exists(const std::wstring& dirpath) {
-		struct _stat64i32 s;
-		if (_wstat(dirpath.c_str(), &s) == 0) {
-			if (s.st_mode & S_IFDIR)
-				return true;
-			else
-				return false;
-		}
-		else {
-			return false;
-		}
-	}
-
-	std::wstring get_parentdir(const std::wstring& dirpath) {
-		auto i = dirpath.find_last_of(PATH_SEPARATOR_CHAR);
-		if (i == std::wstring::npos)
-			return L"";
-		return dirpath.substr(0, i);
-	}
-
-	bool create_directory(const std::wstring& filepath) {
-		return (_wmkdir(filepath.c_str()) == 0);
-	}
-
-	bool make_parent_directory_recursive(const std::wstring& filepath)
-	{
-		// if current directory is not exist
-		// then get parent directory
-		// and check it recursively
-		// after that, create own.
-		if (is_directory_exists(filepath))
-			return true;
-		if (is_file_exists(filepath))
-			return false;
-		if (!create_directory(filepath.c_str())) {
-			std::wstring parent = get_parentdir(filepath);
-			if (NOT(make_parent_directory_recursive(parent))) {
-				return false;
-			}
-			return create_directory(filepath.c_str());
-		}
-	}
-
-	std::wstring make_filename_safe(const std::wstring& filepath) {
-		std::wstring fn = get_filename(filepath);
-#define REPLACESTR(s, o, r) (std::replace((s).begin(), (s).end(), (o), (r)))
-		REPLACESTR(fn, L'/', L'_');
-		if (_WIN32) {
-			REPLACESTR(fn, L'|', L'_');
-			REPLACESTR(fn, L'\\', L'_');
-			REPLACESTR(fn, L':', L'_');
-			REPLACESTR(fn, L'*', L'_');
-			REPLACESTR(fn, L'<', L'_');
-			REPLACESTR(fn, L'>', L'_');
-		}
-		return get_filedir(filepath) + PATH_SEPARATORW + fn;
-	}
+FILE* openfile(const std::string& filepath, const std::string& mode) {
+#ifdef _WIN32
+	FILE *fp;
+	std::wstring filepath_w;
+	std::wstring mode_w;
+	filepath_w = RStringToWstring(filepath);
+	mode_w = RStringToWstring(mode);
+	if (_wfopen_s(&fp, filepath_w.c_str(), mode_w.c_str()) == 0)
+		return fp;
+	else
+		return 0;
+#else
+	return fopen(filepath.c_str(), mode.c_str());
 #endif
 }
 
+#ifdef USE_MBCS
+std::wstring substitute_extension(const std::wstring& filepath, const std::wstring& newext) {
+	auto i = filepath.find_last_of(L'.');
+	if (i == std::wstring::npos)
+		return filepath + newext;
+	return filepath.substr(0, i) + newext;
+}
+
+std::wstring substitute_filename(const std::wstring& filepath, const std::wstring& newname) {
+	auto i_start = filepath.find_last_of(L"/\\");
+	if (i_start == std::wstring::npos)
+		i_start = 0;
+	auto i_end = filepath.find_last_of(L'.');
+	if (i_end == std::wstring::npos)
+		i_end = filepath.size() - 1;
+	return filepath.substr(0, i_start) + PATH_SEPARATORW + newname + filepath.substr(i_end);
+}
+
+std::wstring get_fileext(const std::wstring& filepath) {
+	auto i = filepath.find_last_of(L'.');
+	if (i == std::wstring::npos)
+		return L"";
+	return filepath.substr(i);
+}
+
+std::wstring get_filedir(const std::wstring& filepath) {
+	return filepath.substr(0, filepath.find_last_of(L"/\\"));
+}
+
+std::wstring get_filename(const std::wstring& filepath) {
+	auto i = filepath.find_last_of(L"/\\");
+	if (i == std::wstring::npos)
+		return L"";
+	return filepath.substr(i + 1);
+}
+
+bool is_file_exists(const std::wstring& filepath) {
+	struct _stat64i32 s;
+	if (_wstat(filepath.c_str(), &s) == 0) {
+		if (s.st_mode & S_IFREG)
+			return true;
+		else
+			return false;
+	}
+	else {
+		return false;
+	}
+}
+
+bool is_directory_exists(const std::wstring& dirpath) {
+	struct _stat64i32 s;
+	if (_wstat(dirpath.c_str(), &s) == 0) {
+		if (s.st_mode & S_IFDIR)
+			return true;
+		else
+			return false;
+	}
+	else {
+		return false;
+	}
+}
+
+std::wstring get_parentdir(const std::wstring& dirpath) {
+	auto i = dirpath.find_last_of(L"/\\");
+	if (i == std::wstring::npos)
+		return L"";
+	return dirpath.substr(0, i);
+}
+
+bool create_directory(const std::wstring& filepath) {
+	return (_wmkdir(filepath.c_str()) == 0);
+}
+
+bool make_parent_directory_recursive(const std::wstring& filepath)
+{
+	// if current directory is not exist
+	// then get parent directory
+	// and check it recursively
+	// after that, create own.
+	if (is_directory_exists(filepath))
+		return true;
+	if (is_file_exists(filepath))
+		return false;
+	if (!create_directory(filepath.c_str())) {
+		std::wstring parent = get_parentdir(filepath);
+		if (NOT(make_parent_directory_recursive(parent))) {
+			return false;
+		}
+		return create_directory(filepath.c_str());
+	}
+	else {
+		return true;
+	}
+}
+
+std::wstring make_filename_safe(const std::wstring& filepath) {
+	std::wstring fn = get_filename(filepath);
+#define REPLACESTR(s, o, r) (std::replace((s).begin(), (s).end(), (o), (r)))
+	REPLACESTR(fn, L'/', L'_');
+	if (_WIN32) {
+		REPLACESTR(fn, L'|', L'_');
+		REPLACESTR(fn, L'\\', L'_');
+		REPLACESTR(fn, L':', L'_');
+		REPLACESTR(fn, L'*', L'_');
+		REPLACESTR(fn, L'<', L'_');
+		REPLACESTR(fn, L'>', L'_');
+	}
+	return get_filedir(filepath) + PATH_SEPARATORW + fn;
+}
+#endif
+
+/*
 namespace ENCODING {
 	bool wchar_to_utf8(const wchar_t *org, char *out, int maxlen)
 	{
@@ -247,24 +260,25 @@ namespace ENCODING {
 		return true;
 	}
 }
+*/
 
-namespace COMMON {
-	void lower(std::wstring& str) {
-		std::transform(str.begin(), str.end(), str.begin(), towlower);
-	}
 
-	void upper(std::wstring& str) {
-		std::transform(str.begin(), str.end(), str.begin(), towupper);
-	}
-
-	void lower(std::string& str) {
-		std::transform(str.begin(), str.end(), str.begin(), tolower);
-	}
-
-	void upper(std::string& str) {
-		std::transform(str.begin(), str.end(), str.begin(), toupper);
-	}
+void MakeLower(std::wstring& str) {
+	std::transform(str.begin(), str.end(), str.begin(), towlower);
 }
+
+void MakeUpper(std::wstring& str) {
+	std::transform(str.begin(), str.end(), str.begin(), towupper);
+}
+
+void MakeLower(std::string& str) {
+	std::transform(str.begin(), str.end(), str.begin(), tolower);
+}
+
+void MakeUpper(std::string& str) {
+	std::transform(str.begin(), str.end(), str.begin(), toupper);
+}
+
 
 /*
  * STEPMANIA PART SOURCE CODE
@@ -900,6 +914,231 @@ RString URLEncode(const RString &sStr)
 	return sOutput;
 }
 
+#define ZLIB_CHUNK 16384
+// http://www.zlib.net/zpipe.c
+bool compress(const char *in, int in_len, char *out, int level) {
+	int ret, flush;
+	unsigned have;
+	z_stream strm;
+
+	/* allocate deflate state */
+	strm.zalloc = Z_NULL;
+	strm.zfree = Z_NULL;
+	strm.opaque = Z_NULL;
+	ret = deflateInit(&strm, level);
+	if (ret != Z_OK)
+		return ret;
+
+	/* compress until end of file */
+	int outsize = 0;
+	do {
+		strm.avail_in = in_len;
+		if (strm.avail_in > ZLIB_CHUNK) strm.avail_in = ZLIB_CHUNK;
+		in_len -= ZLIB_CHUNK;
+
+		flush = (in_len <= 0) ? Z_FINISH : Z_NO_FLUSH;
+		strm.next_in = (unsigned char*)in;
+		in += ZLIB_CHUNK;
+
+		/* run deflate() on input until output buffer not full, finish
+		compression if all of source has been read in */
+		do {
+			strm.avail_out = ZLIB_CHUNK;
+			strm.next_out = (unsigned char*)(out + outsize);
+			ret = deflate(&strm, flush);    /* no bad return value */
+			_ASSERT(ret != Z_STREAM_ERROR);  /* state not clobbered */
+			have = ZLIB_CHUNK - strm.avail_out;
+			outsize += have;
+		} while (strm.avail_out == 0);
+		_ASSERT(strm.avail_in == 0);     /* all input will be used */
+
+		/* done when last data in file processed */
+	} while (flush != Z_FINISH);
+	_ASSERT(ret == Z_STREAM_END);        /* stream will be complete */
+
+	/* clean up and return */
+	(void)deflateEnd(&strm);
+	return Z_OK;
+}
+
+// http://www.zlib.net/zpipe.c
+bool decompress(const char *in, int in_len, char* out) {
+	int ret;
+	unsigned have;
+	z_stream strm;
+
+	/* allocate inflate state */
+	strm.zalloc = Z_NULL;
+	strm.zfree = Z_NULL;
+	strm.opaque = Z_NULL;
+	strm.avail_in = 0;
+	strm.next_in = Z_NULL;
+	ret = inflateInit(&strm);
+	if (ret != Z_OK)
+		return ret;
+
+	/* decompress until deflate stream ends or end of file */
+	int outsize = 0;
+	do {
+		strm.avail_in = in_len;
+		if (strm.avail_in > ZLIB_CHUNK) strm.avail_in = ZLIB_CHUNK;
+		in_len -= ZLIB_CHUNK;
+
+		if (strm.avail_in == 0)
+			break;
+		strm.next_in = (unsigned char*)in;
+		in += ZLIB_CHUNK;
+
+		/* run inflate() on input until output buffer not full */
+		do {
+			strm.avail_out = ZLIB_CHUNK;
+			strm.next_out = (unsigned char*)(out + outsize);
+			ret = inflate(&strm, Z_NO_FLUSH);
+			_ASSERT(ret != Z_STREAM_ERROR);  /* state not clobbered */
+			switch (ret) {
+			case Z_NEED_DICT:
+				ret = Z_DATA_ERROR;     /* and fall through */
+			case Z_DATA_ERROR:
+			case Z_MEM_ERROR:
+				(void)inflateEnd(&strm);
+				return ret;
+			}
+			have = ZLIB_CHUNK - strm.avail_out;
+			outsize += have;
+		} while (strm.avail_out == 0);
+
+		/* done when inflate() says it's done */
+	} while (ret != Z_STREAM_END);
+
+	/* clean up and return */
+	(void)inflateEnd(&strm);
+	return ret == Z_STREAM_END ? Z_OK : Z_DATA_ERROR;
+}
+
+
+/*------ Base64 Encoding Table ------*/
+static const char MimeBase64[] = {
+	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+	'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+	'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+	'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
+	'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
+	'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+	'w', 'x', 'y', 'z', '0', '1', '2', '3',
+	'4', '5', '6', '7', '8', '9', '+', '/'
+};
+/*------ Base64 Decoding Table ------*/
+static int DecodeMimeBase64[256] = {
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  /* 00-0F */
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  /* 10-1F */
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63,  /* 20-2F */
+	52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1,  /* 30-3F */
+	-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,  /* 40-4F */
+	15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1,  /* 50-5F */
+	-1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,  /* 60-6F */
+	41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1,  /* 70-7F */
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  /* 80-8F */
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  /* 90-9F */
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  /* A0-AF */
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  /* B0-BF */
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  /* C0-CF */
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  /* D0-DF */
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  /* E0-EF */
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1   /* F0-FF */
+};
+
+int base64encode(const char *in, int in_len, char **out) {
+	unsigned char input[3] = { 0, 0, 0 };
+	unsigned char output[4] = { 0, 0, 0, 0 };
+	int   index, i, j, size;
+	const char *p, *plen;
+	plen = in + in_len - 1;
+	size = (4 * (in_len / 3)) + (in_len % 3 ? 4 : 0) + 1;
+	(*out) = (char*)malloc(size);
+	j = 0;
+	for (i = 0, p = in; p <= plen; i++, p++) {
+		index = i % 3;
+		input[index] = *p;
+		if (index == 2 || p == plen) {
+			output[0] = ((input[0] & 0xFC) >> 2);
+			output[1] = ((input[0] & 0x3) << 4) | ((input[1] & 0xF0) >> 4);
+			output[2] = ((input[1] & 0xF) << 2) | ((input[2] & 0xC0) >> 6);
+			output[3] = (input[2] & 0x3F);
+			(*out)[j++] = MimeBase64[output[0]];
+			(*out)[j++] = MimeBase64[output[1]];
+			(*out)[j++] = index == 0 ? '=' : MimeBase64[output[2]];
+			(*out)[j++] = index <  2 ? '=' : MimeBase64[output[3]];
+			input[0] = input[1] = input[2] = 0;
+		}
+	}
+	(*out)[j] = '\0';
+	return size;
+}
+
+int base64decode(const char *in, int in_len, char *out) {
+	const char* cp;
+	int space_idx = 0, phase;
+	int d, prev_d = 0;
+	unsigned char c;
+	space_idx = 0;
+	phase = 0;
+	for (cp = in; *cp != '\0'; ++cp) {
+		d = DecodeMimeBase64[(int)*cp];
+		if (d != -1) {
+			switch (phase) {
+			case 0:
+				++phase;
+				break;
+			case 1:
+				c = ((prev_d << 2) | ((d & 0x30) >> 4));
+				if (space_idx < in_len)
+					out[space_idx++] = c;
+				++phase;
+				break;
+			case 2:
+				c = (((prev_d & 0xf) << 4) | ((d & 0x3c) >> 2));
+				if (space_idx < in_len)
+					out[space_idx++] = c;
+				++phase;
+				break;
+			case 3:
+				c = (((prev_d & 0x03) << 6) | d);
+				if (space_idx < in_len)
+					out[space_idx++] = c;
+				phase = 0;
+				break;
+			}
+			prev_d = d;
+		}
+	}
+	return space_idx;
+}
+
+/*
+ * http://people.csail.mit.edu/rivest/Md5.c
+ */
+#define MD5_CHUNK 1024
+void md5(const char *in, int in_size, char *out) {
+	MD5_CTX mdContext;
+	MD5Init(&mdContext);
+	for (int i = 0; i < in_size; i += MD5_CHUNK) {
+		int chunksize = in_size - i;
+		if (chunksize > MD5_CHUNK) chunksize = MD5_CHUNK;
+		MD5Update(&mdContext, in, chunksize);
+		in += MD5_CHUNK;
+	}
+	MD5Final(&mdContext);
+	
+	// print
+	for (int i = 0; i < 16; i++)
+		sprintf_s(out + i * 2, 2, "%02x", mdContext.digest[i]);
+}
+
+
+
+
+
+
 /* IO */
 
 bool GetFileContents(const RString &sPath, RString &sOut, bool bOneLine)
@@ -922,7 +1161,7 @@ bool GetFileContents(const RString &sPath, RString &sOut, bool bOneLine)
 	if (bOneLine)
 		iGot = file.ReadLine(sData);
 	else
-		iGot = file.Read(sData, file.GetFileSize());
+		iGot = file.Read(sData, file.GetSize());
 
 	if (iGot == -1)
 	{
@@ -937,6 +1176,7 @@ bool GetFileContents(const RString &sPath, RString &sOut, bool bOneLine)
 	return true;
 }
 
+/* read per line */
 bool GetFileContents(const RString &sFile, vector<RString> &asOut)
 {
 	File file;
@@ -1039,4 +1279,12 @@ RString vssprintf(const char *szFormat, va_list argList)
 	}
 #endif
 	return sStr;
+}
+
+bool GetHash(const RString &sPath) {
+	File f;
+	f.Open(sPath, "rb");
+	RString hash = f.GetMD5Hash();
+	f.Close();
+	return hash;
 }

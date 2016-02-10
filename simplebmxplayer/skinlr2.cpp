@@ -5,8 +5,11 @@ using namespace SkinUtil;
 using namespace tinyxml2;
 #include <sstream>
 
-// temp
-char translated[1024];
+// temp use
+namespace {
+	char translated[1024];
+	const char empty_str_[] = "";
+}
 
 // temporarily used common function
 char* Trim(char *p) {
@@ -23,12 +26,15 @@ char* Trim(char *p) {
 	return r;
 }
 
+// utility macros
+#define ADDCHILD(base, name)\
+	(base)->LinkEndChild((base)->GetDocument()->NewElement(name))
+#define ADDTEXT(base, name, val)\
+	((XMLElement*)ADDCHILD(base, name))->SetText(val);
+
 // ---------------------------------------------------------------
 
 bool _LR2SkinParser::ParseLR2Skin(const char *filepath, Skin *s) {
-	// release all used data before starting
-	Clear();
-
 	// fill basic information to skin
 	this->s = s;
 
@@ -38,16 +44,8 @@ bool _LR2SkinParser::ParseLR2Skin(const char *filepath, Skin *s) {
 		"LR2 project origins from lavalse, All rights reserved.");
 	s->skinlayout.LinkEndChild(cmt);
 	/* 4 elements are necessary */
-	XMLElement *info = s->skinlayout.NewElement("Info");
-	XMLElement *resource = s->skinlayout.NewElement("Resource");
-	XMLElement *skin = s->skinlayout.NewElement("Skin");
-	XMLElement *option = s->skinlayout.NewElement("Option");
-	s->skinlayout.LinkEndChild(info);
-	s->skinlayout.LinkEndChild(option);
-	s->skinlayout.LinkEndChild(resource);
+	XMLElement *skin = s->skinlayout.NewElement("skin");
 	s->skinlayout.LinkEndChild(skin);
-	info->SetAttribute("width", 1280);
-	info->SetAttribute("height", 760);
 
 	// load skin line
 	// because lr2skin file format has no end tag, 
@@ -76,8 +74,9 @@ int _LR2SkinParser::LoadSkin(const char *filepath, int linebufferpos) {
 		printf("[ERROR] Cannot find Skin file %s - ignore\n", filepath);
 		return linebufferpos;
 	}
+	strcpy(this->filepath, filepath);
 
-	char line[MAX_LINE_CHARACTER];
+	char line[MAX_LINE_CHARACTER_];
 	char *p;
 	int current_line = 0;		// current file's reading line
 	while (!feof(f)) {
@@ -91,7 +90,7 @@ int _LR2SkinParser::LoadSkin(const char *filepath, int linebufferpos) {
 			continue;
 
 		// if #include then read the file first
-		if (strncmp("#INCLUDE", p, 8) == 0) {
+		/*if (strncmp("#INCLUDE", p, 8) == 0) {
 			char *np = strchr(p + 9, ',');
 			if (np) *np = 0;
 			std::string relpath = p + 9;
@@ -101,15 +100,23 @@ int _LR2SkinParser::LoadSkin(const char *filepath, int linebufferpos) {
 			ConvertRelativePathToAbsPath(relpath, basepath);
 			linebufferpos += LoadSkin(relpath.c_str(), linebufferpos + 1);
 		}
-		else {
-			strcpy(lines[linebufferpos], line);
-			ParseSkinLineArgument(lines[linebufferpos], line_args[linebufferpos]);
-			line_position[linebufferpos] = current_line;
-		}
+		else {*/
+		line_v_ line__;
+		strcpy(line__.line__, line);
+		lines_.push_back(line__);
+		//}
 		linebufferpos++;
 	}
 
 	fclose(f);
+
+	// parse argument
+	for (int i = 0; i < lines_.size(); i++) {
+		args_v_ line_args__;
+		line_v_* line__stored_ = &lines_[i];
+		ParseSkinLineArgument(line__stored_->line__, line_args__.args__);
+		line_args_.push_back(line_args__);
+	}
 
 	// returns how much lines we read
 	return linebufferpos;
@@ -123,19 +130,21 @@ void _LR2SkinParser::ParseSkin() {
 	}
 }
 
-void _LR2SkinParser::ParseSkinLineArgument(char *p, char **args) {
+void _LR2SkinParser::ParseSkinLineArgument(char *p, const char **args) {
 	// first element is element name
 	args[0] = p;
 	int i;
-	for (i = 1; i < 50; i++) {
+	for (i = 1; i < MAX_ARGS_COUNT_; i++) {
 		p = strchr(p, ',');
 		if (!p)
 			break;
 		*p = 0;
 		args[i] = (++p);
 	}
-	// for safety, pack last argument to 0
-	args[i] = 0;
+	// for safety, pack left argument as ""
+	for (; i < MAX_ARGS_COUNT_; i++) {
+		args[i] = empty_str_;
+	}
 }
 
 /* a simple private macro for PLAYLANE (reset position) */
@@ -146,10 +155,10 @@ void MakeFrameRelative(int x, int y, XMLElement *frame) {
 void MakeRelative(int x, int y, XMLElement *e) {
 	XMLElement *dst = e->FirstChildElement("DST");
 	while (dst) {
-		XMLElement *frame = dst->FirstChildElement("Frame");
+		XMLElement *frame = dst->FirstChildElement("frame");
 		while (frame) {
 			MakeFrameRelative(x, y, frame);
-			frame = frame->NextSiblingElement("Frame");
+			frame = frame->NextSiblingElement("frame");
 		}
 		dst = e->NextSiblingElement("DST");
 	}
@@ -158,8 +167,8 @@ void MakeRelative(int x, int y, XMLElement *e) {
 
 int _LR2SkinParser::ParseSkinLine(int line) {
 	// get current line's string & argument
-	char **args;			// contains linebuffer's address
-	args = line_args[line];
+	args_read_ args;			// contains linebuffer's address
+	args = line_args_[line].args__;
 	if (args[0] == 0)
 		return line + 1;
 
@@ -177,7 +186,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		if (condition_level > 0)
 			cur_e = condition_element[--condition_level];
 		else
-			printf("Invalid #ENDIF (%d)\n", line_position[line]);
+			printf("Invalid #ENDIF (%d)\n", line);
 		return line + 1;
 	}
 	if (!cur_e)
@@ -185,9 +194,9 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	if (CMD_IS("#ELSE")) {
 		// #ELSE: find last #IF clause, and copy condition totally.
 		// not perfect, but maybe we can make a deal :)
-		XMLElement *prev_if = condition_element[condition_level - 1]->LastChildElement("If");
+		XMLElement *prev_if = condition_element[condition_level - 1]->LastChildElement("if");
 		if (prev_if) {
-			XMLElement *group = s->skinlayout.NewElement("Ifnot");
+			XMLElement *group = s->skinlayout.NewElement("ifnot");
 			group->SetAttribute("condition", prev_if->Attribute("condition"));
 			cur_e = condition_element[--condition_level];
 			cur_e->LinkEndChild(group);
@@ -202,7 +211,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	}
 	else if (CMD_IS("#IF") || CMD_IS("#ELSEIF")) {
 		// #ELSEIF: think as new #IF clause
-		XMLElement *group = s->skinlayout.NewElement("If");
+		XMLElement *group = s->skinlayout.NewElement("if");
 		if (CMD_IS("#IF")) {
 			condition_level++;
 			condition_status[condition_level] = 0;
@@ -225,24 +234,39 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	/*
 	* header/metadata parsing
 	*/
-	if (CMD_IS("#CUSTOMOPTION")) {
-		XMLElement *customoption = s->skinlayout.NewElement("CustomSwitch");
+	if (CMD_IS("#INCLUDE")) {
+		XMLElement *e = (XMLElement*)ADDCHILD(cur_e, "include");
+
+		std::string relpath = args[1];
+		std::string basepath = filepath;
+		ConvertLR2PathToRelativePath(relpath);
+		//GetParentDirectory(basepath);
+		//ConvertRelativePathToAbsPath(relpath, basepath);
+
+		e->SetAttribute("path", relpath.c_str());
+	}
+	else if (CMD_IS("#CUSTOMOPTION")) {
+		XMLElement *option = FindElement(cur_e, "option", &s->skinlayout);
+		XMLElement *customoption = s->skinlayout.NewElement("customswitch");
+		option->LinkEndChild(customoption);
+
 		std::string name_safe = args[1];
 		ReplaceString(name_safe, " ", "_");
 		customoption->SetAttribute("name", name_safe.c_str());
 		int option_intvalue = atoi(args[2]);
-		for (char **p = args + 3; *p != 0 && strlen(*p) > 0; p++) {
-			XMLElement *options = s->skinlayout.NewElement("Option");
+		for (const char **p = args + 3; *p != 0 && strlen(*p) > 0; p++) {
+			XMLElement *options = s->skinlayout.NewElement("option");
 			options->SetAttribute("name", *p);
 			options->SetAttribute("value", option_intvalue);
 			option_intvalue++;
 			customoption->LinkEndChild(options);
 		}
-		XMLElement *option = s->skinlayout.FirstChildElement("Option");
-		option->LinkEndChild(customoption);
 	}
 	else if (CMD_IS("#CUSTOMFILE")) {
-		XMLElement *customfile = s->skinlayout.NewElement("CustomFile");
+		XMLElement *option = FindElement(cur_e, "option", &s->skinlayout);
+		XMLElement *customfile = s->skinlayout.NewElement("customfile");
+		option->LinkEndChild(customfile);
+
 		std::string name_safe = args[1];
 		ReplaceString(name_safe, " ", "_");
 		customfile->SetAttribute("name", name_safe.c_str());
@@ -263,56 +287,82 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		ReplaceString(path, "*", args[3]);
 		ConvertLR2PathToRelativePath(path);
 		customfile->SetAttribute("path", path.c_str());		// means default path
-		XMLElement *option = s->skinlayout.FirstChildElement("Option");
-		option->LinkEndChild(customfile);
 
 		// register to filter_to_optionname for image change
-		filter_to_optionname.insert(std::pair<std::string, std::string>(args[2], name_safe));
+		AddPathToOption(args[2], name_safe);
+		XMLComment *cmt = s->skinlayout.NewComment(args[2]);
+		option->LinkEndChild(cmt);
 	}
 	else if (CMD_IS("#INFORMATION")) {
 		// set skin's metadata
-		XMLElement *info = s->skinlayout.FirstChildElement("Info");
-		XMLElement *type = s->skinlayout.NewElement("Type");
-		int type_ = INT(args[1]);		// 0: 7key, 1: 9key, 2: 14key, 12: battle
-		switch (type_) {
-		case 0:
-			// 7key
-			type->SetText("7Key");
-			break;
-		case 1:
-			// 9key
-			type->SetText("9Key");
-			break;
-		case 2:
-			// 14key
-			type->SetText("14Key");
-			break;
-		case 5:
-			// select screen
-			type->SetText("SelectMusic");
-			break;
-		case 12:
-			// battle
-			type->SetText("7KBattle");
-			break;
-		default:
-			printf("[ERROR] unknown type of lr2skin(%d). consider as 7Key.\n", type_);
+		XMLElement *info = (XMLElement*)ADDCHILD(cur_e, "info");
+		ADDTEXT(info, "width", 1280);
+		ADDTEXT(info, "height", 720);
+		int type_ = INT(args[1]);
+		if (type_ == 5) {
+			ADDTEXT(info, "type", "Select");
 		}
-		XMLElement *skinname = s->skinlayout.NewElement("Name");
-		skinname->SetText(args[2]);
-		XMLElement *author = s->skinlayout.NewElement("Author");
-		author->SetText(args[3]);
-		info->LinkEndChild(type);
-		info->LinkEndChild(skinname);
-		info->LinkEndChild(author);
+		else if (type_ == 6) {
+			ADDTEXT(info, "type", "Decide");
+		}
+		else if (type_ == 7) {
+			ADDTEXT(info, "type", "Result");
+		}
+		else if (type_ == 8) {
+			ADDTEXT(info, "type", "KeyConfig");
+		}
+		/** @comment skinselect / soundselect are all depreciated, integrated into option. */
+		else if (type_ == 9) {
+			ADDTEXT(info, "type", "SkinSelect");
+		}
+		else if (type_ == 10) {
+			ADDTEXT(info, "type", "SoundSelect");
+		}
+		/** @comment end */
+		else if (type_ == 12) {
+			ADDTEXT(info, "type", "Play");
+			ADDTEXT(info, "key", 15);
+		}
+		else if (type_ == 13) {
+			ADDTEXT(info, "type", "Play");
+			ADDTEXT(info, "key", 17);
+		}
+		else if (type_ == 15) {
+			ADDTEXT(info, "type", "CourseResult");
+		}
+		else if (type_ < 5) {
+			ADDTEXT(info, "type", "Play");
+			int key_ = 7;
+			switch (type_) {
+			case 0:
+				// 7key
+				key_ = 7;
+				break;
+			case 1:
+				// 9key
+				key_ = 5;
+				break;
+			case 2:
+				// 14key
+				key_ = 14;
+				break;
+			case 3:
+				key_ = 10;
+				break;
+			case 4:
+				key_ = 9;
+				break;
+			}
+			ADDTEXT(info, "key", key_);
+		}
+		else {
+			printf("[ERROR] unknown type of lr2skin(%d). consider as 7Key Play.\n", type_);
+			type_ = 0;
+		}
+
+		ADDTEXT(info, "name", args[2]);
+		ADDTEXT(info, "author", args[3]);
 	}
-	/*
-	* we very first parsed #INCLUDE command
-	* so we don't need to process it
-	*
-	else if (CMD_IS("#INCLUDE")) {
-	Parse(args[1]);
-	}*/
 	else if (CMD_IS("#IMAGE")) {
 		/*
 		 * Sometimes resource is added in IF form
@@ -320,8 +370,8 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		 */
 		if (condition_level > 0 && condition_status[condition_level] > 1)
 			return line + 1;
-		XMLElement *resource = s->skinlayout.FirstChildElement("Resource");
-		XMLElement *image = s->skinlayout.NewElement("Image");
+		XMLElement *resource = s->skinlayout.FirstChildElement("skin");
+		XMLElement *image = s->skinlayout.NewElement("image");
 		image->SetAttribute("name", image_cnt++);
 		// check for optionname path
 		std::string path_converted = args[1];
@@ -337,7 +387,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		ConvertLR2PathToRelativePath(path_converted);
 		image->SetAttribute("path", path_converted.c_str());
 
-		resource->LinkEndChild(image);
+		resource->InsertFirstChild(image);
 	}
 	else if (CMD_IS("#FONT")) {
 		printf("#FONT is depreciated option, ignore.\n");
@@ -346,8 +396,8 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		// we don't use bitmap fonts
 		// So if cannot found, we'll going to use default font/texture.
 		// current font won't support TTF, so basically we're going to use default font.
-		XMLElement *resource = s->skinlayout.FirstChildElement("Resource");
-		XMLElement *font = s->skinlayout.NewElement("Font");
+		XMLElement *resource = s->skinlayout.FirstChildElement("skin");
+		XMLElement *font = s->skinlayout.NewElement("font");
 		font->SetAttribute("name", font_cnt++);
 		font->SetAttribute("path", "default");
 		int size = 18;
@@ -380,11 +430,11 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		font->SetAttribute("thickness", INT(args[2]));
 #endif
 		font->SetAttribute("border", size / 20 + 1);
-		resource->LinkEndChild(font);
+		resource->InsertFirstChild(font);
 	}
 	else if (CMD_IS("#SETOPTION")) {
 		// this clause is translated during render tree construction
-		XMLElement *setoption = s->skinlayout.NewElement("Lua");
+		XMLElement *setoption = s->skinlayout.NewElement("lua");
 		std::ostringstream luacode;
 		ConditionAttribute cls;
 		for (int i = 1; i < 50 && args[i]; i++) {
@@ -404,7 +454,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		// process SRC
 		// SRC may have condition (attribute condition; normally not used)
 		XMLElement *obj;
-		obj = s->skinlayout.NewElement("Image");
+		obj = s->skinlayout.NewElement("sprite");
 		int resid = INT(args[2]);	// COMMENT: check out for pre-occupied resid
 		switch (resid) {
 		case 100:
@@ -441,9 +491,9 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		int sop1 = 0, sop2 = 0, sop3 = 0;
 		if (INT(args[10]))
 			obj->SetAttribute("timer", TranslateTimer(INT(args[10])));
-		if (args[11]) sop1 = INT(args[11]);
-		if (args[12]) sop2 = INT(args[12]);
-		if (args[13]) sop3 = INT(args[13]);
+		sop1 = INT(args[11]);
+		sop2 = INT(args[12]);
+		sop3 = INT(args[13]);
 
 		/*
 		 * process NOT-general-objects first
@@ -468,7 +518,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		XMLElement *dst = s->skinlayout.NewElement("DST");
 		obj->LinkEndChild(dst);
 		for (int nl = line + 1; nl < line_total; nl++) {
-			args = line_args[nl];
+			args = line_args_[nl].args__;
 			if (!args[0]) continue;
 			if (CMD_IS("#ENDIF"))
 				continue;			// we can ignore #ENDIF command, maybe
@@ -485,7 +535,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 				if (args[19]) op2 = INT(args[19]);
 				if (args[20]) op3 = INT(args[20]);
 			}
-			XMLElement *frame = s->skinlayout.NewElement("Frame");
+			XMLElement *frame = s->skinlayout.NewElement("frame");
 			frame->SetAttribute("x", args[3]);
 			frame->SetAttribute("y", args[4]);
 			frame->SetAttribute("w", args[5]);
@@ -531,23 +581,23 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		*/
 #define CHECK_PANEL(v) (op1 == (v) || op2 == (v) || op3 == (v) || timer == (v))
 		if (CHECK_PANEL(21))
-			FindElementWithAttribute(cur_e, "Group", "id", "panel1", &s->skinlayout)->LinkEndChild(obj);
+			FindElementWithAttribute(cur_e, "canvas", "id", "panel1", &s->skinlayout)->LinkEndChild(obj);
 		else if (CHECK_PANEL(22))
-			FindElementWithAttribute(cur_e, "Group", "id", "panel2", &s->skinlayout)->LinkEndChild(obj);
+			FindElementWithAttribute(cur_e, "canvas", "id", "panel2", &s->skinlayout)->LinkEndChild(obj);
 		else if (CHECK_PANEL(23))
-			FindElementWithAttribute(cur_e, "Group", "id", "panel3", &s->skinlayout)->LinkEndChild(obj);
+			FindElementWithAttribute(cur_e, "canvas", "id", "panel3", &s->skinlayout)->LinkEndChild(obj);
 		else if (CHECK_PANEL(24))
-			FindElementWithAttribute(cur_e, "Group", "id", "panel4", &s->skinlayout)->LinkEndChild(obj);
+			FindElementWithAttribute(cur_e, "canvas", "id", "panel4", &s->skinlayout)->LinkEndChild(obj);
 		else if (CHECK_PANEL(25))
-			FindElementWithAttribute(cur_e, "Group", "id", "panel5", &s->skinlayout)->LinkEndChild(obj);
+			FindElementWithAttribute(cur_e, "canvas", "id", "panel5", &s->skinlayout)->LinkEndChild(obj);
 		else if (CHECK_PANEL(26))
-			FindElementWithAttribute(cur_e, "Group", "id", "panel6", &s->skinlayout)->LinkEndChild(obj);
+			FindElementWithAttribute(cur_e, "canvas", "id", "panel6", &s->skinlayout)->LinkEndChild(obj);
 		else if (CHECK_PANEL(27))
-			FindElementWithAttribute(cur_e, "Group", "id", "panel7", &s->skinlayout)->LinkEndChild(obj);
+			FindElementWithAttribute(cur_e, "canvas", "id", "panel7", &s->skinlayout)->LinkEndChild(obj);
 		else if (CHECK_PANEL(28))
-			FindElementWithAttribute(cur_e, "Group", "id", "panel8", &s->skinlayout)->LinkEndChild(obj);
+			FindElementWithAttribute(cur_e, "canvas", "id", "panel8", &s->skinlayout)->LinkEndChild(obj);
 		else if (CHECK_PANEL(29))
-			FindElementWithAttribute(cur_e, "Group", "id", "panel9", &s->skinlayout)->LinkEndChild(obj);
+			FindElementWithAttribute(cur_e, "canvas", "id", "panel9", &s->skinlayout)->LinkEndChild(obj);
 		else
 			cur_e->LinkEndChild(obj);
 		
@@ -557,7 +607,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		 * COMMENT: most of them behaves like #IMAGE object.
 		 */
 		// reset arguments to figure out about object
-		args = line_args[line];
+		args = line_args_[line].args__;
 		int objectid = INT(args[1]);
 
 		// combo (play)
@@ -585,7 +635,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 					(timer >= 100 && timer < 110) ||
 					(timer >= 120 && timer < 130)) {
 					// P1
-					XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", 0, &s->skinlayout);
+					XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", 0, &s->skinlayout);
 					MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
 					playarea->LinkEndChild(obj);
 				}
@@ -594,7 +644,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 					(timer >= 110 && timer < 120) ||
 					(timer >= 130 && timer < 140)) {
 					// P2
-					XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", 1, &s->skinlayout);
+					XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", 1, &s->skinlayout);
 					MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
 					playarea->LinkEndChild(obj);
 				}
@@ -605,15 +655,19 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		}
 		else if (OBJTYPE_IS("BGA")) {
 			// change tag to BGA and remove SRC tag
-			obj->SetName("Bga");
+			obj->SetName("bga");
+			// set bga side & remove redundant tag
+			// (LR2 doesn't support 'real' battle mode, so no side attribute.)
+			obj->SetAttribute("side", 0);
+			obj->DeleteAttribute("resid");
 		}
 		else if (OBJTYPE_IS("NUMBER")) {
-			obj->SetName("Number");
+			obj->SetName("number");
 			ProcessNumber(obj, sop1, sop2, sop3);
 		}
 		else if (OBJTYPE_IS("SLIDER")) {
 			// change tag to slider and add attr
-			obj->SetName("Slider");
+			obj->SetName("slider");
 			obj->SetAttribute("direction", sop1);
 			obj->SetAttribute("range", sop2);
 			if (TranslateSlider(sop3))
@@ -629,21 +683,21 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			obj->DeleteAttribute("cycle");
 			obj->DeleteAttribute("divx");
 			obj->DeleteAttribute("divy");
-			obj->SetName("Text");
+			obj->SetName("text");
 			if (TranslateText(INT(args[3])))
 				obj->SetAttribute("value", TranslateText(INT(args[3])));
 			obj->SetAttribute("align", args[4]);
 			obj->SetAttribute("edit", args[5]);
 		}
 		else if (OBJTYPE_IS("BARGRAPH")) {
-			obj->SetName("Graph");
+			obj->SetName("graph");
 			if (TranslateGraph(sop1))
 				obj->SetAttribute("value", TranslateGraph(sop1));
 			obj->SetAttribute("direction", sop2);
 		}
 		else if (OBJTYPE_IS("BUTTON")) {
 			// TODO: onclick event
-			obj->SetName("Button");
+			obj->SetName("button");
 		}
 		/* 
 		 * some special object (PLAY lane object) 
@@ -712,17 +766,17 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			obj->DeleteAttribute("h");
 			obj->DeleteAttribute("divx");
 			obj->DeleteAttribute("divy");
-			obj->SetName("GrooveGauge");
+			obj->SetName("groovegauge");
 		}
 		else if (OBJTYPE_IS("JUDGELINE")) {
-			obj->SetName("JUDGELINE");
-			XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid, &s->skinlayout);
+			obj->SetName("judgeline");
+			XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", objectid, &s->skinlayout);
 			MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
 			playarea->LinkEndChild(obj);
 		}
 		else if (OBJTYPE_IS("LINE")) {
-			obj->SetName("LINE");
-			XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid, &s->skinlayout);
+			obj->SetName("line");
+			XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", objectid, &s->skinlayout);
 			MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
 			playarea->LinkEndChild(obj);
 		}
@@ -732,7 +786,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			printf("#XXX_ONMOUSE command is depreciated, ignore. (%dL) \n", line);
 		}
 		else {
-			printf("Unknown General Object (%s), consider as IMAGE. (%dL)\n", args[0] + 5, line_position[line]);
+			printf("Unknown General Object (%s), consider as IMAGE. (%dL)\n", args[0] + 5, line);
 		}
 
 		// return new line
@@ -749,8 +803,8 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	}
 	else if (CMD_IS("#BAR_CENTER")) {
 		// set center and property ...
-		XMLElement *selectmenu = FindElement(cur_e, "SelectMenu");
-		selectmenu->SetAttribute("center", line_args[line][1]);
+		XMLElement *selectmenu = FindElement(cur_e, "selectmenu");
+		selectmenu->SetAttribute("center", line_args_[line].args__[1]);
 	}
 	else if (CMD_IS("#BAR_AVAILABLE")) {
 		// depreciated, not parse
@@ -760,10 +814,10 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	 * PLAY part 
 	 */
 	else if (CMD_STARTSWITH("#DST_NOTE", 9)) {
-		char **args = line_args[line];
+		args_read_ args = line_args_[line].args__;
 		int objectid = INT(args[1]);
-		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
+		XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", objectid / 10, &s->skinlayout);
+		XMLElement *lane = FindElementWithAttribute(playarea, "note", "index", objectid, &s->skinlayout);
 		lane->SetAttribute("x", INT(args[3]) - playarea->IntAttribute("x"));
 		lane->SetAttribute("y", INT(args[4]) - playarea->IntAttribute("y"));
 		lane->SetAttribute("w", INT(args[5]));
@@ -776,7 +830,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		// just ignore
 	}
 	else {
-		printf("Unknown Type: %s (%dL) - Ignore.\n", args[0], line_position[line]);
+		printf("Unknown Type: %s (%dL) - Ignore.\n", args[0], line);
 	}
 
 	// parse next line
@@ -829,105 +883,63 @@ void _LR2SkinParser::ProcessNumber(XMLElement *obj, int sop1, int sop2, int sop3
  * if lane, return next parsed line
  */
 int _LR2SkinParser::ProcessLane(XMLElement *src, int line, int resid) {
-	char **args = line_args[line];
+	args_read_ args = line_args_[line].args__;
 	int objectid = INT(args[1]);
 
+#define SETNOTE(name)\
+	XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", objectid / 10, &s->skinlayout);\
+	XMLElement *lane = FindElementWithAttribute(playarea, "note", "index", objectid, &s->skinlayout);\
+	lane->SetAttribute("resid", src->Attribute("resid"));\
+	src->DeleteAttribute("resid");\
+	src->SetName(name);\
+	lane->LinkEndChild(src);\
+	return line + 1;
 	if (OBJTYPE_IS("NOTE")) {
-		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
-		lane->SetAttribute("resid", resid);
-		// add src to here
-		src->SetName("SRC_NOTE");
-		lane->LinkEndChild(src);
-		return line + 1;
+		SETNOTE("SRC_NOTE");
 	}
 	else if (OBJTYPE_IS("LN_END")) {
-		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
-		// add src to here
-		src->SetName("SRC_LN_END");
-		lane->LinkEndChild(src);
-		return line + 1;
+		SETNOTE("SRC_LN_END");
 	}
 	else if (OBJTYPE_IS("LN_BODY")) {
-		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
-		// add src to here
-		src->SetName("SRC_LN_BODY");
-		lane->LinkEndChild(src);
-		return line + 1;
+		SETNOTE("SRC_LN_BODY");
 	}
 	else if (OBJTYPE_IS("LN_START")) {
-		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
-		// add src to here
-		src->SetName("SRC_LN_START");
-		lane->LinkEndChild(src);
-		return line + 1;
+		SETNOTE("SRC_LN_START");
 	}
 	else if (OBJTYPE_IS("MINE")) {
-		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
-		// add src to here
-		src->SetName("SRC_MINE");
-		lane->LinkEndChild(src);
-		return line + 1;
+		SETNOTE("SRC_MINE");
 	}
 	if (OBJTYPE_IS("AUTO_NOTE")) {
-		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
-		// add src to here
-		src->SetName("SRC_AUTO_NOTE");
-		lane->LinkEndChild(src);
-		return line + 1;
+		SETNOTE("SRC_AUTO_NOTE");
 	}
 	else if (OBJTYPE_IS("AUTO_LN_END")) {
-		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
-		// add src to here
-		src->SetName("SRC_AUTO_LN_END");
-		lane->LinkEndChild(src);
-		return line + 1;
+		SETNOTE("SRC_AUTO_LN_END");
 	}
 	else if (OBJTYPE_IS("AUTO_LN_BODY")) {
-		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
-		// add src to here
-		src->SetName("SRC_AUTO_LN_BODY");
-		lane->LinkEndChild(src);
-		return line + 1;
+		SETNOTE("SRC_AUTO_LN_BODY");
 	}
 	else if (OBJTYPE_IS("AUTO_LN_START")) {
-		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
-		// add src to here
-		src->SetName("SRC_AUTO_LN_START");
-		lane->LinkEndChild(src);
-		return line + 1;
+		SETNOTE("SRC_AUTO_LN_START");
 	}
 	else if (OBJTYPE_IS("AUTO_MINE")) {
-		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "Note", "index", objectid, &s->skinlayout);
-		// add src to here
-		src->SetName("SRC_AUTO_MINE");
-		lane->LinkEndChild(src);
-		return line + 1;
+		SETNOTE("SRC_AUTO_MINE");
 	}
 	else if (OBJTYPE_IS("JUDGELINE")) {
-		XMLElement *playarea = FindElementWithAttribute(cur_e, "Play", "side", objectid, &s->skinlayout);
+		XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", objectid, &s->skinlayout);
 		// find DST object to set Lane attribute
 		for (int _l = line + 1; _l < line_total; _l++) {
-			if (line_args[_l][0] && strcmp(line_args[_l][0], "#DST_JUDGELINE") == 0 && INT(line_args[_l][1]) == objectid) {
-				int x = INT(line_args[_l][3]);
+			if (strcmp(line_args_[_l].args__[0], "#DST_JUDGELINE") == 0 &&
+				INT(line_args_[_l].args__[1]) == objectid) {
+				int x = INT(line_args_[_l].args__[3]);
 				int y = 0;
-				int w = INT(line_args[_l][5]);
-				int h = INT(line_args[_l][4]);
+				int w = INT(line_args_[_l].args__[5]);
+				int h = INT(line_args_[_l].args__[4]);
 				playarea->SetAttribute("x", x);
 				playarea->SetAttribute("y", y);
 				playarea->SetAttribute("w", w);
 				playarea->SetAttribute("h", h);
 				XMLElement *dst = FindElement(playarea, "DST", &s->skinlayout);
-				XMLElement *frame = FindElement(dst, "Frame", &s->skinlayout);
+				XMLElement *frame = FindElement(dst, "frame", &s->skinlayout);
 				frame->SetAttribute("x", x);
 				frame->SetAttribute("y", y);
 				frame->SetAttribute("w", w);
@@ -949,6 +961,8 @@ std::string _getcomboconditionstring(int player, int level) {
 
 	switch (level) {
 	case 0:
+		return std::string(buf) + "NPoor";
+		break;
 	case 1:
 		return std::string(buf) + "Poor";
 		break;
@@ -964,64 +978,67 @@ std::string _getcomboconditionstring(int player, int level) {
 	case 5:
 		return std::string(buf) + "Perfect";
 		break;
+	default:
+		/* this shouldn't be happened */
+		return "";
+		break;
 	}
 }
 int __comboy = 0;
 int __combox = 0;
 int _LR2SkinParser::ProcessCombo(XMLElement *obj, int line) {
-	char **args = line_args[line];
+	args_read_ args = line_args_[line].args__;
 	int objectid = INT(args[1]);
 	int sop1 = 0, sop2 = 0, sop3 = 0;
 	if (args[11]) sop1 = INT(args[11]);
 	if (args[12]) sop2 = INT(args[12]);
 	if (args[13]) sop3 = INT(args[13]);
 
+#define GETCOMBOOBJ(side)\
+	std::string cond = _getcomboconditionstring(side, objectid);\
+	XMLElement *playcombo = FindElementWithAttribute(cur_e, "combo", "condition", cond.c_str(), &s->skinlayout);
 	if (OBJTYPE_IS("NOWJUDGE_1P")) {
-		std::string cond = _getcomboconditionstring(1, objectid);
-		XMLElement *playcombo = FindElementWithAttribute(cur_e, "Combo", "condition", cond.c_str(), &s->skinlayout);
-		obj->SetName("Image");
+		GETCOMBOOBJ(1);
+		obj->SetName("sprite");
 		playcombo->LinkEndChild(obj);
-		__comboy = obj->FirstChildElement("DST")->FirstChildElement("Frame")->IntAttribute("y");
-		__combox = obj->FirstChildElement("DST")->FirstChildElement("Frame")->IntAttribute("x");
+		__comboy = obj->FirstChildElement("DST")->FirstChildElement("frame")->IntAttribute("y");
+		__combox = obj->FirstChildElement("DST")->FirstChildElement("frame")->IntAttribute("x");
 		return line + 1;
 	}
 	else if (OBJTYPE_IS("NOWCOMBO_1P")) {
-		std::string cond = _getcomboconditionstring(1, objectid);
-		XMLElement *playcombo = FindElementWithAttribute(cur_e, "Combo", "condition", cond.c_str(), &s->skinlayout);
-		obj->SetName("Number");
+		GETCOMBOOBJ(1);
+		obj->SetName("number");
 		ProcessNumber(obj, 0, 0, 0);
 		obj->SetAttribute("value", "P1Combo");
 		obj->SetAttribute("align", 1);
-		for (XMLElement *e = obj->FirstChildElement("DST")->FirstChildElement("Frame"); e;) {
+		for (XMLElement *e = obj->FirstChildElement("DST")->FirstChildElement("frame"); e;) {
 			e->SetAttribute("y", __comboy);
 			e->SetAttribute("x", e->IntAttribute("x") + __combox);
 			e->SetAttribute("w", 0);
-			e = e->NextSiblingElement("Frame");
+			e = e->NextSiblingElement("frame");
 		}
 		playcombo->LinkEndChild(obj);
 		return line + 1;
 	}
 	else if (OBJTYPE_IS("NOWJUDGE_2P")) {
-		std::string cond = _getcomboconditionstring(2, objectid);
-		XMLElement *playcombo = FindElementWithAttribute(cur_e, "Combo", "condition", cond.c_str(), &s->skinlayout);
-		obj->SetName("Image");
+		GETCOMBOOBJ(2);
+		obj->SetName("sprite");
 		playcombo->LinkEndChild(obj);
-		__comboy = obj->FirstChildElement("DST")->FirstChildElement("Frame")->IntAttribute("y");
-		__combox = obj->FirstChildElement("DST")->FirstChildElement("Frame")->IntAttribute("x");
+		__comboy = obj->FirstChildElement("DST")->FirstChildElement("frame")->IntAttribute("y");
+		__combox = obj->FirstChildElement("DST")->FirstChildElement("frame")->IntAttribute("x");
 		return line + 1;
 	}
 	else if (OBJTYPE_IS("NOWCOMBO_2P")) {
-		std::string cond = _getcomboconditionstring(2, objectid);
-		XMLElement *playcombo = FindElementWithAttribute(cur_e, "Combo", "condition", cond.c_str(), &s->skinlayout);
-		obj->SetName("Number");
+		GETCOMBOOBJ(2);
+		obj->SetName("number");
 		ProcessNumber(obj, 0, 0, 0);
 		obj->SetAttribute("value", "P2Combo");
 		obj->SetAttribute("align", 1);
-		for (XMLElement *e = obj->FirstChildElement("DST")->FirstChildElement("Frame"); e;) {
+		for (XMLElement *e = obj->FirstChildElement("DST")->FirstChildElement("frame"); e;) {
 			e->SetAttribute("y", __comboy);
 			e->SetAttribute("x", e->IntAttribute("x") + __combox);
 			e->SetAttribute("w", 0);
-			e = e->NextSiblingElement("Frame");
+			e = e->NextSiblingElement("frame");
 		}
 		playcombo->LinkEndChild(obj);
 		return line + 1;
@@ -1032,12 +1049,12 @@ int _LR2SkinParser::ProcessCombo(XMLElement *obj, int line) {
 }
 
 int _LR2SkinParser::ProcessSelectBar(XMLElement *obj, int line) {
-	char **args = line_args[line];
+	args_read_ args = line_args_[line].args__;
 	int objectid = INT(args[1]);
 
 	// select menu part
 	if (!OBJTYPE_IS("BARGRAPH") && CMD_STARTSWITH("#SRC_BAR", 8)) {
-		XMLElement *selectmenu = FindElement(cur_e, "SelectMenu", &s->skinlayout);
+		XMLElement *selectmenu = FindElement(cur_e, "selectmenu", &s->skinlayout);
 		if (OBJTYPE_IS("BAR_BODY")) {
 			// only register SRC object
 			XMLElement *src = obj->FirstChildElement("SRC");
@@ -1049,31 +1066,31 @@ int _LR2SkinParser::ProcessSelectBar(XMLElement *obj, int line) {
 			s->skinlayout.DeleteNode(obj);
 		}
 		else if (OBJTYPE_IS("BAR_FLASH")) {
-			obj->SetName("Flash");
+			obj->SetName("flash");
 			selectmenu->LinkEndChild(obj);
 		}
 		else if (OBJTYPE_IS("BAR_TITLE")) {
-			obj->SetName("Title");
+			obj->SetName("title");
 			obj->SetAttribute("type", objectid);	// new: 1
 			selectmenu->LinkEndChild(obj);
 		}
 		else if (OBJTYPE_IS("BAR_LEVEL")) {
-			obj->SetName("Level");
+			obj->SetName("level");
 			obj->SetAttribute("type", objectid);	// difficulty
 			selectmenu->LinkEndChild(obj);
 		}
 		else if (OBJTYPE_IS("BAR_LAMP")) {
-			obj->SetName("Lamp");
+			obj->SetName("lamp");
 			obj->SetAttribute("type", objectid);	// clear
 			selectmenu->LinkEndChild(obj);
 		}
 		else if (OBJTYPE_IS("BAR_MY_LAMP")) {
-			obj->SetName("MyLamp");
+			obj->SetName("mylamp");
 			obj->SetAttribute("type", objectid);	// clear
 			selectmenu->LinkEndChild(obj);
 		}
 		else if (OBJTYPE_IS("BAR_RIVAL_LAMP")) {
-			obj->SetName("RivalLamp");
+			obj->SetName("rivallamp");
 			obj->SetAttribute("type", objectid);	// clear
 			selectmenu->LinkEndChild(obj);
 		}
@@ -1093,27 +1110,27 @@ int _LR2SkinParser::ProcessSelectBar(XMLElement *obj, int line) {
 }
 
 int _LR2SkinParser::ProcessSelectBar_DST(int line) {
-	char **args = line_args[line];
+	args_read_ args = line_args_[line].args__;
 	int objectid = INT(args[1]);
 #define CMD_IS(v) (strcmp(args[0], (v)) == 0)
 	if (CMD_IS("#DST_BAR_BODY_ON")) {
-		XMLElement *selectmenu = FindElement(cur_e, "SelectMenu", &s->skinlayout);
-		XMLElement *position = FindElement(selectmenu, "Position", &s->skinlayout);
-		XMLElement *bodyoff = FindElement(position, "Bar");
+		XMLElement *selectmenu = FindElement(cur_e, "selectmenu", &s->skinlayout);
+		XMLElement *position = FindElement(selectmenu, "position", &s->skinlayout);
+		XMLElement *bodyoff = FindElement(position, "bar");
 		if (bodyoff) {
 			/*
 			* DST_SELECTED: only have delta_x, delta_y value
 			*/
-			XMLElement *frame = FindElement(bodyoff, "Frame");
+			XMLElement *frame = FindElement(bodyoff, "frame");
 			position->SetAttribute("delta_x", INT(args[3]) - frame->IntAttribute("x"));
 		}
 		return line + 1;
 	}
 	else if (CMD_IS("#DST_BAR_BODY_OFF")) {
-		XMLElement *selectmenu = FindElement(cur_e, "SelectMenu", &s->skinlayout);
-		XMLElement *position = FindElement(selectmenu, "Position", &s->skinlayout);
-		XMLElement *bodyoff = FindElementWithAttribute(position, "Bar", "index", INT(args[1]), &s->skinlayout);
-		XMLElement *frame = s->skinlayout.NewElement("Frame");
+		XMLElement *selectmenu = FindElement(cur_e, "selectmenu", &s->skinlayout);
+		XMLElement *position = FindElement(selectmenu, "position", &s->skinlayout);
+		XMLElement *bodyoff = FindElementWithAttribute(position, "bar", "index", INT(args[1]), &s->skinlayout);
+		XMLElement *frame = s->skinlayout.NewElement("frame");
 		frame->SetAttribute("time", INT(args[2]));
 		frame->SetAttribute("x", INT(args[3]));
 		frame->SetAttribute("y", INT(args[4]));
@@ -1166,7 +1183,7 @@ void _LR2SkinParser::ConvertToTextureFont(XMLElement *obj) {
 	 * if you want, use Lua condition. that'll be helpful.
 	 */
 	if (fonttype == 24)
-		obj->SetAttribute("24mode", true);
+		obj->SetAttribute("mode24", true);
 }
 
 // returns new(or previous) number
@@ -1200,8 +1217,8 @@ int _LR2SkinParser::GenerateTexturefontString(XMLElement *obj) {
 	texturefont_id.insert(std::pair<int, int>(id, font_cnt++));
 
 	// get image file path from resource
-	XMLElement *resource = s->skinlayout.FirstChildElement("Resource");
-	XMLElement *img = FindElementWithAttribute(resource, "Image", "name", obj->Attribute("resid"));
+	XMLElement *resource = s->skinlayout.FirstChildElement("skin");
+	XMLElement *img = FindElementWithAttribute(resource, "image", "name", obj->Attribute("resid"));
 	// create font data
 	SkinTextureFont tfont;
 	tfont.AddImageSrc(img->Attribute("path"));
@@ -1221,21 +1238,21 @@ int _LR2SkinParser::GenerateTexturefontString(XMLElement *obj) {
 	out = "\n# Auto-generated texture font data by SkinParser\n" + out;
 
 	// register to LR2 resource
-	XMLElement *res = s->skinlayout.FirstChildElement("Resource");
-	XMLElement *restfont = s->skinlayout.NewElement("TextureFont");
+	XMLElement *res = s->skinlayout.FirstChildElement("skin");
+	XMLElement *restfont = s->skinlayout.NewElement("texturefont");
 	restfont->SetAttribute("name", font_cnt-1);		// create new texture font
 	restfont->SetAttribute("type", "1");			// for LR2 font type. (but not decided for other format, yet.)
 	restfont->SetText(out.c_str());
-	res->LinkEndChild(restfont);
+	res->InsertFirstChild(restfont);
 
 	return font_cnt-1;
 }
 
-#define SETOPTION(s) (strcat(translated, s))
+#define SETOPTION(s) (strcat_s(translated, 1024, s))
 #define SETNEGATIVEOPTION(s) \
 if (translated[0] == '!') translated[0] = 0;\
-else strcpy(translated, "!");\
-strcat(translated, s);
+else strcpy_s(translated, 1024, "!");\
+strcat_s(translated, 1024, s);
 const char* _LR2SkinParser::TranslateOPs(int op) {
 	/*
 	 * In Rhythmus, there's no object called OP(condition) code. but, all conditions have timer code, and that does OP code's work.
@@ -1253,87 +1270,87 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 		/* this is an constant code - but should NOT given as argument, I suggest. */
 		strcat(translated, "true");
 	}
-	else if (op > 0 && op < 300) {
+	else if (op > 0 && op < 200) {
 		if (op == 1) {
-			strcat(translated, "IsSelectBarFolder");
+			SETOPTION("IsSelectBarFolder");
 		}
 		else if (op == 2) {
-			strcat(translated, "IsSelectBarSong");
+			SETOPTION("IsSelectBarSong");
 		}
 		else if (op == 3) {
-			strcat(translated, "IsSelectBarCourse");
+			SETOPTION("IsSelectBarCourse");
 		}
 		else if (op == 4) {
-			strcat(translated, "IsSelectBarNewCourse");
+			SETOPTION("IsSelectBarNewCourse");
 		}
 		else if (op == 5) {
-			strcat(translated, "IsSelectBarPlayable");
+			SETOPTION("IsSelectBarPlayable");
 		}
 		else if (op == 10) {
-			strcat(translated, "IsDoublePlay");
+			SETOPTION("IsDoublePlay");
 		}
 		else if (op == 11) {
-			strcat(translated, "IsBattlePlay");
+			SETOPTION("IsBattlePlay");
 		}
 		else if (op == 12) {
-			strcat(translated, "IsDoublePlay");	// this includes battle
+			SETOPTION("IsDoublePlay");	// this includes battle
 		}
 		else if (op == 13) {
-			strcat(translated, "IsBattlePlay");	// this includes ghost battle
+			SETOPTION("IsBattlePlay");	// this includes ghost battle
 		}
 		else if (op == 20) {
-			strcat(translated, "OnPanel");
+			SETOPTION("OnPanel");
 		}
 		else if (op == 21) {
-			strcat(translated, "OnPanel1");
+			SETOPTION("OnPanel1");
 		}
 		else if (op == 22) {
-			strcat(translated, "OnPanel2");
+			SETOPTION("OnPanel2");
 		}
 		else if (op == 23) {
-			strcat(translated, "OnPanel3");
+			SETOPTION("OnPanel3");
 		}
 		else if (op == 24) {
-			strcat(translated, "OnPanel4");
+			SETOPTION("OnPanel4");
 		}
 		else if (op == 25) {
-			strcat(translated, "OnPanel5");
+			SETOPTION("OnPanel5");
 		}
 		else if (op == 26) {
-			strcat(translated, "OnPanel6");
+			SETOPTION("OnPanel6");
 		}
 		else if (op == 27) {
-			strcat(translated, "OnPanel7");
+			SETOPTION("OnPanel7");
 		}
 		else if (op == 28) {
-			strcat(translated, "OnPanel8");
+			SETOPTION("OnPanel8");
 		}
 		else if (op == 29) {
-			strcat(translated, "OnPanel9");
+			SETOPTION("OnPanel9");
 		}
 		else if (op == 30) {
-			strcat(translated, "IsBGANormal");		// Depreciated; won't be used
+			SETOPTION("IsBGANormal");		// Depreciated; won't be used
 		}
 		else if (op == 31) {
-			strcat(translated, "IsBGA");
+			SETOPTION("IsBGA");
 		}
 		else if (op == 32) {
 			SETNEGATIVEOPTION("IsAutoPlay");
 		}
 		else if (op == 33) {
-			strcat(translated, "IsAutoPlay");
+			SETOPTION("IsAutoPlay");
 		}
 		else if (op == 34) {
-			strcat(translated, "IsGhostOff");			// hmm ...
+			SETOPTION("IsGhostOff");			// hmm ...
 		}
 		else if (op == 35) {
-			strcat(translated, "IsGhostA");
+			SETOPTION("IsGhostA");
 		}
 		else if (op == 36) {
-			strcat(translated, "IsGhostB");
+			SETOPTION("IsGhostB");
 		}
 		else if (op == 37) {
-			strcat(translated, "IsGhostC");
+			SETOPTION("IsGhostC");
 		}
 		else if (op == 38) {
 			SETNEGATIVEOPTION("IsScoreGraph");
@@ -1345,22 +1362,22 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 			SETNEGATIVEOPTION("IsBGA");
 		}
 		else if (op == 41) {
-			strcat(translated, "IsBGA");
+			SETOPTION("IsBGA");
 		}
 		else if (op == 42) {
-			strcat(translated, "IsP1GrooveGauge");
+			SETOPTION("IsP1GrooveGauge");
 		}
 		else if (op == 43) {
-			strcat(translated, "IsP1HardGauge");
+			SETOPTION("IsP1HardGauge");
 		}
 		else if (op == 44) {
-			strcat(translated, "IsP2GrooveGauge");
+			SETOPTION("IsP2GrooveGauge");
 		}
 		else if (op == 45) {
-			strcat(translated, "IsP2HardGauge");
+			SETOPTION("IsP2HardGauge");
 		}
 		else if (op == 46) {
-			strcat(translated, "IsDiffFiltered");		// on select menu; but depreciated?
+			SETOPTION("IsDiffFiltered");		// on select menu; but depreciated?
 		}
 		else if (op == 47) {
 			SETNEGATIVEOPTION("IsDifficultyFilter");
@@ -1369,55 +1386,49 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 			SETNEGATIVEOPTION("IsOnline");
 		}
 		else if (op == 51) {
-			strcat(translated, "IsOnline");
+			SETOPTION("IsOnline");
 		}
 		else if (op == 52) {
 			SETNEGATIVEOPTION("IsExtraMode");			// DEMO PLAY
 		}
 		else if (op == 53) {
-			strcat(translated, "IsExtraMode");
+			SETOPTION("IsExtraMode");
 		}
 		else if (op == 54) {
 			SETNEGATIVEOPTION("IsP1AutoSC");
 		}
 		else if (op == 55) {
-			strcat(translated, "IsP1AutoSC");
+			SETOPTION("IsP1AutoSC");
 		}
 		else if (op == 56) {
-			if (translated[0] == '!') translated[0] = 0;
-			else strcpy(translated, "!");
-			strcat(translated, "IsP2AutoSC");
+			SETNEGATIVEOPTION("IsP2AutoSC");
 		}
 		else if (op == 57) {
-			strcat(translated, "IsP2AutoSC");
+			SETOPTION("IsP2AutoSC");
 		}
 		else if (op == 60) {
-			if (translated[0] == '!') translated[0] = 0;
-			else strcpy(translated, "!");
-			strcat(translated, "IsRecordable");
+			SETNEGATIVEOPTION("IsRecordable");
 		}
 		else if (op == 61) {
-			strcat(translated, "IsRecordable");
+			SETOPTION("IsRecordable");
 		}
 		else if (op == 62) {
-			if (translated[0] == '!') translated[0] = 0;
-			else strcpy(translated, "!");
-			strcat(translated, "IsRecordable");
+			SETNEGATIVEOPTION("IsRecordable");
 		}
 		else if (op == 63) {
-			strcat(translated, "IsEasyClear");
+			SETOPTION("IsEasyClear");
 		}
 		else if (op == 64) {
-			strcat(translated, "IsGrooveClear");
+			SETOPTION("IsGrooveClear");
 		}
 		else if (op == 65) {
-			strcat(translated, "IsHardClear");
+			SETOPTION("IsHardClear");
 		}/* NO EXH in LR2
 		else if (op == 66) {
 		strcat(translated, "IsEXHClear");
 		}*/
 		else if (op == 66) {
-			strcat(translated, "IsFCClear");
+			SETOPTION("IsFCClear");
 		}
 		else if (op == 70) {
 			SETNEGATIVEOPTION("IsBeginnerSparkle");
@@ -1435,67 +1446,67 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 			SETNEGATIVEOPTION("IsInsaneSparkle");
 		}
 		else if (op == 75) {
-			strcat(translated, "IsBeginnerSparkle");
+			SETOPTION("IsBeginnerSparkle");
 		}
 		else if (op == 76) {
-			strcat(translated, "IsNormalSparkle");
+			SETOPTION("IsNormalSparkle");
 		}
 		else if (op == 77) {
-			strcat(translated, "IsHyperSparkle");
+			SETOPTION("IsHyperSparkle");
 		}
 		else if (op == 78) {
-			strcat(translated, "IsAnotherSparkle");
+			SETOPTION("IsAnotherSparkle");
 		}
 		else if (op == 79) {
-			strcat(translated, "IsInsaneSparkle");
+			SETOPTION("IsInsaneSparkle");
 		}
 		else if (op == 80) {
-			strcat(translated, "OnSongLoading");
+			SETOPTION("OnSongLoading");
 		}
 		else if (op == 81) {
-			strcat(translated, "OnSongLoadingEnd");
+			SETOPTION("OnSongLoadingEnd");
 		}
 		else if (op == 84) {
-			strcat(translated, "OnSongReplay");
+			SETOPTION("OnSongReplay");
 		}
 		else if (op == 90) {
-			strcat(translated, "OnResultClear");
+			SETOPTION("OnResultClear");
 		}
 		else if (op == 91) {
-			strcat(translated, "OnResultFail");
+			SETOPTION("OnResultFail");
 		}
 		else if (op == 150) {
-			strcat(translated, "OnDiffNone");			// I suggest to use DiffValue == 0 then this.
+			SETOPTION("OnDiffNone");			// I suggest to use DiffValue == 0 then this.
 		}
 		else if (op == 151) {
-			strcat(translated, "OnDiffBeginner");
+			SETOPTION("OnDiffBeginner");
 		}
 		else if (op == 152) {
-			strcat(translated, "OnDiffNormal");
+			SETOPTION("OnDiffNormal");
 		}
 		else if (op == 153) {
-			strcat(translated, "OnDiffHyper");
+			SETOPTION("OnDiffHyper");
 		}
 		else if (op == 154) {
-			strcat(translated, "OnDiffAnother");
+			SETOPTION("OnDiffAnother");
 		}
 		else if (op == 155) {
-			strcat(translated, "OnDiffInsane");
+			SETOPTION("OnDiffInsane");
 		}
 		else if (op == 160) {
-			strcat(translated, "Is7Keys");
+			SETOPTION("Is7Keys");
 		}
 		else if (op == 161) {
-			strcat(translated, "Is5Keys");
+			SETOPTION("Is5Keys");
 		}
 		else if (op == 162) {
-			strcat(translated, "Is14Keys");
+			SETOPTION("Is14Keys");
 		}
 		else if (op == 163) {
-			strcat(translated, "Is10Keys");
+			SETOPTION("Is10Keys");
 		}
 		else if (op == 164) {
-			strcat(translated, "Is9Keys");
+			SETOPTION("Is9Keys");
 		}
 		/* 165 ~ : should we work with it? (same with op 160 ~ 161) */
 		else if (op == 170) {
@@ -1724,38 +1735,38 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 		}
 		/* SUD/LIFT */
 		else if (op == 270) {
-			strcat(translated, "OnP1SuddenChange");
+			SETOPTION("OnP1SuddenChange");
 		}
 		else if (op == 271) {
-			strcat(translated, "OnP2SuddenChange");
+			SETOPTION("OnP2SuddenChange");
 		}
 		/* Course related */
 		else if (op == 280) {
-			strcat(translated, "IsCourse1Stage");
+			SETOPTION("IsCourse1Stage");
 		}
 		else if (op == 281) {
-			strcat(translated, "IsCourse2Stage");
+			SETOPTION("IsCourse2Stage");
 		}
 		else if (op == 282) {
-			strcat(translated, "IsCourse3Stage");
+			SETOPTION("IsCourse3Stage");
 		}
 		else if (op == 283) {
-			strcat(translated, "IsCourse4Stage");
+			SETOPTION("IsCourse4Stage");
 		}
 		else if (op == 289) {
-			strcat(translated, "IsCourseFinal");
+			SETOPTION("IsCourseFinal");
 		}
 		else if (op == 290) {
-			strcat(translated, "IsCourse");
+			SETOPTION("IsCourse");
 		}
 		else if (op == 291) {
-			strcat(translated, "IsGrading");		// Ó«êÈìãïÒ
+			SETOPTION("IsGrading");		// Ó«êÈìãïÒ
 		}
 		else if (op == 292) {
-			strcat(translated, "ExpertCourse");
+			SETOPTION("ExpertCourse");
 		}
 		else if (op == 293) {
-			strcat(translated, "ClassCourse");
+			SETOPTION("ClassCourse");
 		}
 	}
 	/* result screen */
@@ -1899,352 +1910,354 @@ const char* _LR2SkinParser::TranslateOPs(int op) {
 	return translated;
 }
 
+#define SETTIMER(s)\
+	strcpy_s(translated, 1024, (s));
 const char* _LR2SkinParser::TranslateTimer(int timer) {
 	if (timer == 1) {
-		strcpy(translated, "OnStartInput");
+		SETTIMER("OnStartInput");
 	}
 	else if (timer == 2) {
-		strcpy(translated, "OnFadeOut");	// FADEOUT
+		SETTIMER("OnFadeOut");	// FADEOUT
 	}
 	else if (timer == 3) {
-		strcpy(translated, "OnClose");		// Stage failed
+		SETTIMER("OnClose");		// Stage failed
 	}
 	else if (timer == 21) {
-		strcpy(translated, "OnPanel1");
+		SETTIMER("OnPanel1");
 	}
 	else if (timer == 22) {
-		strcpy(translated, "OnPanel2");
+		SETTIMER("OnPanel2");
 	}
 	else if (timer == 23) {
-		strcpy(translated, "OnPanel3");
+		SETTIMER("OnPanel3");
 	}
 	else if (timer == 24) {
-		strcpy(translated, "OnPanel4");
+		SETTIMER("OnPanel4");
 	}
 	else if (timer == 25) {
-		strcpy(translated, "OnPanel5");
+		SETTIMER("OnPanel5");
 	}
 	else if (timer == 26) {
-		strcpy(translated, "OnPanel6");
+		SETTIMER("OnPanel6");
 	}
 	else if (timer == 27) {
-		strcpy(translated, "OnPanel7");
+		SETTIMER("OnPanel7");
 	}
 	else if (timer == 28) {
-		strcpy(translated, "OnPanel8");
+		SETTIMER("OnPanel8");
 	}
 	else if (timer == 29) {
-		strcpy(translated, "OnPanel9");
+		SETTIMER("OnPanel9");
 	}
 	/* Panel closing: DEPRECIATED */
 	else if (timer == 31) {
-		strcpy(translated, "OnPanel1Close");
+		SETTIMER("OnPanel1Close");
 	}
 	else if (timer == 32) {
-		strcpy(translated, "OnPanel2Close");
+		SETTIMER("OnPanel2Close");
 	}
 	else if (timer == 33) {
-		strcpy(translated, "OnPanel3Close");
+		SETTIMER("OnPanel3Close");
 	}
 	else if (timer == 34) {
-		strcpy(translated, "OnPanel4Close");
+		SETTIMER("OnPanel4Close");
 	}
 	else if (timer == 35) {
-		strcpy(translated, "OnPanel5Close");
+		SETTIMER("OnPanel5Close");
 	}
 	else if (timer == 36) {
-		strcpy(translated, "OnPanel6Close");
+		SETTIMER("OnPanel6Close");
 	}
 	else if (timer == 37) {
-		strcpy(translated, "OnPanel7Close");
+		SETTIMER("OnPanel7Close");
 	}
 	else if (timer == 38) {
-		strcpy(translated, "OnPanel8Close");
+		SETTIMER("OnPanel8Close");
 	}
 	else if (timer == 39) {
-		strcpy(translated, "OnPanel9Close");
+		SETTIMER("OnPanel9Close");
 	}
 	else if (timer == 40) {
-		strcpy(translated, "OnReady");
+		SETTIMER("OnReady");
 	}
 	else if (timer == 41) {
-		strcpy(translated, "OnGameStart");
+		SETTIMER("OnGameStart");
 	}
 	else if (timer == 42) {
-		strcpy(translated, "OnP1GaugeUp");
+		SETTIMER("OnP1GaugeUp");
 	}
 	else if (timer == 43) {
-		strcpy(translated, "OnP2GaugeUp");
+		SETTIMER("OnP2GaugeUp");
 	}
 	else if (timer == 44) {
-		strcpy(translated, "OnP1GaugeMax");
+		SETTIMER("OnP1GaugeMax");
 	}
 	else if (timer == 45) {
-		strcpy(translated, "OnP2GaugeMax");
+		SETTIMER("OnP2GaugeMax");
 	}
 	else if (timer == 46) {
-		strcpy(translated, "OnP1Combo");
+		SETTIMER("OnP1Combo");
 	}
 	else if (timer == 47) {
-		strcpy(translated, "OnP2Combo");
+		SETTIMER("OnP2Combo");
 	}
 	else if (timer == 48) {
-		strcpy(translated, "OnP1FullCombo");
+		SETTIMER("OnP1FullCombo");
 	}
 	else if (timer == 49) {
-		strcpy(translated, "OnP2FullCombo");
+		SETTIMER("OnP2FullCombo");
 	}
 	else if (timer == 50) {
-		strcpy(translated, "OnP1JudgeSCOkay");
+		SETTIMER("OnP1JudgeSCOkay");
 	}
 	else if (timer == 51) {
-		strcpy(translated, "OnP1Judge1Okay");
+		SETTIMER("OnP1Judge1Okay");
 	}
 	else if (timer == 52) {
-		strcpy(translated, "OnP1Judge2Okay");
+		SETTIMER("OnP1Judge2Okay");
 	}
 	else if (timer == 53) {
-		strcpy(translated, "OnP1Judge3Okay");
+		SETTIMER("OnP1Judge3Okay");
 	}
 	else if (timer == 54) {
-		strcpy(translated, "OnP1Judge4Okay");
+		SETTIMER("OnP1Judge4Okay");
 	}
 	else if (timer == 55) {
-		strcpy(translated, "OnP1Judge5Okay");
+		SETTIMER("OnP1Judge5Okay");
 	}
 	else if (timer == 56) {
-		strcpy(translated, "OnP1Judge6Okay");
+		SETTIMER("OnP1Judge6Okay");
 	}
 	else if (timer == 57) {
-		strcpy(translated, "OnP1Judge7Okay");
+		SETTIMER("OnP1Judge7Okay");
 	}
 	else if (timer == 58) {
-		strcpy(translated, "OnP1Judge8Okay");
+		SETTIMER("OnP1Judge8Okay");
 	}
 	else if (timer == 59) {
-		strcpy(translated, "OnP1Judge9Okay");
+		SETTIMER("OnP1Judge9Okay");
 	}
 	else if (timer == 60) {
-		strcpy(translated, "OnP2JudgeSCOkay");
+		SETTIMER("OnP2JudgeSCOkay");
 	}
 	else if (timer == 61) {
-		strcpy(translated, "OnP2Judge1Okay");
+		SETTIMER("OnP2Judge1Okay");
 	}
 	else if (timer == 62) {
-		strcpy(translated, "OnP2Judge2Okay");
+		SETTIMER("OnP2Judge2Okay");
 	}
 	else if (timer == 63) {
-		strcpy(translated, "OnP2Judge3Okay");
+		SETTIMER("OnP2Judge3Okay");
 	}
 	else if (timer == 64) {
-		strcpy(translated, "OnP2Judge4Okay");
+		SETTIMER("OnP2Judge4Okay");
 	}
 	else if (timer == 65) {
-		strcpy(translated, "OnP2Judge5Okay");
+		SETTIMER("OnP2Judge5Okay");
 	}
 	else if (timer == 66) {
-		strcpy(translated, "OnP2Judge6Okay");
+		SETTIMER("OnP2Judge6Okay");
 	}
 	else if (timer == 67) {
-		strcpy(translated, "OnP2Judge7Okay");
+		SETTIMER("OnP2Judge7Okay");
 	}
 	else if (timer == 68) {
-		strcpy(translated, "OnP2Judge8Okay");
+		SETTIMER("OnP2Judge8Okay");
 	}
 	else if (timer == 69) {
-		strcpy(translated, "OnP2Judge9Okay");
+		SETTIMER("OnP2Judge9Okay");
 	}
 	else if (timer == 70) {
-		strcpy(translated, "OnP1JudgeSCHold");
+		SETTIMER("OnP1JudgeSCHold");
 	}
 	else if (timer == 71) {
-		strcpy(translated, "OnP1Judge1Hold");
+		SETTIMER("OnP1Judge1Hold");
 	}
 	else if (timer == 72) {
-		strcpy(translated, "OnP1Judge2Hold");
+		SETTIMER("OnP1Judge2Hold");
 	}
 	else if (timer == 73) {
-		strcpy(translated, "OnP1Judge3Hold");
+		SETTIMER("OnP1Judge3Hold");
 	}
 	else if (timer == 74) {
-		strcpy(translated, "OnP1Judge4Hold");
+		SETTIMER("OnP1Judge4Hold");
 	}
 	else if (timer == 75) {
-		strcpy(translated, "OnP1Judge5Hold");
+		SETTIMER("OnP1Judge5Hold");
 	}
 	else if (timer == 76) {
-		strcpy(translated, "OnP1Judge6Hold");
+		SETTIMER("OnP1Judge6Hold");
 	}
 	else if (timer == 77) {
-		strcpy(translated, "OnP1Judge7Hold");
+		SETTIMER("OnP1Judge7Hold");
 	}
 	else if (timer == 78) {
-		strcpy(translated, "OnP1Judge8Hold");
+		SETTIMER("OnP1Judge8Hold");
 	}
 	else if (timer == 79) {
-		strcpy(translated, "OnP1Judge9Hold");
+		SETTIMER("OnP1Judge9Hold");
 	}
 	else if (timer == 80) {
-		strcpy(translated, "OnP2JudgeSCHold");
+		SETTIMER("OnP2JudgeSCHold");
 	}
 	else if (timer == 81) {
-		strcpy(translated, "OnP2Judge1Hold");
+		SETTIMER("OnP2Judge1Hold");
 	}
 	else if (timer == 82) {
-		strcpy(translated, "OnP2Judge2Hold");
+		SETTIMER("OnP2Judge2Hold");
 	}
 	else if (timer == 83) {
-		strcpy(translated, "OnP2Judge3Hold");
+		SETTIMER("OnP2Judge3Hold");
 	}
 	else if (timer == 84) {
-		strcpy(translated, "OnP2Judge4Hold");
+		SETTIMER("OnP2Judge4Hold");
 	}
 	else if (timer == 85) {
-		strcpy(translated, "OnP2Judge5Hold");
+		SETTIMER("OnP2Judge5Hold");
 	}
 	else if (timer == 86) {
-		strcpy(translated, "OnP2Judge6Hold");
+		SETTIMER("OnP2Judge6Hold");
 	}
 	else if (timer == 87) {
-		strcpy(translated, "OnP2Judge7Hold");
+		SETTIMER("OnP2Judge7Hold");
 	}
 	else if (timer == 88) {
-		strcpy(translated, "OnP2Judge8Hold");
+		SETTIMER("OnP2Judge8Hold");
 	}
 	else if (timer == 89) {
-		strcpy(translated, "OnP2Judge9Hold");
+		SETTIMER("OnP2Judge9Hold");
 	}
 	else if (timer == 100) {
-		strcpy(translated, "OnP1KeySCPress");
+		SETTIMER("OnP1KeySCPress");
 	}
 	else if (timer == 101) {
-		strcpy(translated, "OnP1Key1Press");
+		SETTIMER("OnP1Key1Press");
 	}
 	else if (timer == 102) {
-		strcpy(translated, "OnP1Key2Press");
+		SETTIMER("OnP1Key2Press");
 	}
 	else if (timer == 103) {
-		strcpy(translated, "OnP1Key3Press");
+		SETTIMER("OnP1Key3Press");
 	}
 	else if (timer == 104) {
-		strcpy(translated, "OnP1Key4Press");
+		SETTIMER("OnP1Key4Press");
 	}
 	else if (timer == 105) {
-		strcpy(translated, "OnP1Key5Press");
+		SETTIMER("OnP1Key5Press");
 	}
 	else if (timer == 106) {
-		strcpy(translated, "OnP1Key6Press");
+		SETTIMER("OnP1Key6Press");
 	}
 	else if (timer == 107) {
-		strcpy(translated, "OnP1Key7Press");
+		SETTIMER("OnP1Key7Press");
 	}
 	else if (timer == 108) {
-		strcpy(translated, "OnP1Key8Press");
+		SETTIMER("OnP1Key8Press");
 	}
 	else if (timer == 109) {
-		strcpy(translated, "OnP1Key9Press");
+		SETTIMER("OnP1Key9Press");
 	}
 	else if (timer == 110) {
-		strcpy(translated, "OnP2KeySCPress");
+		SETTIMER("OnP2KeySCPress");
 	}
 	else if (timer == 111) {
-		strcpy(translated, "OnP2Key1Press");
+		SETTIMER("OnP2Key1Press");
 	}
 	else if (timer == 112) {
-		strcpy(translated, "OnP2Key2Press");
+		SETTIMER("OnP2Key2Press");
 	}
 	else if (timer == 113) {
-		strcpy(translated, "OnP2Key3Press");
+		SETTIMER("OnP2Key3Press");
 	}
 	else if (timer == 114) {
-		strcpy(translated, "OnP2Key4Press");
+		SETTIMER("OnP2Key4Press");
 	}
 	else if (timer == 115) {
-		strcpy(translated, "OnP2Key5Press");
+		SETTIMER("OnP2Key5Press");
 	}
 	else if (timer == 116) {
-		strcpy(translated, "OnP2Key6Press");
+		SETTIMER("OnP2Key6Press");
 	}
 	else if (timer == 117) {
-		strcpy(translated, "OnP2Key7Press");
+		SETTIMER("OnP2Key7Press");
 	}
 	else if (timer == 118) {
-		strcpy(translated, "OnP2Key8Press");
+		SETTIMER("OnP2Key8Press");
 	}
 	else if (timer == 119) {
-		strcpy(translated, "OnP2Key9Press");
+		SETTIMER("OnP2Key9Press");
 	}
 	else if (timer == 120) {
-		strcpy(translated, "OnP1KeySCUp");
+		SETTIMER("OnP1KeySCUp");
 	}
 	else if (timer == 121) {
-		strcpy(translated, "OnP1Key1Up");
+		SETTIMER("OnP1Key1Up");
 	}
 	else if (timer == 122) {
-		strcpy(translated, "OnP1Key2Up");
+		SETTIMER("OnP1Key2Up");
 	}
 	else if (timer == 123) {
-		strcpy(translated, "OnP1Key3Up");
+		SETTIMER("OnP1Key3Up");
 	}
 	else if (timer == 124) {
-		strcpy(translated, "OnP1Key4Up");
+		SETTIMER("OnP1Key4Up");
 	}
 	else if (timer == 125) {
-		strcpy(translated, "OnP1Key5Up");
+		SETTIMER("OnP1Key5Up");
 	}
 	else if (timer == 126) {
-		strcpy(translated, "OnP1Key6Up");
+		SETTIMER("OnP1Key6Up");
 	}
 	else if (timer == 127) {
-		strcpy(translated, "OnP1Key7Up");
+		SETTIMER("OnP1Key7Up");
 	}
 	else if (timer == 128) {
-		strcpy(translated, "OnP1Key8Up");
+		SETTIMER("OnP1Key8Up");
 	}
 	else if (timer == 129) {
-		strcpy(translated, "OnP1Key9Up");
+		SETTIMER("OnP1Key9Up");
 	}
 	else if (timer == 130) {
-		strcpy(translated, "OnP2KeySCUp");
+		SETTIMER("OnP2KeySCUp");
 	}
 	else if (timer == 131) {
-		strcpy(translated, "OnP2Key1Up");
+		SETTIMER("OnP2Key1Up");
 	}
 	else if (timer == 132) {
-		strcpy(translated, "OnP2Key2Up");
+		SETTIMER("OnP2Key2Up");
 	}
 	else if (timer == 133) {
-		strcpy(translated, "OnP2Key3Up");
+		SETTIMER("OnP2Key3Up");
 	}
 	else if (timer == 134) {
-		strcpy(translated, "OnP2Key4Up");
+		SETTIMER("OnP2Key4Up");
 	}
 	else if (timer == 135) {
-		strcpy(translated, "OnP2Key5Up");
+		SETTIMER("OnP2Key5Up");
 	}
 	else if (timer == 136) {
-		strcpy(translated, "OnP2Key6Up");
+		SETTIMER("OnP2Key6Up");
 	}
 	else if (timer == 137) {
-		strcpy(translated, "OnP2Key7Up");
+		SETTIMER("OnP2Key7Up");
 	}
 	else if (timer == 138) {
-		strcpy(translated, "OnP2Key8Up");
+		SETTIMER("OnP2Key8Up");
 	}
 	else if (timer == 139) {
-		strcpy(translated, "OnP2Key9Up");
+		SETTIMER("OnP2Key9Up");
 	}
 	else if (timer == 140) {
-		strcpy(translated, "OnBeat");
+		SETTIMER("OnBeat");
 	}
 	else if (timer == 143) {
-		strcpy(translated, "OnP1LastNote");
+		SETTIMER("OnP1LastNote");
 	}
 	else if (timer == 144) {
-		strcpy(translated, "OnP2LastNote");
+		SETTIMER("OnP2LastNote");
 	}
 	else if (timer == 150) {
-		strcpy(translated, "OnResult");
+		SETTIMER("OnResult");
 	}
 	else {
 		// unknown timer!
@@ -2255,6 +2268,7 @@ const char* _LR2SkinParser::TranslateTimer(int timer) {
 	return translated;
 }
 
+// TODO: quite things to consider
 const char* _LR2SkinParser::TranslateButton(int code) {
 	if (code == 1)
 		strcpy(translated, "TogglePanel1()");
@@ -2306,24 +2320,32 @@ const char* _LR2SkinParser::TranslateButton(int code) {
 	return translated;
 }
 
+#define SETSLIDER(s)\
+	strcpy_s(translated, 1024, (s))
 const char* _LR2SkinParser::TranslateSlider(int code) {
 	if (code == 1) {
-		strcpy(translated, "SelectBar");
+		SETSLIDER("SelectBar");
 	}
 	else if (code == 2) {
-		strcpy(translated, "P1HighSpeed");
+		SETSLIDER("P1HighSpeed");
 	}
 	else if (code == 3) {
-		strcpy(translated, "P2HighSpeed");
+		SETSLIDER("P2HighSpeed");
 	}
 	else if (code == 4) {
-		strcpy(translated, "P1Sudden");
+		SETSLIDER("P1Sudden");
 	}
 	else if (code == 5) {
-		strcpy(translated, "P2Sudden");
+		SETSLIDER("P2Sudden");
 	}
 	else if (code == 6) {
-		strcpy(translated, "PlayProgress");
+		SETSLIDER("PlayProgress");
+	}
+	else if (code == 17) {
+		SETSLIDER("Volume");
+	}
+	else if (code == 26) {
+		SETSLIDER("Pitch");
 	}
 	// Lift isn't supported in LR2
 	/* else (skin scroll, FX, etc ...) are all depreciated, so ignore. */
@@ -2334,96 +2356,98 @@ const char* _LR2SkinParser::TranslateSlider(int code) {
 	return translated;
 }
 
+#define SETGRAPH(s)\
+	strcpy_s(translated, 1024, (s))
 const char* _LR2SkinParser::TranslateGraph(int code) {
 	if (code == 1) {
-		strcpy(translated, "PlayProgress");			// shares with number
+		SETGRAPH("PlayProgress");			// shares with number
 	}
 	else if (code == 2) {
-		strcpy(translated, "SongLoadProgress");
+		SETGRAPH("SongLoadProgress");
 	}
 	else if (code == 3) {
-		strcpy(translated, "SongLoadProgress");
+		SETGRAPH("SongLoadProgress");
 	}
 	else if (code == 5) {
-		strcpy(translated, "BeginnerLevel");	// graph only value
+		SETGRAPH("BeginnerLevel");	// graph only value
 	}
 	else if (code == 6) {
-		strcpy(translated, "NormalLevel");
+		SETGRAPH("NormalLevel");
 	}
 	else if (code == 7) {
-		strcpy(translated, "HyperLevel");
+		SETGRAPH("HyperLevel");
 	}
 	else if (code == 8) {
-		strcpy(translated, "AnotherLevel");
+		SETGRAPH("AnotherLevel");
 	}
 	else if (code == 9) {
-		strcpy(translated, "InsaneLevel");
+		SETGRAPH("InsaneLevel");
 	}
 	else if (code == 10) {
-		strcpy(translated, "P1ExScore");
+		SETGRAPH("P1ExScore");
 	}
 	else if (code == 11) {
-		strcpy(translated, "P1ExScoreEsti");
+		SETGRAPH("P1ExScoreEsti");
 	}
 	else if (code == 12) {
-		strcpy(translated, "P1HighScore");
+		SETGRAPH("P1HighScore");
 	}
 	else if (code == 13) {
-		strcpy(translated, "P1HighScoreEsti");
+		SETGRAPH("P1HighScoreEsti");
 	}
 	else if (code == 14) {
-		strcpy(translated, "P2ExScore");
+		SETGRAPH("P2ExScore");
 	}
 	else if (code == 15) {
-		strcpy(translated, "P2ExScoreEsti");
+		SETGRAPH("P2ExScoreEsti");
 	}
 	else if (code == 20) {
-		strcpy(translated, "ResultPerfectPercent");
+		SETGRAPH("ResultPerfectPercent");
 	}
 	else if (code == 21) {
-		strcpy(translated, "ResultGreatPercent");
+		SETGRAPH("ResultGreatPercent");
 	}
 	else if (code == 22) {
-		strcpy(translated, "ResultGoodPercent");
+		SETGRAPH("ResultGoodPercent");
 	}
 	else if (code == 23) {
-		strcpy(translated, "ResultBadPercent");
+		SETGRAPH("ResultBadPercent");
 	}
 	else if (code == 24) {
-		strcpy(translated, "ResultPoorPercent");
+		SETGRAPH("ResultPoorPercent");
 	}
 	else if (code == 25) {
-		strcpy(translated, "ResultMaxComboPercent");
+		SETGRAPH("ResultMaxComboPercent");
 	}
 	else if (code == 26) {
-		strcpy(translated, "ResultScorePercent");
+		SETGRAPH("ResultScorePercent");
 	}
 	else if (code == 27) {
-		strcpy(translated, "ResultExScorePercent");
+		SETGRAPH("ResultExScorePercent");
 	}
 	else if (code == 30) {
-		strcpy(translated, "GhostPerfectPercent");
+		SETGRAPH("GhostPerfectPercent");
 	}
 	else if (code == 31) {
-		strcpy(translated, "GhostGreatPercent");
+		SETGRAPH("GhostGreatPercent");
 	}
 	else if (code == 32) {
-		strcpy(translated, "GhostGoodPercent");
+		SETGRAPH("GhostGoodPercent");
 	}
 	else if (code == 33) {
-		strcpy(translated, "GhostBadPercent");
+		SETGRAPH("GhostBadPercent");
 	}
 	else if (code == 34) {
-		strcpy(translated, "GhostPoorPercent");
+		SETGRAPH("GhostPoorPercent");
 	}
 	else if (code == 35) {
-		strcpy(translated, "GhostMaxComboPercent");
+		SETGRAPH("GhostMaxComboPercent");
 	}
 	else if (code == 36) {
-		strcpy(translated, "GhostScorePercent");
+		SETGRAPH("GhostScorePercent");
 	}
 	else if (code == 37) {
-		strcpy(translated, "GhostExScorePercent");
+		SETGRAPH("GhostExScorePercent");
 	}
 	// 40 ~ 47 highscore is depreciated; ignore
 	else {
@@ -2433,346 +2457,348 @@ const char* _LR2SkinParser::TranslateGraph(int code) {
 	return translated;
 }
 
+#define SETNUMBER(s)\
+	strcpy_s(translated, 1024, (s))
 const char* _LR2SkinParser::TranslateNumber(int code) {
 	if (code == 10) {
-		strcpy(translated, "P1Speed");
+		SETNUMBER("P1Speed");
 	}
 	else if (code == 11) {
-		strcpy(translated, "P2Speed");
+		SETNUMBER("P2Speed");
 	}
 	else if (code == 12) {
-		strcpy(translated, "JudgeTiming");
+		SETNUMBER("JudgeTiming");
 	}
 	else if (code == 13) {
-		strcpy(translated, "TargetRate");
+		SETNUMBER("TargetRate");
 	}
 	else if (code == 14) {
-		strcpy(translated, "P1Sudden");
+		SETNUMBER("P1Sudden");
 	}
 	else if (code == 15) {
-		strcpy(translated, "P2Sudden");
+		SETNUMBER("P2Sudden");
 	}/* LR2 doesn't support lift option
 	else if (code == 14) {
-		strcpy(translated, "P2Lift");
+		SETNUMBER("P2Lift");
 	}
 	else if (code == 15) {
-		strcpy(translated, "P2Lift");
+		SETNUMBER("P2Lift");
 	}*/
 	else if (code == 20) {
-		strcpy(translated, "FPS");
+		SETNUMBER("FPS");
 	}
 	else if (code == 21) {
-		strcpy(translated, "Year");
+		SETNUMBER("Year");
 	}
 	else if (code == 22) {
-		strcpy(translated, "Month");
+		SETNUMBER("Month");
 	}
 	else if (code == 23) {
-		strcpy(translated, "Day");
+		SETNUMBER("Day");
 	}
 	else if (code == 24) {
-		strcpy(translated, "Hour");
+		SETNUMBER("Hour");
 	}
 	else if (code == 25) {
-		strcpy(translated, "Minute");
+		SETNUMBER("Minute");
 	}
 	else if (code == 26) {
-		strcpy(translated, "Second");
+		SETNUMBER("Second");
 	}
 	else if (code == 30) {
-		strcpy(translated, "TotalPlayCount");
+		SETNUMBER("TotalPlayCount");
 	}
 	else if (code == 31) {
-		strcpy(translated, "TotalClearCount");
+		SETNUMBER("TotalClearCount");
 	}
 	else if (code == 32) {
-		strcpy(translated, "TotalFailCount");
+		SETNUMBER("TotalFailCount");
 	}
 	else if (code == 45) {
-		strcpy(translated, "BeginnerLevel");
+		SETNUMBER("BeginnerLevel");
 	}
 	else if (code == 46) {
-		strcpy(translated, "NormalLevel");
+		SETNUMBER("NormalLevel");
 	}
 	else if (code == 47) {
-		strcpy(translated, "HyperLevel");
+		SETNUMBER("HyperLevel");
 	}
 	else if (code == 48) {
-		strcpy(translated, "AnotherLevel");
+		SETNUMBER("AnotherLevel");
 	}
 	else if (code == 49) {
-		strcpy(translated, "InsaneLevel");
+		SETNUMBER("InsaneLevel");
 	}
 	else if (code == 70) {
-		strcpy(translated, "Score");
+		SETNUMBER("Score");
 	}
 	else if (code == 71) {
-		strcpy(translated, "ExScore");
+		SETNUMBER("ExScore");
 	}
 	else if (code == 72) {
-		strcpy(translated, "ExScore");
+		SETNUMBER("ExScore");
 	}
 	else if (code == 73) {
-		strcpy(translated, "Rate");
+		SETNUMBER("Rate");
 	}
 	else if (code == 74) {
-		strcpy(translated, "TotalNotes");
+		SETNUMBER("TotalNotes");
 	}
 	else if (code == 75) {
-		strcpy(translated, "MaxCombo");
+		SETNUMBER("MaxCombo");
 	}
 	else if (code == 76) {
-		strcpy(translated, "MinBP");
+		SETNUMBER("MinBP");
 	}
 	else if (code == 77) {
-		strcpy(translated, "PlayCount");
+		SETNUMBER("PlayCount");
 	}
 	else if (code == 78) {
-		strcpy(translated, "ClearCount");
+		SETNUMBER("ClearCount");
 	}
 	else if (code == 79) {
-		strcpy(translated, "FailCount");
+		SETNUMBER("FailCount");
 	}
 	else if (code == 80) {
-		strcpy(translated, "PerfectCount");
+		SETNUMBER("PerfectCount");
 	}
 	else if (code == 81) {
-		strcpy(translated, "GreatCount");
+		SETNUMBER("GreatCount");
 	}
 	else if (code == 82) {
-		strcpy(translated, "GoodCount");
+		SETNUMBER("GoodCount");
 	}
 	else if (code == 83) {
-		strcpy(translated, "BadCount");
+		SETNUMBER("BadCount");
 	}
 	else if (code == 84) {
-		strcpy(translated, "PoorCount");
+		SETNUMBER("PoorCount");
 	}
 	else if (code == 90) {
-		strcpy(translated, "BPMMax");
+		SETNUMBER("BPMMax");
 	}
 	else if (code == 91) {
-		strcpy(translated, "BPMMin");
+		SETNUMBER("BPMMin");
 	}
 	else if (code == 92) {
-		strcpy(translated, "IRRank");
+		SETNUMBER("IRRank");
 	}
 	else if (code == 93) {
-		strcpy(translated, "IRTotal");
+		SETNUMBER("IRTotal");
 	}
 	else if (code == 94) {
-		strcpy(translated, "IRRate");
+		SETNUMBER("IRRate");
 	}
 	else if (code == 95) {
-		strcpy(translated, "RivalDiff");		// abs(HighExScore - HighExScoreRival)
+		SETNUMBER("RivalDiff");		// abs(HighExScore - HighExScoreRival)
 	}
 	/* during play */
 	else if (code == 100) {
-		strcpy(translated, "P1Score");
+		SETNUMBER("P1Score");
 	}
 	else if (code == 101) {
-		strcpy(translated, "P1ExScore");
+		SETNUMBER("P1ExScore");
 	}
 	else if (code == 102) {
-		strcpy(translated, "P1Rate");
+		SETNUMBER("P1Rate");
 	}
 	else if (code == 103) {
-		strcpy(translated, "P1Rate_decimal");
+		SETNUMBER("P1Rate_decimal");
 	}
 	else if (code == 104) {
-		strcpy(translated, "P1Combo");
+		SETNUMBER("P1Combo");
 	}
 	else if (code == 105) {
-		strcpy(translated, "P1MaxCombo");
+		SETNUMBER("P1MaxCombo");
 	}
 	else if (code == 106) {
-		strcpy(translated, "P1TotalNotes");
+		SETNUMBER("P1TotalNotes");
 	}
 	else if (code == 107) {
-		strcpy(translated, "P1Gauge");
+		SETNUMBER("P1Gauge");
 	}
 	else if (code == 108) {
-		strcpy(translated, "P1RivalDiff");
+		SETNUMBER("P1RivalDiff");
 	}
 	else if (code == 110) {
-		strcpy(translated, "P1PerfectCount");
+		SETNUMBER("P1PerfectCount");
 	}
 	else if (code == 111) {
-		strcpy(translated, "P1GreatCount");
+		SETNUMBER("P1GreatCount");
 	}
 	else if (code == 112) {
-		strcpy(translated, "P1GoodCount");
+		SETNUMBER("P1GoodCount");
 	}
 	else if (code == 113) {
-		strcpy(translated, "P1BadCount");
+		SETNUMBER("P1BadCount");
 	}
 	else if (code == 114) {
-		strcpy(translated, "P1PoorCount");
+		SETNUMBER("P1PoorCount");
 	}
 	else if (code == 115) {
-		strcpy(translated, "P1TotalRate");			// estimated value
+		SETNUMBER("P1TotalRate");			// estimated value
 	}
 	else if (code == 116) {
-		strcpy(translated, "P1TotalRate_decimal");	// TODO: process with Lua code
+		SETNUMBER("P1TotalRate_decimal");	// TODO: process with Lua code
 	}
 	/* ghost */
 	else if (code == 120) {
-		strcpy(translated, "P2Score");
+		SETNUMBER("P2Score");
 	}
 	else if (code == 121) {
-		strcpy(translated, "P2ExScore");
+		SETNUMBER("P2ExScore");
 	}
 	else if (code == 122) {
-		strcpy(translated, "P2Rate");
+		SETNUMBER("P2Rate");
 	}
 	else if (code == 123) {
-		strcpy(translated, "P2Rate_decimal");
+		SETNUMBER("P2Rate_decimal");
 	}
 	else if (code == 124) {
-		strcpy(translated, "P2Combo");
+		SETNUMBER("P2Combo");
 	}
 	else if (code == 125) {
-		strcpy(translated, "P2MaxCombo");
+		SETNUMBER("P2MaxCombo");
 	}
 	else if (code == 126) {
-		strcpy(translated, "P2TotalNotes");
+		SETNUMBER("P2TotalNotes");
 	}
 	else if (code == 127) {
-		strcpy(translated, "P2Gauge");
+		SETNUMBER("P2Gauge");
 	}
 	else if (code == 128) {
-		strcpy(translated, "P2RivalDiff");
+		SETNUMBER("P2RivalDiff");
 	}
 	else if (code == 130) {
-		strcpy(translated, "P2PerfectCount");
+		SETNUMBER("P2PerfectCount");
 	}
 	else if (code == 131) {
-		strcpy(translated, "P2GreatCount");
+		SETNUMBER("P2GreatCount");
 	}
 	else if (code == 132) {
-		strcpy(translated, "P2GoodCount");
+		SETNUMBER("P2GoodCount");
 	}
 	else if (code == 133) {
-		strcpy(translated, "P2BadCount");
+		SETNUMBER("P2BadCount");
 	}
 	else if (code == 134) {
-		strcpy(translated, "P2PoorCount");
+		SETNUMBER("P2PoorCount");
 	}
 	else if (code == 135) {
-		strcpy(translated, "P2TotalRate");	// estimated value
+		SETNUMBER("P2TotalRate");	// estimated value
 	}
 	else if (code == 136) {
-		strcpy(translated, "P2TotalRate_decimal");
+		SETNUMBER("P2TotalRate_decimal");
 	}
 	/*
 	 * 150 ~ 158: TODO (useless?)
 	 */
 	else if (code == 160) {
-		strcpy(translated, "PlayBPM");
+		SETNUMBER("PlayBPM");
 	}
 	else if (code == 161) {
-		strcpy(translated, "PlayMinute");
+		SETNUMBER("PlayMinute");
 	}
 	else if (code == 162) {
-		strcpy(translated, "PlaySecond");
+		SETNUMBER("PlaySecond");
 	}
 	else if (code == 163) {
-		strcpy(translated, "PlayRemainMinute");
+		SETNUMBER("PlayRemainMinute");
 	}
 	else if (code == 164) {
-		strcpy(translated, "PlayRemainSecond");
+		SETNUMBER("PlayRemainSecond");
 	}
 	else if (code == 165) {
-		strcpy(translated, "PlayProgress");	// (%)
+		SETNUMBER("PlayProgress");	// (%)
 	}
 	else if (code == 170) {
-		strcpy(translated, "ResultExScoreBefore");
+		SETNUMBER("ResultExScoreBefore");
 	}
 	else if (code == 171) {
-		strcpy(translated, "ResultExScoreNow");
+		SETNUMBER("ResultExScoreNow");
 	}
 	else if (code == 172) {
-		strcpy(translated, "ResultExScoreDiff");
+		SETNUMBER("ResultExScoreDiff");
 	}
 	else if (code == 173) {
-		strcpy(translated, "ResultMaxComboBefore");
+		SETNUMBER("ResultMaxComboBefore");
 	}
 	else if (code == 174) {
-		strcpy(translated, "ResultMaxComboNow");
+		SETNUMBER("ResultMaxComboNow");
 	}
 	else if (code == 175) {
-		strcpy(translated, "ResultMaxComboDiff");
+		SETNUMBER("ResultMaxComboDiff");
 	}
 	else if (code == 176) {
-		strcpy(translated, "ResultMinBPBefore");
+		SETNUMBER("ResultMinBPBefore");
 	}
 	else if (code == 177) {
-		strcpy(translated, "ResultMinBPNow");
+		SETNUMBER("ResultMinBPNow");
 	}
 	else if (code == 178) {
-		strcpy(translated, "ResultMinBPDiff");
+		SETNUMBER("ResultMinBPDiff");
 	}
 	else if (code == 179) {
-		strcpy(translated, "ResultIRRankNow");
+		SETNUMBER("ResultIRRankNow");
 	}
 	else if (code == 180) {
-		strcpy(translated, "ResultIRRankTotal");
+		SETNUMBER("ResultIRRankTotal");
 	}
 	else if (code == 181) {
-		strcpy(translated, "ResultIRRankRate");
+		SETNUMBER("ResultIRRankRate");
 	}
 	else if (code == 182) {
-		strcpy(translated, "ResultIRRankBefore");
+		SETNUMBER("ResultIRRankBefore");
 	}
 	else if (code == 183) {
-		strcpy(translated, "ResultRate");
+		SETNUMBER("ResultRate");
 	}
 	else if (code == 184) {
-		strcpy(translated, "ResultRate_decimal");
+		SETNUMBER("ResultRate_decimal");
 	}
 	/* ignore IR Beta3: 200 ~ 250 */
 	/* rival (in select menu) */
 	else if (code == 270) {
-		strcpy(translated, "RivalScore");
+		SETNUMBER("RivalScore");
 	}
 	else if (code == 271) {
-		strcpy(translated, "RivalExScore");
+		SETNUMBER("RivalExScore");
 	}
 	else if (code == 272) {
-		strcpy(translated, "RivalRate");
+		SETNUMBER("RivalRate");
 	}
 	else if (code == 273) {
-		strcpy(translated, "RivalRate_decimal");
+		SETNUMBER("RivalRate_decimal");
 	}
 	else if (code == 274) {
-		strcpy(translated, "RivalCombo");
+		SETNUMBER("RivalCombo");
 	}
 	else if (code == 275) {
-		strcpy(translated, "RivalMaxCombo");
+		SETNUMBER("RivalMaxCombo");
 	}
 	else if (code == 276) {
-		strcpy(translated, "RivalTotalNotes");
+		SETNUMBER("RivalTotalNotes");
 	}
 	else if (code == 277) {
-		strcpy(translated, "RivalGrooveGauge");
+		SETNUMBER("RivalGrooveGauge");
 	}
 	else if (code == 278) {
-		strcpy(translated, "RivalRivalDiff");
+		SETNUMBER("RivalRivalDiff");
 	}
 	else if (code == 280) {
-		strcpy(translated, "RivalPerfectCount");
+		SETNUMBER("RivalPerfectCount");
 	}
 	else if (code == 281) {
-		strcpy(translated, "RivalGreatCount");
+		SETNUMBER("RivalGreatCount");
 	}
 	else if (code == 282) {
-		strcpy(translated, "RivalGoodCount");
+		SETNUMBER("RivalGoodCount");
 	}
 	else if (code == 283) {
-		strcpy(translated, "RivalBadCount");
+		SETNUMBER("RivalBadCount");
 	}
 	else if (code == 284) {
-		strcpy(translated, "RivalPoorCount");
+		SETNUMBER("RivalPoorCount");
 	}
 	/* 285 ~ is depreciated. ignore. */
 	else {
@@ -2782,141 +2808,143 @@ const char* _LR2SkinParser::TranslateNumber(int code) {
 	return translated;
 }
 
+#define SETTEXT_(s)\
+	strcpy_s(translated, 1024, (s))
 const char* _LR2SkinParser::TranslateText(int code) {
 	if (code == 1) {
-		strcpy(translated, "RivalName"); 
+		SETTEXT_("RivalName"); 
 	}
 	else if (code == 2) {
-		strcpy(translated, "PlayerName");
+		SETTEXT_("PlayerName");
 	}
 	else if (code == 10) {
-		strcpy(translated, "Title");
+		SETTEXT_("Title");
 	}
 	else if (code == 11) {
-		strcpy(translated, "Subtitle");
+		SETTEXT_("Subtitle");
 	}
 	else if (code == 12) {
-		strcpy(translated, "MainTitle");
+		SETTEXT_("MainTitle");
 	}
 	else if (code == 13) {
-		strcpy(translated, "Genre");
+		SETTEXT_("Genre");
 	}
 	else if (code == 14) {
-		strcpy(translated, "Artist");
+		SETTEXT_("Artist");
 	}
 	else if (code == 15) {
-		strcpy(translated, "SubArtist");
+		SETTEXT_("SubArtist");
 	}
 	else if (code == 16) {
-		strcpy(translated, "SearchTag");
+		SETTEXT_("SearchTag");
 	}
 	else if (code == 17) {
-		strcpy(translated, "PlayLevel");		// depreciated?
+		SETTEXT_("PlayLevel");		// depreciated?
 	}
 	else if (code == 18) {
-		strcpy(translated, "PlayDiff");			// depreciated?
+		SETTEXT_("PlayDiff");			// depreciated?
 	}
 	else if (code == 19) {
-		strcpy(translated, "PlayInsaneLevel");	// depreciated?
+		SETTEXT_("PlayInsaneLevel");	// depreciated?
 	}
 	/*
 	 * 20 ~ 30: for editing (depreciated/ignore?)
 	 */
 	else if (code == 40) {
-		strcpy(translated, "KeySlot0");
+		SETTEXT_("KeySlot0");
 	}
 	else if (code == 41) {
-		strcpy(translated, "KeySlot1");
+		SETTEXT_("KeySlot1");
 	}
 	else if (code == 42) {
-		strcpy(translated, "KeySlot2");
+		SETTEXT_("KeySlot2");
 	}
 	else if (code == 43) {
-		strcpy(translated, "KeySlot3");
+		SETTEXT_("KeySlot3");
 	}
 	else if (code == 44) {
-		strcpy(translated, "KeySlot4");
+		SETTEXT_("KeySlot4");
 	}
 	else if (code == 45) {
-		strcpy(translated, "KeySlot5");
+		SETTEXT_("KeySlot5");
 	}
 	else if (code == 46) {
-		strcpy(translated, "KeySlot6");
+		SETTEXT_("KeySlot6");
 	}
 	else if (code == 47) {
-		strcpy(translated, "KeySlot7");
+		SETTEXT_("KeySlot7");
 	}
 	/* Skin select window */
 	else if (code == 50) {
-		strcpy(translated, "SkinName");
+		SETTEXT_("SkinName");
 	}
 	else if (code == 51) {
-		strcpy(translated, "SkinAuthor");
+		SETTEXT_("SkinAuthor");
 	}
 	/* option */
 	else if (code == 60) {
-		strcpy(translated, "PlayMode");
+		SETTEXT_("PlayMode");
 	}
 	else if (code == 61) {
-		strcpy(translated, "PlaySort");
+		SETTEXT_("PlaySort");
 	}
 	else if (code == 62) {
-		strcpy(translated, "PlayDiff");
+		SETTEXT_("PlayDiff");
 	}
 	else if (code == 63) {
-		strcpy(translated, "RandomP1");
+		SETTEXT_("RandomP1");
 	}
 	else if (code == 64) {
-		strcpy(translated, "RandomP2");
+		SETTEXT_("RandomP2");
 	}
 	else if (code == 65) {
-		strcpy(translated, "GaugeP1");
+		SETTEXT_("GaugeP1");
 	}
 	else if (code == 66) {
-		strcpy(translated, "GaugeP2");
+		SETTEXT_("GaugeP2");
 	}
 	else if (code == 67) {
-		strcpy(translated, "AssistP1");
+		SETTEXT_("AssistP1");
 	}
 	else if (code == 68) {
-		strcpy(translated, "AssistP2");
+		SETTEXT_("AssistP2");
 	}
 	else if (code == 69) {
-		strcpy(translated, "Battle");		// depreciated?
+		SETTEXT_("Battle");		// depreciated?
 	}
 	else if (code == 70) {
-		strcpy(translated, "Flip");			// depreciated?
+		SETTEXT_("Flip");			// depreciated?
 	}
 	else if (code == 71) {
-		strcpy(translated, "ScoreGraph");	// depreciated?
+		SETTEXT_("ScoreGraph");	// depreciated?
 	}
 	else if (code == 72) {
-		strcpy(translated, "Ghost");
+		SETTEXT_("Ghost");
 	}
 	else if (code == 74) {
-		strcpy(translated, "ScrollType");
+		SETTEXT_("ScrollType");
 	}
 	else if (code == 75) {
-		strcpy(translated, "BGASize");		// depreciated
+		SETTEXT_("BGASize");		// depreciated
 	}
 	else if (code == 76) {
-		strcpy(translated, "IsBGA");		// depreciated?
+		SETTEXT_("IsBGA");		// depreciated?
 	}/*
 	screen color: depreciated
 	else if (code == 60) {
-		strcpy(translated, "ScreenColor");
+		SETTEXT_("ScreenColor");
 	}*/
 	else if (code == 78) {
-		strcpy(translated, "VSync");
+		SETTEXT_("VSync");
 	}
 	else if (code == 79) {
-		strcpy(translated, "ScreenMode");	// full/window
+		SETTEXT_("ScreenMode");	// full/window
 	}
 	else if (code == 80) {
-		strcpy(translated, "AutoJudge");
+		SETTEXT_("AutoJudge");
 	}
 	else if (code == 81) {
-		strcpy(translated, "ReplaySave");
+		SETTEXT_("ReplaySave");
 	}
 	// ignore trial lines / ignore effects
 	/*
@@ -2939,7 +2967,8 @@ void _LR2SkinParser::Clear() {
 	font_cnt = 0;
 	filter_to_optionname.clear();
 	texturefont_id.clear();
-	memset(line_args, 0, sizeof(line_args));
+	lines_.clear();
+	line_args_.clear();
 	memset(condition_status, 0, sizeof(condition_status));
 }
 

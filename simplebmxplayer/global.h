@@ -34,7 +34,7 @@ namespace BmsJudgeTiming {
 		GOOD = 125,
 		BAD = 173,
 		POOR = 350,
-		NPOOR = 500,
+		NPOOR = 350,
 	};
 }
 
@@ -75,7 +75,7 @@ namespace PLAYERTYPE {
 }
 
 namespace PlayerKeyIndex {
-	const int NONE = 0;
+	const int P1_BUTTONSCUP = 0;
 	const int P1_BUTTON1 = 1;
 	const int P1_BUTTON2 = 2;
 	const int P1_BUTTON3 = 3;
@@ -83,10 +83,11 @@ namespace PlayerKeyIndex {
 	const int P1_BUTTON5 = 5;
 	const int P1_BUTTON6 = 6;
 	const int P1_BUTTON7 = 7;
-	// this means Scratch, mostly
+	// this means Scratch(down), mostly
 	const int P1_BUTTON8 = 8;
-	const int P1_BUTTONSC = 8;
+	const int P1_BUTTONSCDOWN = 8;
 	const int P1_BUTTON9 = 9;
+	const int P2_BUTTONSCUP = 10;
 	const int P2_BUTTON1 = 11;
 	const int P2_BUTTON2 = 12;
 	const int P2_BUTTON3 = 13;
@@ -94,9 +95,9 @@ namespace PlayerKeyIndex {
 	const int P2_BUTTON5 = 15;
 	const int P2_BUTTON6 = 16;
 	const int P2_BUTTON7 = 17;
-	// this means Scratch, mostly
+	// this means Scratch(down), mostly
 	const int P2_BUTTON8 = 18;
-	const int P2_BUTTONSC = 18;
+	const int P2_BUTTONSCDOWN = 18;
 	const int P2_BUTTON9 = 19;
 	const int P1_BUTTONSTART = 20;
 	const int P1_BUTTONVEFX = 21;
@@ -124,6 +125,15 @@ namespace GAUGETYPE {
 	const int ASSISTEASY = 6;
 	const int GRADE = 10;
 	const int EXGRADE = 11;
+}
+
+namespace OPTYPE {
+	const int NONE = 0;
+	const int RANDOM = 1;
+	const int RRANDOM = 2;
+	const int SRANDOM = 3;
+	const int HRANDOM = 4;
+	const int MIRROR = 5;
 }
 
 namespace PACEMAKERTYPE {
@@ -154,6 +164,33 @@ namespace PLAYTYPE {
 
 namespace SCENETYPE {
 
+}
+
+/*
+ * used by skin
+ */
+namespace ACTORTYPE {
+	enum ACTORTYPE {
+		NONE = 0,		/* same as unknown */
+		GENERAL = 1,	/* handled by basic rendering function */
+		GROUP = 2,
+		EXTERN = 3,
+		UNKNOWN = 4,
+		BASE = 5,
+		IMAGE = 10,
+		NUMBER = 11,
+		GRAPH = 12,
+		SLIDER = 13,
+		TEXT = 14,
+		BUTTON = 15,
+		LIST = 16,
+		SCRIPT = 17,
+		/* some renderer specific objects ... */
+		BGA = 20,
+		PLAYLANE = 21,
+		COMBO = 22,				// unused; same as general
+		GROOVEGAUGE = 23,		// unused; same as general
+	};
 }
 
 

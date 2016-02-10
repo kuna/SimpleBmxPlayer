@@ -10,6 +10,7 @@
     <tutorial>1</tutorial>
     <soundlatency>1024</soundlatency>
     <useIR>0</useIR>
+    <bga>1</bga>
     <skin>
         <main></main>
         <player></player>
@@ -24,7 +25,7 @@
         <skinconfig></skinconfig>
         <common></common>
     </skin>
-    <username>NONAME</username>
+    <username>KBUSER</username>
     <keymode>7</keymode>
     <usepreview>1</usepreview>
     <bmsdirs/>

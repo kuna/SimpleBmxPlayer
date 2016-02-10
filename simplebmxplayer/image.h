@@ -1,6 +1,7 @@
 #pragma once
 
 #include "global.h"
+#include "file.h"
 #include "SDL/SDL_image.h"
 #include "SDL/SDL_video.h"
 
@@ -22,6 +23,9 @@ private:
 protected:
 	// also includes movie!
 	SDL_Texture *sdltex;
+	Uint32 colorkey;
+	bool usecolorkey;
+
 	AVFormatContext *moviectx;			// movie context (handle)
 	AVStream *stream;					// current movie stream
 	int moviestream;
@@ -40,15 +44,20 @@ protected:
 	bool LoadMovie(const char *path);
 	void ReleaseMovie();
 public:
-	Image(std::wstring& filepath, bool loop = true);
-	Image(std::string& filepath, bool loop = true);
+#ifdef _WIN32
+	Image(const std::wstring& filepath, bool loop = true);
+	bool Load(const std::wstring& filepath, bool loop = true);
+#endif
+	Image(const std::string& filepath, bool loop = true);
+	bool Load(const std::string& filepath, bool loop = true);
+	bool Load(FileBasic* f, bool loop = true);
 	Image();
 	~Image();
 	void Release();
-	bool Load(const std::wstring& filepath, bool loop = true);
-	bool Load(const std::string& filepath, bool loop = true);
 	int GetWidth();
 	int GetHeight();
+
+	void SetColorKey(bool usecolorkey, Uint32 colorkey);
 
 	bool IsLoaded();
 	void Reset();				// reset pos to first one

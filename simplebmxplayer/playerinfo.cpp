@@ -47,17 +47,32 @@ namespace {
 
 #pragma region PLAYERSCORE
 PlayerScore::PlayerScore() : PlayerScore(0) {}
-PlayerScore::PlayerScore(int notecnt) : totalnote(notecnt), combo(0), maxcombo(0) {
-	memset(score, 0, sizeof(score));
+PlayerScore::PlayerScore(int notecnt) : totalnote(notecnt) {
+	Clear();
 }
-int PlayerScore::CalculateEXScore() {
+void PlayerScore::Clear() {
+	memset(score, 0, sizeof(score));
+	combo = 0;
+	maxcombo = 0;
+	fast = slow = 0;
+}
+int PlayerScore::LastNoteFinished() const {
+	return totalnote <= score[1] + score[2] + score[3] + score[4] + score[5];
+}
+int PlayerScore::GetJudgedNote() const {
+	return score[1] + score[2] + score[3] + score[4] + score[5];
+}
+int PlayerScore::CalculateEXScore() const {
 	return score[JUDGETYPE::JUDGE_PGREAT] * 2 + score[JUDGETYPE::JUDGE_GREAT];
 }
-int PlayerScore::CalculateScore() { return CalculateRate() * 200000; }
-double PlayerScore::CalculateRate() {
+double PlayerScore::CurrentRate() const {
+	return (double)CalculateEXScore() / GetJudgedNote() / 2;
+}
+int PlayerScore::CalculateScore() const { return CalculateRate() * 200000; }
+double PlayerScore::CalculateRate() const {
 	return (double)CalculateEXScore() / totalnote / 2;
 }
-int PlayerScore::CalculateGrade() {
+int PlayerScore::CalculateGrade() const {
 	double rate = CalculateRate();
 	if (rate >= 8.0 / 9)
 		return GRADETYPE::GRADE_AAA;
@@ -125,12 +140,14 @@ void PlayerScore::AddGrade(const int type) {
 #define QUERY_TABLE_SELECT\
 	"SELECT * FROM record WHERE songhash=?;"
 #define QUERY_TABLE_INSERT\
-	"INSERT OR REPLACE INTO record VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+	"INSERT OR REPLACE INTO record VALUES"\
+	"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
 #define QUERY_TABLE_DELETE\
 	"DELETE FROM record WHERE songhash=?"
 #define QUERY_DB_BEGIN		"BEGIN;"
 #define QUERY_DB_COMMIT		"COMMIT;"
-#define QUERY_BIND_TEXT(p)	sqlite3_bind_text(stmt, 1, p, -1, SQLITE_STATIC);
+#define QUERY_BIND_TEXT(idx, p)	sqlite3_bind_text(stmt, idx, p, -1, SQLITE_STATIC);
+#define QUERY_BIND_INT(idx, p)	sqlite3_bind_int(stmt, idx, p);
 
 #define RUNQUERY(q)\
 	bool r;\
@@ -151,23 +168,144 @@ void PlayerScore::AddGrade(const int type) {
 #define GETINT(col, v)\
 	CHECKTYPE(col, SQLITE_INTEGER), v = sqlite3_column_int(stmt, col)
 
-void PlayerReplay::AddJudge(int judge) {
-	// TODO
+void PlayerReplayRecord::AddPress(int time, int lane, int value) {
+	objects.push_back({ time, lane, value });
 }
 
-void PlayerReplay::Clear() {
-	// TODO
+void PlayerReplayRecord::AddJudge(int time, int playside, int judge, int fastslow, int silent) {
+	objects.push_back({ 
+		time, 
+		0xA0 + playside, 
+		judge + 16 * fastslow + 256 * silent 
+	});
 }
 
-void PlayerReplay::Serialize(RString &out) {
-	// TODO
+void PlayerReplayRecord::Clear() {
+	objects.clear();
 }
 
-void PlayerReplay::Parse(const RString& in) {
-	// TODO
+#define MAX_REPLAY_BUFFER 1024000	// about 1000kb
+void PlayerReplayRecord::Serialize(RString &out) const {
+	char *buf = (char*)malloc(MAX_REPLAY_BUFFER);
+	// 
+	//  0 ~ 32 byte: songhash
+	// 40 ~ 44 byte: op1 code
+	// 44 ~ 48 byte: op2 code
+	// 48 ~ 52 byte: gauge 
+	// 52 ~ 56 byte: rseed
+	// 56 ~ 72 byte: rate (double)
+	// (dummy)
+	// 116 ~ 120 byte: header size
+	// 120 byte: header end, replay body data starts
+	// (1 row per 4 * 3 = 12bytes)
+	//
+	strcpy(buf, songhash);
+	memcpy(buf+40, &op_1p, sizeof(int));
+	memcpy(buf+44, &op_2p, sizeof(int));
+	memcpy(buf+48, &gauge, sizeof(int));
+	memcpy(buf+52, &rseed, sizeof(int));
+	memcpy(buf+56, &rate, sizeof(int));
+
+	memcpy(buf + 116, (void*)objects.size(), 4);
+	for (int i = 0; i < objects.size(); i++) {
+		memcpy(buf + 120 + i * 12, &objects[i], 12);
+	}
+
+	// zip compress
+	// (TODO)
+
+	// serialize compressed data to base64
+	char *b64;
+	base64encode(buf, 120 + objects.size() * 12, &b64);
+
+	// delete original data
+	out = b64;
+	free(b64);
+	free(buf);
 }
+
+void PlayerReplayRecord::Parse(const RString& in) {
+	// parse base64 data into binary
+	char *repdata = (char*)malloc(in.size());
+	int rep_len = base64decode(in, in.size(), repdata);
+
+	// zip uncompress
+	// (TODO)
+	char *buf = repdata;
+
+	// memcpy datas
+	int isize;
+	memcpy(&isize, buf + 116, 4);
+	for (int i = 0; i < isize; i++) {
+		struct ReplayObject _tmp;
+		memcpy(&_tmp, buf + 120 + i * 12, 12);
+		objects.push_back(_tmp);
+	}
+
+	// cleanup
+	free(repdata);
+}
+
+
+
+
+
+/*
+ * Helpers
+ */
 
 namespace PlayerReplayHelper {
+	bool LoadReplay(
+		PlayerReplayRecord& rep, 
+		const char* playername, 
+		const char* songhash, 
+		const char* course) {
+		RString path;
+		if (course) {
+			path = ssprintf("../replay/%s/%s/%s.rep", playername, course, songhash);
+		}
+		else {
+			path = ssprintf("../replay/%s/%s.rep", playername, songhash);
+		}
+		RString repdata;
+		if (GetFileContents(path, repdata)) {
+			rep.Parse(repdata);
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	bool SaveReplay(
+		const PlayerReplayRecord& rep, 
+		const char* playername, 
+		const char* songhash, 
+		const char* course) {
+
+		RString path;
+		if (course) {
+			path = ssprintf("../replay/%s/%s/%s.rep", playername, course, songhash);
+		}
+		else {
+			path = ssprintf("../replay/%s/%s.rep", playername, songhash);
+		}
+		RString repdata;
+		rep.Serialize(repdata);
+		FileHelper::ConvertPathToSystem(path);
+		FileHelper::CreateFolder(path);
+		File f;
+		if (f.Open(path, "w")) {
+			f.Write(repdata);
+			f.Close();
+			return true;
+		} else {
+			return false;
+		}
+	}
+}
+
+namespace PlayerRecordHelper {
 	/** [private] sqlite3 for querying player record */
 	namespace {
 		// private; used for load/save PlayerRecord
@@ -224,7 +362,7 @@ namespace PlayerReplayHelper {
 
 		/*
 		 * text - songhash
-		 * text - scorehash
+		 * text - scorehash (only for in/out data)
 		 * int - playcount
 		 * int - clearcount
 		 * int - failcount
@@ -232,17 +370,16 @@ namespace PlayerReplayHelper {
 		 * int - minbp
 		 * int - maxcombo
 		 * int[5] - grade [pg, gr, gd, bd, pr]
-		 * text - replay
 		 */
 		bool QueryPlayRecord(PlayerSongRecord& record, const char *songhash) {
 			RUNQUERY(QUERY_TABLE_SELECT);
-			QUERY_BIND_TEXT(songhash);
+			QUERY_BIND_TEXT(1, songhash);
 			// only get one query
 			if (sqlite3_step(stmt) == SQLITE_ROW) {
 				RString replay;
 				int op1, op2, rseed;
 				GETTEXT(0, record.hash);
-				GETTEXT(1, record.scorehash);
+				//GETTEXT(1, record.scorehash);		// TODO: load scorehash and check validation
 				GETINT(2, record.playcount);
 				GETINT(3, record.clearcount);
 				GETINT(4, record.failcount);
@@ -254,8 +391,8 @@ namespace PlayerReplayHelper {
 				GETINT(10, record.score.score[5]);
 				GETINT(11, record.score.score[2]);
 				GETINT(12, record.score.score[1]);
+				GETINT(13, record.score.score[0]);
 				// COMMENT: ÍöPOOR?
-				GETTEXT(13, replay);					// replay
 				record.replay.Parse(replay);
 				r = true;
 			}
@@ -263,9 +400,31 @@ namespace PlayerReplayHelper {
 		}
 
 		bool InsertPlayRecord(const PlayerSongRecord& record, const char* songhash) {
-			RUNQUERY(QUERY_TABLE_SELECT);
-			QUERY_BIND_TEXT(songhash);
-			Begin();
+			// before insert, get previous play record if available
+			// if exists, then set record with more higher score
+			PlayerSongRecord record_;
+			if (QueryPlayRecord(record_, songhash)) {
+				if (record.score.CalculateEXScore() >= record_.score.CalculateEXScore())
+					record_ = record;
+			}
+			else {
+				record_ = record;
+			}
+			RUNQUERY(QUERY_TABLE_INSERT);
+			QUERY_BIND_TEXT(1, songhash);
+			QUERY_BIND_TEXT(2, "");		// TODO: generate scorehash
+			QUERY_BIND_INT(3, record.playcount);
+			QUERY_BIND_INT(4, record.clearcount);
+			QUERY_BIND_INT(5, record.failcount);
+			QUERY_BIND_INT(6, record.status);
+			QUERY_BIND_INT(7, record.minbp);
+			QUERY_BIND_INT(8, record.maxcombo);
+			QUERY_BIND_INT(9, record.score.score[5]);
+			QUERY_BIND_INT(10, record.score.score[4]);
+			QUERY_BIND_INT(11, record.score.score[3]);
+			QUERY_BIND_INT(12, record.score.score[2]);
+			QUERY_BIND_INT(13, record.score.score[1]);
+			QUERY_BIND_INT(14, record.score.score[0]);
 			CHECKQUERY(SQLITE_DONE);
 			if (r) r = Commit();
 			FINISHQUERY();
@@ -273,7 +432,7 @@ namespace PlayerReplayHelper {
 
 		bool DeletePlayRecord(const char* songhash) {
 			RUNQUERY(QUERY_TABLE_DELETE);
-			QUERY_BIND_TEXT(songhash);
+			QUERY_BIND_TEXT(1, songhash);
 			CHECKQUERY(SQLITE_DONE);
 			FINISHQUERY();
 		}
@@ -282,9 +441,9 @@ namespace PlayerReplayHelper {
 	bool LoadPlayerRecord(PlayerSongRecord& record, const char* name, const char* songhash) {
 		// create & convert db path to absolute
 		RString absolute_db_path = ssprintf("../player/%s.db", name);
-		FileHelper::ConvertPathToAbsolute(absolute_db_path);
-		RString absolute_db_dir = FileHelper::GetParentDirectory(absolute_db_path);
-		FileHelper::CreateFolder(absolute_db_dir);
+		FileHelper::ConvertPathToSystem(absolute_db_path);
+		//RString absolute_db_dir = FileHelper::GetParentDirectory(absolute_db_path);
+		//FileHelper::CreateFolder(absolute_db_dir);
 		// start to query DB
 		ASSERT(sql == 0);
 		if (!OpenSQL(absolute_db_path))
@@ -295,14 +454,31 @@ namespace PlayerReplayHelper {
 		return recordfound && CloseSQL();
 	}
 
-	bool SavePlayerRecord(const PlayerSongRecord& record, const char* name) {
-		// TODO
-		return false;
+	bool SavePlayerRecord(const PlayerSongRecord& record, const char* name, const char *songhash) {
+		RString absolute_db_path = ssprintf("../player/%s.db", name);
+		FileHelper::ConvertPathToSystem(absolute_db_path);
+		RString absolute_db_dir = FileHelper::GetParentDirectory(absolute_db_path);
+		FileHelper::CreateFolder(absolute_db_dir);
+		// start to query DB
+		ASSERT(sql == 0);
+		if (!OpenSQL(absolute_db_path))
+			return false;
+		if (!IsRecordTableExist())
+			CreateRecordTable();
+		bool processrecord = InsertPlayRecord(record, songhash);
+		return processrecord && CloseSQL();
 	}
 
 	bool DeletePlayerRecord(const char* name, const char* songhash) {
-		// TODO
-		return false;
+		RString absolute_db_path = ssprintf("../player/%s.db", name);
+		FileHelper::ConvertPathToSystem(absolute_db_path);
+		//RString absolute_db_dir = FileHelper::GetParentDirectory(absolute_db_path);
+		//FileHelper::CreateFolder(absolute_db_dir);
+		ASSERT(sql == 0);
+		if (!OpenSQL(absolute_db_path))
+			return false;
+		bool processrecord = DeletePlayRecord(songhash);
+		return processrecord && CloseSQL();
 	}
 }
 
@@ -375,7 +551,7 @@ namespace PlayerInfoHelper {
 	bool LoadPlayerInfo(PlayerInfo& player, const char* name) {
 		// create & convert db path to absolute
 		RString absolute_db_path = ssprintf("../player/%s.xml", name);
-		FileHelper::ConvertPathToAbsolute(absolute_db_path);
+		FileHelper::ConvertPathToSystem(absolute_db_path);
 		RString absolute_db_dir = FileHelper::GetParentDirectory(absolute_db_path);
 		FileHelper::CreateFolder(absolute_db_dir);
 		// start to parse XML file
@@ -408,7 +584,7 @@ namespace PlayerInfoHelper {
 	bool SavePlayerInfo(PlayerInfo& player) {
 		// create & convert db path to absolute
 		RString absolute_db_path = ssprintf("../player/%s.xml", player.name.c_str());
-		FileHelper::ConvertPathToAbsolute(absolute_db_path);
+		FileHelper::ConvertPathToSystem(absolute_db_path);
 		RString absolute_db_dir = FileHelper::GetParentDirectory(absolute_db_path);
 		FileHelper::CreateFolder(absolute_db_dir);
 		// make new XML file
@@ -449,7 +625,7 @@ namespace PlayerKeyHelper {
 					return i;
 			}
 		}
-		return PlayerKeyIndex::NONE;
+		return -1;
 	}
 
 	void LoadKeyConfig(PlayerKeyConfig &config, XMLNode *base) {
@@ -484,25 +660,36 @@ namespace PlayerKeyHelper {
 	}
 
 	void DefaultKeyConfig(PlayerKeyConfig &config) {
-		config.keycode[PlayerKeyIndex::P1_BUTTON1][0] = SDLK_z;
-		config.keycode[PlayerKeyIndex::P1_BUTTON2][0] = SDLK_s;
-		config.keycode[PlayerKeyIndex::P1_BUTTON3][0] = SDLK_x;
-		config.keycode[PlayerKeyIndex::P1_BUTTON4][0] = SDLK_d;
-		config.keycode[PlayerKeyIndex::P1_BUTTON5][0] = SDLK_c;
-		config.keycode[PlayerKeyIndex::P1_BUTTON6][0] = SDLK_f;
-		config.keycode[PlayerKeyIndex::P1_BUTTON7][0] = SDLK_v;
-		config.keycode[PlayerKeyIndex::P1_BUTTONSC][0] = SDLK_LSHIFT;
-		config.keycode[PlayerKeyIndex::P1_BUTTONSC][1] = SDLK_LCTRL;
+		config.keycode[PlayerKeyIndex::P1_BUTTON1][0] = SDL_SCANCODE_Z;
+		config.keycode[PlayerKeyIndex::P1_BUTTON2][0] = SDL_SCANCODE_S;
+		config.keycode[PlayerKeyIndex::P1_BUTTON3][0] = SDL_SCANCODE_X;
+		config.keycode[PlayerKeyIndex::P1_BUTTON4][0] = SDL_SCANCODE_D;
+		config.keycode[PlayerKeyIndex::P1_BUTTON5][0] = SDL_SCANCODE_C;
+		config.keycode[PlayerKeyIndex::P1_BUTTON6][0] = SDL_SCANCODE_F;
+		config.keycode[PlayerKeyIndex::P1_BUTTON7][0] = SDL_SCANCODE_V;
+		config.keycode[PlayerKeyIndex::P1_BUTTON1][1] = 1001;
+		config.keycode[PlayerKeyIndex::P1_BUTTON2][1] = 1002;
+		config.keycode[PlayerKeyIndex::P1_BUTTON3][1] = 1003;
+		config.keycode[PlayerKeyIndex::P1_BUTTON4][1] = 1004;
+		config.keycode[PlayerKeyIndex::P1_BUTTON5][1] = 1005;
+		config.keycode[PlayerKeyIndex::P1_BUTTON6][1] = 1006;
+		config.keycode[PlayerKeyIndex::P1_BUTTON7][1] = 1007;
+		config.keycode[PlayerKeyIndex::P1_BUTTONSCUP][0] = SDL_SCANCODE_LSHIFT;
+		config.keycode[PlayerKeyIndex::P1_BUTTONSCDOWN][0] = SDL_SCANCODE_LCTRL;
+		config.keycode[PlayerKeyIndex::P1_BUTTONSCUP][1] = 1100;					// up
+		config.keycode[PlayerKeyIndex::P1_BUTTONSCDOWN][1] = 1101;					// down
+		config.keycode[PlayerKeyIndex::P1_BUTTONSTART][0] = SDL_SCANCODE_1;
 
-		config.keycode[PlayerKeyIndex::P2_BUTTON1][0] = SDLK_m;
-		config.keycode[PlayerKeyIndex::P2_BUTTON2][0] = SDLK_k;
-		config.keycode[PlayerKeyIndex::P2_BUTTON3][0] = SDLK_COMMA;
-		config.keycode[PlayerKeyIndex::P2_BUTTON4][0] = SDLK_l;
-		config.keycode[PlayerKeyIndex::P2_BUTTON5][0] = SDLK_PERIOD;
-		config.keycode[PlayerKeyIndex::P2_BUTTON6][0] = SDLK_SEMICOLON;
-		config.keycode[PlayerKeyIndex::P2_BUTTON7][0] = SDLK_SLASH;
-		config.keycode[PlayerKeyIndex::P2_BUTTONSC][0] = SDLK_RSHIFT;
-		config.keycode[PlayerKeyIndex::P2_BUTTONSC][1] = SDLK_RCTRL;
+		config.keycode[PlayerKeyIndex::P2_BUTTON1][0] = SDL_SCANCODE_M;
+		config.keycode[PlayerKeyIndex::P2_BUTTON2][0] = SDL_SCANCODE_K;
+		config.keycode[PlayerKeyIndex::P2_BUTTON3][0] = SDL_SCANCODE_COMMA;
+		config.keycode[PlayerKeyIndex::P2_BUTTON4][0] = SDL_SCANCODE_L;
+		config.keycode[PlayerKeyIndex::P2_BUTTON5][0] = SDL_SCANCODE_PERIOD;
+		config.keycode[PlayerKeyIndex::P2_BUTTON6][0] = SDL_SCANCODE_SEMICOLON;
+		config.keycode[PlayerKeyIndex::P2_BUTTON7][0] = SDL_SCANCODE_SLASH;
+		config.keycode[PlayerKeyIndex::P2_BUTTONSCUP][0] = SDL_SCANCODE_RSHIFT;
+		config.keycode[PlayerKeyIndex::P2_BUTTONSCDOWN][0] = SDL_SCANCODE_RCTRL;
+		config.keycode[PlayerKeyIndex::P2_BUTTONSTART][0] = SDL_SCANCODE_2;
 	}
 }
 
@@ -531,6 +718,7 @@ namespace PlayOptionHelper {
 		config.speed = GetIntValue(playconfig, "speed") / 100.0;
 		config.speedtype = GetIntValue(playconfig, "speedtype");
 		config.floatspeed = GetIntValue(playconfig, "floatspeed") / 1000.0;
+		config.usefloatspeed = GetIntValue(playconfig, "usefloat");
 		config.sudden = GetIntValue(playconfig, "sudden") / 1000.0;
 		config.lift = GetIntValue(playconfig, "lift") / 1000.0;
 		config.op_1p = GetIntValue(playconfig, "op_1p");
@@ -543,6 +731,8 @@ namespace PlayOptionHelper {
 		config.longnote = GetIntValue(playconfig, "longnote");
 		config.morenote = GetIntValue(playconfig, "morenote");
 		config.judge = GetIntValue(playconfig, "judge");
+		config.judgeoffset = GetIntValue(playconfig, "judgeoffset");
+		config.judgecalibration = GetIntValue(playconfig, "judgecalibration");
 		config.scratch = GetIntValue(playconfig, "scratch");
 		config.freq = GetIntValue(playconfig, "freq") / 100.0;
 	}
@@ -552,9 +742,11 @@ namespace PlayOptionHelper {
 		XMLElement *playconfig = doc->NewElement("PlayConfig");
 		doc->LinkEndChild(playconfig);
 
-		CreateElement(playconfig, "speed")->SetText(config.speed * 100);
+		// 0.5 : kind of round() function
+		CreateElement(playconfig, "speed")->SetText((int)(config.speed * 100 + 0.5));
 		CreateElement(playconfig, "speedtype")->SetText(config.speedtype);
 		CreateElement(playconfig, "floatspeed")->SetText(config.floatspeed * 1000);
+		CreateElement(playconfig, "usefloat")->SetText(config.usefloatspeed);
 		CreateElement(playconfig, "sudden")->SetText(config.sudden * 1000);
 		CreateElement(playconfig, "lift")->SetText(config.lift * 1000);
 		CreateElement(playconfig, "op_1p")->SetText(config.op_1p);
@@ -567,6 +759,8 @@ namespace PlayOptionHelper {
 		CreateElement(playconfig, "longnote")->SetText(config.longnote);
 		CreateElement(playconfig, "morenote")->SetText(config.morenote);
 		CreateElement(playconfig, "judge")->SetText(config.judge);
+		CreateElement(playconfig, "judgeoffset")->SetText(config.judgeoffset);
+		CreateElement(playconfig, "judgecalibration")->SetText(config.judgecalibration);
 		CreateElement(playconfig, "scratch")->SetText(config.scratch);
 		CreateElement(playconfig, "freq")->SetText(config.freq * 100);
 	}

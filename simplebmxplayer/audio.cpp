@@ -1,17 +1,42 @@
 #include "audio.h"
 #include "util.h"
 
-Audio::Audio(std::wstring& filepath, int channel) : channel(channel) {
-	char path_utf8[1024];
-	ENCODING::wchar_to_utf8(filepath.c_str(), path_utf8, 1024);
-	sdlaudio = Mix_LoadWAV(path_utf8);
+#ifdef _WIN32
+Audio::Audio(std::wstring& filepath, int channel) : channel(channel), sdlaudio(0) {
+	RString path_utf8 = WStringToRString(filepath);
+	Load(path_utf8, channel);
 }
+#endif
 
-Audio::Audio(const char* filepath, int channel) : channel(channel) {
-	sdlaudio = Mix_LoadWAV(filepath);
+Audio::Audio() : channel(-1), sdlaudio(0) {}
+
+Audio::Audio(const char* filepath, int channel) : channel(channel), sdlaudio(0) {
+	Load(filepath, channel);
 }
 
 Audio::~Audio() {
+	Close();
+}
+
+bool Audio::Load(const char* filepath, int channel) {
+	Close();
+	File *f = new File(filepath, "rb");
+	bool r = Load(f, channel);
+	delete f;
+	return r;
+}
+
+bool Audio::Load(FileBasic* f, int channel) {
+	Close();
+	sdlaudio = Mix_LoadWAV_RW(f->GetSDLRW(), 1);
+	this->channel = channel;
+	if (sdlaudio)
+		return true;
+	else
+		return false;
+}
+
+void Audio::Close() {
 	if (IsLoaded())
 		Mix_FreeChunk(sdlaudio);
 }
@@ -40,15 +65,16 @@ void Audio::Resample(double rate) {
 	if (rate == 1) return;
 
 	int m = 1, n = 1;
-	Mix_Chunk *newsample = new Mix_Chunk;
+	Mix_Chunk *newsample = (Mix_Chunk*)SDL_malloc(sizeof(Mix_Chunk));
 	int original_length = sdlaudio->alen;
 	int length = original_length * rate;
-
-	newsample->allocated = sdlaudio->allocated;
+	
+	int allocsize = sizeof(Uint8) * length;
+	newsample->allocated = allocsize;
 	newsample->abuf = NULL;
 	newsample->alen = length;
 	newsample->volume = sdlaudio->volume;
-	Uint8 *data1 = new Uint8[length];
+	Uint8 *data1 = (Uint8*)SDL_malloc(allocsize);// new Uint8[length];
 	Uint8 *start = sdlaudio->abuf;		// position of old buffer
 	Uint8 *start1 = data1;				// position of new buffer
 

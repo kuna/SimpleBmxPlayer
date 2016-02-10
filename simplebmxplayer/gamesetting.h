@@ -12,6 +12,7 @@ struct GameSetting {
 	int soundlatency;
 	int tutorial;
 	int useIR;
+	int bga;
 
 	// skin (not skin option)
 	RString skin_main;
