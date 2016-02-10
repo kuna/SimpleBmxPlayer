@@ -18,7 +18,7 @@
 - ```zlib```
 - ```zziplib```
 
-##### This Project doesn't include ```libSDL 2.0```, ```FFmpeg```
+##### This Project doesn't include ```libSDL 2.0```, ```SDL2_ttf```, ```FFmpeg```
   - download ```Dev Lib / Runtime Binaries``` directly from [SDL](https://www.libsdl.org/download-2.0.php), and extract file to ```include/SDL, lib/x86, Release```.
   - download ffmpeg from [Zeranoe FFmpeg](http://ffmpeg.zeranoe.com/builds/), and extract to ```include/ffmpeg, lib/ffmpeg, Release```
 
@@ -47,7 +47,7 @@
 - (SC: scratch; LShift on keyboard)
 
 ### available options
--nobga: don't load image files (ignore image channel)
+-bgaoff: don't load image files (ignore image channel)
 -replay: show replay file (if no replay file, it won't turn on)
 -auto: autoplayed by DJ
 -op__: set op for player (RANDOM ... etc; only support int value)

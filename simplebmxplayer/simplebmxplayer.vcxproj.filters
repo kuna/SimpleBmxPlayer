@@ -206,11 +206,11 @@
     <Library Include="..\lib\Release\Lua.lib" />
     <Library Include="..\lib\Release\SDL2_image.lib" />
     <Library Include="..\lib\Release\SDL2_mixer.lib" />
-    <Library Include="..\lib\Release\zziplib.lib" />
-    <Library Include="..\lib\Release\sqlite.lib" />
     <Library Include="..\lib\Release-Lib\tinyxml2.lib" />
     <Library Include="..\extern\SDL\lib\x86\SDL2_ttf.lib" />
     <Library Include="..\lib\Release\SDL_FontCache.lib" />
+    <Library Include="..\lib\Release\sqlite.lib" />
+    <Library Include="..\lib\Release\zziplib.lib" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="simplebmxplayer.rc">

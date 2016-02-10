@@ -206,8 +206,30 @@ namespace BmsHelper {
 		currentbar = 0;
 
 		// load bms file & create time table
-		if (!BmsResource::BMS.LoadBmsFile(path)) {
-			succeed = false;
+		// if current folder is archive, read file fully and parse it
+		if (FileHelper::CurrentDirectoryIsZipFile()) {
+			FileBasic *f = 0;
+			RString relpath = get_filename(path);
+			if (!FileHelper::LoadFile(relpath, &f)) {
+				succeed = false;
+			}
+			else {
+				BmsParser::Parser *p = new BmsParser::Parser(BmsResource::BMS);
+				RString bmstext;
+				f->ReadAll(bmstext);
+				p->Parse(bmstext);
+				delete p;
+			}
+
+			if (f) {
+				f->Close();
+				delete f;
+			}
+		}
+		else {
+			if (!BmsResource::BMS.LoadBmsFile(path)) {
+				succeed = false;
+			}
 		}
 
 		mutex_bmsresource.unlock();

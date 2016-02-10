@@ -296,25 +296,24 @@ namespace FileHelper {
 	/* mount (MUST insert absolute path) */
 	void PushBasePath(const char *path) {
 		ASSERT(CheckIsAbsolutePath(path));
-		char basepath[1024];
-		strcpy(basepath, path);
-		// get parent directory if current one isn't directory 
-		// (directory should end with `/`)
-		if (path[strlen(path) - 1] != '/' || path[strlen(path) - 1] != '\\') {
-			if (strchr(path, '/'))
-				strcat(basepath, "/");
-			else
-				strcat(basepath, "\\");
-		}
+		RString basepath = path;
+
 		mount_status_ stat_;
-		stat_.path_ = basepath;
-		if (EndsWith(basepath, ".zip")) {
-			stat_.zipdir_ = zzip_dir_open(basepath, 0);
-			stat_.iszipfile_ = (stat_.zipdir_ != 0);
+			if (EndsWith(basepath, ".zip")) {
+			stat_.zipdir_ = zzip_opendir(basepath);
+			ASSERT(stat_.zipdir_ != 0);
+			stat_.iszipfile_ = true;
 		}
 		else {
 			stat_.iszipfile_ = false;
 		}
+
+		// (directory should end with `/`)
+		if (basepath[strlen(basepath) - 1] != '/' && basepath[strlen(basepath) - 1] != '\\') {
+			basepath += "/";
+		}
+
+		stat_.path_ = basepath;
 		basepath_stack.push_back(stat_);
 	}
 
@@ -371,16 +370,19 @@ namespace FileHelper {
 	}
 
 	/*
-	* get current directory's file list (include dir)
-	*/
-	bool GetFileList(std::vector<RString>& list) {
+	 * get current directory's file list (include dir)
+	 */
+	void GetFileList(std::vector<RString>& list) {
 		mount_status_ stat_ = basepath_stack.back();
 		if (stat_.iszipfile_) {
+			ZZIP_DIRENT dirent;
+			while (zzip_dir_read(stat_.zipdir_, &dirent)) {
+				list.push_back(dirent.d_name);
+			}
 		}
 		else {
-
+			GetFileList(stat_.path_, list);
 		}
-		return false;
 	}
 
 	RString& GetBasePath() {
@@ -520,15 +522,15 @@ namespace FileHelper {
 		split(extfilters, ";", filters);
 
 		for (auto filepath = filelist.begin(); filepath != filelist.end(); ) {
-			bool update = true;
+			bool update = false;
 			for (auto ext = filters.begin(); ext != filters.end(); ++ext) {
-				if (!EndsWith(*filepath, *ext)) {
-					filepath = filelist.erase(filepath);
-					update = false;
-					continue;
+				if (EndsWith(*filepath, *ext)) {
+					update = true;
+					break;
 				}
 			}
-			if (update) ++filepath;
+			if (!update) filepath = filelist.erase(filepath);
+			else ++filepath;
 		}
 	}
 
@@ -555,7 +557,7 @@ namespace FileHelper {
 	}
 
 	bool IsFile(const RString& path) {
-		//if (EndsWith(path, ".zip")) return false;
+		if (EndsWith(path, ".zip")) return false;
 #ifdef _WIN32
 		std::wstring path_w = RStringToWstring(path);
 		struct _stat64i32 s;
@@ -571,7 +573,7 @@ namespace FileHelper {
 	}
 
 	bool IsFolder(const RString& path) {
-		//if (EndsWith(path, ".zip")) return true;
+		if (EndsWith(path, ".zip")) return true;
 #ifdef _WIN32
 		std::wstring path_w = RStringToWstring(path);
 		struct _stat64i32 s;

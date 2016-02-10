@@ -265,6 +265,7 @@ void Player::Silent(bool b) {
 }
 
 void Player::PlaySound(BmsWord& value) {
+	if (!pBmstimer->IsStarted()) return;
 	if (!issilent) PLAYSOUND(value);
 }
 

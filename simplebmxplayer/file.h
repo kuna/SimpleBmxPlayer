@@ -113,6 +113,7 @@ namespace FileHelper {
 	RString& GetBasePath();
 	RString& GetSystemPath();
 	void GetFileList(const char *folderpath, std::vector<RString>& filelist, bool getfileonly = true);
+	void GetFileList(std::vector<RString>& filelist);
 	void FilterFileList(const char *extfilters, std::vector<RString>& filelist);
 	/** @brief is path exists & file? */
 	bool IsFile(const RString& path);

@@ -18,7 +18,7 @@ namespace Parameter {
 			"- course play available (test1.bms;test2.bms;test3.bms)\n"
 			"- archive file available (ex: ./ex.zip/test.bms)\n"
 			"<options>\n"
-			"-nobga: don't load image files (ignore image channel)\n"
+			"-bgaoff: don't load image files (ignore image channel)\n"
 			"-replay: show replay file (if no replay file, it won't turn on)\n"
 			"-auto: autoplayed by DJ\n"
 			"-op__: set op for player (RANDOM ... etc; only support int value)\n"
@@ -32,7 +32,7 @@ namespace Parameter {
 			"-pace__: pacemaker percent (decimal)\n"
 			"\n"
 			"<keys>\n"
-			"default key config is -\n(1P) LS Z S X D C F V (2P) M K , L . ; / RS\nyou can change it by changing preset files.\n"
+			"default key config is -\n(1P) LS Z S X D C F V\n(2P) RS M K , L . ; /\nyou can change it by changing preset files.\n"
 			"[Up/Down]		change speed.\n"
 			"[Right/Left]	change sudden.\n"
 			"[F12]			float speed toggle\n"
@@ -98,6 +98,25 @@ namespace Parameter {
 		std::vector<RString> courses;
 		split(argv[1], ";", courses);
 		for (int i = 0; i < courses.size(); i++) {
+			/*
+			 * before loading Bms file, check argument is folder
+			 * if it does, get valid path from player
+			 */
+			if (FileHelper::IsFolder(courses[i])) {
+				FileHelper::PushBasePath(courses[i]);
+				std::vector<RString> filelist;
+				FileHelper::GetFileList(filelist);
+				FileHelper::FilterFileList(".bml;.bme;.bms;.pms", filelist);
+				printf("Select one:\n");
+				for (int i = 0; i < filelist.size(); i++) printf("%d. %s\n", i, filelist[i].c_str());
+				char buf_[256];
+				fflush(stdin);
+				gets(buf_);
+				int r = atoi(buf_);
+				if (r >= filelist.size()) r = filelist.size() - 1;
+				courses[i] = filelist[r];
+				FileHelper::PopBasePath();
+			}
 			GamePlay::P.bmspath[i] = courses[i];
 			GamePlay::P.bmshash[i] = GetHash(courses[i]);
 		}
@@ -129,8 +148,14 @@ namespace Parameter {
 			else if (BeginsWith(argv[i], "-auto")) {
 				GamePlay::P.autoplay = true;
 			}
-			else if (BeginsWith(argv[i], "-nobga")) {
+			else if (BeginsWith(argv[i], "-bgaoff")) {
 				GamePlay::P.bga = false;
+			}
+			else if (BeginsWith(argv[i], "-rate")) {
+				GamePlay::P.rate = atof(argv[i] + 5);
+			}
+			else if (BeginsWith(argv[i], "-pace")) {
+				GamePlay::P.pacemaker = atof(argv[i] + 5);
 			}
 			else if (BeginsWith(argv[i], "-g")) {
 				PLAYERINFO[0].playconfig.gaugetype = atoi(argv[i] + 2);
@@ -143,12 +168,6 @@ namespace Parameter {
 			}
 			else if (BeginsWith(argv[i], "-r")) {
 				GamePlay::P.repeat = atoi(argv[i] + 2);
-			}
-			else if (BeginsWith(argv[i], "-rate")) {
-				GamePlay::P.rate = atof(argv[i] + 5);
-			}
-			else if (BeginsWith(argv[i], "-pace")) {
-				GamePlay::P.pacemaker = atof(argv[i] + 5);
 			}
 		}
 		return true;
@@ -175,11 +194,16 @@ namespace Parameter {
 	}
 }
 
+// testing
+#include <sys/stat.h>
+#include <io.h>
+
 #ifdef _WIN32
 int _tmain(int argc, _TCHAR **argv) {
 #else
 int main(int argc, char **argv) {
 #endif
+
 	/*
 	 * pool is an part of game system
 	 * MUST be initalized very first

@@ -1,8 +1,8 @@
 160209
 
 - 하드게 죽어도 샷다쾅 안되는 문제 수정
-- -nobga가 `obga` 유저로 인식되는 문제 수정
-- 매개변수로 rate 안먹는 문제 수정
+o -nobga가 `obga` 유저로 인식되는 문제 수정
+o 매개변수로 rate 안먹는 문제 수정
 o 파일이름에 유니코드 들어갈시 제대로 안 되는 문제 수정
 - bms cut 문제 수정 (end) -> bms load할때 아예 잘라버리도록 구조를 바꾸기
 - bms repeat 문제 수정
@@ -19,6 +19,7 @@ o 레이어 black을 transparent하도록 함
 o 레이어 miss 이미지 제대로 뜨는지 확인
 o 스크래치를 빨리 돌릴 때 입력이 일부 씹히는 버그
 o 24bit wav 파일 재생 불능
+o rate 옵션 걸 시 BGA속도가 음악과 싱크되지않음.
 
 o bmsbel _ASSERT 부분 수정 (_ASSERT on linux?)
 o lvalue 대입 안되는 문제 보고 수정
