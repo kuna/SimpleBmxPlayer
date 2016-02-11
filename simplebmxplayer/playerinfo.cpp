@@ -728,6 +728,8 @@ namespace PlayOptionHelper {
 		config.op_1p = config.op_2p = 0;
 		config.gaugetype = 0;
 
+		config.ghost_type = 0;
+		config.judge_type = 0;
 		config.pacemaker_type = PACEMAKERTYPE::PACEA;
 		config.pacemaker_goal = 90;
 
@@ -751,6 +753,8 @@ namespace PlayOptionHelper {
 		config.op_2p = GetIntValue(playconfig, "op_2p");
 		config.gaugetype = GetIntValue(playconfig, "gaugetype");
 
+		config.ghost_type = GetIntValue(playconfig, "ghost_type");
+		config.judge_type = GetIntValue(playconfig, "judge_type");
 		config.pacemaker_type = GetIntValue(playconfig, "pacemaker_type");
 		config.pacemaker_goal = GetIntValue(playconfig, "pacemaker_goal");
 
@@ -779,6 +783,8 @@ namespace PlayOptionHelper {
 		CreateElement(playconfig, "op_2p")->SetText(config.op_2p);
 		CreateElement(playconfig, "gaugetype")->SetText(config.gaugetype);
 
+		CreateElement(playconfig, "ghost_type")->SetText(config.ghost_type);
+		CreateElement(playconfig, "judge_type")->SetText(config.judge_type);
 		CreateElement(playconfig, "pacemaker_type")->SetText(config.pacemaker_type);
 		CreateElement(playconfig, "pacemaker_goal")->SetText(config.pacemaker_goal);
 

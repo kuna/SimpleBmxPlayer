@@ -10,3 +10,6 @@
 [submodule "extern/bmsbelplus"]
 	path = extern/bmsbelplus
 	url = ./bmsbelplus
+[submodule "extern/libarchive"]
+	path = extern/libarchive
+	url = ./libarchive
