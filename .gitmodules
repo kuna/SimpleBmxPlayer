@@ -9,7 +9,7 @@
 	url = https://github.com/kuna/SDL2_mixer
 [submodule "extern/bmsbelplus"]
 	path = extern/bmsbelplus
-	url = ./bmsbelplus
+	url = https://github.com/kuna/bmsbelplus
 [submodule "extern/libarchive"]
 	path = extern/libarchive
-	url = ./libarchive
+	url = https://github.com/kuna/libarchive
