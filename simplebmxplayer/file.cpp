@@ -498,7 +498,7 @@ namespace FileHelper {
 
 						f_->raw_ = malloc(f_->size);
 						while ((r = archive_read_data_block(stat_->a, &ptr_, &size_, &offset_)) == 0) {
-							memcpy(f_->raw_, ptr_, size_);
+							memcpy((char*)f_->raw_ + offset_, ptr_, size_);
 						}
 						if (r == ARCHIVE_FAILED) {
 							printf("%s\n", archive_error_string(stat_->a));

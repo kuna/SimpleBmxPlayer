@@ -5,7 +5,7 @@
     <LocalDebuggerCommandArguments>"D:\LR2\BMS\Lewisia.zip"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments>"D:\LR2\BMS\ハイパーミラクルシューティングスター.zip" -auto</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\LR2\BMS\Lewisia.zip" -auto</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>
