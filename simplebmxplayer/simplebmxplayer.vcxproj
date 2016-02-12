@@ -162,6 +162,7 @@
     <Library Include="..\lib\ffmpeg\swscale.lib" />
     <Library Include="..\lib\pthreadVC2.lib" />
     <Library Include="..\lib\Release-Lib\tinyxml2.lib" />
+    <Library Include="..\lib\Release\archive.lib" />
     <Library Include="..\lib\Release\bmsbel.lib" />
     <Library Include="..\lib\Release\libiconv.lib" />
     <Library Include="..\lib\Release\Lua.lib" />

@@ -1,6 +1,7 @@
 #include "file.h"
 #include "globalresources.h"
-#include <zzip/lib.h>		// zzip library
+#include "libarchive/archive.h"
+#include "libarchive/archive_entry.h"
 #include <sys/stat.h>
 #include "util.h"
 #include "md5.h"
@@ -280,33 +281,147 @@ SDL_RWops* FileMemory::GetSDLRW() {
 
 namespace FileHelper {
 	/* used for checking current mounting */
+	struct mount_fileinfo_ {
+		void* raw_;		// only meaningful to archive file
+		size_t size;
+		time_t time;
+		bool isfolder;
+	};
 	struct mount_status_ {
 		RString path_;
-		bool iszipfile_;
-		ZZIP_DIR *zipdir_;
+		bool isarchive_;
+		struct archive *a;
+		std::map<RString, mount_fileinfo_> filelist_;
 	};
 
 	/* all mount status are stored in here */
 	std::vector<mount_status_> basepath_stack;
 
 	/* private */
-	bool CheckIsAbsolutePath(const char *path) {
-		return (path[0] != 0 && (path[0] == '/' || path[1] == ':'));
+	namespace {
+		bool IsAbsolutePath(const char *path) {
+			return (path[0] != 0 && (path[0] == '/' || path[1] == ':'));
+		}
+
+		void InitArchive(struct archive **a) {
+			*a = archive_read_new();
+			//archive_read_support_format_7zip(*a);
+			//archive_read_support_format_rar(*a);
+			//archive_read_support_format_zip(*a);
+			archive_read_support_format_all(*a);
+			archive_read_support_compression_all(*a);
+		}
+
+		int OpenArchive(struct archive *a, const RString& path) {
+#ifdef _WIN32
+			std::wstring wpath = RStringToWstring(path);
+			return archive_read_open_filename_w(a, wpath.c_str(), 10240);
+#else
+			return archive_read_open_filename(a, path, 10240);
+#endif
+		}
 	}
 
 	/* mount (MUST insert absolute path) */
 	void PushBasePath(const char *path) {
-		ASSERT(CheckIsAbsolutePath(path));
+		ASSERT(IsAbsolutePath(path));
 		RString basepath = path;
 
 		mount_status_ stat_;
-		if (EndsWith(basepath, ".zip")) {
-			stat_.zipdir_ = zzip_opendir(basepath);
-			ASSERT(stat_.zipdir_ != 0);
-			stat_.iszipfile_ = true;
+		if (EndsWith(basepath, ".zip") ||
+			EndsWith(basepath, ".rar") ||
+			EndsWith(basepath, ".7z"))
+		{
+			stat_.isarchive_ = true;
+			InitArchive(&stat_.a);
+			if (OpenArchive(stat_.a, basepath) == 0)
+			{
+				// scan total archive files
+				struct archive_entry *aent;
+				int r;
+				for (r = archive_read_next_header(stat_.a, &aent); 
+					r != ARCHIVE_EOF; 
+					r = archive_read_next_header(stat_.a, &aent))
+				{
+					if (r == ARCHIVE_OK) {
+						const char* fn = archive_entry_pathname(aent);
+						if (!fn) continue;
+						mount_fileinfo_ finfo_;
+						finfo_.size = archive_entry_size(aent);
+						finfo_.time = archive_entry_atime(aent);
+						finfo_.isfolder = archive_entry_filetype(aent) == AE_IFDIR;
+						RString fname = fn;
+						//
+						// don't call read_data_block now, it costs too much
+						// call it later when called LoadFile()
+						//
+						//archive_read_data_block(stat_.a, (void**)&finfo_.raw_, &finfo_.size, 0);
+						//archive_seek_data
+						archive_read_data_skip(stat_.a);
+						finfo_.raw_ = 0;
+						stat_.filelist_[fname] = finfo_;
+					}
+					else if (r == ARCHIVE_FATAL) {
+						break;
+					}
+				}
+				//archive_entry_free(aent);
+			}
 		}
 		else {
-			stat_.iszipfile_ = false;
+			stat_.isarchive_ = false;
+			// scan all directory files
+#ifdef _WIN32
+			HANDLE dir;
+			WIN32_FIND_DATA file_data;
+
+			std::wstring directory_w = RStringToWstring(basepath);
+			if ((dir = FindFirstFileW((directory_w + L"/*").c_str(), &file_data)) != INVALID_HANDLE_VALUE)
+			{
+				do {
+					const wstring file_name = file_data.cFileName;
+					const bool is_directory =
+						(file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+
+					if (file_name[0] == '.')
+						continue;
+
+					const RString fname = WStringToRString(file_name);
+					mount_fileinfo_ info_;
+					info_.size = file_data.nFileSizeLow;
+					info_.time = file_data.ftLastWriteTime.dwHighDateTime;
+					info_.raw_ = 0;
+					info_.isfolder = is_directory;
+					stat_.filelist_[fname] = info_;
+				} while (FindNextFile(dir, &file_data));
+				FindClose(dir);
+			}
+#else
+			DIR *dir;
+			class dirent *ent;
+			class stat st;
+
+			dir = opendir(directory);
+			while ((ent = readdir(dir)) != NULL) {
+				const RString file_name = ent->d_name;
+
+				if (file_name[0] == '.')
+					continue;
+
+				if (stat(full_file_name.c_str(), &st) == -1)
+					continue;
+
+				const bool is_directory = (st.st_mode & S_IFDIR) != 0;
+
+				mount_fileinfo_ info_;
+				info_.size = ent->d_size;
+				info_.time = ent->d_time;
+				info_.raw_ = 0;
+				info_.isfolder = is_directory;
+				stat_.filelist_[file_name] = info_;
+			}
+			closedir(dir);
+#endif
 		}
 
 		// (directory should end with `/`)
@@ -321,51 +436,104 @@ namespace FileHelper {
 	/* unmount */
 	void PopBasePath() {
 		mount_status_ stat_ = basepath_stack.back();
-		if (stat_.iszipfile_) {
-			zzip_dir_close(stat_.zipdir_);
+		if (stat_.isarchive_) {
+			for (auto it = stat_.filelist_.begin(); it != stat_.filelist_.end(); ++it) {
+				if (it->second.raw_)
+					free((void*)it->second.raw_);
+			}
+			archive_read_close(stat_.a);
+			archive_read_free(stat_.a);
 		}
 		basepath_stack.pop_back();
 	}
 
 	/*
-	* COMMENT: bug can occur
-	* if basepath zipfile & target normalfile /
-	*    basepath normalfile & target zipfile.
-	* use it at own risk..
-	* COMMENT: path should be relative. (suggest)
-	*          if not relative, then this code will convert path into relative one.
-	*/
+	 * COMMENT: bug can occur
+	 * if basepath zipfile & target normalfile /
+	 *    basepath normalfile & target zipfile.
+	 * use it at own risk..
+	 * COMMENT: path should be relative. (suggest)
+	 *          if not relative, then this code will convert path into relative one.
+	 */
 	bool LoadFile(const char *relpath, FileBasic **f) {
 		RString path_ = relpath;
-		mount_status_ stat_ = basepath_stack.back();
-		if (stat_.iszipfile_) {
-			if (CheckIsAbsolutePath(path_)) {
-				path_ = get_filename(path_);
+		mount_status_ *stat_ = &basepath_stack.back();
+		if (stat_->isarchive_) {
+			path_ = RelativePathToSystem(path_);
+			if (stat_->filelist_.find(path_) == stat_->filelist_.end())
+				return false;
+			mount_fileinfo_ file_ = stat_->filelist_[path_];
+
+			//
+			// if file is zero:
+			// invalid file, return false
+			//
+			// if archive isn't decompressed,
+			// then do it now
+			//
+			if (file_.size == 0) {
+				return false;
 			}
-			// memory file return
-			ZZIP_FILE *zfp = zzip_file_open(stat_.zipdir_, path_, 0);
-			if (!zfp) return false;
-			ZZIP_STAT zstat;
-			zzip_file_stat(zfp, &zstat);
-			int orgsize = zstat.st_size;
-			char *buf_tmp_ = new char[orgsize];
-			zzip_file_read(zfp, buf_tmp_, orgsize);
-			*f = new FileMemory(buf_tmp_, orgsize);
-			delete[] buf_tmp_;
-			zzip_file_close(zfp);
+			else if (file_.raw_ == 0) {
+				// reset
+				archive_read_close(stat_->a);
+				archive_read_finish(stat_->a);
+				InitArchive(&stat_->a);
+				RString dir = get_filedir(stat_->path_);
+				OpenArchive(stat_->a, dir);
+				// 
+				struct archive_entry *aent;
+				int r;
+				for (r = archive_read_next_header(stat_->a, &aent);
+					r != ARCHIVE_EOF; 
+					r = archive_read_next_header(stat_->a, &aent)) 
+				{
+					if (r == ARCHIVE_OK) {
+						const char *fn = archive_entry_pathname(aent);
+						if (!fn) continue;
+						mount_fileinfo_ *f_ = &stat_->filelist_[fn];
+						const void* ptr_;
+						int64_t offset_;
+						size_t size_;
+
+						f_->raw_ = malloc(f_->size);
+						while ((r = archive_read_data_block(stat_->a, &ptr_, &size_, &offset_)) == 0) {
+							memcpy(f_->raw_, ptr_, size_);
+						}
+						if (r == ARCHIVE_FAILED) {
+							printf("%s\n", archive_error_string(stat_->a));
+							free(f_->raw_);
+							f_->raw_ = 0;
+						}
+					}
+					else if (r == ARCHIVE_FATAL) {
+						break;
+					}
+				}
+				if (r == ARCHIVE_FATAL) return false;
+				else return LoadFile(path_, f);
+			}
+			else {
+				*f = new FileMemory((char*)file_.raw_, file_.size);
+			}
 		}
 		else {
 			// normal file return
 			ConvertPathToAbsolute(path_);
-			if (!IsFile(path_)) return false;
-			*f = new File(path_, "rb");
+			if (!IsFile(path_)) {
+				*f = 0;
+				return false;
+			}
+			else {
+				*f = new File(path_, "rb");
+			}
 		}
 		return true;
 	}
 
 	bool CurrentDirectoryIsZipFile() {
 		mount_status_ stat_ = basepath_stack.back();
-		return stat_.iszipfile_;
+		return stat_.isarchive_;
 	}
 
 	/*
@@ -380,15 +548,8 @@ namespace FileHelper {
 	 */
 	void GetFileList(std::vector<RString>& list) {
 		mount_status_ stat_ = basepath_stack.back();
-		if (stat_.iszipfile_) {
-			ZZIP_DIRENT dirent;
-			while (zzip_dir_read(stat_.zipdir_, &dirent)) {
-				list.push_back(dirent.d_name);
-			}
-		}
-		else {
-			GetFileList(stat_.path_, list);
-		}
+		for (auto it = stat_.filelist_.begin(); it != stat_.filelist_.end(); ++it)
+			list.push_back(it->first);
 	}
 
 	RString& GetBasePath() {
@@ -443,6 +604,26 @@ namespace FileHelper {
 
 	void ConvertPathToSystem(RString &path) {
 		return ConvertPathToAbsolute(path, GetSystemPath());
+	}
+
+	RString RelativePathToAbsolute(const RString& path) {
+		RString relpath = path;
+		if (IsAbsolutePath(relpath)) {
+			return relpath.substr(GetBasePath().size());
+		}
+		if (BeginsWith(relpath, "./") || BeginsWith(relpath, ".\\"))
+			relpath = relpath.substr(2);
+		return relpath;
+	}
+
+	RString RelativePathToSystem(const RString& path) {
+		RString relpath = path;
+		if (IsAbsolutePath(relpath)) {
+			return relpath.substr(GetSystemPath().size());
+		}
+		if (BeginsWith(relpath, "./") || BeginsWith(relpath, ".\\"))
+			relpath = relpath.substr(2);
+		return relpath;
 	}
 
 	bool GetAnyAvailableFilePath(RString &path) {

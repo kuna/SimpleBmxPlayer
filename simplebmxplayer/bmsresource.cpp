@@ -250,14 +250,13 @@ namespace BmsHelper {
 		//
 		// modify bms if necessary
 		//
-
 		if (m_start != 0 || m_end != 1000) {
 			BmsResource::BMS.Cut(m_start, m_end);
 		}
 		if (repeat_cnt > 1) {
 			BmsResource::BMS.Repeat(repeat_cnt);
 		}
-		if (BmsResource::BMS.GetObjectExistsFirstMeasure() == 0) {
+		if (BmsResource::BMS.GetObjectExistsFirstMeasure() == 0) {	// <- TODO: bug fix
 			// object at very first measure is too fast for us
 			// so push 1 measure for player
 			BmsResource::BMS.Push(BmsResource::BMS.GetBarManager().GetResolution());

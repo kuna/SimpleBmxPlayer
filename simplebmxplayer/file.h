@@ -132,6 +132,8 @@ namespace FileHelper {
 	/** @brief converts path to absolute path */
 	void ConvertPathToAbsolute(RString& path);
 	void ConvertPathToSystem(RString& path);
+	RString RelativePathToAbsolute(const RString& path);
+	RString RelativePathToSystem(const RString& path);
 	/* @description
 	 * this method tries these paths:
 	 * 1. path itself

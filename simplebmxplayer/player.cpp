@@ -692,7 +692,7 @@ void Player::Update() {
 				NextNote(i);
 			}
 			// if not autoplay, check timing for poor
-			else if (CheckJudgeByTiming(note.time - currenttime + judgeoffset)
+			else if (CheckJudgeByTiming(note.time - currenttime)
 				== JUDGETYPE::JUDGE_POOR) {
 				//
 				// if late, POOR judgement is always occured
@@ -729,7 +729,7 @@ void Player::UpKey(int lane) {
 	if (playmode < 10) lane = lane % 10;
 
 	// record to replay
-	Uint32 currenttime = pBmstimer->GetTick();
+	Uint32 currenttime = pBmstimer->GetTick() + judgeoffset;
 	replay_cur.AddPress(currenttime, lane, 0);
 
 	// if scratch, then set timer
@@ -744,7 +744,7 @@ void Player::UpKey(int lane) {
 	// but works only if you pressing longnote
 	if (islongnote_[lane] && GetCurrentNote(lane)->type == BmsNote::NOTE_LNEND) {
 		// get judge
-		int delta = iter_judge_[lane]->second.time - currenttime + judgeoffset;
+		int delta = iter_judge_[lane]->second.time - currenttime;
 		int judge = CheckJudgeByTiming(delta);
 		if (judge == JUDGETYPE::JUDGE_EARLY || judge == JUDGETYPE::JUDGE_NPOOR)
 			judge = JUDGETYPE::JUDGE_POOR;
@@ -774,7 +774,7 @@ void Player::PressKey(int lane) {
 	//
 	// record to replay
 	//
-	Uint32 currenttime = pBmstimer->GetTick();
+	Uint32 currenttime = pBmstimer->GetTick() + judgeoffset;
 	replay_cur.AddPress(currenttime, lane, 1);
 
 	// if scratch, then set timer
@@ -804,7 +804,7 @@ void Player::PressKey(int lane) {
 	// make judge
 	//
 	if (IsNoteAvailable(lane)) {
-		int delta = iter_judge_[lane]->second.time - currenttime + judgeoffset;
+		int delta = iter_judge_[lane]->second.time - currenttime;
 		int fastslow = delta > 0 ? 1 : 2;
 		int judge = CheckJudgeByTiming(delta);
 		// only continue judging if judge isn't too fast (no judge)
