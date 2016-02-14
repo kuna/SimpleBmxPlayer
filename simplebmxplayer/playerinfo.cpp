@@ -1,6 +1,7 @@
 #include "playerinfo.h"
 #include "util.h"
 #include "file.h"
+#include "logger.h"
 #include "sqlite3.h"
 #include "SDL\SDL.h"
 
@@ -329,6 +330,8 @@ namespace PlayerRecordHelper {
 			int rc = sqlite3_open(path, &sql);
 #endif
 			if (rc != SQLITE_OK) {
+				LOG->Critical("SQLITE initization failed!");
+				LOG->Critical(sqlite3_errmsg(sql));
 				sqlite3_close(sql);
 				sql = 0;
 				return false;
@@ -374,6 +377,7 @@ namespace PlayerRecordHelper {
 			RUNQUERY(QUERY_TABLE_CREATE);
 			CHECKQUERY(SQLITE_DONE);
 			if (r) r = Commit();
+			else LOG->Warn(sqlite3_errmsg(sql));
 			FINISHQUERY();
 		}
 
@@ -450,6 +454,7 @@ namespace PlayerRecordHelper {
 			QUERY_BIND_INT(19, record.type);
 			CHECKQUERY(SQLITE_DONE);
 			if (r) r = Commit();
+			else LOG->Warn(sqlite3_errmsg(sql));
 			FINISHQUERY();
 		}
 
@@ -457,6 +462,7 @@ namespace PlayerRecordHelper {
 			RUNQUERY(QUERY_TABLE_DELETE);
 			QUERY_BIND_TEXT(1, songhash);
 			CHECKQUERY(SQLITE_DONE);
+			if (!r) LOG->Warn(sqlite3_errmsg(sql));
 			FINISHQUERY();
 		}
 	}

@@ -49,6 +49,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="..\..\tinyxml2\tinyxml2\bin\Win32-Debug-Lib\tinyxml2.lib" />
+    <Library Include="..\lib\Release-Lib\tinyxml2.lib" />
   </ItemGroup>
 </Project>

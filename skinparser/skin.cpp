@@ -9,8 +9,8 @@ using namespace SkinUtil;
  * This also cuts and reduces class conditions
  */
 
-bool Skin::Parse(const char *filepath) {
-	if (!skinlayout.Parse(filepath)) {
+bool Skin::Load(const char *filepath) {
+	if (skinlayout.LoadFile(filepath) != 0) {
 		return false;
 	}
 	return true;
@@ -29,32 +29,33 @@ void Skin::Release() {
 void Skin::GetDefaultOption(SkinOption *o) {
 	o->Clear();
 
-	XMLElement *option = skinlayout.FirstChildElement("Option");
-	XMLElement *ele_switch = option->FirstChildElement("CustomSwitch");
+	XMLElement *skin = skinlayout.FirstChildElement("skin");
+	XMLElement *option = skin->FirstChildElement("option");
+	XMLElement *ele_switch = option->FirstChildElement("customswitch");
 	while (ele_switch) {
 		if (ele_switch->FirstChild()) {
 			XMLElement *defaultoption = ele_switch->FirstChildElement();
 			o->GetSwitches().push_back({ ele_switch->Attribute("name"), defaultoption->Attribute("value") });
 		}
-		ele_switch = ele_switch->NextSiblingElement("CustomSwitch");
+		ele_switch = ele_switch->NextSiblingElement("customswitch");
 	}
 
 	/*
-	 * CustomValue isn't supported in LR2 skin
+	 * CustomValue isn't supported in LR2 skin (dummy code here)
 	 */
-	XMLElement *ele_value = option->FirstChildElement("CustomValue");
+	XMLElement *ele_value = option->FirstChildElement("customvalue");
 	while (ele_value) {
 		if (ele_value->FirstChild()) {
 			XMLElement *defaultoption = ele_value->FirstChildElement();
 			o->GetValues().push_back({ ele_value->Attribute("name"), defaultoption->IntAttribute("value") });
 		}
-		ele_value = ele_value->NextSiblingElement("CustomValue");
+		ele_value = ele_value->NextSiblingElement("customvalue");
 	}
 
-	XMLElement *ele_file = option->FirstChildElement("CustomFile");
+	XMLElement *ele_file = option->FirstChildElement("customfile");
 	while (ele_file) {
 		o->GetFiles().push_back({ ele_file->Attribute("name"), ele_file->Attribute("path") });
-		ele_file = ele_file->NextSiblingElement("CustomFile");
+		ele_file = ele_file->NextSiblingElement("customfile");
 	}
 }
 

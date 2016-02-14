@@ -1,13 +1,18 @@
+160213
+
+- archive 파일의 이름이 Shift_JIS면 제대로 파일이 열리지 않음.
+- archive 파일 열때 너무 cost가 심함, 최적화 필요.
+
 160212
 
 - mybest ghost data 도입.
 
 160211
 
-- zip open시 경로에 유니코드 들어가있으면 파일이 제대로 열리지 않음.
+o zip open시 경로에 유니코드 들어가있으면 파일이 제대로 열리지 않음.
 - 4bit wav 파일이 열리지 않음.
 o 16bit 32000Hz wav 파일이 제대로 재생되지 않음.
-- BmsBms::Push에서, measure length가 제대로 push 되지 않음.
+o BmsBms::Push에서, measure length가 제대로 push 되지 않음.
 o judge auto assist에서, 보정 방향이 반대로 되는 문제 존재.
 
 160210

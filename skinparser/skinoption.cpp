@@ -23,9 +23,9 @@ bool SkinOption::LoadSkinOption(const char *filepath) {
 	}
 
 	XMLElement *ele_fileh = options->FirstChildElement("File");
-	while (ele_switch) {
-		files.push_back({ ele_switch->Attribute("name"), ele_switch->Attribute("value") });
-		ele_switch = ele_switch->NextSiblingElement("File");
+	while (ele_fileh) {
+		files.push_back({ ele_fileh->Attribute("name"), ele_fileh->Attribute("path") });
+		ele_fileh = ele_fileh->NextSiblingElement("File");
 	}
 
 	delete doc;
@@ -83,3 +83,17 @@ std::vector<SkinOption::CustomValue>& SkinOption::GetValues() {
 std::vector<SkinOption::CustomFile>& SkinOption::GetFiles() {
 	return files;
 }
+
+#ifdef _USEPOOL
+void SkinOption::SetEnvironmentFromOption() {
+	for (auto it = switches.begin(); it != switches.end(); ++it) {
+		TIMERPOOL->Set(it->switchname.c_str());
+	}
+	for (auto it = values.begin(); it != values.end(); ++it) {
+		INTPOOL->Set(it->optionname.c_str(), it->value);
+	}
+	for (auto it = files.begin(); it != files.end(); ++it) {
+		STRPOOL->Set(it->optionname.c_str(), it->path.c_str());
+	}
+}
+#endif

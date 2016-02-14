@@ -1,5 +1,6 @@
 #include "file.h"
 #include "globalresources.h"
+#include "logger.h"
 #include "libarchive/archive.h"
 #include "libarchive/archive_entry.h"
 #include <sys/stat.h>
@@ -501,7 +502,7 @@ namespace FileHelper {
 							memcpy((char*)f_->raw_ + offset_, ptr_, size_);
 						}
 						if (r == ARCHIVE_FAILED) {
-							printf("%s\n", archive_error_string(stat_->a));
+							LOG->Warn(archive_error_string(stat_->a));
 							free(f_->raw_);
 							f_->raw_ = 0;
 						}

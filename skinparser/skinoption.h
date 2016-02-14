@@ -1,6 +1,10 @@
 #pragma once
 
 #include <vector>
+//#define _USEPOOL		// you can use SkinOption generally by disabling this definition
+#ifdef _USEPOOL
+#include "globalresources.h"
+#endif
 
 /*
  * Manages state of Skin
@@ -48,4 +52,7 @@ public:
 	std::vector<CustomTimer>& GetSwitches();
 	std::vector<CustomValue>& GetValues();
 	std::vector<CustomFile>& GetFiles();
+#ifdef _USEPOOL
+	void SetEnvironmentFromOption();
+#endif
 };

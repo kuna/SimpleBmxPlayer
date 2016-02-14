@@ -22,7 +22,7 @@ public:
 	Skin();
 	~Skin();
 	void Release();
-	bool Parse(const char *filepath);
+	bool Load(const char *filepath);
 	bool Save(const char *filepath);
 
 	// must call after skin data is loaded
@@ -31,17 +31,24 @@ public:
 
 
 // -------------------------------------------------------------
-#define MAX_LINE 20000
-#define MAX_LINE_CHARACTER 1024
+#define MAX_LINE_CHARACTER_	1024
+#define MAX_ARGS_COUNT_		100
 
 class _LR2SkinParser {
 private:
+	typedef char line_[MAX_LINE_CHARACTER_];
+	typedef const char* args_[MAX_ARGS_COUNT_];
+	typedef const char** args_read_;
+	struct line_v_ { line_ line__; };
+	struct args_v_ { args_ args__; };
+
+private:
 	Skin *s;
 	tinyxml2::XMLElement *cur_e;				// current base element
-	char lines[MAX_LINE][MAX_LINE_CHARACTER];	// contain included lines
-	char *line_args[MAX_LINE][100];				// contain arguments for each lines
-	int line_position[MAX_LINE];				// line position per each included files
+	std::vector<line_v_> lines_;				// contains line data
+	std::vector<args_v_> line_args_;			// contains arguments per line
 	int line_total;								// the line we totally read
+	char filepath[1024];						// current file name
 
 	/*
 	 * 
@@ -55,6 +62,7 @@ private:
 	 * Should support nested condition, at least
 	 */
 	tinyxml2::XMLElement *condition_element[100];
+	int condition_status[100];		// access count for that level. only for #IMAGE parsing.
 	int condition_level;
 
 	/*
@@ -69,31 +77,26 @@ private:
 	int LoadSkin(const char *filepath, int linebufferpos = 0);
 	void ParseSkin();
 	int ParseSkinLine(int line);			// returns next line to be parsed
-	void ParseSkinLineArgument(char *line, char** args);
+	void ParseSkinLineArgument(char *line, const char** args);
 private:
 	/*
 	 * under are a little macros
 	 */
+	void ProcessNumber(tinyxml2::XMLElement* obj, int sop1, int sop2, int sop3);
 	int ProcessLane(tinyxml2::XMLElement *src, int line, int resid);			// process commands about lane
 	int ProcessCombo(tinyxml2::XMLElement *obj, int line);		// process commands about combo
 	int ProcessSelectBar(tinyxml2::XMLElement *obj, int line);	// process commands about select bar
 	int ProcessSelectBar_DST(int line);					// process commands about select bar
 	// pacemaker: use default XML
 public:
-	/*
-	 * there're 3 pools: string/number(float)/timer(handler)
-	 * and we can call these pool by string name. 
-	 * and these function converts LR2 name into string name.
-	 */
-	static const char* TranslateOPs(int op);			// LR2 op code to useful visible tag (timer)
-	static const char* TranslateTimer(int timer);		// translate code (timer/handler)
-	static const char* TranslateButton(int code);		// translate code to handler (timer/handler)
-	static const char* TranslateSlider(int code);		// slider to value code (float)
-	static const char* TranslateGraph(int code);		// BARGRAPH to value code (float)
-	static const char* TranslateNumber(int code);		// number to value code (float)
-	static const char* TranslateText(int code);			// text to value code (string)
+	// for extern use
+	void AddPathToOption(const std::string& path, const std::string& option) {
+		filter_to_optionname.insert(std::pair<std::string, std::string>(path, option));
+	};
 
 	// after parsing, this will automatically call Clear();
 	bool ParseLR2Skin(const char *filepath, Skin *s);
 	void Clear();
+
+	_LR2SkinParser() { Clear(); }
 };
