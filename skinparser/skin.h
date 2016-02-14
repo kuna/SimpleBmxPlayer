@@ -59,10 +59,10 @@ private:
 	std::map<int, int> texturefont_id;							// check texturefont existence
 private:
 	/*
-	 * Should support nested condition, at least
+	 * parsing status
 	 */
+	int currentline;
 	tinyxml2::XMLElement *condition_element[100];
-	int condition_status[100];		// access count for that level. only for #IMAGE parsing.
 	int condition_level;
 
 	/*
@@ -76,17 +76,18 @@ private:
 	 */
 	int LoadSkin(const char *filepath, int linebufferpos = 0);
 	void ParseSkin();
-	int ParseSkinLine(int line);			// returns next line to be parsed
+	void ParseSkinLine();			// returns next line to be parsed
 	void ParseSkinLineArgument(char *line, const char** args);
 private:
-	/*
-	 * under are a little macros
-	 */
+	bool ProcessDepreciated(const args_read_& args);
+	bool ProcessCondition(const args_read_& args);
+	bool ProcessMetadata(const args_read_& args);
+	bool ProcessResource(const args_read_& args);
 	void ProcessNumber(tinyxml2::XMLElement* obj, int sop1, int sop2, int sop3);
-	int ProcessLane(tinyxml2::XMLElement *src, int line, int resid);			// process commands about lane
-	int ProcessCombo(tinyxml2::XMLElement *obj, int line);		// process commands about combo
-	int ProcessSelectBar(tinyxml2::XMLElement *obj, int line);	// process commands about select bar
-	int ProcessSelectBar_DST(int line);					// process commands about select bar
+	int ProcessLane(const args_read_& args, tinyxml2::XMLElement *src, int resid);			// process commands about lane
+	int ProcessCombo(const args_read_& args, tinyxml2::XMLElement *obj);		// process commands about combo
+	int ProcessSelectBar(const args_read_& args, tinyxml2::XMLElement *obj);	// process commands about select bar
+	int ProcessSelectBar_DST(const args_read_& args);					// process commands about select bar
 	// pacemaker: use default XML
 public:
 	// for extern use
@@ -94,7 +95,11 @@ public:
 		filter_to_optionname.insert(std::pair<std::string, std::string>(path, option));
 	};
 
-	// after parsing, this will automatically call Clear();
+	// this includes skin layout
+	// use this method after LR2Skin is parsed.
+	bool ParseCSV(const char* filepath, Skin *s);
+	// this includes metadata
+	// metadata should be saved as xml file.
 	bool ParseLR2Skin(const char *filepath, Skin *s);
 	void Clear();
 

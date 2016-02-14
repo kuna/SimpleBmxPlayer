@@ -657,6 +657,7 @@ bool _LR2SkinParser::ParseLR2Skin(const char *filepath, Skin *s) {
 	else {
 		// if this value is the final output,
 		// then there might be some #ENDIF was leaked.
+		printf("LR2Skin Warning - invalid #IF clause seems existing (not closed)\n");
 		return false;
 	}
 }
@@ -679,28 +680,15 @@ int _LR2SkinParser::LoadSkin(const char *filepath, int linebufferpos) {
 		p = Trim(line);
 
 		// ignore comment
+		// (or push the line as comment?)
 		if (strncmp("//", p, 2) == 0 || !strlen(p))
 			continue;
 
-		// if #include then read the file first
-		/*if (strncmp("#INCLUDE", p, 8) == 0) {
-			char *np = strchr(p + 9, ',');
-			if (np) *np = 0;
-			std::string relpath = p + 9;
-			std::string basepath = filepath;
-			ConvertLR2PathToRelativePath(relpath);
-			GetParentDirectory(basepath);
-			ConvertRelativePathToAbsPath(relpath, basepath);
-			linebufferpos += LoadSkin(relpath.c_str(), linebufferpos + 1);
-		}
-		else {*/
 		line_v_ line__;
 		strcpy(line__.line__, line);
 		lines_.push_back(line__);
-		//}
 		linebufferpos++;
 	}
-
 	fclose(f);
 
 	// parse argument
@@ -717,9 +705,9 @@ int _LR2SkinParser::LoadSkin(const char *filepath, int linebufferpos) {
 
 void _LR2SkinParser::ParseSkin() {
 	// start first line to end line
-	int current_line = 0;
-	while (current_line >= 0 && current_line < line_total) {
-		current_line = ParseSkinLine(current_line);
+	currentline = 0;
+	while (currentline >= 0 && currentline < line_total) {
+		ParseSkinLine();
 	}
 }
 
@@ -757,76 +745,77 @@ void MakeRelative(int x, int y, XMLElement *e) {
 	}
 }
 
-
-int _LR2SkinParser::ParseSkinLine(int line) {
-	// get current line's string & argument
-	args_read_ args;			// contains linebuffer's address
-	args = line_args_[line].args__;
-	if (args[0] == 0)
-		return line + 1;
+/* *********************************************************
+ * LR2 csv parsing start
+ * *********************************************************/
 
 #define CMD_IS(v) (strcmp(args[0], (v)) == 0)
 #define OBJTYPE_IS(v) (strcmp(args[0]+5, (v)) == 0)
 #define CMD_STARTSWITH(v,l) (strncmp(args[0], (v), (l)) == 0)
 #define INT(v) (atoi(v))
-#define ADDTOHEADER(v) (v)
-	/*
-	* condition part
-	*/
+bool _LR2SkinParser::ProcessCondition(const args_read_& args) {
+	bool cond = false;
 	if (CMD_IS("#ENDIF")) {
 		// we just ignore this statement, so only 1st-level parsing is enabled.
 		// but if previous #IF clause exists, then close it
 		if (condition_level > 0)
 			cur_e = condition_element[--condition_level];
 		else
-			printf("Invalid #ENDIF (%d)\n", line);
-		return line + 1;
+			printf("LR2Skin - Invalid #ENDIF (%d)\n", currentline);
+		cond = true;
 	}
-	if (!cur_e)
-		return line + 1;
-	if (CMD_IS("#ELSE")) {
-		// #ELSE: find last #IF clause, and copy condition totally.
-		// not perfect, but maybe we can make a deal :)
-		XMLElement *prev_if = condition_element[condition_level - 1]->LastChildElement("if");
-		if (prev_if) {
-			XMLElement *group = s->skinlayout.NewElement("ifnot");
-			group->SetAttribute("condition", prev_if->Attribute("condition"));
-			cur_e = condition_element[--condition_level];
-			cur_e->LinkEndChild(group);
-			condition_element[++condition_level] = cur_e = group;
-			condition_status[condition_level]++;
-		}
-		else {
-			// we tend to ignore #ELSE clause ... it's wrong.
-			cur_e = 0;
-		}
-		return line + 1;
-	}
-	else if (CMD_IS("#IF") || CMD_IS("#ELSEIF")) {
-		// #ELSEIF: think as new #IF clause
-		XMLElement *group = s->skinlayout.NewElement("if");
-		if (CMD_IS("#IF")) {
-			condition_level++;
-			condition_status[condition_level] = 0;
-		}
-		condition_element[condition_level] = group;
-		condition_status[condition_level]++;
+	else if (CMD_IS("#ELSE")) {
+		XMLElement *cond_ = cur_e->Parent()->ToElement();
+		XMLElement *obj_ = (XMLElement*)ADDCHILD(cond_, "else");
+		cur_e = obj_;
 		ConditionAttribute cls;
 		for (int i = 1; i < 50 && args[i]; i++) {
-			const char *c = INT(args[i])?TranslateOPs(INT(args[i])):0;
-			if (c) cls.AddCondition(c);
+			cls.AddCondition(TranslateOPs(INT(args[i])));
 		}
-		group->SetAttribute("condition", cls.ToString());
-		// get parent object and link new group to there
-		cur_e = condition_element[condition_level - 1];	
-		cur_e->LinkEndChild(group);
-		cur_e = group;
-		return line + 1;
+		cond = true;
+	}
+	else if (CMD_IS("#IF")) {
+		//
+		// xml structure
+		//
+		// condition
+		//   if
+		//     ...
+		//   /if
+		//   elseif
+		//     ...
+		//   /elseif
+		//   else
+		//   ...
+		//   /else
+		// /condition
+		//
+		condition_element[condition_level] = cur_e;
+		XMLElement *cond_ = (XMLElement*)ADDCHILD(cur_e, "condition");
+		XMLElement *obj_ = (XMLElement*)ADDCHILD(cond_, "if");
+		cur_e = obj_;
+		condition_level++;
+		ConditionAttribute cls;
+		for (int i = 1; i < 50 && args[i]; i++) {
+			cls.AddCondition(TranslateOPs(INT(args[i])));
+		}
+		cond = true;
+	}
+	else if (CMD_IS("#ELSEIF")) {
+		XMLElement *cond_ = cur_e->Parent()->ToElement();
+		XMLElement *obj_ = (XMLElement*)ADDCHILD(cond_, "elseif");
+		cur_e = obj_;
+		ConditionAttribute cls;
+		for (int i = 1; i < 50 && args[i]; i++) {
+			cls.AddCondition(TranslateOPs(INT(args[i])));
+		}
+		cond = true; 
 	}
 
-	/*
-	* header/metadata parsing
-	*/
+	return cond;
+}
+
+bool _LR2SkinParser::ProcessMetadata(const args_read_& args) {
 	if (CMD_IS("#INCLUDE")) {
 		XMLElement *e = (XMLElement*)ADDCHILD(cur_e, "include");
 
@@ -837,6 +826,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		//ConvertRelativePathToAbsPath(relpath, basepath);
 
 		e->SetAttribute("path", relpath.c_str());
+		return true;
 	}
 	else if (CMD_IS("#CUSTOMOPTION")) {
 		XMLElement *option = FindElement(cur_e, "option", &s->skinlayout);
@@ -854,6 +844,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			option_intvalue++;
 			customoption->LinkEndChild(options);
 		}
+		return true;
 	}
 	else if (CMD_IS("#CUSTOMFILE")) {
 		XMLElement *option = FindElement(cur_e, "option", &s->skinlayout);
@@ -885,6 +876,7 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		AddPathToOption(args[2], name_safe);
 		XMLComment *cmt = s->skinlayout.NewComment(args[2]);
 		option->LinkEndChild(cmt);
+		return true;
 	}
 	else if (CMD_IS("#INFORMATION")) {
 		// set skin's metadata
@@ -949,20 +941,25 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			ADDTEXT(info, "key", key_);
 		}
 		else {
-			printf("[ERROR] unknown type of lr2skin(%d). consider as 7Key Play.\n", type_);
+			printf("LR2Skin error: unknown type of lr2skin(%d). consider as 7Key Play.\n", type_);
 			type_ = 0;
 		}
 
 		ADDTEXT(info, "name", args[2]);
 		ADDTEXT(info, "author", args[3]);
+		return true;
 	}
-	else if (CMD_IS("#IMAGE")) {
-		/*
-		 * Sometimes resource is added in IF form
-		 * then ONLY allow first one
-		 */
-		if (condition_level > 0 && condition_status[condition_level] > 1)
-			return line + 1;
+	return false;
+}
+
+bool _LR2SkinParser::ProcessResource(const args_read_& args) {
+	//
+	// all resources are splited into 
+	// - id
+	// - resource path
+	// LR2 has not so modern style skin structure :p
+	//
+	if (CMD_IS("#IMAGE")) {
 		XMLElement *resource = s->skinlayout.FirstChildElement("skin");
 		XMLElement *image = s->skinlayout.NewElement("image");
 		image->SetAttribute("name", image_cnt++);
@@ -981,9 +978,8 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		image->SetAttribute("path", path_converted.c_str());
 
 		resource->InsertFirstChild(image);
-	}
-	else if (CMD_IS("#FONT")) {
-		printf("#FONT is depreciated option, ignore.\n");
+
+		return true;
 	}
 	else if (CMD_IS("#LR2FONT")) {
 		// we don't use bitmap fonts
@@ -997,15 +993,15 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		if (strstr(args[1], "small")) size = 15;
 		if (strstr(args[1], "title")
 			|| strstr(args[1], "big")
-			|| strstr(args[1], "large")) 
+			|| strstr(args[1], "large"))
 			size = 42;
 		if (size > 20)
 			font->SetAttribute("texturepath", "default");
 		font->SetAttribute("size", size);
 #if 0
 		/*
-		 * these are available in #FONT, not #LR2FONT
-		 */
+		* these are available in #FONT, not #LR2FONT
+		*/
 		switch (INT(args[3])) {
 		case 0:
 			// normal
@@ -1024,8 +1020,63 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 #endif
 		font->SetAttribute("border", size / 20 + 1);
 		resource->InsertFirstChild(font);
+		return true;
 	}
-	else if (CMD_IS("#SETOPTION")) {
+	return false;
+}
+
+bool _LR2SkinParser::ProcessDepreciated(const args_read_& args) {
+	if (CMD_IS("#FONT") ||
+		CMD_IS("#ENDOFHEADER") ||
+		CMD_IS("#FLIPRESULT") ||
+		CMD_IS("TRANSCLOLR")) 
+	{
+		return true;
+	}
+	return false;
+}
+
+void _LR2SkinParser::ParseSkinLine() {
+	// get current line's string & argument
+	args_read_ args;			// contains linebuffer's address
+	args = line_args_[currentline].args__;
+	int objectid = INT(args[1]);
+
+	/*
+	 * depreciated ones
+	 */
+	if (ProcessDepreciated(args)) {
+		printf("LR2Skin - %s is depreciated command, ignore.\n", args[0]);
+		currentline++;
+		return;
+	}
+
+	/*
+	 * Is it conditional clause?
+	 */
+	if (ProcessCondition(args)) {
+		currentline++;
+		return;
+	}
+
+	/*
+	 * header/metadata parsing
+	 */
+	if (ProcessMetadata(args)) {
+		currentline++;
+		return;
+	}
+
+	/*
+	 * resource parsing
+	 */
+	if (ProcessResource(args)) {
+		currentline++;
+		return;
+	}
+
+
+	if (CMD_IS("#SETOPTION")) {
 		// this clause is translated during render tree construction
 		XMLElement *setoption = s->skinlayout.NewElement("lua");
 		std::ostringstream luacode;
@@ -1038,10 +1089,6 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		setoption->SetText(("\n" + luacode.str()).c_str());
 		cur_e->LinkEndChild(setoption);
 	}
-	/* Just ignore these option */
-	else if (CMD_IS("#ENDOFHEADER")) {}
-	else if (CMD_IS("#FLIPRESULT")) {}
-	else if (CMD_IS("#TRANSCLOLR")) {}		// should we have to implement colorkey?
 	else if (CMD_STARTSWITH("#SRC_", 4)){
 		// we parse #DST with #SRC.
 		// process SRC
@@ -1094,9 +1141,10 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		 * (bad-syntax >:( )
 		 */
 		// check for play area
-		int isPlayElement = ProcessLane(obj, line, resid);
+		int isPlayElement = ProcessLane(args, obj, resid);
 		if (isPlayElement) {
-			return isPlayElement;
+			currentline += isPlayElement;
+			return;
 		}
 
 		/*
@@ -1110,8 +1158,8 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		int op1 = 0, op2 = 0, op3 = 0;
 		XMLElement *dst = s->skinlayout.NewElement("DST");
 		obj->LinkEndChild(dst);
-		for (int nl = line + 1; nl < line_total; nl++) {
-			args = line_args_[nl].args__;
+		for (int nl = currentline + 1; nl < line_total; nl++) {
+			args_read_ args = line_args_[nl].args__;
 			if (!args[0]) continue;
 			if (CMD_IS("#ENDIF"))
 				continue;			// we can ignore #ENDIF command, maybe
@@ -1199,19 +1247,19 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		 * Check out for some special object (which requires #DST object)
 		 * COMMENT: most of them behaves like #IMAGE object.
 		 */
-		// reset arguments to figure out about object
-		args = line_args_[line].args__;
-		int objectid = INT(args[1]);
-
 		// combo (play)
-		int isComboElement = ProcessCombo(obj, line);
-		if (isComboElement)
-			return isComboElement;
+		int isComboElement = ProcessCombo(args, obj);
+		if (isComboElement) {
+			currentline += isComboElement;
+			return;
+		}
 
 		// select menu (select)
-		int isSelectBar = ProcessSelectBar(obj, line);
-		if (isSelectBar)
-			return isSelectBar;
+		int isSelectBar = ProcessSelectBar(args, obj);
+		if (isSelectBar) {
+			currentline += isSelectBar;
+			return;
+		}
 
 		/* 
 		 * under these are general individual object
@@ -1376,28 +1424,31 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		else if (OBJTYPE_IS("ONMOUSE")) {
 			// depreciated/ignore
 			// TODO: support this by SRC_HOVER tag.
-			printf("#XXX_ONMOUSE command is depreciated, ignore. (%dL) \n", line);
+			printf("#XXX_ONMOUSE command is depreciated, ignore. (%dL) \n", currentline);
 		}
 		else {
-			printf("Unknown General Object (%s), consider as IMAGE. (%dL)\n", args[0] + 5, line);
+			printf("Unknown General Object (%s), consider as IMAGE. (%dL)\n", args[0] + 5, currentline);
 		}
 
 		// return new line
-		return line+1;
+		currentline+=1;
+		return;
 	}
 	/*
 	 * SELECT part 
 	 */
 	else if (CMD_STARTSWITH("#DST_BAR_BODY", 13)) {
 		// select menu part
-		int isProcessSelectBarDST = ProcessSelectBar_DST(line);
-		if (isProcessSelectBarDST)
-			return isProcessSelectBarDST;
+		int isProcessSelectBarDST = ProcessSelectBar_DST(args);
+		if (isProcessSelectBarDST) {
+			currentline += isProcessSelectBarDST;
+			return;
+		}
 	}
 	else if (CMD_IS("#BAR_CENTER")) {
 		// set center and property ...
 		XMLElement *selectmenu = FindElement(cur_e, "selectmenu");
-		selectmenu->SetAttribute("center", line_args_[line].args__[1]);
+		selectmenu->SetAttribute("center", args[1]);
 	}
 	else if (CMD_IS("#BAR_AVAILABLE")) {
 		// depreciated, not parse
@@ -1407,7 +1458,6 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	 * PLAY part 
 	 */
 	else if (CMD_STARTSWITH("#DST_NOTE", 9)) {
-		args_read_ args = line_args_[line].args__;
 		int objectid = INT(args[1]);
 		XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", objectid / 10, &s->skinlayout);
 		XMLElement *lane = FindElementWithAttribute(playarea, "note", "index", objectid, &s->skinlayout);
@@ -1423,11 +1473,11 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		// just ignore
 	}
 	else {
-		printf("Unknown Type: %s (%dL) - Ignore.\n", args[0], line);
+		printf("LR2Skin - Unknown Type: %s (%dL) - Ignore.\n", args[0], currentline);
 	}
 
 	// parse next line
-	return line + 1;
+	currentline++;
 }
 
 // comment: maybe I need to process it with namespace ...?
@@ -1475,8 +1525,7 @@ void _LR2SkinParser::ProcessNumber(XMLElement *obj, int sop1, int sop2, int sop3
  * if not lane, return 0
  * if lane, return next parsed line
  */
-int _LR2SkinParser::ProcessLane(XMLElement *src, int line, int resid) {
-	args_read_ args = line_args_[line].args__;
+int _LR2SkinParser::ProcessLane(const args_read_& args, XMLElement *src, int resid) {
 	int objectid = INT(args[1]);
 
 #define SETNOTE(name)\
@@ -1486,7 +1535,7 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line, int resid) {
 	src->DeleteAttribute("resid");\
 	src->SetName(name);\
 	lane->LinkEndChild(src);\
-	return line + 1;
+	return 1;
 	if (OBJTYPE_IS("NOTE")) {
 		SETNOTE("SRC_NOTE");
 	}
@@ -1520,7 +1569,7 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line, int resid) {
 	else if (OBJTYPE_IS("JUDGELINE")) {
 		XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", objectid, &s->skinlayout);
 		// find DST object to set Lane attribute
-		for (int _l = line + 1; _l < line_total; _l++) {
+		for (int _l = currentline; _l < line_total; _l++) {
 			if (strcmp(line_args_[_l].args__[0], "#DST_JUDGELINE") == 0 &&
 				INT(line_args_[_l].args__[1]) == objectid) {
 				int x = INT(line_args_[_l].args__[3]);
@@ -1579,8 +1628,7 @@ std::string _getcomboconditionstring(int player, int level) {
 }
 int __comboy = 0;
 int __combox = 0;
-int _LR2SkinParser::ProcessCombo(XMLElement *obj, int line) {
-	args_read_ args = line_args_[line].args__;
+int _LR2SkinParser::ProcessCombo(const args_read_& args, XMLElement *obj) {
 	int objectid = INT(args[1]);
 	int sop1 = 0, sop2 = 0, sop3 = 0;
 	if (args[11]) sop1 = INT(args[11]);
@@ -1596,7 +1644,7 @@ int _LR2SkinParser::ProcessCombo(XMLElement *obj, int line) {
 		playcombo->LinkEndChild(obj);
 		__comboy = obj->FirstChildElement("DST")->FirstChildElement("frame")->IntAttribute("y");
 		__combox = obj->FirstChildElement("DST")->FirstChildElement("frame")->IntAttribute("x");
-		return line + 1;
+		return 1;
 	}
 	else if (OBJTYPE_IS("NOWCOMBO_1P")) {
 		GETCOMBOOBJ(1);
@@ -1611,7 +1659,7 @@ int _LR2SkinParser::ProcessCombo(XMLElement *obj, int line) {
 			e = e->NextSiblingElement("frame");
 		}
 		playcombo->LinkEndChild(obj);
-		return line + 1;
+		return 1;
 	}
 	else if (OBJTYPE_IS("NOWJUDGE_2P")) {
 		GETCOMBOOBJ(2);
@@ -1619,7 +1667,7 @@ int _LR2SkinParser::ProcessCombo(XMLElement *obj, int line) {
 		playcombo->LinkEndChild(obj);
 		__comboy = obj->FirstChildElement("DST")->FirstChildElement("frame")->IntAttribute("y");
 		__combox = obj->FirstChildElement("DST")->FirstChildElement("frame")->IntAttribute("x");
-		return line + 1;
+		return 1;
 	}
 	else if (OBJTYPE_IS("NOWCOMBO_2P")) {
 		GETCOMBOOBJ(2);
@@ -1634,15 +1682,14 @@ int _LR2SkinParser::ProcessCombo(XMLElement *obj, int line) {
 			e = e->NextSiblingElement("frame");
 		}
 		playcombo->LinkEndChild(obj);
-		return line + 1;
+		return 1;
 	}
 
 	// not a combo object
 	return 0;
 }
 
-int _LR2SkinParser::ProcessSelectBar(XMLElement *obj, int line) {
-	args_read_ args = line_args_[line].args__;
+int _LR2SkinParser::ProcessSelectBar(const args_read_& args, XMLElement *obj) {
 	int objectid = INT(args[1]);
 
 	// select menu part
@@ -1695,15 +1742,14 @@ int _LR2SkinParser::ProcessSelectBar(XMLElement *obj, int line) {
 			// ignore
 			s->skinlayout.DeleteNode(obj);
 		}
-		return line + 1;
+		return 1;
 	}
 
 	// not a select bar object
 	return 0;
 }
 
-int _LR2SkinParser::ProcessSelectBar_DST(int line) {
-	args_read_ args = line_args_[line].args__;
+int _LR2SkinParser::ProcessSelectBar_DST(const args_read_& args) {
 	int objectid = INT(args[1]);
 #define CMD_IS(v) (strcmp(args[0], (v)) == 0)
 	if (CMD_IS("#DST_BAR_BODY_ON")) {
@@ -1717,7 +1763,7 @@ int _LR2SkinParser::ProcessSelectBar_DST(int line) {
 			XMLElement *frame = FindElement(bodyoff, "frame");
 			position->SetAttribute("delta_x", INT(args[3]) - frame->IntAttribute("x"));
 		}
-		return line + 1;
+		return 1;
 	}
 	else if (CMD_IS("#DST_BAR_BODY_OFF")) {
 		XMLElement *selectmenu = FindElement(cur_e, "selectmenu", &s->skinlayout);
@@ -1730,7 +1776,7 @@ int _LR2SkinParser::ProcessSelectBar_DST(int line) {
 		frame->SetAttribute("w", INT(args[5]));
 		frame->SetAttribute("h", INT(args[6]));
 		bodyoff->LinkEndChild(frame);
-		return line + 1;
+		return 1;
 	}
 	else {
 		// not a select bar object
@@ -1851,7 +1897,6 @@ void _LR2SkinParser::Clear() {
 	texturefont_id.clear();
 	lines_.clear();
 	line_args_.clear();
-	memset(condition_status, 0, sizeof(condition_status));
 }
 
 // ----------------------- LR2Skin part end ------------------------
