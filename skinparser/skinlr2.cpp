@@ -57,11 +57,11 @@ namespace {
 		empty_str_,                 empty_str_,
 		empty_str_,                 empty_str_,
 		// 20
-		"OnPanel", "OnPanel1",
-		"OnPanel2", "OnPanel3",
-		"OnPanel4", "OnPanel5",
-		"OnPanel6", "OnPanel7",
-		"OnPanel8", "OnPanel9",
+		"Panel", "Panel1",
+		"Panel2", "Panel3",
+		"Panel4", "Panel5",
+		"Panel6", "Panel7",
+		"Panel8", "Panel9",
 		// 30
 		"IsBGANormal", "IsBGA",
 		"!IsAutoPlay", "IsAutoPlay",
@@ -121,7 +121,7 @@ namespace {
 		"IsLevelSparkle", "!IsLevelSparkle", "IsLevelSparkle",
 		empty_str_, empty_str_, empty_str_,
 		// 190
-		"!IsStageFile", "IsStageFile"
+		"!IsStageFile", "IsStageFile",
 		"!IsBANNER", "IsBANNER",
 		"!IsBACKBMP", "IsBACKBMP",
 		"!IsReplayable", "!IsReplayable",
@@ -139,27 +139,27 @@ namespace {
 		"IsP2ReachAAA", "IsP2ReachAA", "IsP2ReachA", "IsP2ReachB", "IsP2ReachC", "IsP2ReachD", "IsP2ReachE", "IsP2ReachF",
 		empty_str_, empty_str_,
 		// 240
-		empty_str_, "OnP1JudgePerfect",
-		"OnP1JudgeGreat", "OnP1JudgeGood",
-		"OnP1JudgeBad", "OnP1JudgePoor",
-		"OnP1JudgeNPoor", "OnP1Miss",
-		"!OnP1Miss", empty_str_,
+		empty_str_, "P1JudgePerfect",
+		"P1JudgeGreat", "P1JudgeGood",
+		"P1JudgeBad", "P1JudgePoor",
+		"P1JudgeNPoor", "P1Miss",
+		"!P1Miss", empty_str_,
 		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
 		//  260
-		empty_str_, "OnP2JudgePerfect",
-		"OnP2JudgeGreat", "OnP2JudgeGood",
-		"OnP2JudgeBad", "OnP2JudgePoor",
-		"OnP2JudgeNPoor", "OnP2Miss",
-		"!OnP2Miss", empty_str_,
+		empty_str_, "P2JudgePerfect",
+		"P2JudgeGreat", "P2JudgeGood",
+		"P2JudgeBad", "P2JudgePoor",
+		"P2JudgeNPoor", "P2Miss",
+		"!P2Miss", empty_str_,
 		// 270
 		"OnP1SuddenChange", "OnP2SuddenChange",
 		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
 		// 280
-		"IsCourse1Stage", "IsCourse2Stage"
-		"IsCourse3Stage", "IsCourse4Stage"
-		"IsCourse5Stage", "IsCourse6Stage"
-		"IsCourse7Stage", "IsCourse8Stage"
-		"IsCourse9Stage", "IsCourseFinal"
+		"IsCourse1Stage", "IsCourse2Stage",
+		"IsCourse3Stage", "IsCourse4Stage",
+		"IsCourse5Stage", "IsCourse6Stage",
+		"IsCourse7Stage", "IsCourse8Stage",
+		"IsCourse9Stage", "IsCourseFinal",
 		// 290
 		// 291: Ó«êÈìãïÒ
 		"IsCourse", "IsGrading", "IsExpertCourse", "IsClassCourse",
@@ -209,45 +209,45 @@ namespace {
 	const char* timer_code_[1000] = { 
 		// 0
 		empty_str_, 
-		"OnStartInput",
-		"OnFadeOut",
-		"OnFail",
+		"StartInput",
+		"FadeOut",
+		"ShutDown",
 		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
 		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
 		// 20
-		empty_str_, "OnPanel1", "OnPanel2", "OnPanel3", "OnPanel4", "OnPanel5", "OnPanel6", "OnPanel7", "OnPanel8", "OnPanel9",
-		empty_str_, "OnPanel1Close", "OnPanel2Close", "OnPanel3Close", "OnPanel4Close",
-		"OnPanel5Close", "OnPanel6Close", "OnPanel7Close", "OnPanel8Close", "OnPanel9Close",
+		empty_str_, "Panel1", "Panel2", "Panel3", "Panel4", "Panel5", "Panel6", "Panel7", "Panel8", "Panel9",
+		empty_str_, "Panel1Close", "Panel2Close", "Panel3Close", "Panel4Close",
+		"Panel5Close", "Panel6Close", "Panel7Close", "Panel8Close", "Panel9Close",
 		// 40
-		// - basic handler is OnP1GaugeChanged / OnP2GaugeChanged
+		// - basic handler is P1GaugeChanged / P2GaugeChanged
 		//   we should make helper code out of there.
-		"OnReady", "OnGameStart", 
-		"OnP1GaugeUp", "OnP2GaugeUp", 
-		"OnP1GaugeMax", "OnP2GaugeMax",
-		"OnP1Combo", "OnP2Combo", 
-		"OnP1FullCombo", "OnP2FullCombo",
+		"Ready", "GameStart", 
+		"P1GaugeUp", "P2GaugeUp", 
+		"P1GaugeMax", "P2GaugeMax",
+		"P1Combo", "P2Combo", 
+		"P1FullCombo", "P2FullCombo",
 		// 50
-		"OnP1JudgeSCOkay", "OnP1Judge1Okay",
-		"OnP1Judge2Okay", "OnP1Judge3Okay",
-		"OnP1Judge4Okay", "OnP1Judge5Okay",
-		"OnP1Judge6Okay", "OnP1Judge7Okay",
-		"OnP1Judge8Okay", "OnP1Judge9Okay",
-		"OnP2JudgeSCOkay", "OnP2Judge1Okay",
-		"OnP2Judge2Okay", "OnP2Judge3Okay",
-		"OnP2Judge4Okay", "OnP2Judge5Okay",
-		"OnP2Judge6Okay", "OnP2Judge7Okay",
-		"OnP2Judge8Okay", "OnP2Judge9Okay",
+		"P1JudgeSCOkay", "P1Judge1Okay",
+		"P1Judge2Okay", "P1Judge3Okay",
+		"P1Judge4Okay", "P1Judge5Okay",
+		"P1Judge6Okay", "P1Judge7Okay",
+		"P1Judge8Okay", "P1Judge9Okay",
+		"P2JudgeSCOkay", "P2Judge1Okay",
+		"P2Judge2Okay", "P2Judge3Okay",
+		"P2Judge4Okay", "P2Judge5Okay",
+		"P2Judge6Okay", "P2Judge7Okay",
+		"P2Judge8Okay", "P2Judge9Okay",
 		// 70
-		"OnP1JudgeSCHold", "OnP1Judge1Hold",
-		"OnP1Judge2Hold", "OnP1Judge3Hold",
-		"OnP1Judge4Hold", "OnP1Judge5Hold",
-		"OnP1Judge6Hold", "OnP1Judge7Hold",
-		"OnP1Judge8Hold", "OnP1Judge9Hold",
-		"OnP2JudgeSCHold", "OnP2Judge1Hold",
-		"OnP2Judge2Hold", "OnP2Judge3Hold",
-		"OnP2Judge4Hold", "OnP2Judge5Hold",
-		"OnP2Judge6Hold", "OnP2Judge7Hold",
-		"OnP2Judge8Hold", "OnP2Judge9Hold",
+		"P1JudgeSCHold", "P1Judge1Hold",
+		"P1Judge2Hold", "P1Judge3Hold",
+		"P1Judge4Hold", "P1Judge5Hold",
+		"P1Judge6Hold", "P1Judge7Hold",
+		"P1Judge8Hold", "P1Judge9Hold",
+		"P2JudgeSCHold", "P2Judge1Hold",
+		"P2Judge2Hold", "P2Judge3Hold",
+		"P2Judge4Hold", "P2Judge5Hold",
+		"P2Judge6Hold", "P2Judge7Hold",
+		"P2Judge8Hold", "P2Judge9Hold",
 		// 90
 		empty_str_, empty_str_,
 		empty_str_, empty_str_,
@@ -255,40 +255,40 @@ namespace {
 		empty_str_, empty_str_,
 		empty_str_, empty_str_,
 		// 100
-		"OnP1KeySCPress", "OnP1Key1Press",
-		"OnP1Key2Press", "OnP1Key3Press",
-		"OnP1Key4Press", "OnP1Key5Press",
-		"OnP1Key6Press", "OnP1Key7Press",
-		"OnP1Key8Press", "OnP1Key9Press",
-		"OnP2KeySCPress", "OnP2Key1Press",
-		"OnP2Key2Press", "OnP2Key3Press",
-		"OnP2Key4Press", "OnP2Key5Press",
-		"OnP2Key6Press", "OnP2Key7Press",
-		"OnP2Key8Press", "OnP2Key9Press",
+		"P1KeySCPress", "P1Key1Press",
+		"P1Key2Press", "P1Key3Press",
+		"P1Key4Press", "P1Key5Press",
+		"P1Key6Press", "P1Key7Press",
+		"P1Key8Press", "P1Key9Press",
+		"P2KeySCPress", "P2Key1Press",
+		"P2Key2Press", "P2Key3Press",
+		"P2Key4Press", "P2Key5Press",
+		"P2Key6Press", "P2Key7Press",
+		"P2Key8Press", "P2Key9Press",
 		// 120
-		"OnP1KeySCUp", "OnP1Key1Up",
-		"OnP1Key2Up", "OnP1Key3Up",
-		"OnP1Key4Up", "OnP1Key5Up",
-		"OnP1Key6Up", "OnP1Key7Up",
-		"OnP1Key8Up", "OnP1Key9Up",
-		"OnP2KeySCUp", "OnP2Key1Up",
-		"OnP2Key2Up", "OnP2Key3Up",
-		"OnP2Key4Up", "OnP2Key5Up",
-		"OnP2Key6Up", "OnP2Key7Up",
-		"OnP2Key8Up", "OnP2Key9Up",
+		"P1KeySCUp", "P1Key1Up",
+		"P1Key2Up", "P1Key3Up",
+		"P1Key4Up", "P1Key5Up",
+		"P1Key6Up", "P1Key7Up",
+		"P1Key8Up", "P1Key9Up",
+		"P2KeySCUp", "P2Key1Up",
+		"P2Key2Up", "P2Key3Up",
+		"P2Key4Up", "P2Key5Up",
+		"P2Key6Up", "P2Key7Up",
+		"P2Key8Up", "P2Key9Up",
 		// 140
-		"OnBeat",
+		"Measure",
 		empty_str_,
 		empty_str_,
-		"OnP1LastNote",
-		"OnP2LastNote",
+		"P1LastNote",
+		"P2LastNote",
 		empty_str_,
 		empty_str_,
 		empty_str_,
 		empty_str_,
 		empty_str_,
 		// 150
-		"OnResult",
+		"Result",
 		// end
 		empty_str_,
 	};
@@ -569,7 +569,10 @@ namespace {
 			translated[0] = 0;
 		}
 
-		if (op == 999) {
+		if (op == 0) {
+			return "";
+		}
+		else if (op == 999) {
 			strcpy(translated + negative, "false");
 		}
 		else if (op >= 900) {
@@ -577,7 +580,9 @@ namespace {
 			itoa(op, translated + negative, 10);
 		}
 		else {
-			strcpy(translated + negative, op_code_[op]);
+			const char* code = op_code_[op];
+			if (!code) code = empty_str_;
+			strcpy(translated + negative, code);
 		}
 
 		// remove double negative expression
@@ -590,27 +595,39 @@ namespace {
 	}
 
 	const char* TranslateTimer(int timer) {
-		return timer_code_[timer];
+		const char* code = timer_code_[timer];
+		if (!code) code = empty_str_;
+		return code;
 	}
 
 	const char* TranslateButton(int code) {
-		return button_code_[code];
+		const char* ret = button_code_[code];
+		if (!ret) ret = empty_str_;
+		return ret;
 	}
 
 	const char* TranslateSlider(int code) {
-		return slider_code_[code];
+		const char* ret = slider_code_[code];
+		if (!ret) ret = empty_str_;
+		return ret;
 	}
 
 	const char* TranslateGraph(int code) {
-		return graph_code_[code];
+		const char* ret = graph_code_[code];
+		if (!ret) ret = empty_str_;
+		return ret;
 	}
 
 	const char* TranslateNumber(int code) {
-		return number_code_[code];
+		const char* ret = number_code_[code];
+		if (!ret) ret = empty_str_;
+		return ret;
 	}
 
 	const char* TranslateText(int code) {
-		return text_code_[code];
+		const char* ret = text_code_[code];
+		if (!ret) ret = empty_str_;
+		return ret;
 	}
 }
 
@@ -627,8 +644,38 @@ namespace {
 
 // ---------------------------------------------------------------
 
-bool _LR2SkinParser::ParseLR2Skin(const char *filepath, Skin *s) {
+bool _LR2SkinParser::ParseLR2Skin(const char *filepath, SkinMetric *s) {
 	// fill basic information to skin
+	Clear();
+	this->sm = s;
+
+	// load skin line
+	line_total = LoadSkin(filepath);
+	if (!line_total) {
+		printf("LR2Skin Warning - Cannot find file (%s)\n", filepath);
+		return false;
+	}
+
+	XMLElement *skin = s->tree.NewElement("skin");
+	s->tree.LinkEndChild(skin);
+	ADDCHILD(skin, "option");
+
+	// after we read all lines, skin parse start
+	filter_to_optionname.clear();			// clear filter_to_optionname in here.
+	condition_element[0] = cur_e = skin;
+	condition_level = 0;
+	currentline = 0;
+	while (currentline >= 0 && currentline < line_total) {
+		ParseSkinMetricLine();
+	}
+
+	// don't check condition here
+	return true;
+}
+
+bool _LR2SkinParser::ParseCSV(const char *filepath, Skin *s) {
+	// fill basic information to skin
+	Clear();
 	this->s = s;
 
 	strcpy(s->filepath, filepath);
@@ -641,14 +688,20 @@ bool _LR2SkinParser::ParseLR2Skin(const char *filepath, Skin *s) {
 	s->skinlayout.LinkEndChild(skin);
 
 	// load skin line
-	// because lr2skin file format has no end tag, 
-	//  it's better to load all lines before parsing
 	line_total = LoadSkin(filepath);
+	if (!line_total) {
+		printf("LR2Skin Warning - Cannot find file (%s)\n", filepath);
+		return false;
+	}
 
 	// after we read all lines, skin parse start
 	condition_element[0] = cur_e = skin;
 	condition_level = 0;
-	ParseSkin();
+	currentline = 0;
+	while (currentline >= 0 && currentline < line_total) {
+		ParseSkinCSVLine();
+	}
+
 
 	if (condition_level == 0) {
 		printf("lr2skin(%s) parsing successfully done\n", filepath);
@@ -662,11 +715,12 @@ bool _LR2SkinParser::ParseLR2Skin(const char *filepath, Skin *s) {
 	}
 }
 
-int _LR2SkinParser::LoadSkin(const char *filepath, int linebufferpos) {
+int _LR2SkinParser::LoadSkin(const char *filepath) {
+	int lines = 0;
 	FILE *f = fopen(filepath, "r");
 	if (!f) {
-		printf("[ERROR] Cannot find Skin file %s - ignore\n", filepath);
-		return linebufferpos;
+		printf("LR2Skin - Cannot find Skin file %s - ignore\n", filepath);
+		return 0;
 	}
 	strcpy(this->filepath, filepath);
 
@@ -687,7 +741,7 @@ int _LR2SkinParser::LoadSkin(const char *filepath, int linebufferpos) {
 		line_v_ line__;
 		strcpy(line__.line__, line);
 		lines_.push_back(line__);
-		linebufferpos++;
+		lines++;
 	}
 	fclose(f);
 
@@ -695,23 +749,15 @@ int _LR2SkinParser::LoadSkin(const char *filepath, int linebufferpos) {
 	for (int i = 0; i < lines_.size(); i++) {
 		args_v_ line_args__;
 		line_v_* line__stored_ = &lines_[i];
-		ParseSkinLineArgument(line__stored_->line__, line_args__.args__);
+		SplitCSVLine(line__stored_->line__, line_args__.args__);
 		line_args_.push_back(line_args__);
 	}
 
 	// returns how much lines we read
-	return linebufferpos;
+	return lines;
 }
 
-void _LR2SkinParser::ParseSkin() {
-	// start first line to end line
-	currentline = 0;
-	while (currentline >= 0 && currentline < line_total) {
-		ParseSkinLine();
-	}
-}
-
-void _LR2SkinParser::ParseSkinLineArgument(char *p, const char **args) {
+void _LR2SkinParser::SplitCSVLine(char *p, const char **args) {
 	// first element is element name
 	args[0] = p;
 	int i;
@@ -799,6 +845,7 @@ bool _LR2SkinParser::ProcessCondition(const args_read_& args) {
 		for (int i = 1; i < 50 && args[i]; i++) {
 			cls.AddCondition(TranslateOPs(INT(args[i])));
 		}
+		obj_->SetAttribute("condition", cls.ToString());
 		cond = true;
 	}
 	else if (CMD_IS("#ELSEIF")) {
@@ -809,47 +856,52 @@ bool _LR2SkinParser::ProcessCondition(const args_read_& args) {
 		for (int i = 1; i < 50 && args[i]; i++) {
 			cls.AddCondition(TranslateOPs(INT(args[i])));
 		}
+		obj_->SetAttribute("condition", cls.ToString());
 		cond = true; 
 	}
 
 	return cond;
 }
 
-bool _LR2SkinParser::ProcessMetadata(const args_read_& args) {
-	if (CMD_IS("#INCLUDE")) {
-		XMLElement *e = (XMLElement*)ADDCHILD(cur_e, "include");
-
-		std::string relpath = args[1];
-		std::string basepath = filepath;
-		ConvertLR2PathToRelativePath(relpath);
-		//GetParentDirectory(basepath);
-		//ConvertRelativePathToAbsPath(relpath, basepath);
-
-		e->SetAttribute("path", relpath.c_str());
+#define CMD_IS_(v) (strcmp(cmd, (v)) == 0)
+bool _LR2SkinParser::IsMetadata(const char* cmd) {
+	if (CMD_IS_("#CUSTOMOPTION") ||
+		CMD_IS_("#CUSTOMFILE") ||
+		CMD_IS_("#INFORMATION"))
 		return true;
-	}
-	else if (CMD_IS("#CUSTOMOPTION")) {
+	else
+		return false;
+}
+
+bool _LR2SkinParser::ProcessMetadata(const args_read_& args) {
+	if (CMD_IS("#CUSTOMOPTION")) {
 		XMLElement *option = FindElement(cur_e, "option", &s->skinlayout);
-		XMLElement *customoption = s->skinlayout.NewElement("customswitch");
+		XMLElement *customoption = ADDCHILD(option, "customswitch")->ToElement();
 		option->LinkEndChild(customoption);
 
 		std::string name_safe = args[1];
 		ReplaceString(name_safe, " ", "_");
 		customoption->SetAttribute("name", name_safe.c_str());
 		int option_intvalue = atoi(args[2]);
+		std::string desc_txt = "";
+		std::string val_txt = "";
 		for (const char **p = args + 3; *p != 0 && strlen(*p) > 0; p++) {
-			XMLElement *options = s->skinlayout.NewElement("option");
-			options->SetAttribute("name", *p);
-			options->SetAttribute("value", option_intvalue);
-			option_intvalue++;
-			customoption->LinkEndChild(options);
+			desc_txt += *p;
+			desc_txt.push_back(';');
+			char t_[10];
+			itoa(option_intvalue, t_, 10);
+			val_txt += t_;
+			val_txt.push_back(';');
 		}
+		desc_txt.pop_back();
+		val_txt.pop_back();
+		customoption->SetAttribute("valuename", desc_txt.c_str());
+		customoption->SetAttribute("value", val_txt.c_str());
 		return true;
 	}
 	else if (CMD_IS("#CUSTOMFILE")) {
 		XMLElement *option = FindElement(cur_e, "option", &s->skinlayout);
-		XMLElement *customfile = s->skinlayout.NewElement("customfile");
-		option->LinkEndChild(customfile);
+		XMLElement *customfile = ADDCHILD(option, "customfile")->ToElement();
 
 		std::string name_safe = args[1];
 		ReplaceString(name_safe, " ", "_");
@@ -874,7 +926,7 @@ bool _LR2SkinParser::ProcessMetadata(const args_read_& args) {
 
 		// register to filter_to_optionname for image change
 		AddPathToOption(args[2], name_safe);
-		XMLComment *cmt = s->skinlayout.NewComment(args[2]);
+		XMLComment *cmt = sm->tree.NewComment(args[2]);
 		option->LinkEndChild(cmt);
 		return true;
 	}
@@ -1036,7 +1088,34 @@ bool _LR2SkinParser::ProcessDepreciated(const args_read_& args) {
 	return false;
 }
 
-void _LR2SkinParser::ParseSkinLine() {
+void _LR2SkinParser::ParseSkinMetricLine() {
+	args_read_ args;			// contains linebuffer's address
+	args = line_args_[currentline].args__;
+	int objectid = INT(args[1]);
+
+	/*
+	 * depreciated ones
+	 */
+	if (ProcessDepreciated(args)) {
+		printf("LR2Skin - %s is depreciated command, ignore.\n", args[0]);
+		currentline++;
+		return;
+	}
+
+	/*
+	 * header/metadata parsing
+	 */
+	if (ProcessMetadata(args)) {
+		currentline++;
+		return;
+	}
+
+	// ignore all other elements
+
+	currentline++;
+}
+
+void _LR2SkinParser::ParseSkinCSVLine() {
 	// get current line's string & argument
 	args_read_ args;			// contains linebuffer's address
 	args = line_args_[currentline].args__;
@@ -1061,8 +1140,9 @@ void _LR2SkinParser::ParseSkinLine() {
 
 	/*
 	 * header/metadata parsing
+	 * - ignore metadata here
 	 */
-	if (ProcessMetadata(args)) {
+	if (IsMetadata(args[0])) {
 		currentline++;
 		return;
 	}
@@ -1076,7 +1156,18 @@ void _LR2SkinParser::ParseSkinLine() {
 	}
 
 
-	if (CMD_IS("#SETOPTION")) {
+	if (CMD_IS("#INCLUDE")) {
+		XMLElement *e = (XMLElement*)ADDCHILD(cur_e, "include");
+
+		std::string relpath = args[1];
+		std::string basepath = filepath;
+		ConvertLR2PathToRelativePath(relpath);
+		//GetParentDirectory(basepath);
+		//ConvertRelativePathToAbsPath(relpath, basepath);
+
+		e->SetAttribute("path", relpath.c_str());
+	}
+	else if (CMD_IS("#SETOPTION")) {
 		// this clause is translated during render tree construction
 		XMLElement *setoption = s->skinlayout.NewElement("lua");
 		std::ostringstream luacode;
@@ -1128,12 +1219,13 @@ void _LR2SkinParser::ParseSkinLine() {
 		}
 		if (INT(args[9]))
 			obj->SetAttribute("cycle", INT(args[9]));
-		int sop1 = 0, sop2 = 0, sop3 = 0;
+		int sop1 = 0, sop2 = 0, sop3 = 0, sop4 = 0;		// sop4 used in scratch rotation
 		if (INT(args[10]))
 			obj->SetAttribute("timer", TranslateTimer(INT(args[10])));
 		sop1 = INT(args[11]);
 		sop2 = INT(args[12]);
 		sop3 = INT(args[13]);
+		sop4 = INT(args[14]);
 
 		/*
 		 * process NOT-general-objects first
@@ -1290,7 +1382,11 @@ void _LR2SkinParser::ParseSkinLine() {
 					playarea->LinkEndChild(obj);
 				}
 			}
-			// however, BOMB SRC effect(SRC loop) MUST TURN OFF
+			// if sop4 == 1, then change object to scratch
+			if (sop4) {
+				obj->SetName("scratch");
+			}
+			// BOMB SRC effect(SRC loop) MUST TURN OFF; don't loop.
 			if ((timer >= 50 && timer < 60) || (timer >= 60 && timer < 70))
 				obj->SetAttribute("loop", 0);
 		}
@@ -1893,10 +1989,104 @@ void _LR2SkinParser::Clear() {
 	cur_e = 0;
 	image_cnt = 0;
 	font_cnt = 0;
-	filter_to_optionname.clear();
 	texturefont_id.clear();
 	lines_.clear();
 	line_args_.clear();
 }
 
 // ----------------------- LR2Skin part end ------------------------
+
+//
+// skin converter
+//
+
+
+namespace SkinConverter {
+	// private function; for searching including file
+	void SearchInclude(std::vector<std::string>& inc, XMLElement* node) {
+		for (XMLElement* n = node;
+			n;
+			n = n->NextSiblingElement())
+		{
+			if (strcmp(n->Name(), "include") == 0) {
+				inc.push_back(SkinUtil::GetAbsolutePath(n->Attribute("path")));
+			}
+			SearchInclude(inc, n->FirstChildElement());
+		}
+	}
+
+	// depreciated; only for basic test, or 
+	bool ConvertLR2SkinToXml(const char* lr2skinpath) {
+		_LR2SkinParser *parser = new _LR2SkinParser();
+		SkinMetric* skinmetric = new SkinMetric();
+		Skin* skinmetric_code = new Skin();
+		// skin include path is relative to csvskin path,
+		// so need to register basepath
+		std::string basedir = SkinUtil::GetParentDirectory(lr2skinpath);
+		SkinUtil::SetBasePath(basedir);
+		
+		bool r = parser->ParseLR2Skin(lr2skinpath, skinmetric);
+		r &= parser->ParseCSV(lr2skinpath, skinmetric_code);
+		if (r) {
+			std::string dest_xml = SkinUtil::ReplaceExtension(lr2skinpath, ".skin.xml");
+			std::string dest_lua = SkinUtil::ReplaceExtension(lr2skinpath, ".xml");
+			// save metric data first
+			skinmetric->Save(dest_xml.c_str());
+			skinmetric_code->Save(dest_lua.c_str());
+			// check for included files
+			std::vector<std::string> include_csvs;
+			SearchInclude(include_csvs, skinmetric_code->skinlayout.FirstChildElement());
+			// convert all included files
+			for (int i = 0; i < include_csvs.size(); i++) {
+				Skin* csvskin = new Skin();
+				if (parser->ParseCSV(include_csvs[i].c_str(), csvskin)) {
+					std::string dest_path = SkinUtil::ReplaceExtension(include_csvs[i], ".xml");
+					// TODO: depart texturefont files?
+					csvskin->Save(dest_path.c_str());
+				}
+				delete csvskin;
+			}
+		}
+		delete skinmetric;
+		delete parser;
+
+		return r;
+	}
+
+	bool ConvertLR2SkinToLua(const char* lr2skinpath) {
+		_LR2SkinParser *parser = new _LR2SkinParser();
+		SkinMetric* skinmetric = new SkinMetric();
+		Skin* skinmetric_code = new Skin();
+		// skin include path is relative to csvskin path,
+		// so need to register basepath
+		std::string basedir = SkinUtil::GetParentDirectory(lr2skinpath);
+		SkinUtil::SetBasePath(basedir);
+
+		bool r = parser->ParseLR2Skin(lr2skinpath, skinmetric);
+		r &= parser->ParseCSV(lr2skinpath, skinmetric_code);
+		if (r) {
+			std::string dest_xml = SkinUtil::ReplaceExtension(lr2skinpath, ".skin.xml");
+			std::string dest_lua = SkinUtil::ReplaceExtension(lr2skinpath, ".lua");
+			// save metric data first
+			skinmetric->Save(dest_xml.c_str());
+			skinmetric_code->SaveToLua(dest_lua.c_str());
+			// check for included files
+			std::vector<std::string> include_csvs;
+			SearchInclude(include_csvs, skinmetric_code->skinlayout.FirstChildElement());
+			// convert all included files
+			for (int i = 0; i < include_csvs.size(); i++) {
+				Skin* csvskin = new Skin();
+				if (parser->ParseCSV(include_csvs[i].c_str(), csvskin)) {
+					std::string dest_path = SkinUtil::ReplaceExtension(include_csvs[i], ".lua");
+					// TODO: depart texturefont files?
+					csvskin->SaveToLua(dest_path.c_str());
+				}
+				delete csvskin;
+			}
+		}
+		delete skinmetric;
+		delete parser;
+
+		return false;
+	}
+}

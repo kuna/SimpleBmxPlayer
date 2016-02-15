@@ -2091,12 +2091,6 @@ SetTimer("IsSelectBarFolder")
             <frame x="214" y="9" w="15" h="18" time="1000"/>
         </DST>
     </number>
-    <!-- Automatically generated code (floatspeed, lift) -->
-    <number resid="8" condition="OnP1SuddenChange" value="P1FloatSpeed" align="0" length="3">
-        <DST acc="0">
-            <frame x="264" y="9" w="15" h="18" time="0"/>
-        </DST>
-    </number>
     <if condition="!IsAutoPlay,950,IsScoreGraph">
         <sprite resid="2" x="307" y="800" w="162" h="130" condition="981">
             <DST acc="0" loop="1200">
@@ -2634,19 +2628,6 @@ SetTimer("IsSelectBarFolder")
             <frame x="196" y="301" w="15" h="18" time="500"/>
         </DST>
     </number>
-    <!-- Automatically added FAST/SLOW indicator (GhostA type) -->
-    <if condition="IsGhostA">
-        <sprite resid="_fastslow" x="0" y="0" w="67" h="26">
-            <DST timer="OnP1Fast">
-                <frame x="196" y="270" w="45" h="18" time="0"/>
-            </DST>
-        </sprite>
-        <sprite resid="_fastslow" x="0" y="26" w="67" h="26">
-            <DST timer="OnP1Slow">
-                <frame x="196" y="270" w="45" h="18" time="0"/>
-            </DST>
-        </sprite>
-    </if>
     <number resid="5" condition="!IsAutoPlay,IsGhostB" mode24="1" value="P1RivalDiff" align="0" length="4">
         <DST acc="0" loop="0" timer="OnReady">
             <frame x="440" y="338" w="15" h="18" time="0"/>
