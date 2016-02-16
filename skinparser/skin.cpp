@@ -1,4 +1,5 @@
 #include "skin.h"
+#include "skinconverter.h"
 #include "skinutil.h"
 using namespace SkinUtil;
 
@@ -28,22 +29,42 @@ namespace {
 	// TODO: not processed objects (combo)
 	// TODO: notefield requires information per lane (think about this more ...)
 	// TODO: can we send lua code in tween object?
+	const char* nosrctags[TAGMAXCOUNT] = {
+		// these object generally means group object
+		// which has no SRC attributes at all.
+		"notefield", "combo", "listview",
+	};
 	const char *objecttags[TAGMAXCOUNT] = {
 		// generals
-		"sprite", "text", "number", "graph", "button",
+		"sprite", "text", "number", "graph", "button", "slider",
 		// ingenerals
-		"bga", "notefield", "groovegauge",
-		"listview", 
+		"bga", "groovegauge", "judgeline", "note", "scratch", "line",
 	};
 	const char* srctags[TAGMAXCOUNT] = {
-		"SRC",
-		"SRC_LN_NOTES",
+		"SRC_NOTE",
+		"SRC_LN_START",
+		"SRC_LN_BODY",
+		"SRC_LN_END",
+		"SRC_MINE",
+		"SRC_AUTO_NOTE",
+		"SRC_AUTO_LN_START",
+		"SRC_AUTO_LN_BODY",
+		"SRC_AUTO_LN_END",
+		"SRC_AUTO_MINE",
+		"SRC_GROOVE_ACTIVE",
+		"SRC_GROOVE_INACTIVE",
+		"SRC_HARD_ACTIVE",
+		"SRC_HARD_INACTIVE",
+		"SRC_EX_ACTIVE",
+		"SRC_EX_INACTIVE",
 	};
 	const char* dsttags[TAGMAXCOUNT] = {
 		"DST",
 	};
-	const char* attrtags[TAGMAXCOUNT] = {
-		"DST",
+	const char* srcattr[TAGMAXCOUNT] = {
+		// SRC supports only general attributes
+		// so filter it in here
+		"x", "y", "w", "h", "divx", "divy", "timer", "loop",
 	};
 
 	// find out is tag included in this attribute
@@ -59,90 +80,98 @@ namespace {
 	private:
 		// head: values which will be logically interpreted to create body
 		std::string head;
+		std::string body;
 		// current indentation
 		int indent;
-		// current parse depth
+		// current parse depth (now useless?)
 		int depth;
 		// current object id
 		int objid;
 	public:
-		void AppendIndentHead(int indent) {
+		void AppendIndentBody(int indent) {
 			for (int i = 0; i < indent; i++)
-				head.push_back('\t');
+				body.push_back('\t');
+		}
+		void AppendBody(const std::string& str) {
+			AppendIndentBody(indent);
+			body.append(str);
+			body.append("\n");
 		}
 		void AppendHead(const std::string& str) {
-			AppendIndentHead(indent);
 			head.append(str);
 			head.append("\n");
 		}
 		// process single SRC
 		void AppendSRC(const XMLElement *e) {
-			AppendIndentHead(indent);
-			head.append("Src={");
+			AppendIndentBody(indent);
+			// if it starts with name SRC~,
+			// then it's SRC specific object - use its own name.
+			if (strncmp(e->Name(), "SRC", 3) == 0)
+				body.append(ssprintf("%s={", e->Name()));
+			else
+				body.append("Src={");
+			// iterate through attributes ...
 			for (const XMLAttribute *attr = e->FirstAttribute();
 				attr;
 				attr = attr->Next())
 			{
 				const char *name = attr->Name();
-				if (strcmp(name, "resid") == 0 ||
-					strcmp(name, "condition") == 0 ||
-					strcmp(name, "length") == 0 ||
-					strcmp(name, "value") == 0 ||
-					strcmp(name, "align") == 0 ||
-					strcmp(name, "edit") == 0)
+				// skip attribute if its not general attribute
+				if (!CheckTagGroup(name, srcattr))
 					continue;
 				if (strcmp(name, "timer") == 0)
-					head.append(ssprintf("%s:\"%s\",", name, attr->Value()));
+					body.append(ssprintf("%s:\"%s\",", name, attr->Value()));
 				else
-					head.append(ssprintf("%s:%s,", name, attr->Value()));
+					body.append(ssprintf("%s:%s,", name, attr->Value()));
 			}
-			if (head.back() == ',') head.pop_back();
-			head.append("};\n");
+			if (body.back() == ',') body.pop_back();
+			body.append("};\n");
 		}
 		// process single DST
 		void AppendDST(const XMLElement *dst) {
 			if (!dst) return;
+			// timer is get changed into event handler
 			const char *timer = dst->Attribute("timer");
-			if (!dst->Attribute("timer"))
+			if (!timer)
 				timer = "Init";
-			AppendIndentHead(indent);
-			head.append(ssprintf("On%s=DST(\n", timer));
+			AppendIndentBody(indent);
+			body.append(ssprintf("On%s=DST(\n", timer));
 			indent++;
-			// add basic dst attribute (loop, acc)
-			AppendIndentHead(indent);
-			head.append("{");
+			// add basic dst attribute (loop, acc, rotatecenter, blend)
+			AppendIndentBody(indent);
+			body.append("{");
 			if (dst->Attribute("loop"))
-				head.append(ssprintf("loop:%s", dst->Attribute("loop")));
-			if (head.back() != '{')
-				head.append(",");
+				body.append(ssprintf("loop:%s", dst->Attribute("loop")));
+			if (body.back() != '{')
+				body.append(",");
 			if (dst->Attribute("acc"))
-				head.append(ssprintf("acc:%s", dst->Attribute("acc")));
-			head.append("};\n");
+				body.append(ssprintf("acc:%s", dst->Attribute("acc")));
+			body.append("};\n");
 			for (const XMLElement *f = dst->FirstChildElement();
 				f;
 				f = f->NextSiblingElement())
 			{
-				AppendIndentHead(indent);
-				head.append("{");
+				AppendIndentBody(indent);
+				body.append("{");
 				for (const XMLAttribute *attr = f->FirstAttribute();
 					attr;
 					attr = attr->Next())
 				{
 					const char *aname = attr->Name();
 					if (strcmp(aname, "timer") == 0)
-						head.append(ssprintf("%s:\"%s\",", aname, attr->Value()));
+						body.append(ssprintf("%s:\"%s\",", aname, attr->Value()));
 					else
-						head.append(ssprintf("%s:%s,", aname, attr->Value()));
+						body.append(ssprintf("%s:%s,", aname, attr->Value()));
 				}
-				head.pop_back();
-				head.append("};\n");
+				body.pop_back();
+				body.append("};\n");
 			}
 			indent--;
-			head.pop_back();
-			head.append(");\n");
+			body.pop_back();
+			body.append(");\n");
 		}
 		void AppendComment(const XMLComment *cmt) {
-			AppendIndentHead(indent);
+			AppendIndentBody(indent);
 			const char *pn, *p = cmt->Value();
 			do {
 				pn = strchr(p, '\n');
@@ -151,7 +180,7 @@ namespace {
 					l = p;
 				else
 					l = std::string(p, pn-p);
-				head.append(ssprintf("-- %s\n", l.c_str()));
+				body.append(ssprintf("-- %s\n", l.c_str()));
 				p = pn+1;
 			} while (pn);
 		};
@@ -159,28 +188,32 @@ namespace {
 		void AppendObject(const XMLElement *e, const char* name) {
 			// some object - like playfield / combo - is quite nasty.
 			// take care of them carefully.
-			AppendIndentHead(indent);
-			if (depth <= 1)		// 1 -> (skin) -> 2(base)
-				head.append("t[#t+1] = ");
-			head.append(ssprintf("Def.%s(\"res%d\", {\n", name, e->IntAttribute("resid")));
+			AppendIndentBody(indent);
+			body.append(ssprintf("Def.%s(\"%d\", {\n", name, e->IntAttribute("resid")));
 			indent++;
-			// process attribute first
+			// process some object-specific attributes
 			const char *attrval;
 			if (attrval = e->Attribute("condition"))
-				AppendHead(ssprintf("class=\"%s\";", attrval));
+				AppendBody(ssprintf("class=\"%s\";", attrval));
 			if (attrval = e->Attribute("value"))
-				AppendHead(ssprintf("valuekey=\"%s\";", attrval));
+				AppendBody(ssprintf("valuekey=\"%s\";", attrval));
 			if (attrval = e->Attribute("align"))
-				AppendHead(ssprintf("align=%s;", attrval));
+				AppendBody(ssprintf("align=%s;", attrval));
 			if (attrval = e->Attribute("edit"))
-				AppendHead(ssprintf("edit=%s;", attrval));
+				AppendBody(ssprintf("edit=%s;", attrval));
 			if (attrval = e->Attribute("length"))
-				AppendHead(ssprintf("length=%s;", attrval));
-			AppendSRC(e);
+				AppendBody(ssprintf("length=%s;", attrval));
+			if (attrval = e->Attribute("range"))
+				AppendBody(ssprintf("range=%s;", attrval));
+			if (attrval = e->Attribute("direction"))
+				AppendBody(ssprintf("direction=%s;", attrval));
+			// add SRC if this tag isn't group object
+			if (!CheckTagGroup(e->Name(), nosrctags))
+				AppendSRC(e);
 			// parse inner element
 			Parse(e->FirstChildElement());
 			indent--;
-			AppendHead("});");
+			AppendBody("});");
 			objid++;
 		}
 		void AppendElement(const XMLElement *e) {
@@ -191,32 +224,48 @@ namespace {
 			// in case of include
 			//
 			else if (strcmp(name, "include") == 0) {
-				AppendHead(ssprintf("t[#t+1] = LoadActor(\"%s\")", e->Attribute("path")));
+				AppendBody(ssprintf("LoadActor(\"%s\");", e->Attribute("path")));
 			}
 			// in case of resource,
 			// parse it and register it as cached resource
 			else if (strcmp(name, "image") == 0) {
-				AppendHead(ssprintf("LoadImageResource(\"%s\", {path=\"%s\"})",
-					e->Attribute("name"), e->Attribute("path")));
+				std::string r = ssprintf("LoadImageResource(\"%s\", {path=\"%s\"});",
+					e->Attribute("name"), e->Attribute("path"));
+				if (depth == 0)
+					AppendHead(r);
+				else
+					AppendBody(r);
+			}
+			else if (strcmp(name, "font") == 0) {
+				std::string r = ssprintf("LoadFontResource(\"%s\", {path=\"%s\", size=%s, border=%s});",
+					e->Attribute("name"), e->Attribute("path"),
+					e->Attribute("size"), e->Attribute("border"));
+				if (depth == 0)
+					AppendHead(r);
+				else
+					AppendBody(r);
 			}
 			else if (strcmp(name, "texturefont") == 0) {
-				AppendHead(ssprintf("-- converter message: use path rather than data attribute"));
+				//AppendBody(ssprintf("-- converter message: use path rather than data attribute"));
 				AppendHead(ssprintf("texturefont_data=[[%s]]", e->GetText()));
-				AppendHead(ssprintf("LoadTFontResource(\"%s\", {data=texturefont_data})",
-					e->Attribute("name")));
+				AppendHead(ssprintf("LoadTFontResource(\"%s\", {data=texturefont_data});", e->Attribute("name")));
 			}
 
 			// in case of conditional clause
 			else if (strcmp(name, "condition") == 0) {
+				AppendBody("(function()");
 				for (const XMLElement *cond = e->FirstChildElement();
 					cond;
 					cond = cond->NextSiblingElement())
 				{
 					if (strcmp(cond->Name(), "else") == 0) {
-						AppendHead("else");
+						AppendBody("}; else return Def.frame{");
+					}
+					else if (strcmp(cond->Name(), "elseif") == 0) {
+						AppendBody(ssprintf("}; elseif CND(\"%s\") then return Def.frame{", cond->Attribute("condition")));
 					}
 					else {
-						AppendHead(ssprintf("%s CND(\"%s\") then", cond->Name(), cond->Attribute("condition")));
+						AppendBody(ssprintf("if CND(\"%s\") then return Def.frame{", cond->Attribute("condition")));
 					}
 					indent++;
 					Parse(cond->FirstChild());
@@ -235,7 +284,8 @@ namespace {
 					AppendHead("end");
 					*/
 				}
-				AppendHead("end");
+				AppendBody("}; end");
+				AppendBody("end)();");
 			}
 			// in case of Lua
 			else if (strcmp(name, "lua") == 0) {
@@ -247,15 +297,18 @@ namespace {
 						l = p;
 					else
 						l = std::string(p, pn - p);
-					AppendHead(l.c_str());
+					AppendBody(l.c_str());
 					p = pn + 1;
 				} while (pn);
 			}
 			// in case of group / object / src / dst
-			else if (CheckTagGroup(name, objecttags)) {
+			else if (CheckTagGroup(name, objecttags) || CheckTagGroup(name, nosrctags)) {
 				depth++;
 				AppendObject(e, name);
 				depth--;
+			}
+			else if (CheckTagGroup(name, srctags)) {
+				AppendSRC(e);
 			}
 			else if (CheckTagGroup(name, dsttags)) {
 				AppendDST(e);
@@ -280,20 +333,26 @@ namespace {
 		};
 		void StartParse(const XMLNode *node) {
 			Clear();
+			indent++;
 			Parse(node);
+			indent--;
 		}
 		std::string GetLuaCode() {
 			return
+				"-- Auto generated lua code\n" + 
+				head + 
+				"\n\n"
 				"-- skin table structure\n"
-				"t = {}\n\n" +
-				head +
-				"\n" +
+				"local t = Def.ActorGroup{\n" +
+				body +
+				"}\n" +
 				"return t";
 		};
 		void Clear() {
 			indent = 0;
 			objid = 0;
 			head = "";
+			body = "";
 			indent = 0;
 			depth = 0;
 		};

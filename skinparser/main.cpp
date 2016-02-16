@@ -1,10 +1,9 @@
 #include <stdio.h>
-#include "skin.h"
-#include "skinoption.h"
+//#include "skin.h"
+//#include "skinoption.h"
+#include "skinconverter.h"
 
-Skin skin;
-SkinOption soption;
-_LR2SkinParser lr2skin;
+//SkinOption soption;
 
 #define LOADPLAY
 

@@ -81,6 +81,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="skin.cpp" />
+    <ClCompile Include="skinconverter.cpp" />
     <ClCompile Include="skinlr2.cpp" />
     <ClCompile Include="skinoption.cpp" />
     <ClCompile Include="skintexturefont.cpp" />
@@ -88,6 +89,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="skin.h" />
+    <ClInclude Include="skinconverter.h" />
     <ClInclude Include="skinoption.h" />
     <ClInclude Include="skintexturefont.h" />
     <ClInclude Include="skinutil.h" />

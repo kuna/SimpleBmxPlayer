@@ -1,4 +1,5 @@
 #include "skin.h"
+#include "skinconverter.h"
 #include "skinutil.h"
 #include "skintexturefont.h"
 using namespace SkinUtil;
@@ -208,7 +209,7 @@ namespace {
 namespace {
 	const char* timer_code_[1000] = { 
 		// 0
-		empty_str_, 
+		"Scene",		// this timer is automatically started when scene started, actually.
 		"StartInput",
 		"FadeOut",
 		"ShutDown",
@@ -1175,7 +1176,7 @@ void _LR2SkinParser::ParseSkinCSVLine() {
 		for (int i = 1; i < 50 && args[i]; i++) {
 			const char *c = INT(args[i]) ? TranslateOPs(INT(args[i])) : 0;
 			if (c)
-				luacode << "SetTimer(\"" << c << "\")\n";
+				luacode << "SetSwitch(\"" << c << "\");\n";
 		}
 		setoption->SetText(("\n" + luacode.str()).c_str());
 		cur_e->LinkEndChild(setoption);
@@ -1249,41 +1250,76 @@ void _LR2SkinParser::ParseSkinCSVLine() {
 		int looptime = 0, blend = 0, timer = 0, rotatecenter = -1, acc = 0;
 		int op1 = 0, op2 = 0, op3 = 0;
 		XMLElement *dst = s->skinlayout.NewElement("DST");
-		obj->LinkEndChild(dst);
-		for (int nl = currentline + 1; nl < line_total; nl++) {
-			args_read_ args = line_args_[nl].args__;
-			if (!args[0]) continue;
-			if (CMD_IS("#ENDIF"))
-				continue;			// we can ignore #ENDIF command, maybe
-			if (!CMD_STARTSWITH("#DST_", 5))
-				break;
-			// if it's very first line (parse basic element)
-			if (rotatecenter < 0) {
-				looptime = INT(args[16]);
-				blend = INT(args[12]);
-				rotatecenter = INT(args[15]);
-				timer = INT(args[17]);
-				acc = INT(args[7]);
-				if (args[18]) op1 = INT(args[18]);
-				if (args[19]) op2 = INT(args[19]);
-				if (args[20]) op3 = INT(args[20]);
+		{
+			int a_ = 255, r_ = 255, g_ = 255, b_ = 255;
+			int x_ = 0, y_ = 0, w_ = 0, h_ = 0;
+			int angle_ = 0;
+			obj->LinkEndChild(dst);
+			for (int nl = currentline + 1; nl < line_total; nl++) {
+				args_read_ args = line_args_[nl].args__;
+				if (strcmp(args[0], "") == 0) continue;
+				if (CMD_IS("#ENDIF"))
+					continue;			// we can ignore #ENDIF command, maybe
+				if (!CMD_STARTSWITH("#DST_", 5))
+					break;
+				// if it's very first line (parse basic element)
+				if (rotatecenter < 0) {
+					looptime = INT(args[16]);
+					blend = INT(args[12]);
+					rotatecenter = INT(args[15]);
+					timer = INT(args[17]);
+					acc = INT(args[7]);
+					if (args[18]) op1 = INT(args[18]);
+					if (args[19]) op2 = INT(args[19]);
+					if (args[20]) op3 = INT(args[20]);
+				}
+				XMLElement *frame = s->skinlayout.NewElement("frame");
+				/*
+				 * frame attribute
+				 * only add attribute if value is different from previous(default) one.
+				 */
+				frame->SetAttribute("time", args[2]);
+				if (INT(args[3]) != x_) {
+					x_ = INT(args[3]);
+					frame->SetAttribute("x", y_);
+				}
+				if (INT(args[4]) != y_) {
+					y_ = INT(args[4]);
+					frame->SetAttribute("x", y_);
+				}
+				if (INT(args[5]) != w_) {
+					w_ = INT(args[5]);
+					frame->SetAttribute("w", w_);
+				}
+				if (INT(args[6]) != h_) {
+					h_ = INT(args[6]);
+					frame->SetAttribute("h", h_);
+				}
+				if (INT(args[8]) != a_) {
+					a_ = INT(args[8]);
+					frame->SetAttribute("a", a_);
+				}
+				if (INT(args[9]) != r_) {
+					r_ = INT(args[9]);
+					frame->SetAttribute("r", r_);
+				}
+				if (INT(args[10]) != g_) {
+					g_ = INT(args[10]);
+					frame->SetAttribute("g", g_);
+				}
+				if (INT(args[11]) != b_) {
+					b_ = INT(args[11]);
+					frame->SetAttribute("b", b_);
+				}
+				if (INT(args[14]) != angle_) {
+					angle_ = INT(args[14]);
+					frame->SetAttribute("angle", angle_);
+				}
+				/*
+				 * end frame attribute
+				 */
+				dst->LinkEndChild(frame);
 			}
-			XMLElement *frame = s->skinlayout.NewElement("frame");
-			frame->SetAttribute("x", args[3]);
-			frame->SetAttribute("y", args[4]);
-			frame->SetAttribute("w", args[5]);
-			frame->SetAttribute("h", args[6]);
-			frame->SetAttribute("time", args[2]);
-			if (!(INT(args[8]) == 255))
-				frame->SetAttribute("a", args[8]);
-			if (!(INT(args[9]) == 255 && INT(args[10]) == 255 && INT(args[11]) == 255)) {
-				frame->SetAttribute("r", args[9]);
-				frame->SetAttribute("g", args[10]);
-				frame->SetAttribute("b", args[11]);
-			}
-			if (INT(args[14]))
-				frame->SetAttribute("angle", args[14]);
-			dst->LinkEndChild(frame);
 		}
 		// set common draw attribute
 		dst->SetAttribute("acc", acc);
@@ -1995,98 +2031,3 @@ void _LR2SkinParser::Clear() {
 }
 
 // ----------------------- LR2Skin part end ------------------------
-
-//
-// skin converter
-//
-
-
-namespace SkinConverter {
-	// private function; for searching including file
-	void SearchInclude(std::vector<std::string>& inc, XMLElement* node) {
-		for (XMLElement* n = node;
-			n;
-			n = n->NextSiblingElement())
-		{
-			if (strcmp(n->Name(), "include") == 0) {
-				inc.push_back(SkinUtil::GetAbsolutePath(n->Attribute("path")));
-			}
-			SearchInclude(inc, n->FirstChildElement());
-		}
-	}
-
-	// depreciated; only for basic test, or 
-	bool ConvertLR2SkinToXml(const char* lr2skinpath) {
-		_LR2SkinParser *parser = new _LR2SkinParser();
-		SkinMetric* skinmetric = new SkinMetric();
-		Skin* skinmetric_code = new Skin();
-		// skin include path is relative to csvskin path,
-		// so need to register basepath
-		std::string basedir = SkinUtil::GetParentDirectory(lr2skinpath);
-		SkinUtil::SetBasePath(basedir);
-		
-		bool r = parser->ParseLR2Skin(lr2skinpath, skinmetric);
-		r &= parser->ParseCSV(lr2skinpath, skinmetric_code);
-		if (r) {
-			std::string dest_xml = SkinUtil::ReplaceExtension(lr2skinpath, ".skin.xml");
-			std::string dest_lua = SkinUtil::ReplaceExtension(lr2skinpath, ".xml");
-			// save metric data first
-			skinmetric->Save(dest_xml.c_str());
-			skinmetric_code->Save(dest_lua.c_str());
-			// check for included files
-			std::vector<std::string> include_csvs;
-			SearchInclude(include_csvs, skinmetric_code->skinlayout.FirstChildElement());
-			// convert all included files
-			for (int i = 0; i < include_csvs.size(); i++) {
-				Skin* csvskin = new Skin();
-				if (parser->ParseCSV(include_csvs[i].c_str(), csvskin)) {
-					std::string dest_path = SkinUtil::ReplaceExtension(include_csvs[i], ".xml");
-					// TODO: depart texturefont files?
-					csvskin->Save(dest_path.c_str());
-				}
-				delete csvskin;
-			}
-		}
-		delete skinmetric;
-		delete parser;
-
-		return r;
-	}
-
-	bool ConvertLR2SkinToLua(const char* lr2skinpath) {
-		_LR2SkinParser *parser = new _LR2SkinParser();
-		SkinMetric* skinmetric = new SkinMetric();
-		Skin* skinmetric_code = new Skin();
-		// skin include path is relative to csvskin path,
-		// so need to register basepath
-		std::string basedir = SkinUtil::GetParentDirectory(lr2skinpath);
-		SkinUtil::SetBasePath(basedir);
-
-		bool r = parser->ParseLR2Skin(lr2skinpath, skinmetric);
-		r &= parser->ParseCSV(lr2skinpath, skinmetric_code);
-		if (r) {
-			std::string dest_xml = SkinUtil::ReplaceExtension(lr2skinpath, ".skin.xml");
-			std::string dest_lua = SkinUtil::ReplaceExtension(lr2skinpath, ".lua");
-			// save metric data first
-			skinmetric->Save(dest_xml.c_str());
-			skinmetric_code->SaveToLua(dest_lua.c_str());
-			// check for included files
-			std::vector<std::string> include_csvs;
-			SearchInclude(include_csvs, skinmetric_code->skinlayout.FirstChildElement());
-			// convert all included files
-			for (int i = 0; i < include_csvs.size(); i++) {
-				Skin* csvskin = new Skin();
-				if (parser->ParseCSV(include_csvs[i].c_str(), csvskin)) {
-					std::string dest_path = SkinUtil::ReplaceExtension(include_csvs[i], ".lua");
-					// TODO: depart texturefont files?
-					csvskin->SaveToLua(dest_path.c_str());
-				}
-				delete csvskin;
-			}
-		}
-		delete skinmetric;
-		delete parser;
-
-		return false;
-	}
-}
