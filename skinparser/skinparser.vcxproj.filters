@@ -53,8 +53,12 @@
     <ClInclude Include="skinconverter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="LuaRef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\lib\Release-Lib\tinyxml2.lib" />
+    <Library Include="..\lib\Release\Lua.lib" />
   </ItemGroup>
 </Project>

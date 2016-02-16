@@ -90,8 +90,51 @@ public:
 	_LR2SkinParser() { Clear(); }
 };
 
+// enable this line if you have lua library
+#define LUA 1
+#ifdef LUA
+extern "C" {
+#include "Lua/lua.h"
+#include "Lua/lualib.h"
+#include "Lua/lauxlib.h"
+}
+#include "LuaBridge.h"
+
+
+typedef lua_State Lua;
+namespace LuaHelper {
+	using namespace std;
+
+	template<class T>
+	void Push(lua_State *L, const T &Object);
+
+	template<class T>
+	bool FromStack(lua_State *L, T &Object, int iOffset);
+
+	template<class T>
+	bool Pop(lua_State *L, T &val)
+	{
+		bool bRet = FromStack(L, val, -1);
+		lua_pop(L, 1);
+		return bRet;
+	}
+
+	bool RunExpression(Lua *L, const string &sExpression, const string &sName);
+	bool RunScriptFile(Lua *L, const string &sFile, int ReturnValues = 0);
+	bool RunScriptOnStack(Lua *L, string &Error, int Args, int ReturnValues, bool ReportError);
+	bool RunScript(Lua *L, const string &Script, const string &Name, string &Error, int Args, int ReturnValues, bool ReportError);
+}
+#endif
 
 namespace SkinConverter {
 	bool ConvertLR2SkinToXml(const char* lr2skinpath);
 	bool ConvertLR2SkinToLua(const char* lr2skinpath);
+}
+
+namespace SkinTest {
+#ifdef LUA
+	void InitLua();
+	void CloseLua();
+	bool TestLuaSkin(const char* luaskinpath);
+#endif
 }

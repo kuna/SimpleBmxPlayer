@@ -5,13 +5,24 @@
 
 //SkinOption soption;
 
+#ifdef LUA
+// enable this line if you want to run test
+#define LUATEST
+#endif
+
 #define LOADPLAY
 
 int main(int argc, char **argv) {
 #ifdef LOADPLAY
-	SkinConverter::ConvertLR2SkinToLua("../skin/Wisp_HD_lua/play/HDPLAY_W.lr2skin");
+	//SkinConverter::ConvertLR2SkinToLua("../skin/Wisp_HD_lua/play/HDPLAY_W.lr2skin");
+#ifdef LUATEST
+	SkinTest::InitLua();
+	if (!SkinTest::TestLuaSkin("../system/script/test.lua"))
+		printf("LuaTest: lua skin test failed.\n");
+	SkinTest::CloseLua();
 #endif
-#ifdef LOADSELECT
+#endif
+#ifdef LOADSELECTx
 	SkinConverter::ConvertLR2SkinToXml("../skin/EndlessCirculation/SE-Select/SEselect.lr2skin");
 #endif
 	return 0;

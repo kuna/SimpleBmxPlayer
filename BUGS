@@ -1,3 +1,7 @@
+160216
+
+- -bgaoff 옵션 활성화 시 프로그램 정지. (아마도 bmsfileload시에 bga iterator을 다시 재정비해야 할 듯)
+
 160215
 
 - revival of kalpa - 일부 유니코드 문자가 들어간 키음 파일이 제대로 열리지 않음.

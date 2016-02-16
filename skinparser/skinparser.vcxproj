@@ -88,6 +88,7 @@
     <ClCompile Include="skinutil.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="LuaRef.h" />
     <ClInclude Include="skin.h" />
     <ClInclude Include="skinconverter.h" />
     <ClInclude Include="skinoption.h" />
@@ -96,6 +97,7 @@
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\lib\Release-Lib\tinyxml2.lib" />
+    <Library Include="..\lib\Release\Lua.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
