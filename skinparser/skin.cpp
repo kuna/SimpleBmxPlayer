@@ -189,7 +189,7 @@ namespace {
 			// some object - like playfield / combo - is quite nasty.
 			// take care of them carefully.
 			AppendIndentBody(indent);
-			body.append(ssprintf("Def.%s(\"%d\", {\n", name, e->IntAttribute("resid")));
+			body.append(ssprintf("Def.%s(\"%d\") .. {\n", name, e->IntAttribute("resid")));
 			indent++;
 			// process some object-specific attributes
 			const char *attrval;
@@ -213,7 +213,7 @@ namespace {
 			// parse inner element
 			Parse(e->FirstChildElement());
 			indent--;
-			AppendBody("});");
+			AppendBody("};");
 			objid++;
 		}
 		void AppendElement(const XMLElement *e) {

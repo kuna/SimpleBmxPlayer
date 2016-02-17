@@ -119,6 +119,7 @@ namespace LuaHelper {
 		return bRet;
 	}
 
+	int GetLuaStack(lua_State *L);
 	bool RunExpression(Lua *L, const string &sExpression, const string &sName);
 	bool RunScriptFile(Lua *L, const string &sFile, int ReturnValues = 0);
 	bool RunScriptOnStack(Lua *L, string &Error, int Args, int ReturnValues, bool ReportError);

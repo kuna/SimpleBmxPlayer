@@ -155,7 +155,7 @@ namespace LuaHelper {
 	 * This function is used to get whole Lua stack information
 	 * All Lua stack information will be gathered into one stack.
 	 */
-	static int GetLuaStack(lua_State *L)
+	int GetLuaStack(lua_State *L)
 	{
 		string sErr;
 		Pop(L, sErr);
@@ -359,24 +359,55 @@ namespace LuaRunner {
 		return true;
 	}
 
-	// originally: generate object
-	void* Luna_DefDummyObject(const std::string& table) {
-		// TODO 1: how to pass/get table to here?
-		// TODO 2: create object and return?
-		// TODO 3: finally, Can I get this pointer-value object as returning value?
-		return 0;
+	void Luna_warn(const std::string& msg) {
+		printf("Lua Script warning: %s\n", msg.c_str());
+	}
+
+	// register basic functions / classes
+	namespace Util {
+		bool IsRegisteredClass(const std::string& cls) {
+			// in debug, always return true
+			return true;
+		}
+		std::string GetDir(const std::string& path) {
+			//printf("Dir %s\n", path.c_str());
+			return "test";
+		}
+		std::string ResolvePath(const std::string& relpath) {
+			// temporarily function; it should convert relpath to absolute path, in fact.
+			return relpath;
+		}
+		std::string GetFileType(const std::string& relpath) {
+			// temporarily function; get file type
+			int p = relpath.find_last_of('.');
+			if (p != std::string::npos) {
+				std::string ext = relpath.substr(p+1);
+				if (ext == "lua")
+					return "Lua";
+				else if (ext == "jpg" || ext == "jpeg" || ext == "bmp" || ext == "tga" || ext == "png")
+					return "Image";
+				else if (ext == "mp4" || ext == "avi" || ext == "mpeg" || ext == "mpg")
+					return "Movie";
+			}
+			return "Unknown";
+		}
+	};
+	void RegisterBasic(lua_State* L) {
+		Namespace& ln = getGlobalNamespace(L);
+		ln.addFunction("CND", Luna_CND);
+		ln.addFunction("warn", Luna_warn);
+
+		// refer: Utilizing library ... http://www.lua.org/pil/28.1.html
+		ln.beginNamespace("Util")
+			.addFunction("IsRegisteredClass", Util::IsRegisteredClass)
+			.addFunction("GetDir", Util::GetDir)
+			.addFunction("ResolvePath", Util::ResolvePath)
+			.addFunction("GetDir", Util::GetDir)
+			.endNamespace();
 	}
 
 	lua_State *L;
 	bool luainitalized = false;
-	void RegisterBasic(lua_State* L) {
-		Namespace& ln = getGlobalNamespace(L);
-		ln.addFunction("CND", Luna_CND);
-	}
-	void RegisterDefCls(lua_State* L) {
-		//Namespace& ln = getGlobalNamespace(L);
-		//ln.addVariable("", "", false);
-	}
 	void InitLua() {
 		assert(luainitalized == false);
 
@@ -388,16 +419,17 @@ namespace LuaRunner {
 		lua_pushcfunction(L, luaopen_debug); lua_call(L, 0, 0);
 		lua_pushcfunction(L, luaopen_package); lua_call(L, 0, 0);
 
-		// Register default library path
-		// (TODO)
-
 		// Register default inner global function
 		RegisterBasic(L);
 
-		// Make Def table
-		lua_newtable(L);
-		RegisterDefCls(L);
-		lua_setglobal(L, "Def");
+		// Register default library path
+		// (TODO)
+
+		// Load default library into stack (CreateMethodsTable?)
+		// COMMENT: we can set metatable on raw c pointer object, refer:
+		// http://stackoverflow.com/questions/14618002/how-to-return-c-object-to-lua-5-2
+		// http://lua-users.org/lists/lua-l/2006-08/msg00245.html
+		LuaHelper::RunScriptFile(L, "../system/script/common.lua");
 
 		luainitalized = true;
 	}
@@ -409,8 +441,8 @@ namespace LuaRunner {
 	}
 
 	lua_State* Get() {
-		// TODO: lua_gettop, what does it means exactly?
-		//assert(lua_gettop(L) == 1);
+		// don't use thread pool now, so clean stack.
+		assert(lua_gettop(L) == 0);
 		lua_State *pRet = lua_newthread(L);
 		return pRet;
 	}
@@ -455,6 +487,44 @@ namespace SkinTest {
 	// * If this entry is a table, add it recursively.
 	// * Otherwise, add an attribute.
 
+	int printindent = 0;
+	inline void PrintIndent() {
+		printf("-");
+		for (int i = 0; i < printindent;i++)
+			printf("  ");
+	}
+	void PrintTable(lua_State* l) {
+		// parses table and tell it's state.
+		lua_pushnil(l);
+		while (lua_next(l, -2)) {
+			// copy key, so lua_tostring won't modify original key
+			lua_pushvalue(l, -2);
+			std::string key = lua_tostring(l, -1);
+			lua_pop(l, 1);
+
+			if (lua_isstring(l, -1)) {
+				PrintIndent();
+				printf("%s=%s (str)\n", key.c_str(), lua_tostring(l, -1));
+			}
+			else if (lua_isnumber(l, -1)) {
+				PrintIndent();
+				printf("%s=%s (int)\n", key.c_str(), lua_tostring(l, -1));
+			}
+			else if (lua_istable(l, -1)) {
+				printf("%s (table)\n", key.c_str());
+				//printf("table\n");
+				printindent++;
+				PrintTable(l);
+				printindent--;
+			}
+			else {
+				PrintIndent();
+				printf("%s (unknown)\n", key.c_str());
+			}
+			lua_pop(l, 1);		// pop current attribute
+		}
+	}
+
 	// private end, public start
 
 	/*
@@ -474,9 +544,25 @@ namespace SkinTest {
 			r &= TestLuaFile(path.c_str());
 		}
 		printf("stack after run: %d\n", lua_gettop(l));
-		int ret;
-		LuaHelper::Pop(l, ret);
-		printf("returned value is: %d\n", ret);
+		// we need to extract table by ourselves
+		{
+			int t = lua_type(l, -1);
+			if (t == LUA_TTABLE) {
+				printf("okay its table\n");
+				printindent = 0;
+				PrintTable(l);
+				lua_pop(l, 1);		// pop table
+			}
+			else if (t == LUA_TNUMBER) {
+				int ret;
+				LuaHelper::Pop(l, ret);
+				printf("okay its int, value is %d\n", ret);
+			}
+			else {
+				printf("I can\'t figure out what it this ... nil?\n");
+				lua_pop(l, 1);		// pop anyway
+			}
+		}
 		printf("stack finally: %d\n", lua_gettop(l));
 		m_lualock.unlock();
 		return r;
