@@ -1,7 +1,7 @@
 #include "skin.h"
 #include "skinconverter.h"
 #include "skinutil.h"
-#include <mutex>
+#include "LuaHelper.h"
 #include <assert.h>
 using namespace tinyxml2;
 //
@@ -99,430 +99,355 @@ namespace SkinConverter {
 	}
 }
 
-
-
-
-
-// 
-// LUA part
-// - is redundant if you aren't going to test script.
-//
-
-#ifdef LUA
-namespace LuaHelper
-{
-	using namespace std;
-	template<> void Push<bool>(lua_State *L, const bool &Object) { lua_pushboolean(L, Object); }
-	template<> void Push<float>(lua_State *L, const float &Object) { lua_pushnumber(L, Object); }
-	template<> void Push<int>(lua_State *L, const int &Object) { lua_pushinteger(L, Object); }
-	template<> void Push<unsigned int>(lua_State *L, const unsigned int &Object) { lua_pushnumber(L, double(Object)); }
-	template<> void Push<string>(lua_State *L, const string &Object) { lua_pushlstring(L, Object.data(), Object.size()); }
-
-	template<> bool FromStack<bool>(Lua *L, bool &Object, int iOffset) { Object = !!lua_toboolean(L, iOffset); return true; }
-	template<> bool FromStack<float>(Lua *L, float &Object, int iOffset) { Object = (float)lua_tonumber(L, iOffset); return true; }
-	template<> bool FromStack<int>(Lua *L, int &Object, int iOffset) { Object = lua_tointeger(L, iOffset); return true; }
-	template<> bool FromStack<string>(Lua *L, string &Object, int iOffset)
-	{
-		size_t iLen;
-		const char *pStr = lua_tolstring(L, iOffset, &iLen);
-		if (pStr != NULL)
-			Object.assign(pStr, iLen);
-		else
-			Object.clear();
-
-		return pStr != NULL;
-	}
-}
-
-namespace LuaHelper {
-	using namespace luabridge;
-	using namespace std;
-
-	/*
-	 * stack related
-	 */
-	bool IsBoolOnStack(lua_State *L) {
-		return lua_isboolean(L, -1);
-	}
-	bool IsStringOnStack(lua_State *L) {
-		return lua_isstring(L, -1);
-	}
-	bool IsNoneOnStack(lua_State *L) {
-		return lua_isnil(L, -1);
-	}
-
-	/*
-	 * This function is used to get whole Lua stack information
-	 * All Lua stack information will be gathered into one stack.
-	 */
-	int GetLuaStack(lua_State *L)
-	{
-		string sErr;
-		Pop(L, sErr);
-
-		lua_Debug ar;
-
-		for (int iLevel = 0; lua_getstack(L, iLevel, &ar); ++iLevel)
-		{
-			if (!lua_getinfo(L, "nSluf", &ar))
-				break;
-			// The function is now on the top of the stack.
-			const char *file = ar.source[0] == '@' ? ar.source + 1 : ar.short_src;
-			const char *name;
-			vector<string> vArgs;
-
-			if (!strcmp(ar.what, "C"))
-			{
-				for (int i = 1; i <= ar.nups && (name = lua_getupvalue(L, -1, i)) != NULL; ++i)
-				{
-					vArgs.push_back(ssprintf("%s = %s", name, lua_tostring(L, -1)));
-					lua_pop(L, 1); // pop value
-				}
-			}
-			else
-			{
-				for (int i = 1; (name = lua_getlocal(L, &ar, i)) != NULL; ++i)
-				{
-					vArgs.push_back(ssprintf("%s = %s", name, lua_tostring(L, -1)));
-					lua_pop(L, 1); // pop value
-				}
-			}
-
-			// If the first call is this function, omit it from the trace.
-			if (iLevel == 0 && lua_iscfunction(L, -1) && lua_tocfunction(L, 1) == GetLuaStack)
-			{
-				lua_pop(L, 1); // pop function
-				continue;
-			}
-			lua_pop(L, 1); // pop function
-
-			sErr += ssprintf("\n%s:", file);
-			if (ar.currentline != -1)
-				sErr += ssprintf("%i:", ar.currentline);
-
-			if (ar.name && ar.name[0])
-				sErr += ssprintf(" %s", ar.name);
-			else if (!strcmp(ar.what, "main") || !strcmp(ar.what, "tail") || !strcmp(ar.what, "C"))
-				sErr += ssprintf(" %s", ar.what);
-			else
-				sErr += ssprintf(" unknown");
-			// join string with ","
-			sErr += "(";
-			for (int i = 0; i < vArgs.size(); i++) {
-				sErr += vArgs[i] + ",";
-			}
-			if (vArgs.size()) sErr.pop_back();
-			sErr += ")";
-		}
-
-		Push(L, sErr);
-		return 1;
-	}
-
-	bool RunScriptOnStack(Lua *L, string &Error, int Args, int ReturnValues, bool ReportError)
-	{
-		lua_pushcfunction(L, GetLuaStack);
-
-		// move the error function above the function and params
-		int ErrFunc = lua_gettop(L) - Args - 1;
-		lua_insert(L, ErrFunc);
-
-		// evaluate
-		int ret = lua_pcall(L, Args, ReturnValues, ErrFunc);
-		if (ret)
-		{
-			if (ReportError)
-			{
-				string lerror;
-				Pop(L, lerror);
-				Error += lerror;
-				printf("Lua Error: %s\n", lerror.c_str());
-				//ScriptErrorMessage(Error);
-			}
-			else
-			{
-				Pop(L, Error);
-			}
-			lua_remove(L, ErrFunc);
-			for (int i = 0; i < ReturnValues; ++i)
-				lua_pushnil(L);
-			return false;
-		}
-
-		lua_remove(L, ErrFunc);
-		return true;
-	}
-
-	/** private */
-	namespace {
-#define READBUFSIZE 1024
-		bool GetFileContents(const char* luapath, string& script) {
-			char buf[READBUFSIZE + 1];
-			FILE *f = SkinUtil::OpenFile(luapath, "r");
-			if (!f)
-				return false;
-			int s;
-			while (s = fread(buf, 1, READBUFSIZE, f)) {
-				buf[s] = 0;
-				script.append(buf);
-			}
-			fclose(f);
-			return true;
-		}
-	}
-
-	bool RunScriptFile(Lua *L, const string &sFile, int ReturnValues)
-	{
-		string sScript;
-		if (!GetFileContents(sFile.c_str(), sScript))
-			return false;
-
-		string sError;
-		if (!RunScript(L, sScript, "@" + sFile, sError, 0, ReturnValues, true))
-		{
-			printf("Lua runtime error: %s", sError.c_str());
-			//LuaHelpers::ReportScriptError(sError);
-			return false;
-		}
-
-		return true;
-	}
-
-	bool RunExpression(Lua *L, const string &sExpression, const string &sName)
-	{
-		string sError = ssprintf("Lua runtime error parsing \"%s\": ", sName.size() ? sName.c_str() : sExpression.c_str());
-		if (!RunScript(L, "return " + sExpression, sName.empty() ? string("in") : sName, sError, 0, 1, true))
-		{
-			return false;
-		}
-		return true;
-	}
-
-	bool LoadScript(Lua *L, const string &sScript, const string &sName, string &sError)
-	{
-		// load string into lua stack
-		int ret = luaL_loadbuffer(L, sScript.data(), sScript.size(), sName.c_str());
-		if (ret)
-		{
-			Pop(L, sError);
-			return false;
-		}
-		return true;
-	}
-
-	bool RunScript(Lua *L, const string &Script, const string &Name, string &Error, int Args, int ReturnValues, bool ReportError)
-	{
-		string lerror;
-		if (!LoadScript(L, Script, Name, lerror))
-		{
-			Error += lerror;
-			if (ReportError)
-			{
-				//ScriptErrorMessage(Error);
-				printf("Lua Error: %s\n", lerror.c_str());
-			}
-			lua_pop(L, Args);
-			for (int i = 0; i < ReturnValues; ++i)
-				lua_pushnil(L);
-			return false;
-		}
-
-		// move the function above the params
-		lua_insert(L, lua_gettop(L) - Args);
-
-		return RunScriptOnStack(L, Error, Args, ReturnValues, ReportError);
-	}
-}
-
-namespace LuaRunner {
-	//
-	// lua core vars
-	//
-	// basic funcs:
-	// - CND
-	// - DST
-	// Defs
-	// - Def.sprite
-	// - Def.text
-	// - ...
-	// set import path
-	// http://stackoverflow.com/questions/22492741/lua-require-function-does-not-find-my-required-file-on-ios
-	//
-	using namespace luabridge;
-
-	// originally: calculate condition
-	bool Luna_CND(const std::string& cnd) {
-		// do nothing ...
-		// but we should inspect all conditional clause,
-		// so always return true.
-		printf("received CND: %s\n", cnd.c_str());
-		return true;
-	}
-
-	void Luna_warn(const std::string& msg) {
-		printf("Lua Script warning: %s\n", msg.c_str());
-	}
-
-	// register basic functions / classes
-	namespace Util {
-		bool IsRegisteredClass(const std::string& cls) {
-			// in debug, always return true
-			return true;
-		}
-		std::string GetDir(const std::string& path) {
-			//printf("Dir %s\n", path.c_str());
-			return "test";
-		}
-		std::string ResolvePath(const std::string& relpath) {
-			// temporarily function; it should convert relpath to absolute path, in fact.
-			return relpath;
-		}
-		std::string GetFileType(const std::string& relpath) {
-			// temporarily function; get file type
-			int p = relpath.find_last_of('.');
-			if (p != std::string::npos) {
-				std::string ext = relpath.substr(p+1);
-				if (ext == "lua")
-					return "Lua";
-				else if (ext == "jpg" || ext == "jpeg" || ext == "bmp" || ext == "tga" || ext == "png")
-					return "Image";
-				else if (ext == "mp4" || ext == "avi" || ext == "mpeg" || ext == "mpg")
-					return "Movie";
-			}
-			return "Unknown";
-		}
+/*
+* local converter
+*/
+namespace {
+#define TAGMAXCOUNT 50
+	// TODO: not processed objects (combo)
+	// TODO: notefield requires information per lane (think about this more ...)
+	// TODO: can we send lua code in tween object?
+	const char* nosrctags[TAGMAXCOUNT] = {
+		// these object generally means group object
+		// which has no SRC attributes at all.
+		"notefield", "combo", "listview",
 	};
-	void RegisterBasic(lua_State* L) {
-		Namespace& ln = getGlobalNamespace(L);
-		ln.addFunction("CND", Luna_CND);
-		ln.addFunction("warn", Luna_warn);
+	const char *objecttags[TAGMAXCOUNT] = {
+		// generals
+		"sprite", "text", "number", "graph", "button", "slider",
+		// ingenerals
+		"bga", "groovegauge", "judgeline", "note", "scratch", "line",
+	};
+	const char* srctags[TAGMAXCOUNT] = {
+		"SRC_NOTE",
+		"SRC_LN_START",
+		"SRC_LN_BODY",
+		"SRC_LN_END",
+		"SRC_MINE",
+		"SRC_AUTO_NOTE",
+		"SRC_AUTO_LN_START",
+		"SRC_AUTO_LN_BODY",
+		"SRC_AUTO_LN_END",
+		"SRC_AUTO_MINE",
+		"SRC_GROOVE_ACTIVE",
+		"SRC_GROOVE_INACTIVE",
+		"SRC_HARD_ACTIVE",
+		"SRC_HARD_INACTIVE",
+		"SRC_EX_ACTIVE",
+		"SRC_EX_INACTIVE",
+	};
+	const char* dsttags[TAGMAXCOUNT] = {
+		"DST",
+	};
+	const char* srcattr[TAGMAXCOUNT] = {
+		// SRC supports only general attributes
+		// so filter it in here
+		"x", "y", "w", "h", "divx", "divy", "timer", "loop",
+	};
 
-		// refer: Utilizing library ... http://www.lua.org/pil/28.1.html
-		ln.beginNamespace("Util")
-			.addFunction("IsRegisteredClass", Util::IsRegisteredClass)
-			.addFunction("GetDir", Util::GetDir)
-			.addFunction("ResolvePath", Util::ResolvePath)
-			.addFunction("GetDir", Util::GetDir)
-			.endNamespace();
-	}
-
-	lua_State *L;
-	bool luainitalized = false;
-	void InitLua() {
-		assert(luainitalized == false);
-
-		L = lua_open();
-		lua_pushcfunction(L, luaopen_base); lua_call(L, 0, 0);
-		lua_pushcfunction(L, luaopen_math); lua_call(L, 0, 0);
-		lua_pushcfunction(L, luaopen_string); lua_call(L, 0, 0);
-		lua_pushcfunction(L, luaopen_table); lua_call(L, 0, 0);
-		lua_pushcfunction(L, luaopen_debug); lua_call(L, 0, 0);
-		lua_pushcfunction(L, luaopen_package); lua_call(L, 0, 0);
-
-		// Register default inner global function
-		RegisterBasic(L);
-
-		// Register default library path
-		// (TODO)
-
-		// Load default library into stack (CreateMethodsTable?)
-		// COMMENT: we can set metatable on raw c pointer object, refer:
-		// http://stackoverflow.com/questions/14618002/how-to-return-c-object-to-lua-5-2
-		// http://lua-users.org/lists/lua-l/2006-08/msg00245.html
-		LuaHelper::RunScriptFile(L, "../system/script/common.lua");
-
-		luainitalized = true;
-	}
-
-	void CloseLua() {
-		assert(luainitalized);
-		lua_close(L);
-		luainitalized = false;
-	}
-
-	lua_State* Get() {
-		// don't use thread pool now, so clean stack.
-		assert(lua_gettop(L) == 0);
-		lua_State *pRet = lua_newthread(L);
-		return pRet;
-	}
-
-	void Release(lua_State* p) {
-		// must process all stacks before release it
-		assert(lua_gettop(p) == 0);
-		p = NULL;
+	// find out is tag included in this attribute
+	bool CheckTagGroup(const char* testtag, const char** taglist) {
+		for (int i = 0; i < TAGMAXCOUNT && taglist[i]; i++) {
+			if (strcmp(taglist[i], testtag) == 0)
+				return true;
+		}
+		return false;
 	}
 }
-#endif
+
+void XmlToLuaConverter::AppendIndentBody(int indent) {
+	for (int i = 0; i < indent; i++)
+		body.push_back('\t');
+}
+void XmlToLuaConverter::AppendBody(const std::string& str) {
+	AppendIndentBody(indent);
+	body.append(str);
+	body.append("\n");
+}
+void XmlToLuaConverter::AppendHead(const std::string& str) {
+	head.append(str);
+	head.append("\n");
+}
+// process single SRC
+void XmlToLuaConverter::AppendSRC(const XMLElement *e) {
+	AppendIndentBody(indent);
+	// if it starts with name SRC~,
+	// then it's SRC specific object - use its own name.
+	if (strncmp(e->Name(), "SRC", 3) == 0)
+		body.append(ssprintf("%s={", e->Name()));
+	else
+		body.append("Src={");
+	// iterate through attributes ...
+	for (const XMLAttribute *attr = e->FirstAttribute();
+		attr;
+		attr = attr->Next())
+	{
+		const char *name = attr->Name();
+		// skip attribute if its not general attribute
+		if (!CheckTagGroup(name, srcattr))
+			continue;
+		if (strcmp(name, "timer") == 0)
+			body.append(ssprintf("%s=\"%s\",", name, attr->Value()));
+		else
+			body.append(ssprintf("%s=%s,", name, attr->Value()));
+	}
+	if (body.back() == ',') body.pop_back();
+	body.append("};\n");
+}
+// process single DST
+void XmlToLuaConverter::AppendDST(const XMLElement *dst) {
+	if (!dst) return;
+	// timer is get changed into event handler
+	const char *timer = dst->Attribute("timer");
+	if (!timer)
+		timer = "Init";
+	AppendIndentBody(indent);
+	body.append(ssprintf("On%s=DST{\n", timer));
+	indent++;
+	// add basic dst attribute (loop, acc, rotatecenter, blend)
+	if (dst->Attribute("acc"))
+		AppendBody(ssprintf("acc=%s,", dst->Attribute("acc")));
+	if (dst->Attribute("rotatecenter"))
+		AppendBody(ssprintf("rotatecenter=%s,", dst->Attribute("acc")));
+	if (dst->Attribute("blend"))
+		AppendBody(ssprintf("blend=%s,", dst->Attribute("acc")));
+	// add dst frames
+	for (const XMLElement *f = dst->FirstChildElement();
+		f;
+		f = f->NextSiblingElement())
+	{
+		AppendIndentBody(indent);
+		for (const XMLAttribute *attr = f->FirstAttribute();
+			attr;
+			attr = attr->Next())
+		{
+			const char *aname = attr->Name();
+			body.append(ssprintf("%s=%s,", aname, attr->Value()));
+		}
+		body.push_back('\n');
+	}
+	body.pop_back();
+	// add loop on the last
+	if (dst->Attribute("loop")) {
+		body.append(ssprintf("loop=%s", dst->Attribute("loop")));
+	}
+	indent--;
+	body.append("};\n");
+}
+void XmlToLuaConverter::AppendComment(const XMLComment *cmt) {
+	AppendIndentBody(indent);
+	const char *pn, *p = cmt->Value();
+	do {
+		pn = strchr(p, '\n');
+		std::string l;
+		if (!pn)
+			l = p;
+		else
+			l = std::string(p, pn - p);
+		body.append(ssprintf("-- %s\n", l.c_str()));
+		p = pn + 1;
+	} while (pn);
+};
+// process general object/groups
+void XmlToLuaConverter::AppendObject(const XMLElement *e, const char* name) {
+	// some object - like playfield / combo - is quite nasty.
+	// take care of them carefully.
+	AppendIndentBody(indent);
+	body.append(ssprintf("Def.%s{\n", name));
+	indent++;
+	if (e->Attribute("resid"))
+		AppendBody(ssprintf("file=\"%s\";", e->Attribute("resid")));
+	// process some object-specific attributes
+	const char *attrval;
+	if (attrval = e->Attribute("condition"))
+		AppendBody(ssprintf("class=\"%s\";", attrval));
+	if (attrval = e->Attribute("value"))
+		AppendBody(ssprintf("valuekey=\"%s\";", attrval));
+	if (attrval = e->Attribute("align"))
+		AppendBody(ssprintf("align=%s;", attrval));
+	if (attrval = e->Attribute("edit"))
+		AppendBody(ssprintf("edit=%s;", attrval));
+	if (attrval = e->Attribute("length"))
+		AppendBody(ssprintf("length=%s;", attrval));
+	if (attrval = e->Attribute("range"))
+		AppendBody(ssprintf("range=%s;", attrval));
+	if (attrval = e->Attribute("direction"))
+		AppendBody(ssprintf("direction=%s;", attrval));
+	// add SRC if this tag isn't group object
+	if (!CheckTagGroup(e->Name(), nosrctags))
+		AppendSRC(e);
+	// parse inner element
+	Parse(e->FirstChildElement());
+	indent--;
+	AppendBody("};");
+	objid++;
+}
+void XmlToLuaConverter::AppendElement(const XMLElement *e) {
+	const char* name = e->Name();
+	if (strcmp(name, "skin") == 0) {
+		Parse(e->FirstChild());
+	}
+	// in case of include
+	//
+	else if (strcmp(name, "include") == 0) {
+		AppendBody(ssprintf("LoadObject(\"%s\");", e->Attribute("path")));
+	}
+	// in case of resource,
+	// parse it and register it as cached resource
+	else if (strcmp(name, "image") == 0) {
+		std::string r = ssprintf("LoadImage(\"%s\", {path=\"%s\"});",
+			e->Attribute("name"), e->Attribute("path"));
+		if (depth == 0)
+			AppendHead(r);
+		else
+			AppendBody(r);
+	}
+	else if (strcmp(name, "font") == 0) {
+		std::string r = ssprintf("LoadFont(\"%s\", {path=\"%s\", size=%s, border=%s});",
+			e->Attribute("name"), e->Attribute("path"),
+			e->Attribute("size"), e->Attribute("border"));
+		if (depth == 0)
+			AppendHead(r);
+		else
+			AppendBody(r);
+	}
+	else if (strcmp(name, "texturefont") == 0) {
+		//AppendBody(ssprintf("-- converter message: use path rather than data attribute"));
+		AppendHead(ssprintf("texturefont_data=[[%s]]", e->GetText()));
+		AppendHead(ssprintf("LoadTFont(\"%s\", {data=texturefont_data});", e->Attribute("name")));
+	}
+
+	// in case of conditional clause
+	else if (strcmp(name, "condition") == 0) {
+		AppendBody("(function()");
+		for (const XMLElement *cond = e->FirstChildElement();
+			cond;
+			cond = cond->NextSiblingElement())
+		{
+			if (strcmp(cond->Name(), "else") == 0) {
+				AppendBody("}; else return Def.frame{");
+			}
+			else if (strcmp(cond->Name(), "elseif") == 0) {
+				AppendBody(ssprintf("}; elseif CND(\"%s\") then return Def.frame{", cond->Attribute("condition")));
+			}
+			else {
+				AppendBody(ssprintf("if CND(\"%s\") then return Def.frame{", cond->Attribute("condition")));
+			}
+			indent++;
+			Parse(cond->FirstChild());
+			indent--;
+			/*
+			* I think we don't need to create group, as we just add elements to here ...
+			* --but need in case of group object, like this:
+			* no, it's redundant unless if clause is positioned inside group object.
+			*
+			AppendHead("t[#t+1] = (function()");
+			indent++;
+			AppendHead("local t = {}");
+			Parse(cond->FirstChild());
+			AppendHead("return t");
+			indent--;
+			AppendHead("end");
+			*/
+		}
+		AppendBody("}; end");
+		AppendBody("end)();");
+	}
+	// in case of Lua
+	else if (strcmp(name, "lua") == 0) {
+		const char *pn, *p = e->GetText();
+		do {
+			pn = strchr(p, '\n');
+			std::string l;
+			if (!pn)
+				l = p;
+			else
+				l = std::string(p, pn - p);
+			AppendBody(l.c_str());
+			p = pn + 1;
+		} while (pn);
+	}
+	// in case of group / object / src / dst
+	else if (CheckTagGroup(name, objecttags) || CheckTagGroup(name, nosrctags)) {
+		depth++;
+		AppendObject(e, name);
+		depth--;
+	}
+	else if (CheckTagGroup(name, srctags)) {
+		AppendSRC(e);
+	}
+	else if (CheckTagGroup(name, dsttags)) {
+		AppendDST(e);
+	}
+	// unexpected tag
+	else {
+		printf("XmlToLua - Unexpected tag(%s), ignore.\n", name);
+	}
+};
+void XmlToLuaConverter::Parse(const XMLNode *node) {
+	for (const XMLNode *n = node;
+		n;
+		n = n->NextSibling())
+	{
+		if (n->ToComment()) {
+			AppendComment(n->ToComment());
+		}
+		else if (n->ToElement()) {
+			AppendElement(n->ToElement());
+		}
+	}
+};
+void XmlToLuaConverter::StartParse(const XMLNode *node) {
+	Clear();
+	indent++;
+	Parse(node);
+	indent--;
+}
+std::string XmlToLuaConverter::GetLuaCode() {
+	return
+		"-- Auto generated lua code\n" +
+		head +
+		"\n\n"
+		"-- skin table structure\n"
+		"local t = Def.ActorGroup{\n" +
+		body +
+		"}\n" +
+		"return t";
+};
+void XmlToLuaConverter::Clear() {
+	indent = 0;
+	objid = 0;
+	head = "";
+	body = "";
+	indent = 0;
+	depth = 0;
+};
+
+// ---------- Lua Converter end -----------------------------
+
+
+
+
 
 namespace SkinTest {
 	// ////////////////////////////////////////////////////////
 	// lua testing part
 	// ////////////////////////////////////////////////////////
-#ifdef LUA
+#ifdef LUAMANAGER
 	//
-	// parsing related vars
+	// emulates some lua functions
 	//
-	std::vector<std::string> parselist;
-	std::mutex m_lualock;
-	Lua* l = 0;
-	bool TestLuaFile(const char* luapath) {
-		return LuaHelper::RunScriptFile(l, luapath, 1);
-	}
 
 	void InitLua() {
-		LuaRunner::InitLua();
+		LUA = new LuaManager();
+		Lua *l = LUA->Get();
+		LuaUtil::RegisterBasic(l);
+		LuaHelper::RunScriptFile(l, "../system/test/dummy.lua");
+		LUA->Release(l);
 	}
 
 	void CloseLua() {
-		LuaRunner::CloseLua();
-	}
-
-	// check: LoadFromNode()
-	// LoadXNodeFromLuaShowErrors
-	// XNodeFromTable
-	// -> So, in fact, it creates xml table for itself!
-	// refer https://github.com/stepmania/stepmania/blob/536be1f64c215cdf53eadbf29926a2c5d82a4518/src/XmlFileUtil.cpp
-	// -> get table as return argument.
-	// * If this entry is a table, add it recursively.
-	// * Otherwise, add an attribute.
-
-	int printindent = 0;
-	inline void PrintIndent() {
-		printf("-");
-		for (int i = 0; i < printindent;i++)
-			printf("  ");
-	}
-	void PrintTable(lua_State* l) {
-		// parses table and tell it's state.
-		lua_pushnil(l);
-		while (lua_next(l, -2)) {
-			// copy key, so lua_tostring won't modify original key
-			lua_pushvalue(l, -2);
-			std::string key = lua_tostring(l, -1);
-			lua_pop(l, 1);
-
-			if (lua_isstring(l, -1)) {
-				PrintIndent();
-				printf("%s=%s (str)\n", key.c_str(), lua_tostring(l, -1));
-			}
-			else if (lua_isnumber(l, -1)) {
-				PrintIndent();
-				printf("%s=%s (int)\n", key.c_str(), lua_tostring(l, -1));
-			}
-			else if (lua_istable(l, -1)) {
-				printf("%s (table)\n", key.c_str());
-				//printf("table\n");
-				printindent++;
-				PrintTable(l);
-				printindent--;
-			}
-			else {
-				PrintIndent();
-				printf("%s (unknown)\n", key.c_str());
-			}
-			lua_pop(l, 1);		// pop current attribute
-		}
+		delete LUA;
 	}
 
 	// private end, public start
@@ -532,39 +457,24 @@ namespace SkinTest {
 	** although this func will be automatically locked...
 	*/
 	bool TestLuaSkin(const char* luapath) {
-		m_lualock.lock();
-		parselist.push_back(luapath);
-		bool r = true;
-		if (!l)
-			l = LuaRunner::Get();
+		Lua* l = LUA->Get();
 		printf("stack before run: %d\n", lua_gettop(l));
-		while (parselist.size()) {
-			std::string path = parselist[0];
-			parselist.erase(parselist.begin());
-			r &= TestLuaFile(path.c_str());
-		}
+		bool r = LuaHelper::RunScriptFile(l, luapath, 1);
 		printf("stack after run: %d\n", lua_gettop(l));
-		// we need to extract table by ourselves
 		{
-			int t = lua_type(l, -1);
-			if (t == LUA_TTABLE) {
-				printf("okay its table\n");
-				printindent = 0;
-				PrintTable(l);
-				lua_pop(l, 1);		// pop table
-			}
-			else if (t == LUA_TNUMBER) {
-				int ret;
-				LuaHelper::Pop(l, ret);
-				printf("okay its int, value is %d\n", ret);
+			// parse table with STree object
+			STree tree;
+			if (lua_istable(l, -1)) {
+				tree.ParseLua(l);
+				printf("parsing result:\n%s\n", tree.NodeToString().c_str());
 			}
 			else {
-				printf("I can\'t figure out what it this ... nil?\n");
-				lua_pop(l, 1);		// pop anyway
+				printf("invalid argument(not table), cannot parse.\n");
 			}
+			lua_pop(l, 1);
 		}
 		printf("stack finally: %d\n", lua_gettop(l));
-		m_lualock.unlock();
+		LUA->Release(l);
 		return r;
 	}
 #endif

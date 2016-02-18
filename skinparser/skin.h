@@ -97,3 +97,55 @@ public:
 	void GetDefaultOption(SkinOption *o);
 };
 
+/*
+ * @description
+ * parsed node by Lua/Xml
+ * basic skin structure, but not an rendering tree.
+ * independent to tinyxml2.
+ */
+#include "LuaManager.h"
+#include "LuaHelper.h"
+
+class STree;
+class SNode {
+	/*
+	 * SNode only has attr, handler, child attribute.
+	 * no other functions for rendering. inherit if you want to do so..
+	 */
+protected:
+	std::map<std::string, std::string> attribute_;
+	std::map<std::string, LuaFunc> handler_;
+	std::vector<SNode*> children_;
+	STree* tree;
+public:
+	SNode() : SNode(0) {}
+	SNode(STree* t) : tree(t) {}
+	~SNode() {}
+
+	// make node by lua table (child is not parsed) (table MUST be on stack)
+	void ParseLua(lua_State *l);
+	// make node by xml table (child is not parsed)
+	void ParseXml(const tinyxml2::XMLElement *e);
+	// for info/debug
+	int GetChildCount();
+	std::string NodeToString(bool recursive = true, int indent = 0);
+	// access to node
+	template<class T>
+	bool NodeQuery(const std::string& key, T& out);
+	std::vector<SNode*>::const_iterator NodeBegin();
+	std::vector<SNode*>::const_iterator NodeEnd();
+};
+
+class STree: public SNode {
+	/*
+	 * Manages SNode like objects
+	 */
+protected:
+	std::vector<SNode*> nodepool_;
+public:
+	STree() : SNode(this) {}
+	~STree() { ClearTree(); }
+
+	virtual SNode* NewNode();
+	virtual void ClearTree();
+};

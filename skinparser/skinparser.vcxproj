@@ -79,6 +79,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="LuaHelper.cpp" />
+    <ClCompile Include="LuaManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="skin.cpp" />
     <ClCompile Include="skinconverter.cpp" />
@@ -88,7 +90,8 @@
     <ClCompile Include="skinutil.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="LuaRef.h" />
+    <ClInclude Include="LuaHelper.h" />
+    <ClInclude Include="LuaManager.h" />
     <ClInclude Include="skin.h" />
     <ClInclude Include="skinconverter.h" />
     <ClInclude Include="skinoption.h" />

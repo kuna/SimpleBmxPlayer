@@ -36,6 +36,12 @@
     <ClCompile Include="skinconverter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LuaManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LuaHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="skin.h">
@@ -53,7 +59,10 @@
     <ClInclude Include="skinconverter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="LuaRef.h">
+    <ClInclude Include="LuaManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -8,6 +8,8 @@
  * converting LR2 file is written at skinlr2.cpp
  */
 
+#pragma once
+
 #include "skin.h"
 #include "tinyxml2.h"
 #include <map>
@@ -71,7 +73,7 @@ private:
 	int ProcessLane(const args_read_& args, tinyxml2::XMLElement *src, int resid);			// process commands about lane
 	int ProcessCombo(const args_read_& args, tinyxml2::XMLElement *obj);		// process commands about combo
 	int ProcessSelectBar(const args_read_& args, tinyxml2::XMLElement *obj);	// process commands about select bar
-	int ProcessSelectBar_DST(const args_read_& args);					// process commands about select bar
+	int ProcessSelectBar_DST(const args_read_& args);							// process commands about select bar
 	// pacemaker: use default XML
 public:
 	// for extern use
@@ -90,50 +92,43 @@ public:
 	_LR2SkinParser() { Clear(); }
 };
 
-// enable this line if you have lua library
-#define LUA 1
-#ifdef LUA
-extern "C" {
-#include "Lua/lua.h"
-#include "Lua/lualib.h"
-#include "Lua/lauxlib.h"
-}
-#include "LuaBridge.h"
-
-
-typedef lua_State Lua;
-namespace LuaHelper {
-	using namespace std;
-
-	template<class T>
-	void Push(lua_State *L, const T &Object);
-
-	template<class T>
-	bool FromStack(lua_State *L, T &Object, int iOffset);
-
-	template<class T>
-	bool Pop(lua_State *L, T &val)
-	{
-		bool bRet = FromStack(L, val, -1);
-		lua_pop(L, 1);
-		return bRet;
-	}
-
-	int GetLuaStack(lua_State *L);
-	bool RunExpression(Lua *L, const string &sExpression, const string &sName);
-	bool RunScriptFile(Lua *L, const string &sFile, int ReturnValues = 0);
-	bool RunScriptOnStack(Lua *L, string &Error, int Args, int ReturnValues, bool ReportError);
-	bool RunScript(Lua *L, const string &Script, const string &Name, string &Error, int Args, int ReturnValues, bool ReportError);
-}
-#endif
-
 namespace SkinConverter {
 	bool ConvertLR2SkinToXml(const char* lr2skinpath);
 	bool ConvertLR2SkinToLua(const char* lr2skinpath);
 }
 
+class XmlToLuaConverter {
+private:
+	// head: values which will be logically interpreted to create body
+	std::string head;
+	std::string body;
+	// current indentation
+	int indent;
+	// current parse depth (now useless?)
+	int depth;
+	// current object id
+	int objid;
+
+	void AppendIndentBody(int indent);
+	void AppendBody(const std::string& str);
+	void AppendHead(const std::string& str);
+	void AppendSRC(const tinyxml2::XMLElement *e);
+	void AppendDST(const tinyxml2::XMLElement *dst);
+	void AppendComment(const tinyxml2::XMLComment *cmt);
+	void AppendObject(const tinyxml2::XMLElement *e, const char* name);
+	void AppendElement(const tinyxml2::XMLElement *e);
+public:
+	void Parse(const tinyxml2::XMLNode *node);
+	void StartParse(const tinyxml2::XMLNode *node);
+	std::string GetLuaCode();	// call after parse
+	void Clear();				// called automatically
+};
+
+// enable this line if you have lua library
+#include "LuaManager.h"
+
 namespace SkinTest {
-#ifdef LUA
+#ifdef LUAMANAGER
 	void InitLua();
 	void CloseLua();
 	bool TestLuaSkin(const char* luaskinpath);
