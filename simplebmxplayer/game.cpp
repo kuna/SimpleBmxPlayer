@@ -230,8 +230,8 @@ namespace Game {
 			flag |= SDL_WINDOW_RESIZABLE;
 		if (SETTING.vsync)
 			flag |= SDL_RENDERER_PRESENTVSYNC;
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+		//SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+		//SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 		WINDOW = SDL_CreateWindow(PROGRAMNAME " - " PROGRAMDATE "(" PROGRAMCOMMIT ")", 
 			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 			SETTING.width, SETTING.height, flag);
@@ -245,6 +245,17 @@ namespace Game {
 			LOG->Critical(SDL_GetError());
 			return -1;
 		}
+		printf("OpenGL Version %s\n", glGetString(GL_VERSION));
+		glClearColor(0, 0, 0, 0);
+		glViewport(0, 0, SETTING.width, SETTING.height);
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho(0, SETTING.width, SETTING.height, 0, 1, -1);	// this don't work in opengl3.0 .. don't know why
+		glMatrixMode(GL_MODELVIEW);
+		glEnable(GL_TEXTURE_2D);
+
+		glLoadIdentity();
+
 		nJoystickCnt = SDL_NumJoysticks();
 		if (nJoystickCnt > 10) nJoystickCnt = 10;
 		for (int i = 0; i < nJoystickCnt; i++) {
@@ -426,18 +437,23 @@ namespace Game {
 			 *   (TODO)
 			 */
 			RMUTEX.lock();
-
-			glViewport(0, 0, SETTING.width, SETTING.height);
-			glClearColor(0, 0, 0, 0);
+			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			//SDL_RenderClear(RENDERER);
+			glLoadIdentity();
+
+			glBegin(GL_QUADS);
+			glColor3f(1, 0, 0); glVertex3f(0, 0, 0);
+			glColor3f(1, 1, 0); glVertex3f(100, 0, 0);
+			glColor3f(1, 0, 1); glVertex3f(100, 100, 0);
+			glColor3f(1, 1, 1); glVertex3f(0, 100, 0);
+			glEnd();
 
 			SCENE->Update();
 			SCENE->Render();
 			if (showfps) Render_FPS();
 
-			glFinish();
 			//SDL_RenderPresent(RENDERER);
+			//glFinish();
 			SDL_GL_SwapWindow(WINDOW);
 			RMUTEX.unlock();
 		}
@@ -468,6 +484,7 @@ namespace Game {
 			SDL_JoystickClose(JOYSTICK[i]);
 		Mix_CloseAudio();
 		//SDL_DestroyRenderer(RENDERER);
+		SDL_GL_DeleteContext(RENDERER);
 		SDL_DestroyWindow(WINDOW);
 	}
 }

@@ -662,24 +662,29 @@ namespace {
 
 		// set vertex/color/texture quad vertices.
 		// TODO: move them to Display class
-		Vertex[0 * 3 + 0] = dst_rect.x;
-		Vertex[0 * 3 + 1] = dst_rect.y;
-		Vertex[0 * 3 + 2] = 1;
-		Vertex[1 * 3 + 0] = dst_rect.x + dst_rect.w;
-		Vertex[1 * 3 + 1] = dst_rect.y;
-		Vertex[1 * 3 + 2] = 1;
-		Vertex[2 * 3 + 0] = dst_rect.x + dst_rect.w;
-		Vertex[2 * 3 + 1] = dst_rect.y + dst_rect.h;
-		Vertex[2 * 3 + 2] = 1;
-		Vertex[3 * 3 + 0] = dst_rect.x;
-		Vertex[3 * 3 + 1] = dst_rect.y + dst_rect.h;
-		Vertex[3 * 3 + 2] = 1;
+		Vertex[0 * 3 + 0] = 
+			Vertex[2 * 3 + 0] =
+			dst_rect.x;
+		Vertex[1 * 3 + 0] = 
+			Vertex[3 * 3 + 0] = 
+			dst_rect.x + dst_rect.w;
+		Vertex[0 * 3 + 1] = 
+			Vertex[1 * 3 + 1] = 
+			dst_rect.y;
+		Vertex[2 * 3 + 1] = 
+			Vertex[3 * 3 + 1] = 
+			dst_rect.y + dst_rect.h;
+		Vertex[0 * 3 + 2] =
+			Vertex[1 * 3 + 2] =
+			Vertex[2 * 3 + 2] =
+			Vertex[3 * 3 + 2] =
+			1.0f;
 
 		Texture[0 * 2 + 0] =
-			Texture[3 * 2 + 0] =
+			Texture[2 * 2 + 0] =
 			src_rect.x / width;
 		Texture[1 * 2 + 0] =
-			Texture[2 * 2 + 0] =
+			Texture[3 * 2 + 0] =
 			(src_rect.x + src_rect.w) / width;
 		Texture[0 * 2 + 1] =
 			Texture[1 * 2 + 1] =
@@ -701,6 +706,14 @@ namespace {
 		glColorPointer(4, GL_UNSIGNED_BYTE, 0, Color);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glTexCoordPointer(2, GL_FLOAT, 0, Texture);
+
+		/*
+		glBegin(GL_QUADS);
+		glTexCoord2f(0.f, 0.f); glVertex2f(0.f, 0.f);
+		glTexCoord2f(1.f, 0.f); glVertex2f(dst_rect.w, 0.f);
+		glTexCoord2f(1.f, 1.f); glVertex2f(dst_rect.w, dst_rect.h);
+		glTexCoord2f(0.f, 1.f); glVertex2f(0.f, dst_rect.h);
+		glEnd();*/
 	}
 }
 void SkinRenderHelper::Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, int blend, int rotationcenter) {
@@ -718,9 +731,14 @@ void SkinRenderHelper::Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, i
 	//SDL_RendererFlip flip = SDL_RendererFlip::SDL_FLIP_NONE;
 	//SDL_RenderCopyEx(Game::RENDERER, t, &src_rect, &dst_rect,
 	//	frame->angle, &rot_center, flip);
+	glEnable(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glBindTexture(GL_TEXTURE_2D, img->GetTexID());
 	UpdateRenderArgs(frame, blend);
 	UpdateTexState(src, frame, width, height, rotationcenter);
-	glDrawArrays(GL_QUAD_STRIP, 0, 4);
+	glBindTexture(GL_TEXTURE_2D, img->GetTexID());
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 	// reset rotation
 	glPopMatrix();

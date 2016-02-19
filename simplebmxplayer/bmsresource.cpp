@@ -470,7 +470,8 @@ namespace BmsHelper {
 			/*
 			 * only sync in main BGA
 			 */
-			if (img) img->Sync(BMSVALUE.OnBgaMain->GetTick() / BmsResource::soundrate);
+			// TODO - crashing now
+			//if (img) img->Sync(BMSVALUE.OnBgaMain->GetTick() / BmsResource::soundrate);
 			return img;
 		}
 		else {
