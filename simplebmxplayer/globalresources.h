@@ -108,9 +108,9 @@ public:
 	Font* GetByID(const RString &id);
 
 	Font* RegisterFont(const char* id, Font* f);
-	Font* LoadTTFFont(const char* id, const RString &path, int size, SDL_Color color, int thickness = 0,
-		SDL_Color bordercolor = FC_MakeColor(0, 0, 0, 255), int border = 1,
-		int style = TTF_STYLE_NORMAL, const char* texturepath = 0);
+	Font* LoadTTFFont(const char* id, const RString &path, int size, Uint32 color, int thickness = 0,
+		Uint32 bordercolor = 0x000000FF, int border = 1,
+		int style = 0, const char* texturepath = 0);
 	Font* LoadTextureFont(const char* id, const RString &path);
 	Font* LoadTextureFontFromTextData(const char* id, const RString &textdata);
 };

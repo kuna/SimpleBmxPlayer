@@ -29,7 +29,7 @@ namespace Game {
 
 	// SDL
 	SDL_Window*		WINDOW = NULL;
-	SDL_Renderer*	RENDERER = NULL;
+	SDL_GLContext	RENDERER = NULL;
 	SDL_Joystick*	JOYSTICK[10] = { 0, };
 	int				nJoystickCnt = 0;
 
@@ -221,7 +221,7 @@ namespace Game {
 			return -1;
 		}
 		Mix_AllocateChannels(1296);
-		int flag = SDL_WINDOW_SHOWN;
+		int flag = SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL;
 		if (SETTING.fullscreen == 1)
 			flag |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 		else if (SETTING.fullscreen > 1)
@@ -230,8 +230,8 @@ namespace Game {
 			flag |= SDL_WINDOW_RESIZABLE;
 		if (SETTING.vsync)
 			flag |= SDL_RENDERER_PRESENTVSYNC;
-		//SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-		//SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 		WINDOW = SDL_CreateWindow(PROGRAMNAME " - " PROGRAMDATE "(" PROGRAMCOMMIT ")", 
 			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 			SETTING.width, SETTING.height, flag);
@@ -239,9 +239,10 @@ namespace Game {
 			LOG->Critical("Failed to create window");
 			return -1;
 		}
-		RENDERER = SDL_CreateRenderer(WINDOW, -1, SDL_RENDERER_ACCELERATED);// | SDL_RENDERER_PRESENTVSYNC);
+		RENDERER = SDL_GL_CreateContext(WINDOW);// SDL_CreateRenderer(WINDOW, -1, SDL_RENDERER_ACCELERATED);
 		if (!RENDERER) {
 			LOG->Critical("Failed to create Renderer");
+			LOG->Critical(SDL_GetError());
 			return -1;
 		}
 		nJoystickCnt = SDL_NumJoysticks();
@@ -253,8 +254,9 @@ namespace Game {
 		/*
 		 * prepare game basic resource
 		 */
+		/*
 		IMAGEPOOL->Register("_black", new ImageColor(0x000000FF));
-		IMAGEPOOL->Register("_white", new ImageColor(0xFFFFFFFF));
+		IMAGEPOOL->Register("_white", new ImageColor(0xFFFFFFFF));*/
 		RString path;
 		path = "../system/resource/fastslow.png";
 		FileHelper::ConvertPathToSystem(path);
@@ -265,8 +267,8 @@ namespace Game {
 		oninputstart = TIMERPOOL->Get("OnInputStart");
 		onscene = TIMERPOOL->Get("OnScene");
 		font = FONTPOOL->LoadTTFFont("_system", 
-			"../system/resource/NanumGothicExtraBold.ttf", 28, FC_MakeColor(120, 120, 120, 255), 0,
-			FC_MakeColor(0, 0, 0, 255), 1, 0,
+			"../system/resource/NanumGothicExtraBold.ttf", 28, 0x909090FF, 0,
+			0x000000FF, 1, 0,
 			"../system/resource/fontbackground_small.png");
 
 		/*
@@ -424,11 +426,19 @@ namespace Game {
 			 *   (TODO)
 			 */
 			RMUTEX.lock();
-			SDL_RenderClear(RENDERER);
+
+			glViewport(0, 0, SETTING.width, SETTING.height);
+			glClearColor(0, 0, 0, 0);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			//SDL_RenderClear(RENDERER);
+
 			SCENE->Update();
 			SCENE->Render();
 			if (showfps) Render_FPS();
-			SDL_RenderPresent(RENDERER);
+
+			glFinish();
+			//SDL_RenderPresent(RENDERER);
+			SDL_GL_SwapWindow(WINDOW);
 			RMUTEX.unlock();
 		}
 	}
@@ -457,7 +467,7 @@ namespace Game {
 		for (int i = 0; i < nJoystickCnt; i++)
 			SDL_JoystickClose(JOYSTICK[i]);
 		Mix_CloseAudio();
-		SDL_DestroyRenderer(RENDERER);
+		//SDL_DestroyRenderer(RENDERER);
 		SDL_DestroyWindow(WINDOW);
 	}
 }

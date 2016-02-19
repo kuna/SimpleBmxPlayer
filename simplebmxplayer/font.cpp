@@ -19,19 +19,19 @@ namespace {
 }
 
 Font::Font() 
-: texturefont(0), ttffont(0) {}
+: texturefont(0) {}
 
 Font::~Font() { Release(); }
 
 void Font::Release() {
 	SAFE_DELETE(texturefont);
-	if (ttffont) FC_ClearFont(ttffont), ttffont=0;
 }
 
 /*
  * Font loading should be always successful. (incorrect font may be placed)
  * So, use fallback font/texture when cannot found...
  */
+#if 0
 bool Font::LoadTTFFont(const RString& path, int size, SDL_Color color, int thickness, 
 	SDL_Color bordercolor, int border, int fontstyle, const char* texturepath) {
 	ttffont = FC_CreateFont();
@@ -75,6 +75,7 @@ bool Font::LoadTTFFont(const RString& path, int size, SDL_Color color, int thick
 	SAFE_DELETE(texture);
 	return true;
 }
+#endif
 
 bool Font::LoadTextureFont(const RString& path) {
 	RString t;
@@ -91,48 +92,44 @@ void Font::LoadTextureFontByText(const RString& textdata) {
 }
 
 bool Font::IsLoaded() {
-	return (ttffont || texturefont);
+	return texturefont;
 }
 
 int Font::GetWidth(const char* text) {
+#if 0
 	if (ttffont) {
 		return FC_GetWidth(ttffont, text);
 	}
 	else if (texturefont) {
 		return texturefont->GetWidth(text);
 	}
+#endif
 	return 0;
 }
 
 void Font::Render(const char* text, int x, int y) {
+	// TODO
+#if 0
 	if (ttffont) {
 		FC_Draw(ttffont, Game::RENDERER, x, y, text);
 	}
 	else if (texturefont) {
 		texturefont->Render(text, x, y);
 	}
+#endif
 }
 
 void Font::Render(const char* text, int x, int y, int width) {
 	// TODO
+	// MUST be device-dependent structure.
 }
 
 void Font::SetAlphaMod(uint8_t a) {
-	if (ttffont) {
-		FC_SetAlphaMod(ttffont, a);
-	}
-	else if (texturefont) {
-		texturefont->SetAlphaMod(a);
-	}
+
 }
 
 void Font::SetColorMod(uint8_t r, uint8_t g, uint8_t b) {
-	if (ttffont) {
-		FC_SetColorMod(ttffont, r, g, b);
-	}
-	else if (texturefont) {
-		texturefont->SetColorMod(r, g, b);
-	}
+
 }
 
 // -------------------------------------------------
@@ -238,6 +235,9 @@ int TextureFont::GetWidth(const RString& text) {
 }
 
 void TextureFont::Render(const RString& text, int x, int y) {
+	// we'll do it later
+	// TODO
+#if 0
 	uint32_t leftpos = x;
 	const char *p = text.c_str();
 	uint32_t glyphcode;
@@ -256,12 +256,5 @@ void TextureFont::Render(const RString& text, int x, int y) {
 		} else leftpos += stf.GetFallbackWidth();
 		p++;
 	}
-}
-
-void TextureFont::SetAlphaMod(uint8_t a) { this->a = a; }
-
-void TextureFont::SetColorMod(uint8_t r, uint8_t g, uint8_t b) {
-	this->r = r;
-	this->g = g;
-	this->b = b;
+#endif
 }

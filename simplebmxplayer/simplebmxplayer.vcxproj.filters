@@ -204,15 +204,14 @@
     <Library Include="..\lib\zdll.lib" />
     <Library Include="..\lib\Release\bmsbel.lib" />
     <Library Include="..\lib\Release\Lua.lib" />
-    <Library Include="..\lib\Release\SDL2_image.lib" />
     <Library Include="..\lib\Release\SDL2_mixer.lib" />
     <Library Include="..\lib\Release-Lib\tinyxml2.lib" />
-    <Library Include="..\extern\SDL\lib\x86\SDL2_ttf.lib" />
-    <Library Include="..\lib\Release\SDL_FontCache.lib" />
     <Library Include="..\lib\Release\sqlite.lib" />
     <Library Include="..\lib\Release\zziplib.lib" />
     <Library Include="..\lib\Release\libiconv.lib" />
     <Library Include="..\lib\Release\archive.lib" />
+    <Library Include="..\lib\SOIL.lib" />
+    <Library Include="..\lib\glew32.lib" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="simplebmxplayer.rc">

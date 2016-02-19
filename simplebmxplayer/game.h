@@ -51,7 +51,7 @@ namespace Game {
 
 	// global veriables about game rendering.
 	extern SceneBasic*		SCENE;
-	extern SDL_Renderer*	RENDERER;
+	extern SDL_GLContext	RENDERER;
 	extern SDL_Window*		WINDOW;
 	extern GameSetting		SETTING;
 	extern std::mutex		RMUTEX;

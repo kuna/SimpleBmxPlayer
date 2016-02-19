@@ -313,8 +313,9 @@ Font* FontPool::RegisterFont(const char* id, Font* f) {
 }
 
 Font* FontPool::LoadTTFFont(const char* id, const RString &path, 
-	int size, SDL_Color color, int border, SDL_Color bordercolor,
+	int size, Uint32 color, int border, Uint32 bordercolor,
 	int style, int thickness, const char* texturepath) {
+#if 0
 	RString _path = path;
 	FileHelper::ConvertPathToAbsolute(_path);
 	GetAnyProperFile(_path);
@@ -327,6 +328,8 @@ Font* FontPool::LoadTTFFont(const char* id, const RString &path,
 		delete f;
 		return 0;
 	}
+#endif
+	return 0;
 }
 
 Font* FontPool::LoadTextureFont(const char* id, const RString &path) {

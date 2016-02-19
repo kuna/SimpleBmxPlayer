@@ -70,9 +70,6 @@ private:
 
 	/** @brief stores element ID-pointer. use GetElementById() to use this array. */
 	std::map<RString, SkinRenderObject*> _idpool;
-
-	/** @brief rendered textured (triple-buffer) */
-	SDL_Texture *tex_render;
 public:
 	SkinRenderTree(int skinwidth, int skinheight);
 	~SkinRenderTree();
@@ -141,7 +138,6 @@ namespace SkinRenderHelper {
 	ImageDSTFrame Tween(ImageDSTFrame& a, ImageDSTFrame &b, double t, int acctype);
 	/** @brief in debug mode, border will drawn around object. */
 	void Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, int blend = 1, int rotationcenter = ROTATIONCENTER::CENTER);
-	void Render(SDL_Texture *img, ImageSRC *src, ImageDSTFrame *frame, int blend = 1, int rotationcenter = ROTATIONCENTER::CENTER);
 
 	/** @brief replaces path string to a correct one */
 	//void ConvertPath(RString& path);

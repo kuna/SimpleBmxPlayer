@@ -305,25 +305,33 @@ SkinGroupObject::end() { return _childs.end(); }
 
 
 
-
+// 
+// TODO:
+// need to create ImageFrame object to process this correctly ...
+// don't do direct GL access in here, it's sooooo nasty
+//
 SkinCanvasObject::SkinCanvasObject(SkinRenderTree *owner)
 	: SkinGroupObject(owner) {
+#if 0
 	t = SDL_CreateTexture(Game::RENDERER,
 		SDL_PIXELFORMAT_RGBA8888,
 		SDL_TEXTUREACCESS_TARGET, rtree->GetWidth(), rtree->GetHeight());
+#endif
 }
 
 SkinCanvasObject::~SkinCanvasObject() { if (t) SDL_DestroyTexture(t); }
 
 void SkinCanvasObject::SetAsRenderTarget() {
 	if (!t) return;
+#if 0
 	_org = SDL_GetRenderTarget(Game::RENDERER);
 	SDL_SetRenderTarget(Game::RENDERER, t);
+#endif
 }
 
 void SkinCanvasObject::ResetRenderTarget() {
 	if (!t) return;
-	SDL_SetRenderTarget(Game::RENDERER, _org);
+	//SDL_SetRenderTarget(Game::RENDERER, _org);
 }
 
 void SkinCanvasObject::SetObject(XMLElement *e) {
@@ -333,6 +341,7 @@ void SkinCanvasObject::SetObject(XMLElement *e) {
 }
 
 void SkinCanvasObject::Render() {
+#if 0
 	// same method like ImageObject
 	if (!t) return;
 	if (!drawable) return;
@@ -345,6 +354,7 @@ void SkinCanvasObject::Render() {
 	// then draw cached texture like image object
 	SkinRenderHelper::Render(t, &src, &dst_cached.frame,
 		dst_cached.dst->blend, dst_cached.dst->rotatecenter);
+#endif
 }
 
 #pragma endregion SKINGROUPOBJECT

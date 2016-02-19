@@ -13,8 +13,6 @@ using namespace tinyxml2;
 
 #pragma region SKINRENDERTREE
 SkinRenderTree::SkinRenderTree(int w, int h) : SkinGroupObject(this) { 
-	tex_render = 0;
-
 	// set skin size
 	SetSkinSize(w, h); 
 
@@ -23,8 +21,6 @@ SkinRenderTree::SkinRenderTree(int w, int h) : SkinGroupObject(this) {
 
 void SkinRenderTree::SetSkinSize(int w, int h) { 
 	_scr_w = w, _scr_h = h; 
-	if (tex_render) SDL_DestroyTexture(tex_render);
-	tex_render = SDL_CreateTexture(Game::RENDERER, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, _scr_w, _scr_h);
 }
 
 SkinRenderTree::~SkinRenderTree() {
@@ -57,7 +53,7 @@ void SkinRenderTree::RegisterImage(RString &id, RString &path) {
 }
 
 void SkinRenderTree::RegisterTTFFont(RString &id, RString &path, int size, int border, const char *texturepath) {
-	Font *f = FONTPOOL->LoadTTFFont(id, path, size, FC_MakeColor(255, 255, 255, 255), 0, FC_MakeColor(0, 0, 0, 255), border, 0, texturepath);
+	Font *f = FONTPOOL->LoadTTFFont(id, path, size, 0xFFFFFFFF, 0, 0x000000FF, border, 0, texturepath);
 	if (f) {
 		_fontkey.insert(std::pair<RString, Font*>(id, f));
 	}
@@ -95,21 +91,9 @@ void SkinRenderTree::PopRenderOffset() {
 }
 
 void SkinRenderTree::Render() {
-	SDL_SetRenderTarget(Game::RENDERER, tex_render);
-	SDL_RenderClear(Game::RENDERER);
 	for (auto it = begin(); it != end(); ++it) {
 		(*it)->Render();
 	}
-	SDL_SetRenderTarget(Game::RENDERER, 0);
-	// similar to SkinGroup
-	// difference is, uses ratio to fit skin to screen
-	SDL_RenderCopy(Game::RENDERER, tex_render, 0, 0);
-	/*
-	SDL_RenderSetScale(Game::RENDERER,
-		(float)Game::SETTING.width / _scr_w,
-		(float)Game::SETTING.height / _scr_h);
-	SDL_RenderSetScale(Game::RENDERER, 1, 1);
-	*/
 }
 
 void SkinRenderTree::Update() {
@@ -579,90 +563,166 @@ ImageDSTFrame SkinRenderHelper::Tween(ImageDSTFrame &a, ImageDSTFrame &b, double
 	}
 }
 
+namespace {
+#define SIZE 4
+	float Vertex[SIZE * 3];
+	float Texture[SIZE * 2] = {
+		0, 0,
+		1, 0,
+		1, 1,
+		0, 1
+	};
+	GLubyte Color[SIZE * 4];
+
+	void UpdateRenderArgs(ImageDSTFrame *frame, int blend) {
+		glEnable(GL_BLEND);
+		switch (blend) {
+		case 0:
+			/*
+			* LR2 is strange; NO blending does BLENDING, actually.
+			*
+			SDL_SetTextureBlendMode(img->GetPtr(), SDL_BlendMode::SDL_BLENDMODE_NONE);
+			break;
+			*/
+		case 1:
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			//SDL_SetTextureBlendMode(t, SDL_BlendMode::SDL_BLENDMODE_BLEND);
+			break;
+		case 2:
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+			//SDL_SetTextureBlendMode(t, SDL_BlendMode::SDL_BLENDMODE_ADD);
+			break;
+		case 3:
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			break;
+		case 4:
+			glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+			//SDL_SetTextureBlendMode(t, SDL_BlendMode::SDL_BLENDMODE_MOD);
+			break;
+		default:
+			//SDL_SetTextureBlendMode(t, SDL_BlendMode::SDL_BLENDMODE_BLEND);
+			break;
+		}
+	}
+
+	void UpdateTexRotate(SDL_Rect& dst_rect, int rotationcenter, float angle) {
+		SDL_Point rot_center = { 0, 0 };
+		switch (rotationcenter) {
+		case ROTATIONCENTER::TOPLEFT:
+			rot_center = { 0, 0 };
+			break;
+		case ROTATIONCENTER::TOPCENTER:
+			rot_center = { dst_rect.w / 2, 0 };
+			break;
+		case ROTATIONCENTER::TOPRIGHT:
+			rot_center = { dst_rect.w, 0 };
+			break;
+		case ROTATIONCENTER::CENTERLEFT:
+			rot_center = { 0, dst_rect.h / 2 };
+			break;
+		case 0:
+		case ROTATIONCENTER::CENTER:
+			rot_center = { dst_rect.w / 2, dst_rect.h / 2 };
+			break;
+		case ROTATIONCENTER::CENTERRIGHT:
+			rot_center = { dst_rect.w, dst_rect.h / 2 };
+			break;
+		case ROTATIONCENTER::BOTTOMLEFT:
+			rot_center = { 0, dst_rect.h };
+			break;
+		case ROTATIONCENTER::BOTTOMCENTER:
+			rot_center = { dst_rect.w / 2, dst_rect.h };
+			break;
+		case ROTATIONCENTER::BOTTOMRIGHT:
+			rot_center = { dst_rect.w, dst_rect.h };
+			break;
+		}
+
+		glPushMatrix();
+		glTranslatef(-dst_rect.x, -dst_rect.y, 0);
+		glRotatef(angle / 360.0f, 0, 0, 1);
+		glTranslatef(dst_rect.x, dst_rect.y, 0);
+	}
+
+	void UpdateTexState(ImageSRC* src, ImageDSTFrame *frame, float width, float height, int rotationcenter) {
+		SDL_Rect src_rect = SkinRenderHelper::ToRect(*src);
+		SDL_Rect dst_rect = SkinRenderHelper::ToRect(*frame);
+		// in LR2, negative size doesn't mean flipping.
+		if (dst_rect.h < 0) {
+			dst_rect.y += dst_rect.h;
+			dst_rect.h *= -1;
+		}
+		if (dst_rect.w < 0) {
+			dst_rect.x += dst_rect.h;
+			dst_rect.w *= -1;
+		}
+
+		// rotateion
+		UpdateTexRotate(dst_rect, rotationcenter, frame->angle);
+
+		// set vertex/color/texture quad vertices.
+		// TODO: move them to Display class
+		Vertex[0 * 3 + 0] = dst_rect.x;
+		Vertex[0 * 3 + 1] = dst_rect.y;
+		Vertex[0 * 3 + 2] = 1;
+		Vertex[1 * 3 + 0] = dst_rect.x + dst_rect.w;
+		Vertex[1 * 3 + 1] = dst_rect.y;
+		Vertex[1 * 3 + 2] = 1;
+		Vertex[2 * 3 + 0] = dst_rect.x + dst_rect.w;
+		Vertex[2 * 3 + 1] = dst_rect.y + dst_rect.h;
+		Vertex[2 * 3 + 2] = 1;
+		Vertex[3 * 3 + 0] = dst_rect.x;
+		Vertex[3 * 3 + 1] = dst_rect.y + dst_rect.h;
+		Vertex[3 * 3 + 2] = 1;
+
+		Texture[0 * 2 + 0] =
+			Texture[3 * 2 + 0] =
+			src_rect.x / width;
+		Texture[1 * 2 + 0] =
+			Texture[2 * 2 + 0] =
+			(src_rect.x + src_rect.w) / width;
+		Texture[0 * 2 + 1] =
+			Texture[1 * 2 + 1] =
+			src_rect.y / height;
+		Texture[2 * 2 + 1] =
+			Texture[3 * 2 + 1] =
+			(src_rect.y + src_rect.h) / height;
+
+		for (int i = 0; i < SIZE; i++) {
+			Color[i * 4 + 0] = frame->r;
+			Color[i * 4 + 1] = frame->g;
+			Color[i * 4 + 2] = frame->b;
+			Color[i * 4 + 3] = frame->a;
+		}
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(3, GL_FLOAT, 0, Vertex);
+		glEnableClientState(GL_COLOR_ARRAY);
+		glColorPointer(4, GL_UNSIGNED_BYTE, 0, Color);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(2, GL_FLOAT, 0, Texture);
+	}
+}
 void SkinRenderHelper::Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, int blend, int rotationcenter) {
-	if (!img) return;
-	SkinRenderHelper::Render(img->GetPtr(), src, frame, blend, rotationcenter);
-}
-
-void SkinRenderHelper::Render(SDL_Texture *t, ImageSRC *src, ImageDSTFrame *frame, int blend, int rotationcenter) {
-	// if alpha == 0 then don't draw
-	if (!t) return;
+	if (!img || !img->IsLoaded()) return;
 	if (frame->a == 0) return;
+	int width = img->GetWidth();
+	int height = img->GetHeight();
+	if (src->w <= 0) src->w = width;
+	if (src->h <= 0) src->h = height;
 
-	SDL_SetTextureAlphaMod(t, frame->a);
-	SDL_SetTextureColorMod(t, frame->r, frame->g, frame->b);
+	
 
-	switch (blend) {
-	case 0:
-		/*
-		 * LR2 is strange; NO blending does BLENDING, actually.
-		 *
-		SDL_SetTextureBlendMode(img->GetPtr(), SDL_BlendMode::SDL_BLENDMODE_NONE);
-		break;
-		*/
-	case 1:
-		SDL_SetTextureBlendMode(t, SDL_BlendMode::SDL_BLENDMODE_BLEND);
-		break;
-	case 2:
-		SDL_SetTextureBlendMode(t, SDL_BlendMode::SDL_BLENDMODE_ADD);
-		break;
-	case 4:
-		SDL_SetTextureBlendMode(t, SDL_BlendMode::SDL_BLENDMODE_MOD);
-		break;
-	default:
-		SDL_SetTextureBlendMode(t, SDL_BlendMode::SDL_BLENDMODE_BLEND);
-	}
+	//SDL_SetTextureAlphaMod(t, frame->a);
+	//SDL_SetTextureColorMod(t, frame->r, frame->g, frame->b);
+	//SDL_RendererFlip flip = SDL_RendererFlip::SDL_FLIP_NONE;
+	//SDL_RenderCopyEx(Game::RENDERER, t, &src_rect, &dst_rect,
+	//	frame->angle, &rot_center, flip);
+	UpdateRenderArgs(frame, blend);
+	UpdateTexState(src, frame, width, height, rotationcenter);
+	glDrawArrays(GL_QUAD_STRIP, 0, 4);
 
-	if (src->w <= 0) SDL_QueryTexture(t, 0, 0, &src->w, 0);
-	if (src->h <= 0) SDL_QueryTexture(t, 0, 0, 0, &src->h);
-	SDL_Rect src_rect = ToRect(*src);
-	SDL_Rect dst_rect = ToRect(*frame);
-
-	SDL_Point rot_center = { 0, 0 };
-	switch (rotationcenter) {
-	case ROTATIONCENTER::TOPLEFT:
-		rot_center = { 0, 0 };
-		break;
-	case ROTATIONCENTER::TOPCENTER:
-		rot_center = { dst_rect.w / 2, 0 };
-		break;
-	case ROTATIONCENTER::TOPRIGHT:
-		rot_center = { dst_rect.w, 0 };
-		break;
-	case ROTATIONCENTER::CENTERLEFT:
-		rot_center = { 0, dst_rect.h / 2 };
-		break;
-	case 0:
-	case ROTATIONCENTER::CENTER:
-		rot_center = { dst_rect.w / 2, dst_rect.h / 2 };
-		break;
-	case ROTATIONCENTER::CENTERRIGHT:
-		rot_center = { dst_rect.w, dst_rect.h / 2 };
-		break;
-	case ROTATIONCENTER::BOTTOMLEFT:
-		rot_center = { 0, dst_rect.h };
-		break;
-	case ROTATIONCENTER::BOTTOMCENTER:
-		rot_center = { dst_rect.w / 2, dst_rect.h };
-		break;
-	case ROTATIONCENTER::BOTTOMRIGHT:
-		rot_center = { dst_rect.w, dst_rect.h };
-		break;
-	}
-
-	// in LR2, negative size doesn't mean flipping.
-	if (dst_rect.h < 0) {
-		dst_rect.y += dst_rect.h;
-		dst_rect.h *= -1;
-	}
-	if (dst_rect.w < 0) {
-		dst_rect.x += dst_rect.h;
-		dst_rect.w *= -1;
-	}
-
-	SDL_RendererFlip flip = SDL_RendererFlip::SDL_FLIP_NONE;
-	SDL_RenderCopyEx(Game::RENDERER, t, &src_rect, &dst_rect,
-		frame->angle, &rot_center, flip);
+	// reset rotation
+	glPopMatrix();
 }
-
 #pragma endregion SKINRENDERHELPER

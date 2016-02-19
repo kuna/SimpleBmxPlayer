@@ -2,8 +2,10 @@
 
 #include "global.h"
 #include "file.h"
-#include "SDL/SDL_image.h"
-#include "SDL/SDL_video.h"
+// bye-bye, dudes! now I use SOIL/GLEW.
+//#include "SDL/SDL_image.h"
+//#include "SDL/SDL_video.h"
+#include "GL/glew.h"
 
 extern "C" {
 #include "ffmpeg/libavcodec/avcodec.h"
@@ -21,11 +23,13 @@ private:
 	static void _init();
 
 protected:
-	// also includes movie!
-	SDL_Texture *sdltex;
+	// texture info
+	int width, height;
+	GLuint texid;
 	Uint32 colorkey;
 	bool usecolorkey;
 
+	// movie info
 	AVFormatContext *moviectx;			// movie context (handle)
 	AVStream *stream;					// current movie stream
 	int moviestream;
@@ -33,7 +37,7 @@ protected:
 	AVCodecContext *codecctx;			// codec context
 	AVCodec *codec;						// codec
 	AVFrame *frame;						// rendering buffer
-	SwsContext *sws_ctx;				// converter (image data -> YUV420)
+	SwsContext *sws_ctx;				// converter (image data -> RGB24)
 	Uint8 *yPlane, *uPlane, *vPlane;	// stores YUV data
 	double movielength;
 
@@ -62,14 +66,5 @@ public:
 	bool IsLoaded();
 	void Reset();				// reset pos to first one
 	void Sync(Uint32 t);		// refreshes texture in case of movie (loop forever if it's longer then movie)
-	SDL_Texture* GetPtr();
-};
-
-/*
- * @description
- * makes a simple texture(1x1) with specificed color
- */
-class ImageColor : public Image {
-public:
-	ImageColor(uint32_t color, int w = 1, int h = 1);
+	GLuint GetTexID();
 };

@@ -1,8 +1,9 @@
 #pragma once
 
-#include "SDL/SDL_ttf.h"
-#include "SDL/SDL_FontCache.h"
-#include "SDL/SDL_image.h"
+// maybe we can't use SDL_FontCache / SDL_Image library anymore, sorry
+//#include "SDL/SDL_ttf.h"
+//#include "SDL/SDL_FontCache.h"
+//#include "SDL/SDL_image.h"
 #include "skintexturefont.h"
 #include "image.h"
 #include "global.h"
@@ -28,9 +29,6 @@ public:
 	SkinTextureFont::Glyph* GetGlyph(uint32_t code);
 	int GetWidth(const RString& text);
 	void Render(const RString& text, int x, int y);
-
-	void SetAlphaMod(uint8_t a);
-	void SetColorMod(uint8_t r, uint8_t g, uint8_t b);
 };
 
 /*
@@ -43,13 +41,15 @@ public:
 class Font {
 private:
 	TextureFont* texturefont;
-	FC_Font* ttffont;
+	//FC_Font* ttffont;
 public:
 	Font();
 	~Font();
+#if 0
 	bool LoadTTFFont(const RString& path, int size, SDL_Color color,
 		int border = 1, SDL_Color bordercolor = FC_MakeColor(0, 0, 0, 255),
 		int style = TTF_STYLE_NORMAL, int thickness = 0, const char* texturepath = 0);
+#endif
 	bool LoadTextureFont(const RString& path);
 	void LoadTextureFontByText(const RString& textdata);
 

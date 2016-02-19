@@ -1,6 +1,8 @@
 #include "image.h"
 #include "game.h"
 #include "util.h"
+#include "SOIL.h"
+#include <assert.h>
 
 extern "C" {
 #include "ffmpeg/libavutil/avutil.h"
@@ -29,7 +31,7 @@ void Image::_init() {
 	_movie_available = true;
 }
 
-Image::Image() : sdltex(0), moviectx(0),
+Image::Image() : texid(0), moviectx(0),
 usecolorkey(false), colorkey(0xFF000000) {
 	// initalize ffmpeg first
 	try {
@@ -45,6 +47,8 @@ usecolorkey(false), colorkey(0xFF000000) {
 	codecctxorig = 0;
 	codecctx = 0;
 	moviectx = 0;
+
+	width = height = 0;
 }
 
 #ifdef _WIN32
@@ -65,6 +69,36 @@ Image::Image(const std::string& filepath, bool loop) : Image() {
 #define R(x) ((x) >> 16 & 0x000000FF)
 #define G(x) ((x) >> 8 & 0x000000FF)
 #define B(x) ((x) & 0x000000FF)
+namespace {
+	void DoColorkey(unsigned char* ptr, int width, int height, Uint32 colorkey) {
+		// channel must be 4 channels - RGBA
+		for (int i = 0; i < width*height*4; i += 4)
+		{
+			if (ptr[i] == R(colorkey) && ptr[i + 1] == G(colorkey) && ptr[i + 2] == B(colorkey))
+				ptr[i + 3] = 0;
+		}
+	}
+
+	void LoadTexture(const unsigned char* imgdata, GLuint *texid, int width, int height) {
+		Game::RMUTEX.lock();
+		glGenTextures(1, texid);
+		// maybe we don't going to deal with multiple texture rendering
+		// so don't use it
+		//glActiveTexture(GL_TEXTURE0);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, *texid);
+		glTexImage2D(GL_TEXTURE_2D,
+			0,
+			GL_RGBA8,
+			width,
+			height,
+			0,
+			GL_RGBA,
+			GL_UNSIGNED_BYTE,
+			imgdata);
+		Game::RMUTEX.unlock();
+	}
+}
 
 bool Image::Load(const std::string& filepath, bool loop) {
 	RString abspath = filepath;
@@ -84,15 +118,26 @@ bool Image::Load(const std::string& filepath, bool loop) {
 	else {
 		// MUST new context, or block renderer.
 		//SDL_GLContext c = SDL_GL_CreateContext(Game::WINDOW);
-		SDL_Surface *surf = IMG_Load(abspath);
-		if (!surf) return false;
-		if (usecolorkey) SDL_SetColorKey(surf, SDL_TRUE, 
-			SDL_MapRGB(surf->format, R(colorkey), G(colorkey), B(colorkey)));
-		Game::RMUTEX.lock();
-		sdltex = SDL_CreateTextureFromSurface(Game::RENDERER, surf);
-		Game::RMUTEX.unlock();
-		SDL_FreeSurface(surf);
-		if (!sdltex)
+		//
+		//glTex = SOIL_load_OGL_texture(abspath, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
+		//
+		// although we can make easily new texture with upper code,
+		// we need to make colorkey in case, so iterate each pixels.
+		//
+		int channels;
+		unsigned char *imgdata = SOIL_load_image
+			(
+			abspath,
+			&width, &height, &channels,
+			SOIL_LOAD_RGBA			// SOIL_LOAD_AUTO ?
+			);
+		if (!imgdata) return false;
+		assert(channels == 4);		// need alpha channel MUST
+
+		DoColorkey(imgdata, width, height, colorkey);
+		LoadTexture(imgdata, &texid, width, height);
+		SOIL_free_image_data(imgdata);
+		if (!texid)
 			return false;
 	}
 	this->loop = loop;
@@ -102,15 +147,24 @@ bool Image::Load(const std::string& filepath, bool loop) {
 bool Image::Load(FileBasic* f, bool loop) {
 	// don't support movie in this case.
 	// TODO: support movie!
-	SDL_Surface *surf = IMG_Load_RW(f->GetSDLRW(), 1);
-	if (!surf) return false;
-	if (usecolorkey) SDL_SetColorKey(surf, SDL_TRUE,
-		SDL_MapRGB(surf->format, R(colorkey), G(colorkey), B(colorkey)));
-	Game::RMUTEX.lock();
-	sdltex = SDL_CreateTextureFromSurface(Game::RENDERER, surf);
-	Game::RMUTEX.unlock();
-	SDL_FreeSurface(surf);
-	if (!sdltex) return false; else return true;
+	size_t s = f->GetSize();
+	char* imgrawdata = (char*)malloc(s);
+	f->Read(imgrawdata, s);
+
+	int channels;
+	unsigned char* imgdata = 
+		SOIL_load_image_from_memory((unsigned char*)imgrawdata, s, &width, &height, &channels, SOIL_LOAD_RGBA);
+	free(imgrawdata);
+	if (!imgdata) return false;
+	assert(channels == 4);		// need alpha channel MUST
+
+	DoColorkey(imgdata, width, height, colorkey);
+	LoadTexture(imgdata, &texid, width, height);
+	SOIL_free_image_data(imgdata);
+	if (!texid)
+		return false;
+	this->loop = loop;
+	return true;
 }
 
 bool Image::LoadMovie(const char *path) {
@@ -161,16 +215,27 @@ bool Image::LoadMovie(const char *path) {
 	frame = av_frame_alloc();
 
 	// create basic texture
-	sdltex = SDL_CreateTexture(Game::RENDERER, SDL_PIXELFORMAT_YV12,
-		SDL_TEXTUREACCESS_STREAMING, codecctx->width, codecctx->height);
-	if (sdltex == 0) {
-		return false;
-	}
+	Game::RMUTEX.lock();
+	glGenTextures(1, &texid);
+	glBindTexture(GL_TEXTURE_2D, texid);
+	const size_t _tsize = codecctx->width * codecctx->height * 3;
+	unsigned char *_tmp = (unsigned char*)malloc(_tsize);
+	memset(_tmp, 0, _tsize);
+	glTexImage2D(GL_TEXTURE_2D,              //Always GL_TEXTURE_2D
+		0,                                   //0 for now
+		GL_RGB,                              //Format OpenGL uses for image
+		codecctx->width, codecctx->height,   //Width and height
+		0,                                   //The border of the image
+		GL_RGB,                              //GL_RGB, because pixels are stored in RGB format
+		GL_UNSIGNED_BYTE,                    //GL_UNSIGNED_BYTE, because pixels are stored as unsigned numbers
+		_tmp);                               //The actual pixel data
+	free(_tmp);
+	Game::RMUTEX.unlock();
 
 	// initialize SWS context for software scaling
 	sws_ctx = sws_getContext(codecctx->width, codecctx->height,
 		codecctx->pix_fmt, codecctx->width, codecctx->height,
-		AV_PIX_FMT_YUV420P,
+		AV_PIX_FMT_RGB24,
 		SWS_BILINEAR,
 		NULL,
 		NULL,
@@ -223,7 +288,7 @@ void Image::Sync(Uint32 t) {
 
 			// Did we get a video frame?
 			if (frameFinished) {
-				AVPicture pict;
+				static AVPicture pict;
 				pict.data[0] = yPlane;
 				pict.data[1] = uPlane;
 				pict.data[2] = vPlane;
@@ -231,21 +296,15 @@ void Image::Sync(Uint32 t) {
 				pict.linesize[1] = uvPitch;
 				pict.linesize[2] = uvPitch;
 
-				// Convert the image into YUV format that SDL uses
+				// Convert the image into RGB format that SDL uses
 				sws_scale(sws_ctx, (uint8_t const * const *)frame->data,
 					frame->linesize, 0, codecctx->height, pict.data,
 					pict.linesize);
 				
-				SDL_UpdateYUVTexture(
-					sdltex,
-					NULL,
-					yPlane,
-					codecctx->width,
-					uPlane,
-					uvPitch,
-					vPlane,
-					uvPitch
-					);
+				// glTexSubImage2D is a way faster
+				glBindTexture(GL_TEXTURE_2D, texid);
+				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, codecctx->width, codecctx->height, 
+					GL_RGB, GL_UNSIGNED_BYTE, frame->data);
 			}
 			break;
 		}
@@ -272,19 +331,11 @@ void Image::ReleaseMovie() {
 }
 
 int Image::GetWidth() {
-	if (!IsLoaded())
-		return 0;
-	int w;
-	SDL_QueryTexture(sdltex, 0, 0, &w, 0);
-	return w;
+	return width;
 }
 
 int Image::GetHeight() {
-	if (!IsLoaded())
-		return 0;
-	int h;
-	SDL_QueryTexture(sdltex, 0, 0, 0, &h);
-	return h;
+	return height;
 }
 
 void Image::SetColorKey(bool use, Uint32 clr) {
@@ -299,28 +350,16 @@ Image::~Image() {
 void Image::Release() {
 	if (ISLOADED(moviectx))
 		ReleaseMovie();
-	if (ISLOADED(sdltex)) {
-		SDL_DestroyTexture(sdltex);
-		sdltex = 0;
+	if (ISLOADED(texid)) {
+		glDeleteTextures(1, &texid);
+		texid = 0;
 	}
 }
 
 bool Image::IsLoaded() {
-	return ISLOADED(sdltex);
+	return ISLOADED(texid);
 }
 
-SDL_Texture* Image::GetPtr() {
-	return sdltex;
-}
-
-#define COLOR_ARGB(a, r, g, b) ((a) << 24 | (r) << 16 | (g) << 8 | (b))
-
-ImageColor::ImageColor(uint32_t color, int w, int h) {
-	int pitch;
-	Uint32 *p;
-	sdltex = SDL_CreateTexture(Game::RENDERER, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, w, h);
-	SDL_LockTexture(sdltex, 0, (void**)&p, &pitch);
-	for (int i = 0; i < w * h; i++)
-		p[i] = color;
-	SDL_UnlockTexture(sdltex);
+GLuint Image::GetTexID() {
+	return texid;
 }
