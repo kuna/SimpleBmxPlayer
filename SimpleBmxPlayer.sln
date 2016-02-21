@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simplebmxplayer", "simplebmxplayer\simplebmxplayer.vcxproj", "{31AFC055-6B30-4ED3-8E41-4778437435A3}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simplebmxplayer", "src\simplebmxplayer.vcxproj", "{31AFC055-6B30-4ED3-8E41-4778437435A3}"
 	ProjectSection(ProjectDependencies) = postProject
 		{29707C0A-73E2-43DE-8F6D-F2DB06808D14} = {29707C0A-73E2-43DE-8F6D-F2DB06808D14}
 		{0F21B847-7295-4BD3-A966-C66C9D34353E} = {0F21B847-7295-4BD3-A966-C66C9D34353E}

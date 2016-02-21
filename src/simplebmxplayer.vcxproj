@@ -92,6 +92,7 @@
     <ClCompile Include="ActorPlay.cpp" />
     <ClCompile Include="audio.cpp" />
     <ClCompile Include="bmsresource.cpp" />
+    <ClCompile Include="Display.cpp" />
     <ClCompile Include="file.cpp" />
     <ClCompile Include="font.cpp" />
     <ClCompile Include="gameresult.cpp" />
@@ -108,7 +109,7 @@
     <ClCompile Include="game.cpp" />
     <ClCompile Include="gameplay.cpp" />
     <ClCompile Include="gamesetting.cpp" />
-    <ClCompile Include="image.cpp" />
+    <ClCompile Include="Surface.cpp" />
     <ClCompile Include="luamanager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="player.cpp" />
@@ -120,7 +121,8 @@
     <ClInclude Include="ActorPlay.h" />
     <ClInclude Include="audio.h" />
     <ClInclude Include="bmsresource.h" />
-    <ClInclude Include="exception.h" />
+    <ClInclude Include="Display.h" />
+    <ClInclude Include="Exception.h" />
     <ClInclude Include="file.h" />
     <ClInclude Include="gameresult.h" />
     <ClInclude Include="globalresources.h" />
@@ -137,7 +139,7 @@
     <ClInclude Include="gameplay.h" />
     <ClInclude Include="gamesetting.h" />
     <ClInclude Include="handlerargs.h" />
-    <ClInclude Include="image.h" />
+    <ClInclude Include="Surface.h" />
     <ClInclude Include="luamanager.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="playrecord.h" />
@@ -159,6 +161,7 @@
     <Library Include="..\lib\ffmpeg\postproc.lib" />
     <Library Include="..\lib\ffmpeg\swresample.lib" />
     <Library Include="..\lib\ffmpeg\swscale.lib" />
+    <Library Include="..\lib\freetype.lib" />
     <Library Include="..\lib\glew32.lib" />
     <Library Include="..\lib\pthreadVC2.lib" />
     <Library Include="..\lib\Release-Lib\tinyxml2.lib" />
