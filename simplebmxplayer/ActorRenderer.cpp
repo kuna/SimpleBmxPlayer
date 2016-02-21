@@ -565,14 +565,6 @@ ImageDSTFrame SkinRenderHelper::Tween(ImageDSTFrame &a, ImageDSTFrame &b, double
 
 namespace {
 #define SIZE 4
-	float Vertex[SIZE * 3];
-	float Texture[SIZE * 2] = {
-		0, 0,
-		1, 0,
-		1, 1,
-		0, 1
-	};
-	GLubyte Color[SIZE * 4];
 
 	void UpdateRenderArgs(ImageDSTFrame *frame, int blend) {
 		glEnable(GL_BLEND);

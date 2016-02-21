@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SDL/SDL.h"
+#include "Display.h"
 #include "gamesetting.h"
 #include "playerinfo.h"
 #include <tchar.h>
@@ -50,10 +50,6 @@ namespace Game {
 	void ChangeScene(SceneBasic *s);
 
 	// global veriables about game rendering.
-	extern SceneBasic*		SCENE;
-	extern SDL_GLContext	RENDERER;
-	extern SDL_Window*		WINDOW;
-	extern GameSetting		SETTING;
 	extern std::mutex		RMUTEX;
 
 	struct PARAMETER {
@@ -64,3 +60,8 @@ namespace Game {
 	};
 	extern PARAMETER		P;
 }
+
+extern SceneBasic*		SCENE;
+extern IDisplay*		DISPLAY;
+extern SDL_Window*		WINDOW;
+extern GameSetting		SETTING;

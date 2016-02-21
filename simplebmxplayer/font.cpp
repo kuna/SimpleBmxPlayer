@@ -3,176 +3,52 @@
 #include "util.h"
 #include "file.h"
 #include "globalresources.h"
+#include "skintexturefont.h"
+#include "logger.h"
+#include <assert.h>
+using namespace Display;
 
+// refer freetype
+// http://www.freetype.org/freetype2/docs/tutorial/step2.html
+
+/*
+ * it's system dependent,
+ * so remove this from here.
+ *
 #define FALLBACK_FONT			"../system/resource/NanumGothicExtraBold.ttf"
 #define FALLBACK_FONT_TEXTURE_L	"../system/resource/fontbackground.png"
 #define FALLBACK_FONT_TEXTURE_M	"../system/resource/fontbackground_medium.png"
 #define FALLBACK_FONT_TEXTURE_S	"../system/resource/fontbackground_small.png"
-
-/*
- * TEMP: let's use FC_Font now...
- * implementing all those myself it REALLY hard T_T
  */
 
 namespace {
 	char _buffer[10240];
-}
+	int ftLibRefCnt = 0;
+	FT_Library ftLib;
+	FT_Stroker ftStroker;
 
-Font::Font() 
-: texturefont(0) {}
-
-Font::~Font() { Release(); }
-
-void Font::Release() {
-	SAFE_DELETE(texturefont);
-}
-
-/*
- * Font loading should be always successful. (incorrect font may be placed)
- * So, use fallback font/texture when cannot found...
- */
-#if 0
-bool Font::LoadTTFFont(const RString& path, int size, SDL_Color color, int thickness, 
-	SDL_Color bordercolor, int border, int fontstyle, const char* texturepath) {
-	ttffont = FC_CreateFont();
-	if (!ttffont)
-		return false;
-
-	RString path_ = path;
-	if (!FileHelper::IsFile(path_)) {
-		path_ = FALLBACK_FONT;
-		FileHelper::ConvertPathToSystem(path_);
-	}
-
-	FC_Style style;
-	memset(&style, 0, sizeof(FC_Style));
-
-	Uint32 *texture = 0;
-	if (texturepath) {
-		RString texturepath_ = texturepath;
-		if (!FileHelper::IsFile(texturepath_)) {
-			if (size < 70) texturepath_ = FALLBACK_FONT_TEXTURE_S;
-			else if (size < 120) texturepath_ = FALLBACK_FONT_TEXTURE_M;
-			else texturepath_ = FALLBACK_FONT_TEXTURE_L;
-			FileHelper::ConvertPathToSystem(texturepath_);
+	void InitalizeFT() {
+		if (ftLibRefCnt == 0) {
+			if (FT_Init_FreeType(&ftLib) != 0) {
+				LOG->Critical("freetype initalization failed\n");
+				return;
+			}
+			FT_Stroker_New(ftLib, &ftStroker);
 		}
-		// load texture
-		SDL_Surface *surf = IMG_Load(texturepath_);
-		SDL_LockSurface(surf);
-		style.textureWidth = surf->w;
-		style.textureHeight = surf->h;
-		texture = new Uint32[surf->w * surf->h];
-		memcpy(texture, surf->pixels, sizeof(Uint32) * surf->w * surf->h);
-		SDL_UnlockSurface(surf);
-		SDL_FreeSurface(surf);
+		ftLibRefCnt++;
 	}
-	style.texture = texture;
 
-	style.fontSize = size;		style.color = color;				style.style = fontstyle;
-	style.outline = border;		style.outline_color = bordercolor;	style.thickness = thickness;
-	FC_LoadFontFromStyle(ttffont, Game::RENDERER, path_, &style);
-	FC_SetSpacing(ttffont, -border);
-	SAFE_DELETE(texture);
-	return true;
-}
-#endif
-
-bool Font::LoadTextureFont(const RString& path) {
-	RString t;
-	if (GetFileContents(path, t))
-	{
-		LoadTextureFontByText(t);
-	} else return false;
-}
-
-void Font::LoadTextureFontByText(const RString& textdata) {
-	ASSERT(texturefont == 0);
-	texturefont = new TextureFont();
-	texturefont->SetFont(textdata);
-}
-
-bool Font::IsLoaded() {
-	return texturefont;
-}
-
-int Font::GetWidth(const char* text) {
-#if 0
-	if (ttffont) {
-		return FC_GetWidth(ttffont, text);
+	void ReleaseFT() {
+		assert(ftLibRefCnt > 0);
+		ftLibRefCnt--;
+		if (ftLibRefCnt == 0) {
+			FT_Stroker_Done(ftStroker);
+			FT_Done_FreeType(ftLib);
+		}
 	}
-	else if (texturefont) {
-		return texturefont->GetWidth(text);
-	}
-#endif
-	return 0;
-}
 
-void Font::Render(const char* text, int x, int y) {
-	// TODO
-#if 0
-	if (ttffont) {
-		FC_Draw(ttffont, Game::RENDERER, x, y, text);
-	}
-	else if (texturefont) {
-		texturefont->Render(text, x, y);
-	}
-#endif
-}
-
-void Font::Render(const char* text, int x, int y, int width) {
-	// TODO
-	// MUST be device-dependent structure.
-}
-
-void Font::SetAlphaMod(uint8_t a) {
-
-}
-
-void Font::SetColorMod(uint8_t r, uint8_t g, uint8_t b) {
-
-}
-
-// -------------------------------------------------
-
-TextureFont::TextureFont()
-	: imgs_cnt(0), sx(1), sy(1), t(0), a(255), r(255), g(255), b(255) {}
-
-TextureFont::~TextureFont() { Release(); }
-
-void TextureFont::Release() {
-	// in fact, it doesn't release anything
-	// but reduce image texture count reference
-	for (int i = 0; i < imgs_cnt; i++) {
-		IMAGEPOOL->Release(imgs[i]);
-	}
-	imgs_cnt = 0;
-	t = 0;
-}
-
-void TextureFont::SetFont(const RString& textdata) {
-	ASSERT(imgs_cnt == 0);
-	stf.LoadFromText(textdata);
-	// loads image
-	imgs_cnt = stf.GetImageCount();
-	if (stf.GetTimer())
-		t = TIMERPOOL->Get(stf.GetTimer());
-	for (int i = 0; i < imgs_cnt; i++) {
-		imgs[i] = IMAGEPOOL->Load(stf.GetImagePath(i));
-	}
-}
-
-void TextureFont::SetScale(double sx, double sy) {
-	this->sx = sx;
-	this->sy = sy;
-}
-
-/*
- * copied from SDL_Fontcache project, all rights reserved
- * private func
- * @brief returns next single utf8 pointer
- */
-namespace {
-	Uint32 GetCodepointFromUTF8String(const char** c, Uint8 advance_pointer)
+	/* from SDL_FontCache library, MIT License */
+	Uint32 FC_GetCodepointFromUTF8(const char** c, Uint8 advance_pointer)
 	{
 		Uint32 result = 0;
 		const char* str;
@@ -210,51 +86,305 @@ namespace {
 	}
 }
 
-SkinTextureFont::Glyph* TextureFont::GetGlyph(uint32_t code) {
-	SkinTextureFont::Glyph *g = stf.GetGlyph(code, t?t->GetTick():0);
-	if (!g) {
-		if (code == '?')
-			return 0;
-		else
-			return GetGlyph('?');
-	}
-	else return g;
+Font::Font() {
+	// clear basic status
+	::InitalizeFT();
+	m_TexCnt = 0;
+	m_TexX = m_TexY = 0;
+	m_TTF = 0;
+	m_FntProperty.m_Baseline = 0;
+	m_FntProperty.m_DefaultWidth = 1;
+	m_FntProperty.m_LetterSpacing = 0;
+	m_FntProperty.m_LineSpacing = 0;
+	m_FntProperty.m_Height = 0;
+	m_FntProperty.m_MaxHeight = 0;
+	// clear all status
+	m_Status = 0;
+	m_ScaleX = m_ScaleY = 1;
 }
 
-int TextureFont::GetWidth(const RString& text) {
-	int r = 0;
-	const char *p = text.c_str();
-	uint32_t glyphcode;
-	while ((glyphcode = GetCodepointFromUTF8String(&p, 1)) > 0) {
-		SkinTextureFont::Glyph* g = GetGlyph(glyphcode);
-		if (g) r += g->w;
-		else r += stf.GetFallbackWidth();
-		p++;
+Font::~Font() {
+	Release();
+}
+
+void Font::Release() {
+	// close TTF
+	if (m_TTF) {
+		FT_Done_Face(m_TTF);
+		m_TTF = 0;
 	}
+	::ReleaseFT();
+	// remove all glyphs / textures
+	// TODO
+}
+
+/*
+ * Font loading should be always successful. (incorrect font may be placed)
+ * So, use fallback font/texture when cannot found...
+ */
+bool Font::LoadTTFFont(const RString& path, const TTFFontArgs& args) {
+	Release();
+	FT_Error r = FT_New_Face(ftLib, path, 0, &m_TTF);
+	if (r != 0)
+		return false;
+	m_TTFArgs = args;
+
+	// set default properties
+	FT_Set_Pixel_Sizes(m_TTF, 0, args.size);
+	FT_Select_Charmap(m_TTF, FT_ENCODING_UNICODE);
+	// TODO
+	//style_outline = (style->style | TTF_STYLE_OUTLINE);
+	//TTF_SetFontStyle(ttf, style->style);
+	//TTF_SetFontOutline(ttf, style->thickness + style->outline);
+
+	// get default properties
+	// with global glyph metrics
+	m_FntProperty.m_MaxHeight = m_TTF->max_advance_height;
+	m_FntProperty.m_Baseline = m_TTF->ascender;
+	m_FntProperty.m_DefaultWidth = m_TTF->max_advance_width;
+	m_FntProperty.m_LineSpacing = m_TTF->height;	// not for caching but drawing
+	return true;
+}
+
+bool Font::LoadBitmapFont(const RString& path) {
+	RString t;
+	if (GetFileContents(path, t))
+	{
+		return LoadBitmapFontByText(t);
+	} else return false;
+}
+
+bool Font::LoadBitmapFontByText(const RString& textdata) {
+	Release();
+	// parser is provided with SkintextureFont, so use it
+	SkinTextureFont *tf = new SkinTextureFont();
+	tf->LoadFromText(textdata);
+	// load surface and upload it at once
+	for (int i = 0; i < tf->GetImageCount(); i++) {
+		Surface *surf_original = new Surface();
+		if (!surf_original->Load(tf->GetImagePath(i))) {
+			LOG->Warn("Font - Cannot load Bitmap resource - %s", tf->GetImagePath(i));
+			delete surf_original;
+			continue;
+		}
+		// we won't check failure on creating texture
+		m_Tex[i] = DISPLAY->CreateTexture(surf_original);
+		delete surf_original;
+	}
+	// add glyphs
+	for (auto gi = tf->GlyphBegin(); gi != tf->GlyphEnd(); ++gi) {
+		for (int i = 0; i < gi->second.glyphcnt; i++) {
+			FontGlyph fg;
+			fg.m_src.x = gi->second.glyphs[i].x;
+			fg.m_src.y = gi->second.glyphs[i].y;
+			fg.m_src.w = gi->second.glyphs[i].w;
+			fg.m_src.h = gi->second.glyphs[i].h;
+			fg.m_Texidx = gi->second.glyphs[i].image;
+			m_FntGlyphs[gi->first][i] = fg;
+		}
+	}
+	// done-
+	delete tf;
+	return true;
+}
+
+FontGlyph* Font::GetGlyph(uint32_t code) {
+	if (m_FntGlyphs[m_Status].find(code) == m_FntGlyphs[m_Status].end())
+		return 0;
+	else
+		return &m_FntGlyphs[m_Status][code];
+}
+
+int Font::GetWidth(const char* text) {
+	unsigned start = 0;
+	const char* p = text;
+	uint32_t code;
+	int w = 0;
+	while (code = FC_GetCodepointFromUTF8(&p, true)) {
+		FontGlyph* g = GetGlyph(code);
+		if (!g) w += m_FntProperty.m_DefaultWidth;
+		else w += g->m_src.w;
+	}
+	// scale-dependent
+	return w * m_ScaleX;
+}
+
+//
+// COMMENT: this function MUST be done in singleton,
+//          as this function uses ftStroker object globally.
+//
+bool Font::CacheGlyph(uint32_t code) {
+	// only available on TTF
+	if (!IsTTFFont())
+		return false;
+	// if glyph provided?
+	FT_UInt ftcode = FT_Get_Char_Index(m_TTF, code);
+	if (!ftcode)
+		return false;
+	// load basic glyph first
+	FT_Load_Glyph(m_TTF, ftcode, FT_LOAD_DEFAULT);
+	// create surface
+	Surface *surf = new Surface();
+	surf->Create(m_TTF->glyph->metrics.width, m_FntProperty.m_MaxHeight);
+	// render border
+	if (m_TTFArgs.border) {
+		FT_Glyph glyph;
+		FT_Get_Glyph(m_TTF->glyph, &glyph);
+		FT_Stroker_Set(ftStroker,
+			m_TTFArgs.border,
+			FT_STROKER_LINECAP_ROUND,
+			FT_STROKER_LINEJOIN_ROUND,
+			0);
+		FT_Glyph_StrokeBorder(&glyph, ftStroker, 0, 1);
+		FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_NORMAL, nullptr, true);
+		FT_BitmapGlyph bitmapGlyph = reinterpret_cast<FT_BitmapGlyph>(glyph);
+		SetSurfaceFromGlyph(surf, &bitmapGlyph->bitmap,
+			0, 0,
+			Font::GetFontForegroundColor);
+		FT_Done_Glyph(glyph);
+	}
+	// render thickness: foreground bitmap
+	if (m_TTFArgs.thickness) {
+		FT_Glyph glyph;
+		FT_Get_Glyph(m_TTF->glyph, &glyph);
+		FT_Stroker_Set(ftStroker,
+			m_TTFArgs.thickness,
+			FT_STROKER_LINECAP_ROUND,
+			FT_STROKER_LINEJOIN_ROUND,
+			0);
+		FT_Glyph_StrokeBorder(&glyph, ftStroker, 0, 1);
+		FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_NORMAL, nullptr, true);
+		FT_BitmapGlyph bitmapGlyph = reinterpret_cast<FT_BitmapGlyph>(glyph);
+		SetSurfaceFromGlyph(surf, &bitmapGlyph->bitmap,
+			m_TTFArgs.thickness,
+			m_TTFArgs.thickness,
+			Font::GetFontForegroundColor);
+	}
+	// render text: foreground bitmap
+	FT_Render_Glyph(m_TTF->glyph, FT_RENDER_MODE_NORMAL);
+	SetSurfaceFromGlyph(surf, &m_TTF->glyph->bitmap, 
+		m_TTFArgs.border + m_TTFArgs.thickness, 
+		m_TTFArgs.border + m_TTFArgs.thickness, 
+		Font::GetFontForegroundColor);
+	// upload to texture/glyph
+	bool r = UploadGlyph(code, surf);
+	// cleanup & return
+	delete surf;
 	return r;
 }
 
-void TextureFont::Render(const RString& text, int x, int y) {
-	// we'll do it later
-	// TODO
-#if 0
-	uint32_t leftpos = x;
-	const char *p = text.c_str();
-	uint32_t glyphcode;
-	while ((glyphcode = GetCodepointFromUTF8String(&p, 1)) > 0) {
-		SkinTextureFont::Glyph* gl = GetGlyph(glyphcode);
-		if (gl) {
-			SDL_Rect src = { gl->x, gl->y, gl->w, gl->h };
-			SDL_Rect dst = { leftpos, y, gl->w, gl->h };
-			SDL_Texture *t = imgs[gl->image] ? imgs[gl->image]->GetPtr() : 0;
-			if (t) {
-				SDL_SetTextureAlphaMod(t, a);
-				SDL_SetTextureColorMod(t, r, g, b);
-				SDL_RenderCopy(Game::RENDERER, t, &src, &dst);
-			}
-			leftpos += gl->w;
-		} else leftpos += stf.GetFallbackWidth();
-		p++;
+void Font::SetSurfaceFromGlyph(Surface *surf, const FT_Bitmap *bitmap, 
+	int offsetx, int offsety, uint32_t(Font::*ColorFunc)(int, int))
+{
+	for (int y = 0; y < bitmap->rows; ++y) {
+		int outy = bitmap->rows - m_TTF->glyph->bitmap_top + y + offsety;
+		for (int x = 0; x < bitmap->width; ++x) {
+			int outx = m_TTF->glyph->bitmap_left + x + offsetx;
+			unsigned char alpha = bitmap->buffer[bitmap->width * y + x];
+			uint32_t orgclr = GetFontForegroundColor(outx, outy);
+			uint32_t color = (alpha * (orgclr & 0x000000FF) / 255) 
+				| (orgclr & 0xFFFFFF00);
+			surf->SetPixel(outx, outy, color);
+		}
 	}
-#endif
+}
+
+bool Font::UploadGlyph(uint32_t code, Surface* surf) {
+	// find new position for uploading texture, or create new texture
+	bool makenewtex = false;
+	if (m_TexCnt == 0) {
+		makenewtex = true;
+	}
+	if (m_TexX + surf->GetWidth() > FONT_TEX_SIZE) {
+		m_TexY += m_FntProperty.m_MaxHeight;
+		m_TexX = 0;
+	}
+	if (m_TexY + surf->GetHeight() > FONT_TEX_SIZE) {
+		makenewtex = true;
+	}
+	if (makenewtex) {
+		if (m_TexCnt > MAX_SURFACE_COUNT) {
+			LOG->Warn("Font: too many glyphs, cannot make new one");
+			return false;
+		}
+		CreateNewSurface();
+		m_TexX = m_TexY = 0;
+	}
+	// ok, now upload texture to glyph
+	DISPLAY->UpdateTexture(&m_Tex[m_TexCnt - 1], surf, m_TexX, m_TexY);
+	// add new glyph
+	FontGlyph g;
+	g.m_src = { m_TexX, m_TexY, surf->GetWidth(), surf->GetHeight()};
+	g.m_Texidx = m_TexCnt - 1;
+	m_FntGlyphs[m_Status][code] = g;
+	return true;
+}
+
+void Font::CreateNewSurface() {
+	m_Tex[m_TexCnt] = DISPLAY->CreateEmptyTexture(FONT_TEX_SIZE, FONT_TEX_SIZE);
+	m_TexCnt++;
+}
+
+uint32_t Font::GetFontForegroundColor(int x, int y) {
+	if (m_TTFArgs.foretexture) {
+		int w = m_TTFArgs.foretexture->GetWidth();
+		int h = m_TTFArgs.foretexture->GetHeight();
+		return m_TTFArgs.foretexture->GetPixel(x % w, y % h);
+	}
+	else {
+		return m_TTFArgs.color;
+	}
+}
+
+uint32_t Font::GetFontBorderColor(int x, int y) {
+	// a little dummy function
+	return m_TTFArgs.bordercolor;
+}
+
+void Font::Render(const char* text, int x, int y) {
+	unsigned start = 0;
+	int cx = 0;
+	const char* p = text;
+	uint32_t code;
+	while (code = FC_GetCodepointFromUTF8(&p, true)) {
+		FontGlyph* g = GetGlyph(code);
+		if (!g) {
+			// attempt to render glyph
+			if (!CacheGlyph(code))
+				cx += m_FntProperty.m_DefaultWidth;
+			else
+				// glyph caching success, maybe
+				g = GetGlyph(code);
+		}
+		if (g) {
+			// draws from TexRect
+			// scale-dependent
+			Rect dst;
+			dst.x = x + cx * m_ScaleX;
+			dst.y = y * m_ScaleY;
+			dst.w = g->m_src.w;
+			dst.h = g->m_src.h;
+			spr.SetTexture(m_Tex[g->m_Texidx]);
+			spr.SetSrc(&g->m_src);
+			spr.SetDest(&dst);
+			spr.Render();
+
+			cx += g->m_src.w;
+		}
+	}
+}
+
+void Font::Render(const char* text, int x, int y, int width) {
+	// resize font if it's bigger then width
+	int textwidth = GetWidth(text);
+	float backup_sx = m_ScaleX;
+	if (textwidth > width)
+		SetScale(m_ScaleX * width / textwidth, m_ScaleY);
+	Render(text, x, y);
+	SetScale(backup_sx, m_ScaleY);
+}
+
+void Font::SetScale(float sx, float sy) {
+	m_ScaleX = sx;
+	m_ScaleY = sy;
 }

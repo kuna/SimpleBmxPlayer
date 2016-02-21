@@ -8,7 +8,7 @@
 
 #include <map>
 #include <vector>
-#include "image.h"
+#include "Surface.h"
 #include "audio.h"
 #include "timer.h"
 #include "global.h"
@@ -74,22 +74,18 @@ public:
 	void Clear();
 };
 
-class ImagePool {
+class TexturePool {
 private:
-	std::map<RString, Image*> _imagepool;
-	std::map<Image*, int> _loadcount;
+	std::map<RString, Display::Texture> _texpool;
+	std::map<Display::Texture, int> _loadcount;
 public:
-	~ImagePool();
+	~TexturePool();
 	void ReleaseAll();
 
 	bool IsExists(const RString &path);
-	Image* Load(const RString &path);
-	bool Release(Image *img);
-	Image* Get(const RString &path);
-
-	void Register(const char* id, Image* img);
-	Image* GetById(const char* id);
-	Image* LoadById(const char* id);
+	Display::Texture Load(const RString &path);
+	bool Release(Display::Texture *img);
+	Display::Texture Get(const RString &path);		// this doesn't make load count up
 };
 
 // FontPool is a little different from imagepool 
@@ -135,7 +131,7 @@ extern IntPool* INTPOOL;
 extern TimerPool* TIMERPOOL;
 extern HandlerPool* HANDLERPOOL;
 
-extern ImagePool* IMAGEPOOL;
+extern TexturePool* TEXPOOL;
 extern FontPool* FONTPOOL;
 extern SoundPool* SOUNDPOOL;
 

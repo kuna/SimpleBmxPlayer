@@ -6,7 +6,7 @@
 #pragma once
 
 #include "global.h"
-#include "image.h"
+#include "Surface.h"
 #include "timer.h"
 #include "font.h"
 #include "skin.h"
@@ -42,6 +42,9 @@ namespace ACCTYPE {
 
 
 /** @brief rendering tree which is used in real rendering - based on Xml skin structure */
+class ThemeConstructor {
+	ThemeConstructor(SkinObject);
+};
 class SkinRenderTree: public SkinGroupObject {
 private:
 	friend SkinRenderObject;
@@ -53,10 +56,15 @@ private:
 	/** @brief stores all skin render objects */
 	std::vector<SkinRenderObject*> _objpool;
 
+	//
+	//
+	//
+#if 0
 	/** @brief resources used in this game */
-	std::map<RString, Image*> _imagekey;
+	std::map<RString, Display::Texture> _imagekey;
 	/** @brief resources used in this game */
 	std::map<RString, Font*> _fontkey;
+#endif
 
 	/** @brief decide group object's texture size */
 	int _scr_w, _scr_h;
@@ -137,7 +145,7 @@ namespace SkinRenderHelper {
 	bool CalculateFrame(ImageDST &dst, ImageDSTFrame &frame);
 	ImageDSTFrame Tween(ImageDSTFrame& a, ImageDSTFrame &b, double t, int acctype);
 	/** @brief in debug mode, border will drawn around object. */
-	void Render(Image *img, ImageSRC *src, ImageDSTFrame *frame, int blend = 1, int rotationcenter = ROTATIONCENTER::CENTER);
+	void Render(Display::Texture *tex, ImageSRC *src, ImageDSTFrame *frame, int blend = 1, int rotationcenter = ROTATIONCENTER::CENTER);
 
 	/** @brief replaces path string to a correct one */
 	//void ConvertPath(RString& path);

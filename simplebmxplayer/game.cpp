@@ -16,20 +16,21 @@
 
 using namespace tinyxml2;
 
+GameSetting		SETTING;
+SceneBasic*		SCENE = NULL;
+SDL_Window*		WINDOW = NULL;
+IDisplay*		DISPLAY = NULL;
+
 namespace Game {
 	/*
 	 * variables
 	 */
 	// game status
-	GameSetting		SETTING;
-	SceneBasic*		SCENE = NULL;
 	bool			bRunning = false;	// is game running?
 	std::mutex		RMUTEX;
 	PARAMETER		P;
 
 	// SDL
-	SDL_Window*		WINDOW = NULL;
-	SDL_GLContext	RENDERER = NULL;
 	SDL_Joystick*	JOYSTICK[10] = { 0, };
 	int				nJoystickCnt = 0;
 
@@ -239,22 +240,14 @@ namespace Game {
 			LOG->Critical("Failed to create window");
 			return -1;
 		}
-		RENDERER = SDL_GL_CreateContext(WINDOW);// SDL_CreateRenderer(WINDOW, -1, SDL_RENDERER_ACCELERATED);
-		if (!RENDERER) {
+		
+		DISPLAY = new DisplaySDLGlew(WINDOW);
+		if (!DISPLAY->Initialize(SETTING.width, SETTING.height)) {
 			LOG->Critical("Failed to create Renderer");
 			LOG->Critical(SDL_GetError());
 			return -1;
 		}
-		printf("OpenGL Version %s\n", glGetString(GL_VERSION));
-		glClearColor(0, 0, 0, 0);
-		glViewport(0, 0, SETTING.width, SETTING.height);
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(0, SETTING.width, SETTING.height, 0, 1, -1);	// this don't work in opengl3.0 .. don't know why
-		glMatrixMode(GL_MODELVIEW);
-		glEnable(GL_TEXTURE_2D);
-
-		glLoadIdentity();
+		printf("OpenGL Version %s\n", DISPLAY->GetInfo());
 
 		nJoystickCnt = SDL_NumJoysticks();
 		if (nJoystickCnt > 10) nJoystickCnt = 10;

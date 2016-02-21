@@ -1,45 +1,106 @@
-#include "image.h"
+#include "Sprite.h"
 #include "game.h"
 #include "util.h"
 #include "SOIL.h"
 #include <assert.h>
+using namespace Display;
 
 extern "C" {
 #include "ffmpeg/libavutil/avutil.h"
 }
 
-#define ISLOADED(v) (v != 0)
-//
-// ffmpeg initalize part
-//
 
-bool Image::_initalized = false;
-bool Image::_movie_available = false;	// if initalize failed, then false
 
-// from: http://dranger.com/ffmpeg/
-void Image::_init() {
-	// attempt initalize only once
-	if (_initalized)
-		return;
-	_initalized = true;
 
-	// initalize library
-	// This registers all available file formats and codecs
-	av_register_all();
 
-	// if successfully initalized, then movie is available
-	_movie_available = true;
+
+#define R(x) ((x) >> 24 & 0x000000FF)
+#define G(x) ((x) >> 16 & 0x000000FF)
+#define B(x) ((x) >> 8 & 0x000000FF)
+
+bool Surface::IsLoaded() {
+	return pixdata != 0;
 }
 
-Image::Image() : texid(0), moviectx(0),
-usecolorkey(false), colorkey(0xFF000000) {
-	// initalize ffmpeg first
-	try {
-		_init();
-	}
-	catch (...) {
-	}
+bool Surface::Load(const char* path) {
+	Release();
+	int channels;
+	pixdata = SOIL_load_image
+		(
+		path,
+		&width, &height, &channels,
+		SOIL_LOAD_RGBA			// SOIL_LOAD_AUTO - dont use this, we'll force RGBA.
+		);
+	assert(channels == 4);
+	return pixdata != 0;
+}
 
+bool Surface::LoadFromMemory(const unsigned char* ptr, int len, int width, int height) {
+	Release();
+	int channels;
+	pixdata =
+		SOIL_load_image_from_memory(ptr, len, &width, &height, &channels, SOIL_LOAD_RGBA);
+	assert(channels == 4);
+	return pixdata != 0;
+}
+
+void Surface::Create(int width, int height, uint32_t color = 0) {
+	pixdata = (unsigned char*)malloc(width * height * 4);
+	for (int i = 0; i < width * height; i++) {
+		((uint32_t*)pixdata)[i] = color;
+	}
+}
+
+void Surface::SetPixel(int x, int y, uint32_t color) {
+	if (x > width) return;
+	if (y > height) return;
+	assert(x >= 0 && y >= 0);
+	((uint32_t*)pixdata)[width * y + x] = color;
+}
+
+uint32_t Surface::GetPixel(int x, int y) {
+	assert(x >= 0 && y >= 0 && x <= width && y <= height);
+	return ((uint32_t*)pixdata)[width * y + x];
+}
+
+bool Surface::RemoveColor(uint32_t clr) {
+	unsigned char r_ = R(clr);
+	unsigned char g_ = G(clr);
+	unsigned char b_ = B(clr);
+	for (int i = 0; i < width * height; i++) {
+		if (pixdata[i * 4 + 0] == r_ &&
+			pixdata[i * 4 + 1] == g_ &&
+			pixdata[i * 4 + 2] == b_)
+			pixdata[i * 4 + 3] = 0;
+	}
+}
+
+void Surface::Release() {
+	if (pixdata) {
+		free(pixdata);
+		pixdata = 0;
+	}
+}
+
+
+
+
+
+
+
+namespace {
+	bool init_ffmpeg = false;
+	void Initalize_ffmpeg() {
+		// initalize library
+		// This registers all available file formats and codecs
+		if (!init_ffmpeg) {
+			av_register_all();
+			init_ffmpeg = true;
+		}
+	}
+}
+
+SurfaceMovie::SurfaceMovie() {
 	frame = 0;
 	uPlane = 0;
 	vPlane = 0;
@@ -51,123 +112,23 @@ usecolorkey(false), colorkey(0xFF000000) {
 	width = height = 0;
 }
 
-#ifdef _WIN32
-Image::Image(const std::wstring& filepath, bool loop) : Image() {
-	Load(filepath.c_str(), loop);
-}
-
-bool Image::Load(const std::wstring& filepath, bool loop) {
-	RString path_utf8 = WStringToRString(filepath);
-	return Load(path_utf8, loop);
-}
-#endif
-
-Image::Image(const std::string& filepath, bool loop) : Image() {
-	Load(filepath.c_str(), loop);
-}
-
-#define R(x) ((x) >> 16 & 0x000000FF)
-#define G(x) ((x) >> 8 & 0x000000FF)
-#define B(x) ((x) & 0x000000FF)
-namespace {
-	void DoColorkey(unsigned char* ptr, int width, int height, Uint32 colorkey) {
-		// channel must be 4 channels - RGBA
-		for (int i = 0; i < width*height*4; i += 4)
-		{
-			if (ptr[i] == R(colorkey) && ptr[i + 1] == G(colorkey) && ptr[i + 2] == B(colorkey))
-				ptr[i + 3] = 0;
-		}
-	}
-
-	void LoadTexture(const unsigned char* imgdata, GLuint *texid, int width, int height) {
-		Game::RMUTEX.lock();
-		glGenTextures(1, texid);
-		// maybe we don't going to deal with multiple texture rendering
-		// so don't use it
-		//glActiveTexture(GL_TEXTURE0);
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, *texid);
-		glTexImage2D(GL_TEXTURE_2D,
-			0,
-			GL_RGBA8,
-			width,
-			height,
-			0,
-			GL_RGBA,
-			GL_UNSIGNED_BYTE,
-			imgdata);
-		Game::RMUTEX.unlock();
-	}
-}
-
-bool Image::Load(const std::string& filepath, bool loop) {
-	RString abspath = filepath;
-	FileHelper::ConvertPathToAbsolute(abspath);
-
-	// check is it movie or image
-	std::string ext = get_fileext(filepath);	MakeLower(ext);
+bool SurfaceMovie::Load(const char* path) {
+	Initalize_ffmpeg();
+	std::string ext = get_fileext(path);	MakeLower(ext);
+	// well, much more extension?
 	if (ext == ".mpg" || ext == ".avi" || ext == ".mpeg"
-		|| ext == ".m1v") {
-		if (_movie_available) {
-			if (!LoadMovie(abspath)) {
-				ReleaseMovie();
-				return false;
-			}
-		}
+		|| ext == ".m1v" || ext == ".wmv" || ext == ".aac") {
+		if (!LoadMovie(path)) {
+			ReleaseMovie();
+			return false;
+		} else return true;
 	}
 	else {
-		// MUST new context, or block renderer.
-		//SDL_GLContext c = SDL_GL_CreateContext(Game::WINDOW);
-		//
-		//glTex = SOIL_load_OGL_texture(abspath, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
-		//
-		// although we can make easily new texture with upper code,
-		// we need to make colorkey in case, so iterate each pixels.
-		//
-		int channels;
-		unsigned char *imgdata = SOIL_load_image
-			(
-			abspath,
-			&width, &height, &channels,
-			SOIL_LOAD_RGBA			// SOIL_LOAD_AUTO ?
-			);
-		if (!imgdata) return false;
-		assert(channels == 4);		// need alpha channel MUST
-
-		DoColorkey(imgdata, width, height, colorkey);
-		LoadTexture(imgdata, &texid, width, height);
-		SOIL_free_image_data(imgdata);
-		if (!texid)
-			return false;
+		return ((Surface*)this)->Load(path);
 	}
-	this->loop = loop;
-	return true;
 }
 
-bool Image::Load(FileBasic* f, bool loop) {
-	// don't support movie in this case.
-	// TODO: support movie!
-	size_t s = f->GetSize();
-	char* imgrawdata = (char*)malloc(s);
-	f->Read(imgrawdata, s);
-
-	int channels;
-	unsigned char* imgdata = 
-		SOIL_load_image_from_memory((unsigned char*)imgrawdata, s, &width, &height, &channels, SOIL_LOAD_RGBA);
-	free(imgrawdata);
-	if (!imgdata) return false;
-	assert(channels == 4);		// need alpha channel MUST
-
-	DoColorkey(imgdata, width, height, colorkey);
-	LoadTexture(imgdata, &texid, width, height);
-	SOIL_free_image_data(imgdata);
-	if (!texid)
-		return false;
-	this->loop = loop;
-	return true;
-}
-
-bool Image::LoadMovie(const char *path) {
+bool SurfaceMovie::LoadMovie(const char* path) {
 	// load movie
 	if (avformat_open_input(&moviectx, path, NULL, 0) != 0) {
 		// failed to load movie
@@ -248,20 +209,24 @@ bool Image::LoadMovie(const char *path) {
 	uPlane = (Uint8*)malloc(uvPlaneSz);
 	vPlane = (Uint8*)malloc(uvPlaneSz);
 
+	// set metadata
+	// TODO
+
 	// set video pos to first & render first scene
 	Reset();
-	Sync(0);
+	// just create blank surface
+	Create()
+	//UpdateSurface(0);
 
 	return true;
 }
 
-void Image::Sync(Uint32 t) {
+void SurfaceMovie::UpdateSurface(Uint32 t) {
 	if (!ISLOADED(moviectx))
 		return;
 
 	if (t < moviepts)
 		return;
-
 
 	int uvPitch = codecctx->width / 2;
 	AVPacket *packet;
@@ -300,10 +265,10 @@ void Image::Sync(Uint32 t) {
 				sws_scale(sws_ctx, (uint8_t const * const *)frame->data,
 					frame->linesize, 0, codecctx->height, pict.data,
 					pict.linesize);
-				
+
 				// glTexSubImage2D is a way faster
 				glBindTexture(GL_TEXTURE_2D, texid);
-				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, codecctx->width, codecctx->height, 
+				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, codecctx->width, codecctx->height,
 					GL_RGB, GL_UNSIGNED_BYTE, frame->data);
 			}
 			break;
@@ -312,14 +277,7 @@ void Image::Sync(Uint32 t) {
 	av_packet_free(&packet);
 }
 
-void Image::Reset() {
-	// set pts to zero
-	// and reset movie ctx
-	moviepts = 0;
-	// TODO: reset movie ctx
-}
-
-void Image::ReleaseMovie() {
+void SurfaceMovie::ReleaseMovie() {
 	// we don't release texture, it'll automatically destroyed in ~Image();
 	if (frame) { av_frame_free(&frame); frame = 0; }
 	if (yPlane) { free(yPlane); yPlane = 0; }
@@ -330,36 +288,74 @@ void Image::ReleaseMovie() {
 	if (moviectx) { avformat_close_input(&moviectx); moviectx = 0; }
 }
 
-int Image::GetWidth() {
-	return width;
+
+
+
+
+
+void Sprite::Update() {
 }
 
-int Image::GetHeight() {
-	return height;
+void Sprite::SetSrc(const Rect *r) {
+
 }
 
-void Image::SetColorKey(bool use, Uint32 clr) {
-	usecolorkey = use;
-	colorkey = clr;
+void Sprite::SetDest(const Rect *r) {
+
 }
 
-Image::~Image() {
-	Release();
+void Sprite::SetTilt(float sx, float sy) {
+
 }
 
-void Image::Release() {
-	if (ISLOADED(moviectx))
-		ReleaseMovie();
-	if (ISLOADED(texid)) {
-		glDeleteTextures(1, &texid);
-		texid = 0;
+void Sprite::SetRotateCenter(int x, int y) {
+
+}
+
+void Sprite::SetRotateX(float r) {
+}
+
+void Sprite::SetRotateY(float r) {
+
+}
+
+void Sprite::SetRotateZ(float r) {
+
+}
+
+void Sprite::Render() {
+	// apply sprite array
+	// COMMENT: this part is renderer-dependent. should we need to move it to Display part?
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(3, GL_FLOAT, 0, Vertex);
+	glEnableClientState(GL_COLOR_ARRAY);
+	glColorPointer(4, GL_UNSIGNED_BYTE, 0, Color);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glTexCoordPointer(2, GL_FLOAT, 0, Texture);
+
+	// make rotation transform
+	glPushMatrix();
+	glTranslatef(-dst_rect.x, -dst_rect.y, 0);
+	glRotatef(angle / 360.0f, 0, 0, 1);
+	glTranslatef(dst_rect.x, dst_rect.y, 0);
+
+	// render
+	// TODO
+
+	// restore matrix
+	glPopMatrix();
+}
+
+
+
+
+
+namespace RenderHelper {
+	Sprite spr;
+	void Render(Texture* tex, const Rect* src, const Rect* dst) {
+		spr.SetTexture(*tex);
+		spr.SetSrc(src);
+		spr.SetDest(dst);
+		spr.Render();
 	}
-}
-
-bool Image::IsLoaded() {
-	return ISLOADED(texid);
-}
-
-GLuint Image::GetTexID() {
-	return texid;
 }

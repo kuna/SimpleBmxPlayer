@@ -1,6 +1,8 @@
 #include "globalresources.h"
 #include "file.h"
 #include "util.h"
+#include "game.h"
+using namespace Display;
 
 StringPool* STRPOOL = 0;
 DoublePool* DOUBLEPOOL = 0;
@@ -8,7 +10,7 @@ IntPool* INTPOOL = 0;
 TimerPool* TIMERPOOL = 0;
 HandlerPool* HANDLERPOOL = 0;
 
-ImagePool* IMAGEPOOL = 0;
+TexturePool* TEXPOOL = 0;
 FontPool* FONTPOOL = 0;
 SoundPool* SOUNDPOOL = 0;
 
@@ -160,29 +162,29 @@ bool HandlerPool::Remove(const RString &key, _Handler h) {
 
 void HandlerPool::Clear() { _handlerpool.clear(); }
 
-ImagePool::~ImagePool() { ReleaseAll(); }
+TexturePool::~TexturePool() { ReleaseAll(); }
 
-void ImagePool::ReleaseAll() {
-	for (auto it = _imagepool.begin(); it != _imagepool.end(); ++it) {
-		delete it->second;
+void TexturePool::ReleaseAll() {
+	for (auto it = _texpool.begin(); it != _texpool.end(); ++it) {
+		DISPLAY->DeleteTexture(&it->second);
 	}
-	_imagepool.clear();
+	_texpool.clear();
 	_loadcount.clear();
 }
 
-bool ImagePool::Release(Image *img) {
+bool TexturePool::Release(Texture *img) {
 	// reduce loadcount
 	// if loadcount <= 0, then release object from memory
-	if (_loadcount.find(img) != _loadcount.end()) {
-		int loadcount = --_loadcount[img];
+	if (_loadcount.find(*img) != _loadcount.end()) {
+		int loadcount = --_loadcount[*img];
 		if (loadcount <= 0) {
-			for (auto it = _imagepool.begin(); it != _imagepool.end(); ++it) {
-				if (it->second == img) {
-					_imagepool.erase(it);
+			for (auto it = _texpool.begin(); it != _texpool.end(); ++it) {
+				if (it->second.id == img->id) {
+					_texpool.erase(it);
 					break;
 				}
 			}
-			_loadcount.erase(_loadcount.find(img));
+			_loadcount.erase(_loadcount.find(*img));
 			delete img;
 		}
 		return true;
@@ -207,13 +209,13 @@ namespace {
 	}
 }
 
-bool ImagePool::IsExists(const RString &path) {
+bool TexturePool::IsExists(const RString &path) {
 	RString _path = path;
 	FileHelper::ConvertPathToAbsolute(_path);
-	return (_imagepool.find(_path) != _imagepool.end());
+	return (_texpool.find(_path) != _texpool.end());
 }
 
-Image* ImagePool::Load(const RString &path) {
+Texture TexturePool::Load(const RString &path) {
 	// first convert path in easy way
 	RString _path = path;
 	FileHelper::GetAnyAvailableFilePath(_path);
@@ -237,36 +239,11 @@ Image* ImagePool::Load(const RString &path) {
 	}
 }
 
-Image* ImagePool::Get(const RString &path) {
+Texture TexturePool::Get(const RString &path) {
 	RString _path = path;
 	// TODO: this costs a lot. better to change it into ID attribute?
 	FileHelper::GetAnyAvailableFilePath(_path);
 	return GetById(_path);
-}
-
-void ImagePool::Register(const char* id, Image* img) {
-	_imagepool.insert(pair<RString, Image*>(id, img));
-	_loadcount.insert(pair<Image*, int>(img, 1));
-}
-
-Image* ImagePool::GetById(const char* id) {
-	if (_imagepool.find(id) != _imagepool.end()) {
-		return _imagepool[id];
-	}
-	else {
-		return 0;
-	}
-}
-
-Image* ImagePool::LoadById(const char* id) {
-	if (IsExists(id)) {
-		Image *img = _imagepool[id];
-		_loadcount[img]++;
-		return img;
-	}
-	else {
-		return 0;
-	}
 }
 
 FontPool::~FontPool() {
