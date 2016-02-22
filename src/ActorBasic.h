@@ -137,11 +137,11 @@ public:
 class SkinImageObject : public SkinRenderObject {
 protected:
 	ImageSRC imgsrc;
-	Image *img;
+	Display::Texture tex;
 public:
 	SkinImageObject(SkinRenderTree* owner, int type = ACTORTYPE::IMAGE);
 	void SetSRC(const ImageSRC& imgsrc);
-	void SetImage(Image *img);
+	void SetImage(Display::Texture* tex);
 
 	void SetImageObject(XMLElement *e);
 	virtual void SetObject(XMLElement *e);
@@ -260,7 +260,6 @@ public:
 class SkinButtonObject : public SkinImageObject {
 private:
 	ImageSRC hover;
-	Image* img_hover;
 	// only we need more is: handler.
 	//_Handler handler;
 public:

@@ -2,7 +2,6 @@
 
 #include "ActorBasic.h"
 #include "global.h"
-#include "image.h"
 #include "timer.h"
 
 class Player;
@@ -69,7 +68,7 @@ private:
 		ImageSRC auto_ln_start;
 		ImageSRC auto_mine;
 		ImageDSTFrame f;
-		Image* img;				// COMMENT: do we need to have multiple image?
+		Display::Texture tex;			// COMMENT: do we need to have multiple image?
 	} note;
 
 	int			lane;
@@ -115,7 +114,7 @@ private:
 public:
 	SkinBgaObject(SkinRenderTree *);
 	virtual void SetObject(XMLElement *e);
-	void RenderBGA(Image *img);
+	void RenderBGA(Display::Texture* tex);
 	virtual void Update();
 	virtual void Render();
 };

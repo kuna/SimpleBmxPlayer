@@ -29,6 +29,10 @@ namespace Display {
 		int x, y;
 	};
 
+	struct PointF {
+		float x, y;
+	};
+
 	struct Color {
 		unsigned char r, g, b, a;
 	};
@@ -42,6 +46,7 @@ namespace Display {
 
 
 // interface of display object
+// (2.5D)
 class IDisplay {
 public:
 	virtual void BeginRender() = 0;
@@ -58,17 +63,27 @@ public:
 	virtual void UpdateTexture(Display::Texture* tex, const Surface* surf, int x = 0, int y = 0) = 0;
 	virtual void DeleteTexture(Display::Texture* tex) = 0;
 
+	// used when start drawing object
+	virtual void PushState() = 0;
+	// used when end drawing object
+	virtual void PopState() = 0;
+
 	//virtual void LoadShader(const char* vertex_fpath, const char* frag_fpath);
 	virtual void SetBlendMode(int blend) = 0;
-	virtual void SetTexture(Display::Texture* tex) = 0;
+	virtual void SetTexture(const Display::Texture* tex) = 0;
 	virtual void SetColorMod(unsigned char r, unsigned char g, unsigned char b, unsigned char a) = 0;
-	virtual void SetSRC(Display::Rect r) = 0;
-	virtual void SetDST(Display::Rect r, int z) = 0;
-	virtual void SetRotateCenter(int x, int y) = 0;
+	virtual void SetSRC(const Display::Rect* r) = 0;
+	virtual void SetDST(const Display::Rect* r) = 0;
+	virtual void SetZPos(float z) = 0;
+	virtual void SetCenter(int x, int y) = 0;
 	virtual void SetRotateX(float angle) = 0;
 	virtual void SetRotateY(float angle) = 0;
 	virtual void SetRotateZ(float angle) = 0;
 	virtual void SetTilt(float sx, float sy) = 0;
+	virtual void SetOffset(int x, int y) = 0;
+	virtual void SetClip(const Display::Rect* r) = 0;
+	virtual void SetZoom(float zx, float zy) = 0;
+	virtual void ResetDrawing() = 0;
 	virtual void DrawPrimitives() = 0;
 };
 
@@ -102,9 +117,11 @@ protected:
 	Display::Texture m_Texture;
 	Display::Color m_ColorMod;
 	Display::Rotate m_Rotation;
-	Display::Point m_RotCenter;
+	Display::Point m_Center;
 	Display::Rect m_SRC, m_DST;
-	float m_TiltX, m_TiltY;
+	Display::PointF m_Tilt;
+	Display::PointF m_Zoom;
+	float m_ZPos;
 
 	// COMMENT: should it better to make these static?
 	float v_Color[4 * 3];		// colormod
@@ -112,7 +129,7 @@ protected:
 	float v_Vertex[4 * 4];		// vertex
 	void SetupVertices();
 public:
-	DisplaySDLGlew(SDL_Window *win) { m_SDL = win; };
+	DisplaySDLGlew(SDL_Window *win) { m_SDL = win; ResetDrawing(); };
 	~DisplaySDLGlew() { Release(); }
 
 	virtual void BeginRender();
@@ -129,15 +146,33 @@ public:
 	virtual void UpdateTexture(Display::Texture* tex, const Surface* surf, int x = 0, int y = 0);
 	virtual void DeleteTexture(Display::Texture* tex);
 
+	virtual void PushState();
+	virtual void PopState();
+
 	virtual void SetBlendMode(int blend);
-	virtual void SetTexture(Display::Texture* tex);
+	virtual void SetTexture(const Display::Texture* tex);
 	virtual void SetColorMod(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
-	virtual void SetSRC(Display::Rect r);
-	virtual void SetDST(Display::Rect r);
-	virtual void SetRotateCenter(int x, int y);
+	virtual void SetSRC(const Display::Rect* r);
+	virtual void SetDST(const Display::Rect* r);
+	virtual void SetZPos(float z);
+	virtual void SetCenter(int x, int y);
 	virtual void SetRotateX(float angle);
 	virtual void SetRotateY(float angle);
 	virtual void SetRotateZ(float angle);
 	virtual void SetTilt(float sx, float sy);
+	virtual void SetOffset(int x, int y);
+	virtual void SetZoom(float zx, float zy);
+	virtual void SetClip(const Display::Rect* r);
+	virtual void ResetDrawing();
 	virtual void DrawPrimitives();
 };
+
+
+
+
+
+
+namespace RenderHelper {
+	void Render(IDisplay *d, Display::Texture* tex, const Display::Rect* src, const Display::Rect* dst);
+}
+

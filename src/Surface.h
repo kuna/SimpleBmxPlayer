@@ -11,7 +11,7 @@
 
 /*
  * @description
- * stopped, static surface object
+ * constant, static surface object
  */
 // suggest to use RGBA format surface
 // although it's very basic form of surface module,
@@ -71,8 +71,9 @@ protected:
 	AVFrame *frame;						// rendering buffer
 	SwsContext *sws_ctx;				// converter (image data -> RGB24)
 	Uint8 *yPlane, *uPlane, *vPlane;	// stores YUV data
-	double movielength;
 
+	double duration;
+	int64_t moviepts;
 public:
 	SurfaceMovie();
 	~SurfaceMovie();
@@ -83,7 +84,7 @@ public:
 
 	bool LoadMovie(const char* path);
 	void ReleaseMovie();
-	void UpdateSurface(unsigned msec);
+	bool UpdateSurface(Uint32 msec);
 };
 
 
@@ -91,38 +92,4 @@ public:
 
 
 
-
-/*
- * @description
- * very basic element of renderable object
- * COMMENT: making/deleting sprite is independent with texture.
- *          this acts like static SDL_RenderCopy() method.
- */
-
-class Sprite {
-protected:
-	// be careful to don't have invalid texID during rendering
-	Display::Texture tex;
-	virtual void Update();
-	// matrixes (quad-triangle, basically)
-public:
-	Sprite() { tex.id = 0; tex.width = 1; tex.height = 1; };
-	Sprite(Display::Texture tex) { this->tex = tex; };
-	~Sprite() {};
-	void SetTexture(Display::Texture tex) { this->tex = tex; }
-
-	void SetSrc(const Display::Rect *r);
-	void SetDest(const Display::Rect *r);
-	void SetTilt(float sx, float sy);
-	void SetRotateCenter(int x, int y);
-	void SetRotateX(float r);
-	void SetRotateY(float r);
-	void SetRotateZ(float r);
-	void SetBlending(int blend);
-	virtual void Render();
-};
-
-namespace RenderHelper {
-	void Render(Display::Texture* tex, const Display::Rect* src, const Display::Rect* dst);
-}
 

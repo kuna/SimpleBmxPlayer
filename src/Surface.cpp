@@ -1,4 +1,4 @@
-#include "Sprite.h"
+#include "Surface.h"
 #include "game.h"
 #include "util.h"
 #include "SOIL.h"
@@ -110,6 +110,8 @@ SurfaceMovie::SurfaceMovie() {
 	moviectx = 0;
 
 	width = height = 0;
+	moviepts = 0;
+	duration = 0;
 }
 
 bool SurfaceMovie::Load(const char* path) {
@@ -175,23 +177,8 @@ bool SurfaceMovie::LoadMovie(const char* path) {
 	// allocate video frame
 	frame = av_frame_alloc();
 
-	// create basic texture
-	Game::RMUTEX.lock();
-	glGenTextures(1, &texid);
-	glBindTexture(GL_TEXTURE_2D, texid);
-	const size_t _tsize = codecctx->width * codecctx->height * 3;
-	unsigned char *_tmp = (unsigned char*)malloc(_tsize);
-	memset(_tmp, 0, _tsize);
-	glTexImage2D(GL_TEXTURE_2D,              //Always GL_TEXTURE_2D
-		0,                                   //0 for now
-		GL_RGB,                              //Format OpenGL uses for image
-		codecctx->width, codecctx->height,   //Width and height
-		0,                                   //The border of the image
-		GL_RGB,                              //GL_RGB, because pixels are stored in RGB format
-		GL_UNSIGNED_BYTE,                    //GL_UNSIGNED_BYTE, because pixels are stored as unsigned numbers
-		_tmp);                               //The actual pixel data
-	free(_tmp);
-	Game::RMUTEX.unlock();
+	// create texture
+	// -> removed, DIY
 
 	// initialize SWS context for software scaling
 	sws_ctx = sws_getContext(codecctx->width, codecctx->height,
@@ -210,23 +197,29 @@ bool SurfaceMovie::LoadMovie(const char* path) {
 	vPlane = (Uint8*)malloc(uvPlaneSz);
 
 	// set metadata
-	// TODO
+	double time_base = (double)stream->time_base.num / (double)stream->time_base.den;
+	duration = (double)stream->duration * time_base * 1000.0;
+	width = codecctx->width;
+	height = codecctx->height;
 
 	// set video pos to first & render first scene
-	Reset();
+	// Reset(0);		<- TODO
+	moviepts = 0;
 	// just create blank surface
-	Create()
+	Create(width, height);
 	//UpdateSurface(0);
 
 	return true;
 }
 
-void SurfaceMovie::UpdateSurface(Uint32 t) {
-	if (!ISLOADED(moviectx))
-		return;
+bool SurfaceMovie::UpdateSurface(Uint32 t) {
+	// if not loaded, then return
+	if (moviectx == 0)
+		return false;
 
+	// less then movie time, then return
 	if (t < moviepts)
-		return;
+		return false;
 
 	int uvPitch = codecctx->width / 2;
 	AVPacket *packet;
@@ -266,15 +259,18 @@ void SurfaceMovie::UpdateSurface(Uint32 t) {
 					frame->linesize, 0, codecctx->height, pict.data,
 					pict.linesize);
 
+				// Update Surface
+				// TODO
 				// glTexSubImage2D is a way faster
-				glBindTexture(GL_TEXTURE_2D, texid);
-				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, codecctx->width, codecctx->height,
-					GL_RGB, GL_UNSIGNED_BYTE, frame->data);
+				//glBindTexture(GL_TEXTURE_2D, );
+				//glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, codecctx->width, codecctx->height,
+				//	GL_RGB, GL_UNSIGNED_BYTE, frame->data);
 			}
 			break;
 		}
 	}
 	av_packet_free(&packet);
+	return true;
 }
 
 void SurfaceMovie::ReleaseMovie() {
@@ -289,73 +285,3 @@ void SurfaceMovie::ReleaseMovie() {
 }
 
 
-
-
-
-
-void Sprite::Update() {
-}
-
-void Sprite::SetSrc(const Rect *r) {
-
-}
-
-void Sprite::SetDest(const Rect *r) {
-
-}
-
-void Sprite::SetTilt(float sx, float sy) {
-
-}
-
-void Sprite::SetRotateCenter(int x, int y) {
-
-}
-
-void Sprite::SetRotateX(float r) {
-}
-
-void Sprite::SetRotateY(float r) {
-
-}
-
-void Sprite::SetRotateZ(float r) {
-
-}
-
-void Sprite::Render() {
-	// apply sprite array
-	// COMMENT: this part is renderer-dependent. should we need to move it to Display part?
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, 0, Vertex);
-	glEnableClientState(GL_COLOR_ARRAY);
-	glColorPointer(4, GL_UNSIGNED_BYTE, 0, Color);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glTexCoordPointer(2, GL_FLOAT, 0, Texture);
-
-	// make rotation transform
-	glPushMatrix();
-	glTranslatef(-dst_rect.x, -dst_rect.y, 0);
-	glRotatef(angle / 360.0f, 0, 0, 1);
-	glTranslatef(dst_rect.x, dst_rect.y, 0);
-
-	// render
-	// TODO
-
-	// restore matrix
-	glPopMatrix();
-}
-
-
-
-
-
-namespace RenderHelper {
-	Sprite spr;
-	void Render(Texture* tex, const Rect* src, const Rect* dst) {
-		spr.SetTexture(*tex);
-		spr.SetSrc(src);
-		spr.SetDest(dst);
-		spr.Render();
-	}
-}

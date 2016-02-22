@@ -41,10 +41,36 @@ namespace ACCTYPE {
 #include "ActorPlay.h"
 
 
-/** @brief rendering tree which is used in real rendering - based on Xml skin structure */
-class ThemeConstructor {
-	ThemeConstructor(SkinObject);
+/** @brief rendering tree which is used in real rendering */
+class Theme {
+protected:
+	std::vector<SkinRenderObject*> objpool_;
+	SkinRenderObject* base_;
+public:
+	SkinRenderObject* GetPtr();
+	void Update();
+	void Render();
 };
+
+/** @brief constructs rendering tree - based on Xml skin structure */
+class ThemeConstructor {
+protected:
+	//
+	// store file alias here
+	//
+	std::map<RString, RString> aliaspool_;
+	void ParseFileAlias();
+
+	//
+	// just store what resource we have currently.
+	//
+	std::vector<Display::Texture> texpool_;
+public:
+	ThemeConstructor(tinyxml2::XMLDocument* doc);
+	void ConstructTheme(Theme& t);
+};
+
+
 class SkinRenderTree: public SkinGroupObject {
 private:
 	friend SkinRenderObject;
@@ -57,7 +83,9 @@ private:
 	std::vector<SkinRenderObject*> _objpool;
 
 	//
-	//
+	// As we won't going to release 
+	// If you want to do it, then release all theme resource at once;
+	// That's the best method to keep up with, I think.
 	//
 #if 0
 	/** @brief resources used in this game */
