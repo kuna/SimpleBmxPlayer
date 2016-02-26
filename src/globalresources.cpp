@@ -14,6 +14,24 @@ TexturePool* TEXPOOL = 0;
 FontPool* FONTPOOL = 0;
 SoundPool* SOUNDPOOL = 0;
 
+
+
+
+
+HandlerAuto::HandlerAuto() {
+	ASSERT(HANDLERPOOL != 0);
+	HANDLERPOOL->Add(this);
+}
+
+HandlerAuto::~HandlerAuto() {
+	HANDLERPOOL->Remove(this);
+}
+
+
+
+
+
+
 bool StringPool::IsExists(const RString &key) {
 	return _stringpool.find(key) != _stringpool.end();
 }

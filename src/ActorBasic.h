@@ -6,40 +6,49 @@
 #include "tinyxml2.h"
 using namespace tinyxml2;
 
+// Texture pos
 struct ImageSRC {
 	Timer *timer;
 	int x, y, w, h;
 	int divx, divy, cycle;
 	int loop;
+
+	ImageSRC();
+	void SetSRCFromXNode(tinyxml2::XMLElement *e);
 };
-struct ImageDSTFrame {
-	int time;
-	int x, y, w, h, a, r, g, b, angle;
+
+// State that tweens between each state
+struct TweenState {
+	Display::Rect dst;
+	Display::Color color;
+	Display::Rotate rotate;
+	Display::PointF tilt;
+	TweenState();
+	TweenState(const TweenState &t);
 };
+// static information about current tweening
+struct TweenInfo {
+	TweenState state;
+	int blend, acc, center, loop;
+};
+// Compiled tween state (by lua script or some ...)
 struct ImageDST {
-	Timer *timer;
-	int blend;
-	int loopstart, loopend;
-	int rotatecenter;
-	int acctype;
-	std::vector<ImageDSTFrame> frame;
+	Timer timer;
+	std::map<int, TweenInfo>::iterator tween_cur;
+	std::map<int, TweenInfo>::iterator tween_next;
+	std::map<int, TweenInfo> tweens;
+	void SetDSTFromCommand(const RString& cmd);
+	ImageDST();
+	// TODO
+	//void SetDSTFromLua(const RString& lua);
+	//void SetDSTFromLua(LuaFunction *luafunc);
 };
-
-#define _MAX_RENDER_CONDITION	20
-#define _MAX_RENDER_DST			60
-
-/*
- * @comment
- * 2 type of objects are VERY important: TEXT, IMAGE
- * these objects are the base class of every extended classes, so they are real renderer.
- * so, if we take care of those two objects carefully (like offset), 
- * there'll be no problem of rendering.
- */
 
 /*
  * @brief a simple condition evaluator for fast performance
  * supporting format: divided by comma (only AND operator, maximum 10)
  * ex) condition="OnGameStart,On1PKey7Up"
+ * COMMENT: depreciated, only for compatibility with LR2 style.
  */
 class RenderCondition {
 private:
@@ -56,58 +65,55 @@ public:
 	bool Evaluate();
 };
 
+
+
+
+
+
+
 /* redeclaration */
 class SkinRenderTree;
-class SkinGroupObject;
+class ActorFrame;
 class SkinBgaObject;
 class SkinNoteFieldObject;
 
 /** @brief very basic rendering object which does nothing. */
-class SkinRenderObject {
+class Actor {
 protected:
 	/** @brief type of this object */
 	int objtype;
-	/** @brief condition for itself */
-	RenderCondition condition;
-	ImageDST dst[_MAX_RENDER_CONDITION];
-	RenderCondition dst_condition[_MAX_RENDER_CONDITION];
-	size_t dstcnt;
-	/** @brief this value is filled when you call Update() method. */
-	struct ImageDSTCached {
-		ImageDST *dst;
-		ImageDSTFrame frame;
-	} dst_cached;
-	/** @brief different from visible. decided by Renderer(Update() method) */
+	/** @brief handlers & functions when handler called */
+	//std::map<RString, LuaFunction*> handlers;
+	class ActorHandler : public HandlerAuto {
+		virtual void Receive(const Message& msg) {
+			// TODO
+		}
+	};
+	ActorHandler handler;
+	/** @brief current DST (compiled when proper handler called) */
+	ImageSRC m_Src;					// Render From
+	ImageDST m_Dst;					// Render To
+	TweenInfo m_Tweeninfo;			// Current, calculated tween(rendering) state
+	RenderCondition m_Condition;	// Is object currently drawable?
+	/** @brief different from visible(condition). decided by Renderer(Update() method) */
 	bool drawable;
 
-	void *tag;		// for various use
-
+	/** @brief used to check mouse collision event */
 	bool TestCollsion(int x, int y);
 	bool focusable;
 	bool clickable;
-	bool invertcondition;
 
-	SkinRenderTree* rtree;
+	// TODO: we need this? (to get skin width/height)
+	//SkinRenderTree* rtree;
 public:
-	SkinRenderObject(SkinRenderTree* owner, int type = ACTORTYPE::NONE);
+	Actor(SkinRenderTree* owner, int type = ACTORTYPE::NONE);
 	int GetType();
-	/** @brief DST, condition */
-	void SetBasicObject(XMLElement *e);
 
+	/** @brief Clear all attribute of actor */
 	virtual void Clear();
-	virtual void SetObject(XMLElement *e);
+	virtual void LoadFromXML(XMLElement *e);
 	virtual void SetCondition(const RString &str);
-	virtual void AddDST(ImageDST &dst, const RString& condition = "", bool lua = false);
-	bool EvaluateCondition();
-	/** @brief should we have to invert condition? maybe useful for IFNOT clause. */
-	void InvertCondition(bool b);
 
-	/*
-	 * @comment
-	 * most inheritable object calls update, but sometimes it's overwritten
-	 * then you can use this method to update DST easily
-	 */
-	void UpdateBasic();
 	/* @brief must call before update object or do something */
 	virtual void Update();
 	/* @brief draw object to screen with it's own basic style */
@@ -124,17 +130,17 @@ public:
 	bool IsGroup();
 	bool IsGeneral();
 
-	SkinGroupObject* ToGroup();
+	ActorFrame* ToGroup();
 	SkinNoteFieldObject* ToNoteFieldObject();
 };
 
-class SkinUnknownObject : public SkinRenderObject {
+class SkinUnknownObject : public Actor {
 private:
 public:
 	SkinUnknownObject(SkinRenderTree* owner);
 };
 
-class SkinImageObject : public SkinRenderObject {
+class SkinImageObject : public Actor {
 protected:
 	ImageSRC imgsrc;
 	Display::Texture tex;
@@ -149,16 +155,16 @@ public:
 	virtual void Render();
 };
 
-class SkinGroupObject : public SkinRenderObject {
+class ActorFrame : public Actor {
 protected:
 	/** @brief base elements */
-	std::vector<SkinRenderObject*> _childs;
+	std::vector<Actor*> _childs;
 public:
-	SkinGroupObject(SkinRenderTree* owner);
-	~SkinGroupObject();
-	void AddChild(SkinRenderObject* obj);
-	std::vector<SkinRenderObject*>::iterator begin();
-	std::vector<SkinRenderObject*>::iterator end();
+	ActorFrame(SkinRenderTree* owner);
+	~ActorFrame();
+	void AddChild(Actor* obj);
+	std::vector<Actor*>::iterator begin();
+	std::vector<Actor*>::iterator end();
 	void UpdateChilds();
 
 	// CAUTION: this doesn't parses recursively
@@ -167,24 +173,7 @@ public:
 	virtual void Render();
 };
 
-class SkinCanvasObject : public SkinGroupObject {
-private:
-	/** @brief canvas. if 0, then only pushs offset for drawing childs. */
-	SDL_Texture *t, *_org;
-	/** @brief */
-	ImageSRC src;
-public:
-	SkinCanvasObject(SkinRenderTree* owner);
-	~SkinCanvasObject();
-	void SetAsRenderTarget();
-	void ResetRenderTarget();
-	// CAUTION: this doesn't parses recursively
-	virtual void SetObject(XMLElement *e);
-	// render method follows image's one
-	virtual void Render();
-};
-
-class SkinTextObject : public SkinRenderObject {
+class SkinTextObject : public Actor {
 private:
 	/* elements needed for drawing */
 	int align;
@@ -278,19 +267,19 @@ public:
 * May better to extend this class to draw something you want.
 * Use it on your own.
 */
-class SkinListObject : public SkinRenderObject {
+class SkinListObject : public Actor {
 private:
 	Uint32				listsize;
 	double				listscroll;
 	Uint32				x, y, w, h;
 	Uint32				select_dx, select_dy;
 public:
-	void RenderListItem(int idx, SkinRenderObject *obj);
+	void RenderListItem(int idx, Actor *obj);
 };
 
 
 /** @brief it actually doesn't renders anything, but able to work with Render() method. */
-class SkinScriptObject : public SkinRenderObject {
+class SkinScriptObject : public Actor {
 	bool runoneveryframe;
 	int runtime;
 	RString script;

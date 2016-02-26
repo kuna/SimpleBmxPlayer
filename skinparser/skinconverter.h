@@ -27,6 +27,10 @@ private:
 	struct line_v_ { line_ line__; };
 	struct args_v_ { args_ args__; };
 
+	struct OP {
+		int op[4];
+	};
+
 private:
 	Skin *s;
 	SkinMetric *sm;
@@ -75,6 +79,9 @@ private:
 	int ProcessSelectBar(const args_read_& args, tinyxml2::XMLElement *obj);	// process commands about select bar
 	int ProcessSelectBar_DST(const args_read_& args);							// process commands about select bar
 	// pacemaker: use default XML
+
+	OP ProcessSRC(const args_read_& args, tinyxml2::XMLElement *obj);
+	OP ProcessDST(const args_read_& args, tinyxml2::XMLElement *obj);
 public:
 	// for extern use
 	void AddPathToOption(const std::string& path, const std::string& option) {

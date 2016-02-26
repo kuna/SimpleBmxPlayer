@@ -83,36 +83,18 @@ bool RenderCondition::Evaluate() {
 
 // ------ Skin General rendering Objects -----------------
 
-#pragma region SKINRENDEROBJECT
-SkinRenderObject::SkinRenderObject(SkinRenderTree* owner, int type)
-	: rtree(owner), dstcnt(0), tag(0), drawable(false),
-	clickable(false), focusable(false), invertcondition(false), objtype(type) { }
+#pragma region ACTOR
+Actor::Actor(SkinRenderTree* owner, int type) : objtype(type) { Clear(); }
 
-int SkinRenderObject::GetType() { return objtype; }
+int Actor::GetType() { return objtype; }
 
-void SkinRenderObject::Clear() {
-	dstcnt = 0;
+void Actor::Clear() {
+	drawable = false;
+	clickable = false;
+	focusable = false;
 }
 
-void SkinRenderObject::AddDST(ImageDST &dst, const RString &condition, bool lua) {
-	this->dst[dstcnt] = dst;
-	if (!lua)
-		this->dst_condition[dstcnt].Set(condition);
-	else
-		this->dst_condition[dstcnt].SetLuacondition(condition);
-	dstcnt++;
-}
-
-void SkinRenderObject::InvertCondition(bool b) { invertcondition = b; }
-
-bool SkinRenderObject::EvaluateCondition() {
-	if (invertcondition)
-		return !condition.Evaluate();
-	else
-		return condition.Evaluate();
-}
-
-bool SkinRenderObject::IsGroup() {
+bool Actor::IsGroup() {
 	switch (objtype) {
 	case ACTORTYPE::GROUP:
 		return true;
@@ -120,7 +102,7 @@ bool SkinRenderObject::IsGroup() {
 	return false;
 }
 
-bool SkinRenderObject::IsGeneral() {
+bool Actor::IsGeneral() {
 	switch (objtype) {
 	case ACTORTYPE::GENERAL:
 	case ACTORTYPE::IMAGE:
@@ -135,14 +117,14 @@ bool SkinRenderObject::IsGeneral() {
 	return false;
 }
 
-SkinGroupObject* SkinRenderObject::ToGroup() {
+ActorFrame* Actor::ToGroup() {
 	if (objtype == ACTORTYPE::GROUP)
-		return (SkinGroupObject*)this;
+		return (ActorFrame*)this;
 	else
 		return 0;
 }
 
-SkinNoteFieldObject* SkinRenderObject::ToNoteFieldObject() {
+SkinNoteFieldObject* Actor::ToNoteFieldObject() {
 	if (objtype == ACTORTYPE::PLAYLANE)
 		return (SkinNoteFieldObject*)this;
 	else
@@ -150,14 +132,19 @@ SkinNoteFieldObject* SkinRenderObject::ToNoteFieldObject() {
 }
 
 // do nothing
-void SkinRenderObject::Render() {  }
+void Actor::Render() {  }
 
-void SkinRenderObject::UpdateBasic() {
-	// evaluate
-	drawable = condition.Evaluate();
-	if (invertcondition) drawable = !drawable;
-	if (!drawable) return;
-	// fill DST
+void Actor::Update() {
+	// evaluate condition
+	if (!(drawable = m_Condition.Evaluate()))
+		return;
+
+	// Calculate Tween State
+	Uint32 tick = m_Dst.timer.GetTick();
+	while (tweenidx < m_Dst.tweens.size()) {
+		if (m_Dst)
+			tweenidx++;
+	}
 	dst_cached.dst = 0;
 	for (int j = 0; j < dstcnt; j++) {
 		if (dst_condition[j].Evaluate()) {
@@ -173,16 +160,15 @@ void SkinRenderObject::UpdateBasic() {
 			dst_cached.frame.y += rtree->GetOffsetY();
 		}
 	}
-	else {
+
+	// check alpha(color) mod
+	if (00) {
 		drawable = false;
+		return;
 	}
 }
 
-void SkinRenderObject::Update() {
-	UpdateBasic();
-}
-
-bool SkinRenderObject::Click(int x, int y) {
+bool Actor::Click(int x, int y) {
 	// must call after Update()
 	if (drawable && clickable) {
 		return false;
@@ -192,7 +178,7 @@ bool SkinRenderObject::Click(int x, int y) {
 	}
 }
 
-bool SkinRenderObject::Hover(int x, int y) {
+bool Actor::Hover(int x, int y) {
 	// must call after Update()
 	if (drawable && focusable) {
 		return false;
@@ -202,42 +188,31 @@ bool SkinRenderObject::Hover(int x, int y) {
 	}
 }
 
-int SkinRenderObject::GetWidth() {
-	return dst_cached.frame.w;
+int Actor::GetWidth() {
+	return m_Tweeninfo.state.dst.w;
 }
 
-int SkinRenderObject::GetHeight() {
-	return dst_cached.frame.h;
+int Actor::GetHeight() {
+	return m_Tweeninfo.state.dst.h;
 }
 
-int SkinRenderObject::GetX() {
-	return dst_cached.frame.x;
+int Actor::GetX() {
+	return m_Tweeninfo.state.dst.x;
 }
 
-int SkinRenderObject::GetY() {
-	return dst_cached.frame.y;
+int Actor::GetY() {
+	return m_Tweeninfo.state.dst.y;
 }
 
-void SkinRenderObject::SetBasicObject(XMLElement *e) {
-	// parse common attribute: DST, condition
-	SkinRenderHelper::ConstructBasicRenderObject(this, e);
+void Actor::LoadFromXML(XMLElement *e) {
+	// let's load all attributes~~ swing ~~
+
+
 }
 
-void SkinRenderObject::SetObject(XMLElement *e) {
-	SetBasicObject(e);
-}
+void Actor::SetCondition(const RString &str) { condition.Set(str); }
 
-void SkinRenderObject::SetCondition(const RString &str) { condition.Set(str); }
-
-#pragma endregion SKINRENDEROBJECT
-
-
-
-
-
-
-
-SkinUnknownObject::SkinUnknownObject(SkinRenderTree* owner) : SkinRenderObject(owner, ACTORTYPE::UNKNOWN) {}
+#pragma endregion
 
 
 
@@ -246,15 +221,15 @@ SkinUnknownObject::SkinUnknownObject(SkinRenderTree* owner) : SkinRenderObject(o
 
 
 #pragma region SKINGROUPOBJECT
-SkinGroupObject::SkinGroupObject(SkinRenderTree* owner)
-	: SkinRenderObject(owner, ACTORTYPE::GROUP)
+ActorFrame::ActorFrame(SkinRenderTree* owner)
+	: Actor(owner, ACTORTYPE::GROUP)
 {
 }
 
-SkinGroupObject::~SkinGroupObject() {
+ActorFrame::~ActorFrame() {
 }
 
-void SkinGroupObject::UpdateChilds() {
+void ActorFrame::UpdateChilds() {
 	// after pushing offset
 	// update all child object's properties
 	// (recursively)
@@ -265,7 +240,7 @@ void SkinGroupObject::UpdateChilds() {
 	rtree->PopRenderOffset();
 }
 
-void SkinGroupObject::SetObject(XMLElement *e) {
+void ActorFrame::SetObject(XMLElement *e) {
 	SetBasicObject(e);
 	// if dst count = 0, then add basic dst
 	if (dstcnt == 0) {
@@ -277,12 +252,12 @@ void SkinGroupObject::SetObject(XMLElement *e) {
 	}
 }
 
-void SkinGroupObject::Update() {
+void ActorFrame::Update() {
 	UpdateBasic();
 	if (drawable) UpdateChilds();
 }
 
-void SkinGroupObject::Render() {
+void ActorFrame::Render() {
 	// TODO: use SDL_RenderSetViewport
 	// recursively renders child element
 	if (!drawable) return;
@@ -291,73 +266,17 @@ void SkinGroupObject::Render() {
 	}
 }
 
-void SkinGroupObject::AddChild(SkinRenderObject *obj) {
+void ActorFrame::AddChild(Actor *obj) {
 	_childs.push_back(obj);
 }
 
-std::vector<SkinRenderObject*>::iterator
-SkinGroupObject::begin() { return _childs.begin(); }
+std::vector<Actor*>::iterator
+ActorFrame::begin() { return _childs.begin(); }
 
-std::vector<SkinRenderObject*>::iterator
-SkinGroupObject::end() { return _childs.end(); }
+std::vector<Actor*>::iterator
+ActorFrame::end() { return _childs.end(); }
 
-
-
-
-
-// 
-// TODO:
-// need to create ImageFrame object to process this correctly ...
-// don't do direct GL access in here, it's sooooo nasty
-//
-SkinCanvasObject::SkinCanvasObject(SkinRenderTree *owner)
-	: SkinGroupObject(owner) {
-#if 0
-	t = SDL_CreateTexture(Game::RENDERER,
-		SDL_PIXELFORMAT_RGBA8888,
-		SDL_TEXTUREACCESS_TARGET, rtree->GetWidth(), rtree->GetHeight());
-#endif
-}
-
-SkinCanvasObject::~SkinCanvasObject() { if (t) SDL_DestroyTexture(t); }
-
-void SkinCanvasObject::SetAsRenderTarget() {
-	if (!t) return;
-#if 0
-	_org = SDL_GetRenderTarget(Game::RENDERER);
-	SDL_SetRenderTarget(Game::RENDERER, t);
-#endif
-}
-
-void SkinCanvasObject::ResetRenderTarget() {
-	if (!t) return;
-	//SDL_SetRenderTarget(Game::RENDERER, _org);
-}
-
-void SkinCanvasObject::SetObject(XMLElement *e) {
-	SetBasicObject(e);
-	// set SRC
-	SkinRenderHelper::ConstructSRCFromElement(src, e);
-}
-
-void SkinCanvasObject::Render() {
-#if 0
-	// same method like ImageObject
-	if (!t) return;
-	if (!drawable) return;
-	// first draw childs recursively
-	SetAsRenderTarget();
-	for (auto it = begin(); it != end(); ++it) {
-		(*it)->Render();
-	}
-	ResetRenderTarget();
-	// then draw cached texture like image object
-	SkinRenderHelper::Render(t, &src, &dst_cached.frame,
-		dst_cached.dst->blend, dst_cached.dst->rotatecenter);
-#endif
-}
-
-#pragma endregion SKINGROUPOBJECT
+#pragma endregion 
 
 
 
@@ -365,7 +284,7 @@ void SkinCanvasObject::Render() {
 
 
 
-SkinImageObject::SkinImageObject(SkinRenderTree* owner, int type) : SkinRenderObject(owner, type) {
+SkinImageObject::SkinImageObject(SkinRenderTree* owner, int type) : Actor(owner, type) {
 	imgsrc = { 0, 0, 0, 0 };
 	img = 0;
 }
@@ -411,7 +330,7 @@ void SkinImageObject::Render() {
 
 
 SkinTextObject::SkinTextObject(SkinRenderTree* owner)
-	: SkinRenderObject(owner, ACTORTYPE::TEXT), fnt(0), v(0), align(0), editable(false) {}
+	: Actor(owner, ACTORTYPE::TEXT), fnt(0), v(0), align(0), editable(false) {}
 
 void SkinTextObject::SetFont(const char* resid) {
 	if (!resid || rtree->_fontkey.find(resid) == rtree->_fontkey.end()) {
@@ -635,7 +554,7 @@ SkinButtonObject::SkinButtonObject(SkinRenderTree* owner) : SkinImageObject(owne
 
 #pragma region SCRIPTOBJECT
 SkinScriptObject::SkinScriptObject(SkinRenderTree *t)
-	: SkinRenderObject(t, ACTORTYPE::SCRIPT), runoneveryframe(false), runtime(0) {}
+	: Actor(t, ACTORTYPE::SCRIPT), runoneveryframe(false), runtime(0) {}
 
 void SkinScriptObject::SetObject(XMLElement *e) {
 	if (e->Attribute("OnRender"))

@@ -138,7 +138,6 @@
     <ClInclude Include="game.h" />
     <ClInclude Include="gameplay.h" />
     <ClInclude Include="gamesetting.h" />
-    <ClInclude Include="handlerargs.h" />
     <ClInclude Include="Surface.h" />
     <ClInclude Include="luamanager.h" />
     <ClInclude Include="player.h" />

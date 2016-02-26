@@ -8,6 +8,7 @@
 
 #include <map>
 #include <vector>
+#include "Handler.h"
 #include "Surface.h"
 #include "audio.h"
 #include "timer.h"
@@ -15,6 +16,36 @@
 #include "font.h"
 
 using namespace std;
+
+
+
+
+
+
+// basic util
+
+struct Message {
+	RString name;
+};
+
+class Handler {
+public:
+	virtual void Receive(const Message& msg) = 0;
+};
+
+class HandlerAuto : public Handler {
+public:
+	HandlerAuto();
+	~HandlerAuto();
+	virtual void Receive(const Message& msg) = 0;
+};
+
+
+
+
+
+
+// pools
 
 class StringPool {
 private:
@@ -62,15 +93,14 @@ public:
 	void Clear();
 };
 
-typedef void (*_Handler)(void*);
 class HandlerPool {
 private:
-	std::map<RString, std::vector<_Handler>> _handlerpool;
+	std::map<RString, std::vector<Handler*>> _handlerpool;
 public:
 	bool IsExists(const RString &key);
-	_Handler Add(const RString &key, _Handler h);
-	bool Call(const RString &key, void* arg);
-	bool Remove(const RString &key, _Handler h);
+	bool Add(Handler* handler);
+	bool Call(const RString &name);
+	bool Remove(Handler* h);
 	void Clear();
 };
 

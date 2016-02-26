@@ -50,18 +50,18 @@ const char* DisplaySDLGlew::GetErrorStr() {
 	return (const char*)glewGetErrorString(glGetError());
 };
 
-Texture DisplaySDLGlew::CreateTexture(const Surface* surf) {
-	Texture tex;
-	glGenTextures(1, &tex.id);
+Texture* DisplaySDLGlew::CreateTexture(const Surface* surf) {
+	Texture* tex = new Texture();
+	glGenTextures(1, &tex->id);
 	if (surf) {
-		glBindTexture(GL_TEXTURE_2D, tex.id);
-		tex.width = surf->GetWidth();
-		tex.height = surf->GetHeight();
+		glBindTexture(GL_TEXTURE_2D, tex->id);
+		tex->width = surf->GetWidth();
+		tex->height = surf->GetHeight();
 		glTexImage2D(GL_TEXTURE_2D,
 			0,
 			GL_RGBA8,
-			tex.width,
-			tex.height,
+			tex->width,
+			tex->height,
 			0,
 			GL_RGBA,
 			GL_UNSIGNED_BYTE,
@@ -70,11 +70,11 @@ Texture DisplaySDLGlew::CreateTexture(const Surface* surf) {
 	return tex;
 }
 
-Texture DisplaySDLGlew::CreateEmptyTexture(int width, int height) {
-	Texture tex;
-	glGenTextures(1, &tex.id);
-	glBindTexture(GL_TEXTURE_2D, tex.id);
-	tex.width = width; tex.height = height;
+Texture* DisplaySDLGlew::CreateEmptyTexture(int width, int height) {
+	Texture* tex = new Texture();
+	glGenTextures(1, &tex->id);
+	glBindTexture(GL_TEXTURE_2D, tex->id);
+	tex->width = width; tex->height = height;
 	glTexImage2D(GL_TEXTURE_2D,
 		0,
 		GL_RGBA8,
@@ -95,8 +95,9 @@ void DisplaySDLGlew::UpdateTexture(Texture* tex, const Surface* surf, int x = 0,
 }
 
 void DisplaySDLGlew::DeleteTexture(Texture* tex) {
+	ASSERT(tex);
 	glDeleteTextures(1, &tex->id);
-	tex->id = 0;
+	delete tex;
 }
 
 

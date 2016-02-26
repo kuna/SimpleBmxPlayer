@@ -639,7 +639,9 @@ namespace {
 
 // utility macros
 #define ADDCHILD(base, name)\
-	(base)->LinkEndChild((base)->GetDocument()->NewElement(name))
+	((XMLElement*)(base)->LinkEndChild((base)->GetDocument()->NewElement(name)))
+#define ADDCHILDFRONT(base, name)\
+	((XMLElement*)(base)->InsertFirstChild((base)->GetDocument()->NewElement(name)))
 #define ADDTEXT(base, name, val)\
 	((XMLElement*)ADDCHILD(base, name))->SetText(val);
 
@@ -775,7 +777,8 @@ void _LR2SkinParser::SplitCSVLine(char *p, const char **args) {
 	}
 }
 
-/* a simple private macro for PLAYLANE (reset position) */
+/* a simple private macro for PLAYLANE (reset position) - DEPRECIATED */
+#if 0
 void MakeFrameRelative(int x, int y, XMLElement *frame) {
 	frame->SetAttribute("x", frame->IntAttribute("x") - x);
 	frame->SetAttribute("y", frame->IntAttribute("y") - y);
@@ -791,6 +794,7 @@ void MakeRelative(int x, int y, XMLElement *e) {
 		dst = e->NextSiblingElement("DST");
 	}
 }
+#endif
 
 /* *********************************************************
  * LR2 csv parsing start
@@ -874,6 +878,9 @@ bool _LR2SkinParser::IsMetadata(const char* cmd) {
 		return false;
 }
 
+/*
+ * about options or info that related to skin
+ */
 bool _LR2SkinParser::ProcessMetadata(const args_read_& args) {
 	if (CMD_IS("#CUSTOMOPTION")) {
 		XMLElement *option = FindElement(cur_e, "option", &s->skinlayout);
@@ -1116,6 +1123,197 @@ void _LR2SkinParser::ParseSkinMetricLine() {
 	currentline++;
 }
 
+_LR2SkinParser::OP _LR2SkinParser::ProcessSRC(const args_read_& args, tinyxml2::XMLElement *obj) {
+	OP srcop;	memset(&srcop, 0, sizeof(OP));
+	srcop.op[0] = INT(args[11]);
+	srcop.op[1] = INT(args[12]);
+	srcop.op[2] = INT(args[13]);
+	srcop.op[3] = INT(args[14]);
+	int resid = INT(args[2]);	// COMMENT: check out for pre-occupied resid
+	switch (resid) {
+	case 100:
+		obj->SetAttribute("file", "_stagefile");
+		break;
+	case 101:
+		obj->SetAttribute("file", "_backbmp");
+		break;
+	case 102:
+		obj->SetAttribute("file", "_banner");
+		break;
+	case 110:
+		obj->SetAttribute("file", "_black");
+		break;
+	case 111:
+		obj->SetAttribute("file", "_white");
+		break;
+	default:
+		obj->SetAttribute("file", resid);
+		break;
+	}
+	obj->SetAttribute("sx", INT(args[3]));
+	obj->SetAttribute("sy", INT(args[4]));
+	if (INT(args[5]) > 0) {
+		obj->SetAttribute("sw", INT(args[5]));
+		obj->SetAttribute("sh", INT(args[6]));
+	}
+	if (INT(args[7]) > 1 || INT(args[8]) > 1) {
+		obj->SetAttribute("divx", INT(args[7]));
+		obj->SetAttribute("divy", INT(args[8]));
+	}
+	if (INT(args[9]))
+		obj->SetAttribute("cycle", INT(args[9]));
+	int sop1 = 0, sop2 = 0, sop3 = 0, sop4 = 0;		// sop4 used in scratch rotation
+	// COMMENT: SRC timer is necessary?
+	if (INT(args[10]))
+		obj->SetAttribute("timer", TranslateTimer(INT(args[10])));
+	// COMMENT: SRC loop is necessary?
+	
+	// we just processed 1 line
+	currentline++;
+
+	return srcop;
+}
+
+_LR2SkinParser::OP _LR2SkinParser::ProcessDST(const args_read_& args, tinyxml2::XMLElement *obj) {
+	int looptime = 0, blend = 0, timer = 0, rotatecenter = -1, acc = 0;
+	OP dstop;	memset(&dstop, 0, sizeof(OP));
+	int time = 0;
+	XMLElement *dst = s->skinlayout.NewElement("OnScene");
+	{
+		int a_ = 255, r_ = 255, g_ = 255, b_ = 255;
+		int x_ = 0, y_ = 0, w_ = 0, h_ = 0;
+		int angle_ = 0;
+		obj->LinkEndChild(dst);
+		for (int nl = currentline; nl < line_total; nl++) {
+			args_read_ args = line_args_[nl].args__;
+			if (strcmp(args[0], "") == 0) continue;
+			if (CMD_IS("#ENDIF"))
+				continue;			// we can ignore #ENDIF command, maybe
+			if (!CMD_STARTSWITH("#DST_", 5))
+				break;
+			// if it's very first line (parse basic element)
+			if (rotatecenter < 0) {
+				looptime = INT(args[16]);
+				blend = INT(args[12]);
+				rotatecenter = INT(args[15]);
+				dstop.op[3] = timer = INT(args[17]);
+				acc = INT(args[7]);
+				dstop.op[0] = INT(args[18]);
+				dstop.op[1] = INT(args[19]);
+				dstop.op[2] = INT(args[20]);
+			}
+			/*
+			* frame attribute
+			* only add attribute if value is different from previous(default) one.
+			*/
+			time = atoi(args[2]);
+			ADDCHILD(dst, "time")->SetAttribute("v", time);
+			if (INT(args[3]) != x_) {
+				x_ = INT(args[3]);
+				ADDCHILD(dst, "x")->SetAttribute("v", x_);
+			}
+			if (INT(args[4]) != y_) {
+				y_ = INT(args[4]);
+				ADDCHILD(dst, "y")->SetAttribute("v", y_);
+			}
+			if (INT(args[5]) != w_) {
+				w_ = INT(args[5]);
+				ADDCHILD(dst, "w")->SetAttribute("v", w_);
+			}
+			if (INT(args[6]) != h_) {
+				h_ = INT(args[6]);
+				ADDCHILD(dst, "h")->SetAttribute("v", h_);
+			}
+			if (INT(args[8]) != a_) {
+				a_ = INT(args[8]);
+				ADDCHILD(dst, "a")->SetAttribute("v", a_);
+			}
+			if (INT(args[9]) != r_) {
+				r_ = INT(args[9]);
+				ADDCHILD(dst, "r")->SetAttribute("v", r_);
+			}
+			if (INT(args[10]) != g_) {
+				g_ = INT(args[10]);
+				ADDCHILD(dst, "g")->SetAttribute("v", g_);
+			}
+			if (INT(args[11]) != b_) {
+				b_ = INT(args[11]);
+				ADDCHILD(dst, "b")->SetAttribute("v", b_);
+			}
+			if (INT(args[14]) != angle_) {
+				angle_ = INT(args[14]);
+				ADDCHILD(dst, "angle")->SetAttribute("v", angle_);
+			}
+		}
+	}
+	// set common draw attribute
+	const char* handlername = TranslateTimer(timer);
+	if (handlername && *handlername) {
+		char buf[128] = "On";
+		strcat(buf, handlername);
+		dst->SetName(buf);
+	}
+
+	// acc, blend, rotatecenter, condition are MUST defined at the very first of the actions.
+	if (acc)
+		ADDCHILDFRONT(dst, "acc")->SetAttribute("v", acc);
+	if (blend > 1)
+		ADDCHILDFRONT(dst, "blend")->SetAttribute("v", blend);
+	if (rotatecenter >= 0)
+		ADDCHILDFRONT(dst, "center")->SetAttribute("v", rotatecenter);
+
+	// condition of DST means `display or not`, not using alpha or visible command.
+	ConditionAttribute cls;
+	const char *c;
+	c = dstop.op[0] ? TranslateOPs(dstop.op[0]) : 0;
+	if (c) cls.AddCondition(c);
+	c = dstop.op[1] ? TranslateOPs(dstop.op[1]) : 0;
+	if (c) cls.AddCondition(c);
+	c = dstop.op[2] ? TranslateOPs(dstop.op[2]) : 0;
+	if (c) cls.AddCondition(c);
+	if (cls.GetConditionNumber())
+		obj->SetAttribute("visible", cls.ToString());
+
+	// loop MUST be declared at the very last of the actions.
+	// and looptime should be different from last action time.
+	if (looptime >= 0 && looptime != time)
+		ADDCHILD(dst, "loop")->SetAttribute("v", looptime);
+
+	return dstop;
+}
+
+int GetDSTAttrFromObject(XMLElement *e, const char* name) {
+	for (XMLElement *c = e->FirstChildElement(); c; c = c->NextSiblingElement()) {
+		if (strnicmp(c->Name(), "On", 2) == 0) {
+			for (XMLElement *cmd = c->FirstChildElement(); cmd; cmd = cmd->NextSiblingElement()) {
+				if (stricmp(cmd->Name(), name) == 0) {
+					return cmd->IntAttribute("v");
+				}
+			}
+		}
+	}
+
+	// cannot find
+	return 0;
+}
+
+int GetSRCAttrFromObject(XMLElement *e, const char* name) {/*
+	for (XMLElement *c = e->FirstChildElement(); c; c = c->NextSiblingElement()) {
+		if (stricmp(c->Name(), "SRC") == 0) {
+			return c->IntAttribute(name);
+		}
+	}*/
+	return e->IntAttribute(name);
+
+	// cannot find
+	//return 0;
+}
+
+
+
+
+
+
 void _LR2SkinParser::ParseSkinCSVLine() {
 	// get current line's string & argument
 	args_read_ args;			// contains linebuffer's address
@@ -1182,59 +1380,22 @@ void _LR2SkinParser::ParseSkinCSVLine() {
 		cur_e->LinkEndChild(setoption);
 	}
 	else if (CMD_STARTSWITH("#SRC_", 4)){
-		// we parse #DST with #SRC.
-		// process SRC
+		// get ingeneral attributes first
+		int objidx = INT(args[2]);		// note index, etc ...
+		OP dstop, srcop;
+
+		// process SRC.
 		// SRC may have condition (attribute condition; normally not used)
 		XMLElement *obj;
 		obj = s->skinlayout.NewElement("sprite");
-		int resid = INT(args[2]);	// COMMENT: check out for pre-occupied resid
-		switch (resid) {
-		case 100:
-			obj->SetAttribute("resid", "_stagefile");
-			break;
-		case 101:
-			obj->SetAttribute("resid", "_backbmp");
-			break;
-		case 102:
-			obj->SetAttribute("resid", "_banner");
-			break;
-		case 110:
-			obj->SetAttribute("resid", "_black");
-			break;
-		case 111:
-			obj->SetAttribute("resid", "_white");
-			break;
-		default:
-			obj->SetAttribute("resid", resid);
-			break;
-		}
-		obj->SetAttribute("x", INT(args[3]));
-		obj->SetAttribute("y", INT(args[4]));
-		if (INT(args[5]) > 0) {
-			obj->SetAttribute("w", INT(args[5]));
-			obj->SetAttribute("h", INT(args[6]));
-		}
-		if (INT(args[7]) > 1 || INT(args[8]) > 1) {
-			obj->SetAttribute("divx", INT(args[7]));
-			obj->SetAttribute("divy", INT(args[8]));
-		}
-		if (INT(args[9]))
-			obj->SetAttribute("cycle", INT(args[9]));
-		int sop1 = 0, sop2 = 0, sop3 = 0, sop4 = 0;		// sop4 used in scratch rotation
-		if (INT(args[10]))
-			obj->SetAttribute("timer", TranslateTimer(INT(args[10])));
-		sop1 = INT(args[11]);
-		sop2 = INT(args[12]);
-		sop3 = INT(args[13]);
-		sop4 = INT(args[14]);
+		srcop = ProcessSRC(args, obj);
 
 		/*
 		 * process NOT-general-objects first
 		 * these objects doesn't have #DST object directly
-		 * (bad-syntax >:( )
 		 */
 		// check for play area
-		int isPlayElement = ProcessLane(args, obj, resid);
+		int isPlayElement = ProcessLane(args, obj, objidx);
 		if (isPlayElement) {
 			currentline += isPlayElement;
 			return;
@@ -1246,127 +1407,33 @@ void _LR2SkinParser::ParseSkinCSVLine() {
 		 * we have to make object now to parse #DST
 		 * and, if unable to figure out what this element is, it'll be considered as Image object.
 		 */
+		dstop = ProcessDST(args, obj);
 
-		int looptime = 0, blend = 0, timer = 0, rotatecenter = -1, acc = 0;
-		int op1 = 0, op2 = 0, op3 = 0;
-		XMLElement *dst = s->skinlayout.NewElement("DST");
-		{
-			int a_ = 255, r_ = 255, g_ = 255, b_ = 255;
-			int x_ = 0, y_ = 0, w_ = 0, h_ = 0;
-			int angle_ = 0;
-			obj->LinkEndChild(dst);
-			for (int nl = currentline + 1; nl < line_total; nl++) {
-				args_read_ args = line_args_[nl].args__;
-				if (strcmp(args[0], "") == 0) continue;
-				if (CMD_IS("#ENDIF"))
-					continue;			// we can ignore #ENDIF command, maybe
-				if (!CMD_STARTSWITH("#DST_", 5))
-					break;
-				// if it's very first line (parse basic element)
-				if (rotatecenter < 0) {
-					looptime = INT(args[16]);
-					blend = INT(args[12]);
-					rotatecenter = INT(args[15]);
-					timer = INT(args[17]);
-					acc = INT(args[7]);
-					if (args[18]) op1 = INT(args[18]);
-					if (args[19]) op2 = INT(args[19]);
-					if (args[20]) op3 = INT(args[20]);
-				}
-				XMLElement *frame = s->skinlayout.NewElement("frame");
-				/*
-				 * frame attribute
-				 * only add attribute if value is different from previous(default) one.
-				 */
-				frame->SetAttribute("time", args[2]);
-				if (INT(args[3]) != x_) {
-					x_ = INT(args[3]);
-					frame->SetAttribute("x", y_);
-				}
-				if (INT(args[4]) != y_) {
-					y_ = INT(args[4]);
-					frame->SetAttribute("x", y_);
-				}
-				if (INT(args[5]) != w_) {
-					w_ = INT(args[5]);
-					frame->SetAttribute("w", w_);
-				}
-				if (INT(args[6]) != h_) {
-					h_ = INT(args[6]);
-					frame->SetAttribute("h", h_);
-				}
-				if (INT(args[8]) != a_) {
-					a_ = INT(args[8]);
-					frame->SetAttribute("a", a_);
-				}
-				if (INT(args[9]) != r_) {
-					r_ = INT(args[9]);
-					frame->SetAttribute("r", r_);
-				}
-				if (INT(args[10]) != g_) {
-					g_ = INT(args[10]);
-					frame->SetAttribute("g", g_);
-				}
-				if (INT(args[11]) != b_) {
-					b_ = INT(args[11]);
-					frame->SetAttribute("b", b_);
-				}
-				if (INT(args[14]) != angle_) {
-					angle_ = INT(args[14]);
-					frame->SetAttribute("angle", angle_);
-				}
-				/*
-				 * end frame attribute
-				 */
-				dst->LinkEndChild(frame);
-			}
-		}
-		// set common draw attribute
-		dst->SetAttribute("acc", acc);
-		if (blend > 1)
-			dst->SetAttribute("blend", blend);
-		if (looptime >= 0)
-			dst->SetAttribute("loop", looptime);
-		if (rotatecenter > 0)
-			dst->SetAttribute(
-			"rotatecenter", rotatecenter);
-		if (TranslateTimer(timer))
-			dst->SetAttribute("timer", TranslateTimer(timer));
-		ConditionAttribute cls;
-		const char *c;
-		c = op1?TranslateOPs(op1):0;
-		if (c) cls.AddCondition(c);
-		c = op2?TranslateOPs(op2):0;
-		if (c) cls.AddCondition(c);
-		c = op3?TranslateOPs(op3):0;
-		if (c) cls.AddCondition(c);
-		if (cls.GetConditionNumber())
-			obj->SetAttribute("condition", cls.ToString());
 
 		/*
-		* If object is select screen panel dependent(timer/op code 2x),
-		* then add object to there (ease of control)
-		* TODO: take care of 3x objects (OnPanelClose)
-		*/
-#define CHECK_PANEL(v) (op1 == (v) || op2 == (v) || op3 == (v) || timer == (v))
-		if (CHECK_PANEL(21))
-			FindElementWithAttribute(cur_e, "canvas", "id", "panel1", &s->skinlayout)->LinkEndChild(obj);
-		else if (CHECK_PANEL(22))
-			FindElementWithAttribute(cur_e, "canvas", "id", "panel2", &s->skinlayout)->LinkEndChild(obj);
-		else if (CHECK_PANEL(23))
-			FindElementWithAttribute(cur_e, "canvas", "id", "panel3", &s->skinlayout)->LinkEndChild(obj);
-		else if (CHECK_PANEL(24))
-			FindElementWithAttribute(cur_e, "canvas", "id", "panel4", &s->skinlayout)->LinkEndChild(obj);
-		else if (CHECK_PANEL(25))
-			FindElementWithAttribute(cur_e, "canvas", "id", "panel5", &s->skinlayout)->LinkEndChild(obj);
-		else if (CHECK_PANEL(26))
-			FindElementWithAttribute(cur_e, "canvas", "id", "panel6", &s->skinlayout)->LinkEndChild(obj);
-		else if (CHECK_PANEL(27))
-			FindElementWithAttribute(cur_e, "canvas", "id", "panel7", &s->skinlayout)->LinkEndChild(obj);
-		else if (CHECK_PANEL(28))
-			FindElementWithAttribute(cur_e, "canvas", "id", "panel8", &s->skinlayout)->LinkEndChild(obj);
-		else if (CHECK_PANEL(29))
-			FindElementWithAttribute(cur_e, "canvas", "id", "panel9", &s->skinlayout)->LinkEndChild(obj);
+		 * just add each panel to frame
+		 * for ease of skin coding ...
+		 * (op4 for dst is `timer` code, in fact.)
+		 */
+#define CHECK_PANEL(v) (dstop.op[3] == (v))		// dstop.op[0] == (v) || dstop.op[1] == (v) || dstop.op[2] == (v) || 
+		if (CHECK_PANEL(21) || CHECK_PANEL(31))
+			FindElementWithAttribute(cur_e, "frame", "id", "panel1", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(22) || CHECK_PANEL(32))
+			FindElementWithAttribute(cur_e, "frame", "id", "panel2", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(23) || CHECK_PANEL(33))
+			FindElementWithAttribute(cur_e, "frame", "id", "panel3", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(24) || CHECK_PANEL(34))
+			FindElementWithAttribute(cur_e, "frame", "id", "panel4", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(25) || CHECK_PANEL(35))
+			FindElementWithAttribute(cur_e, "frame", "id", "panel5", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(26) || CHECK_PANEL(36))
+			FindElementWithAttribute(cur_e, "frame", "id", "panel6", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(27) || CHECK_PANEL(37))
+			FindElementWithAttribute(cur_e, "frame", "id", "panel7", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(28) || CHECK_PANEL(38))
+			FindElementWithAttribute(cur_e, "frame", "id", "panel8", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(29) || CHECK_PANEL(39))
+			FindElementWithAttribute(cur_e, "frame", "id", "panel9", &s->skinlayout)->LinkEndChild(obj);
 		else
 			cur_e->LinkEndChild(obj);
 		
@@ -1393,33 +1460,35 @@ void _LR2SkinParser::ParseSkinCSVLine() {
 		 * under these are general individual object
 		 */
 		if (OBJTYPE_IS("IMAGE")) {
-			// nothing to do (general object)
-			// but it's not in some special OP/Timer code
-			// - include BOMB/LANE effect into PLAYLANE object
-			// (we may want to include BOMB/OnBeat, but it's programs's limit. Can't do it now.)
-			// (do it yourself)
-			if (!(obj->IntAttribute("w") < 100 && obj->IntAttribute("h") < 100)) {
-				if (//(timer >= 50 && timer < 60) ||
+			/*
+			 * nothing to do (general object) basically,
+			 * but some special objects (BOMB/HOLD/ONBEAT) may need special care.
+			 */
+			int timer = dstop.op[3];
+			if (!(GetDSTAttrFromObject(obj, "w") < 100 && GetDSTAttrFromObject(obj, "h") < 100)) {
+				if ((timer >= 50 && timer < 60) ||
 					(timer >= 70 && timer < 80) ||
 					(timer >= 100 && timer < 110) ||
 					(timer >= 120 && timer < 130)) {
 					// P1
-					XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", 0, &s->skinlayout);
-					MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
-					playarea->LinkEndChild(obj);
+					XMLElement *notefield = FindElementWithAttribute(cur_e, "notefield", "side", 0, &s->skinlayout);
+					notefield->LinkEndChild(obj);
+					// relocate notefield
+					cur_e->InsertEndChild(notefield);
 				}
-				else if (//(timer >= 60 && timer < 70) ||
+				else if ((timer >= 60 && timer < 70) ||
 					(timer >= 80 && timer < 90) ||
 					(timer >= 110 && timer < 120) ||
 					(timer >= 130 && timer < 140)) {
 					// P2
-					XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", 1, &s->skinlayout);
-					MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
-					playarea->LinkEndChild(obj);
+					XMLElement *notefield = FindElementWithAttribute(cur_e, "notefield", "side", 1, &s->skinlayout);
+					notefield->LinkEndChild(obj);
+					// relocate notefield
+					cur_e->InsertEndChild(notefield);
 				}
 			}
 			// if sop4 == 1, then change object to scratch
-			if (sop4) {
+			if (srcop.op[3]) {
 				obj->SetName("scratch");
 			}
 			// BOMB SRC effect(SRC loop) MUST TURN OFF; don't loop.
@@ -1432,19 +1501,19 @@ void _LR2SkinParser::ParseSkinCSVLine() {
 			// set bga side & remove redundant tag
 			// (LR2 doesn't support 'real' battle mode, so no side attribute.)
 			obj->SetAttribute("side", 0);
-			obj->DeleteAttribute("resid");
+			obj->DeleteAttribute("file");
 		}
 		else if (OBJTYPE_IS("NUMBER")) {
 			obj->SetName("number");
-			ProcessNumber(obj, sop1, sop2, sop3);
+			ProcessNumber(obj, srcop.op[0], srcop.op[1], srcop.op[2]);
 		}
 		else if (OBJTYPE_IS("SLIDER")) {
 			// change tag to slider and add attr
 			obj->SetName("slider");
-			obj->SetAttribute("direction", sop1);
-			obj->SetAttribute("range", sop2);
-			if (TranslateSlider(sop3))
-				obj->SetAttribute("value", TranslateSlider(sop3));
+			obj->SetAttribute("direction", srcop.op[0]);
+			obj->SetAttribute("range", srcop.op[1]);
+			if (TranslateSlider(srcop.op[2]))
+				obj->SetAttribute("value", TranslateSlider(srcop.op[2]));
 			//obj->SetAttribute("range", sop2); - disable option is ignored
 		}
 		else if (OBJTYPE_IS("TEXT")) {
@@ -1464,9 +1533,9 @@ void _LR2SkinParser::ParseSkinCSVLine() {
 		}
 		else if (OBJTYPE_IS("BARGRAPH")) {
 			obj->SetName("graph");
-			if (TranslateGraph(sop1))
-				obj->SetAttribute("value", TranslateGraph(sop1));
-			obj->SetAttribute("direction", sop2);
+			if (TranslateGraph(srcop.op[0]))
+				obj->SetAttribute("value", TranslateGraph(srcop.op[0]));
+			obj->SetAttribute("direction", srcop.op[1]);
 		}
 		else if (OBJTYPE_IS("BUTTON")) {
 			// TODO: onclick event
@@ -1477,18 +1546,18 @@ void _LR2SkinParser::ParseSkinCSVLine() {
 		 */
 		else if (OBJTYPE_IS("GROOVEGAUGE")) {
 			int side = INT(args[1]);
-			int addx = sop1;
-			int addy = sop2;
+			int addx = srcop.op[0];
+			int addy = srcop.op[1];
 			obj->SetAttribute("side", side);
 			obj->SetAttribute("addx", addx);
 			obj->SetAttribute("addy", addy);
 			// process SRC and make new SRC elements
-			int x = obj->IntAttribute("x");
-			int y = obj->IntAttribute("y");
-			int w = obj->IntAttribute("w");
-			int h = obj->IntAttribute("h");
-			int divx = obj->IntAttribute("divx");
-			int divy = obj->IntAttribute("divy");
+			int x = GetDSTAttrFromObject(obj, "x");
+			int y = GetDSTAttrFromObject(obj, "y");
+			int w = GetDSTAttrFromObject(obj, "w");
+			int h = GetDSTAttrFromObject(obj, "h");
+			int divx = GetSRCAttrFromObject(obj, "divy");
+			int divy = GetSRCAttrFromObject(obj, "divx");
 			int c = divx * divy;
 			int dw = w / divx;
 			int dh = h / divy;
@@ -1544,26 +1613,23 @@ void _LR2SkinParser::ParseSkinCSVLine() {
 		else if (OBJTYPE_IS("JUDGELINE")) {
 			obj->SetName("judgeline");
 			XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", objectid, &s->skinlayout);
-			MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
 			playarea->LinkEndChild(obj);
 		}
 		else if (OBJTYPE_IS("LINE")) {
 			obj->SetName("line");
 			XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", objectid, &s->skinlayout);
-			MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
 			playarea->LinkEndChild(obj);
 		}
 		else if (OBJTYPE_IS("ONMOUSE")) {
 			// depreciated/ignore
-			// TODO: support this by SRC_HOVER tag.
+			// TODO: support this by SRC_HOVER tag?
 			printf("#XXX_ONMOUSE command is depreciated, ignore. (%dL) \n", currentline);
 		}
 		else {
 			printf("Unknown General Object (%s), consider as IMAGE. (%dL)\n", args[0] + 5, currentline);
 		}
 
-		// return new line
-		currentline+=1;
+		// we already processed line in SRC/DST, so don't do anything in here
 		return;
 	}
 	/*
@@ -1588,15 +1654,17 @@ void _LR2SkinParser::ParseSkinCSVLine() {
 	}
 	/*
 	 * PLAY part 
+	 * use notefield for ease of coding & lift supporting.
 	 */
 	else if (CMD_STARTSWITH("#DST_NOTE", 9)) {
 		int objectid = INT(args[1]);
 		XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "note", "index", objectid, &s->skinlayout);
-		lane->SetAttribute("x", INT(args[3]) - playarea->IntAttribute("x"));
-		lane->SetAttribute("y", INT(args[4]) - playarea->IntAttribute("y"));
-		lane->SetAttribute("w", INT(args[5]));
-		lane->SetAttribute("h", INT(args[6]));
+		XMLElement *note = FindElementWithAttribute(playarea, "note", "index", objectid, &s->skinlayout);
+		// COMMENT: we should make it in OnInit(), but I think supporting this method seems okay.
+		note->SetAttribute("x", INT(args[3]) - playarea->IntAttribute("x"));
+		note->SetAttribute("y", INT(args[4]) - playarea->IntAttribute("y"));
+		note->SetAttribute("w", INT(args[5]));
+		note->SetAttribute("h", INT(args[6]));
 	}
 	/*
 	 * etc
@@ -1663,8 +1731,8 @@ int _LR2SkinParser::ProcessLane(const args_read_& args, XMLElement *src, int res
 #define SETNOTE(name)\
 	XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", objectid / 10, &s->skinlayout);\
 	XMLElement *lane = FindElementWithAttribute(playarea, "note", "index", objectid, &s->skinlayout);\
-	lane->SetAttribute("resid", src->Attribute("resid"));\
-	src->DeleteAttribute("resid");\
+	lane->SetAttribute("file", src->Attribute("file"));\
+	src->DeleteAttribute("file");\
 	src->SetName(name);\
 	lane->LinkEndChild(src);\
 	return 1;
@@ -1712,12 +1780,6 @@ int _LR2SkinParser::ProcessLane(const args_read_& args, XMLElement *src, int res
 				playarea->SetAttribute("y", y);
 				playarea->SetAttribute("w", w);
 				playarea->SetAttribute("h", h);
-				XMLElement *dst = FindElement(playarea, "DST", &s->skinlayout);
-				XMLElement *frame = FindElement(dst, "frame", &s->skinlayout);
-				frame->SetAttribute("x", x);
-				frame->SetAttribute("y", y);
-				frame->SetAttribute("w", w);
-				frame->SetAttribute("h", h);
 				break;
 			}
 		}
@@ -1731,7 +1793,7 @@ int _LR2SkinParser::ProcessLane(const args_read_& args, XMLElement *src, int res
 
 std::string _getcomboconditionstring(int player, int level) {
 	char buf[256];
-	sprintf(buf, "OnP%dJudge", player);
+	sprintf(buf, "P%d", player);
 
 	switch (level) {
 	case 0:
@@ -1769,50 +1831,44 @@ int _LR2SkinParser::ProcessCombo(const args_read_& args, XMLElement *obj) {
 
 #define GETCOMBOOBJ(side)\
 	std::string cond = _getcomboconditionstring(side, objectid);\
-	XMLElement *playcombo = FindElementWithAttribute(cur_e, "combo", "condition", cond.c_str(), &s->skinlayout);
+	XMLElement *playcombo = FindElementWithAttribute(cur_e, "judge", "visible", cond.c_str(), &s->skinlayout);
+
+	/*
+	 * only judge object has information about pos
+	 * (combo object has relative pos to judge object)
+	 */
 	if (OBJTYPE_IS("NOWJUDGE_1P")) {
-		GETCOMBOOBJ(1);
-		obj->SetName("sprite");
-		playcombo->LinkEndChild(obj);
-		__comboy = obj->FirstChildElement("DST")->FirstChildElement("frame")->IntAttribute("y");
-		__combox = obj->FirstChildElement("DST")->FirstChildElement("frame")->IntAttribute("x");
+		std::string cond = _getcomboconditionstring(0, objectid);
+		obj->SetName("judge");
+		obj->SetAttribute("visible", cond.c_str());
+		obj->SetAttribute("judge", objectid);
+		obj->SetAttribute("side", 0);
+		cur_e->LinkEndChild(obj);
 		return 1;
 	}
 	else if (OBJTYPE_IS("NOWCOMBO_1P")) {
-		GETCOMBOOBJ(1);
+		GETCOMBOOBJ(0);
 		obj->SetName("number");
 		ProcessNumber(obj, 0, 0, 0);
 		obj->SetAttribute("value", "P1Combo");
 		obj->SetAttribute("align", 1);
-		for (XMLElement *e = obj->FirstChildElement("DST")->FirstChildElement("frame"); e;) {
-			e->SetAttribute("y", __comboy);
-			e->SetAttribute("x", e->IntAttribute("x") + __combox);
-			e->SetAttribute("w", 0);
-			e = e->NextSiblingElement("frame");
-		}
 		playcombo->LinkEndChild(obj);
 		return 1;
 	}
 	else if (OBJTYPE_IS("NOWJUDGE_2P")) {
-		GETCOMBOOBJ(2);
-		obj->SetName("sprite");
-		playcombo->LinkEndChild(obj);
-		__comboy = obj->FirstChildElement("DST")->FirstChildElement("frame")->IntAttribute("y");
-		__combox = obj->FirstChildElement("DST")->FirstChildElement("frame")->IntAttribute("x");
+		std::string cond = _getcomboconditionstring(1, objectid);
+		obj->SetName("judge");
+		obj->SetAttribute("visible", cond.c_str());
+		obj->SetAttribute("judge", objectid);
+		obj->SetAttribute("side", 1);
 		return 1;
 	}
 	else if (OBJTYPE_IS("NOWCOMBO_2P")) {
-		GETCOMBOOBJ(2);
+		GETCOMBOOBJ(1);
 		obj->SetName("number");
 		ProcessNumber(obj, 0, 0, 0);
 		obj->SetAttribute("value", "P2Combo");
 		obj->SetAttribute("align", 1);
-		for (XMLElement *e = obj->FirstChildElement("DST")->FirstChildElement("frame"); e;) {
-			e->SetAttribute("y", __comboy);
-			e->SetAttribute("x", e->IntAttribute("x") + __combox);
-			e->SetAttribute("w", 0);
-			e = e->NextSiblingElement("frame");
-		}
 		playcombo->LinkEndChild(obj);
 		return 1;
 	}
@@ -1881,33 +1937,38 @@ int _LR2SkinParser::ProcessSelectBar(const args_read_& args, XMLElement *obj) {
 	return 0;
 }
 
+/*
+ * it's not firmly decided yet ...
+ */
 int _LR2SkinParser::ProcessSelectBar_DST(const args_read_& args) {
 	int objectid = INT(args[1]);
 #define CMD_IS(v) (strcmp(args[0], (v)) == 0)
 	if (CMD_IS("#DST_BAR_BODY_ON")) {
-		XMLElement *selectmenu = FindElement(cur_e, "selectmenu", &s->skinlayout);
-		XMLElement *position = FindElement(selectmenu, "position", &s->skinlayout);
-		XMLElement *bodyoff = FindElement(position, "bar");
-		if (bodyoff) {
-			/*
-			* DST_SELECTED: only have delta_x, delta_y value
-			*/
-			XMLElement *frame = FindElement(bodyoff, "frame");
-			position->SetAttribute("delta_x", INT(args[3]) - frame->IntAttribute("x"));
-		}
+		XMLElement *list = FindElement(cur_e, "songlist", &s->skinlayout);
+		XMLElement *bar = FindElementWithAttribute(list, "bar", "index", INT(args[1]), &s->skinlayout);
+		XMLElement *dst = FindElement(cur_e, "OnFocus", &s->skinlayout);
+		ADDCHILD(dst, "time")->SetAttribute("v", INT(args[2]));
+		ADDCHILD(dst, "x")->SetAttribute("v", INT(args[3]));
+		ADDCHILD(dst, "y")->SetAttribute("v", INT(args[4]));
+		ADDCHILD(dst, "w")->SetAttribute("v", INT(args[5]));
+		ADDCHILD(dst, "h")->SetAttribute("v", INT(args[6]));
+		ADDCHILD(dst, "a")->SetAttribute("v", INT(args[8]));
 		return 1;
 	}
 	else if (CMD_IS("#DST_BAR_BODY_OFF")) {
-		XMLElement *selectmenu = FindElement(cur_e, "selectmenu", &s->skinlayout);
-		XMLElement *position = FindElement(selectmenu, "position", &s->skinlayout);
-		XMLElement *bodyoff = FindElementWithAttribute(position, "bar", "index", INT(args[1]), &s->skinlayout);
-		XMLElement *frame = s->skinlayout.NewElement("frame");
-		frame->SetAttribute("time", INT(args[2]));
-		frame->SetAttribute("x", INT(args[3]));
-		frame->SetAttribute("y", INT(args[4]));
-		frame->SetAttribute("w", INT(args[5]));
-		frame->SetAttribute("h", INT(args[6]));
-		bodyoff->LinkEndChild(frame);
+		XMLElement *list = FindElement(cur_e, "songlist", &s->skinlayout);
+		XMLElement *bar = FindElementWithAttribute(list, "bar", "index", INT(args[1]), &s->skinlayout);
+		XMLElement *dst = FindElement(cur_e, "OnInit", &s->skinlayout);
+		ADDCHILD(dst, "time")->SetAttribute("v", INT(args[2]));
+		ADDCHILD(dst, "x")->SetAttribute("v", INT(args[3]));
+		ADDCHILD(dst, "y")->SetAttribute("v", INT(args[4]));
+		ADDCHILD(dst, "w")->SetAttribute("v", INT(args[5]));
+		ADDCHILD(dst, "h")->SetAttribute("v", INT(args[6]));
+		ADDCHILD(dst, "a")->SetAttribute("v", INT(args[8]));
+		// TODO: a, r, g, b, angle
+		// TODO: set first attribute: acc, center, ...
+		// TODO: add func like DST
+		// TODO: compare with previous one?
 		return 1;
 	}
 	else {
@@ -1945,7 +2006,7 @@ void _LR2SkinParser::ConvertToTextureFont(XMLElement *obj) {
 	 */
 	int tfont_idx;
 	tfont_idx = GenerateTexturefontString(obj);
-	obj->SetAttribute("resid", tfont_idx);
+	obj->SetAttribute("file", tfont_idx);
 	/*
 	 * Processed little differently if it's 24mode.
 	 * only for LR2, LEGACY attribute.
@@ -1989,7 +2050,7 @@ int _LR2SkinParser::GenerateTexturefontString(XMLElement *obj) {
 
 	// get image file path from resource
 	XMLElement *resource = s->skinlayout.FirstChildElement("skin");
-	XMLElement *img = FindElementWithAttribute(resource, "image", "name", obj->Attribute("resid"));
+	XMLElement *img = FindElementWithAttribute(resource, "image", "name", obj->Attribute("file"));
 	// create font data
 	SkinTextureFont tfont;
 	tfont.AddImageSrc(img->Attribute("path"));

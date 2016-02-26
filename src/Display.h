@@ -58,8 +58,8 @@ public:
 	virtual const char* GetInfo() = 0;
 	virtual int GetErrorCode() = 0;
 	virtual const char* GetErrorStr() = 0;
-	virtual Display::Texture CreateTexture(const Surface* surf) = 0;
-	virtual Display::Texture CreateEmptyTexture(int width, int height) = 0;
+	virtual Display::Texture* CreateTexture(const Surface* surf) = 0;
+	virtual Display::Texture* CreateEmptyTexture(int width, int height) = 0;
 	virtual void UpdateTexture(Display::Texture* tex, const Surface* surf, int x = 0, int y = 0) = 0;
 	virtual void DeleteTexture(Display::Texture* tex) = 0;
 
@@ -141,8 +141,8 @@ public:
 	virtual const char* GetInfo();
 	virtual int GetErrorCode();
 	virtual const char* GetErrorStr();
-	virtual Display::Texture CreateTexture(const Surface* surf);
-	virtual Display::Texture CreateEmptyTexture(int width, int height);
+	virtual Display::Texture* CreateTexture(const Surface* surf);
+	virtual Display::Texture* CreateEmptyTexture(int width, int height);
 	virtual void UpdateTexture(Display::Texture* tex, const Surface* surf, int x = 0, int y = 0);
 	virtual void DeleteTexture(Display::Texture* tex);
 

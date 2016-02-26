@@ -124,10 +124,22 @@ function LoadObject( path, ... )
 	return t(...)
 end
 
--- DST - make DST command to function.
--- just for convenience.
--- COMMENT - this function is declared at program code.
+-- DST - make DST command to function. (convinence function)
+-- usage: DST.time(0).x(0).time(100).x(100)
+--        => { {'time', 0}, {'x', 0}, {'time', 100}, {'x', 0} }
 
+DST = {}
+setmetatable( DST, {
+	__index = function ( self, attr )
+		-- returns a simple table including self
+		return function (...)
+			t = {...}
+			table.insert(t, 1, attr)
+			table.insert(self, t)
+			return self
+		end
+	end
+})
 
 
 -- end of common.lua

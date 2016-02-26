@@ -118,27 +118,6 @@ namespace {
 		// ingenerals
 		"bga", "groovegauge", "judgeline", "note", "scratch", "line",
 	};
-	const char* srctags[TAGMAXCOUNT] = {
-		"SRC_NOTE",
-		"SRC_LN_START",
-		"SRC_LN_BODY",
-		"SRC_LN_END",
-		"SRC_MINE",
-		"SRC_AUTO_NOTE",
-		"SRC_AUTO_LN_START",
-		"SRC_AUTO_LN_BODY",
-		"SRC_AUTO_LN_END",
-		"SRC_AUTO_MINE",
-		"SRC_GROOVE_ACTIVE",
-		"SRC_GROOVE_INACTIVE",
-		"SRC_HARD_ACTIVE",
-		"SRC_HARD_INACTIVE",
-		"SRC_EX_ACTIVE",
-		"SRC_EX_INACTIVE",
-	};
-	const char* dsttags[TAGMAXCOUNT] = {
-		"DST",
-	};
 	const char* srcattr[TAGMAXCOUNT] = {
 		// SRC supports only general attributes
 		// so filter it in here
@@ -186,6 +165,7 @@ void XmlToLuaConverter::AppendSRC(const XMLElement *e) {
 		// skip attribute if its not general attribute
 		if (!CheckTagGroup(name, srcattr))
 			continue;
+		// COMMENT is timer depreciated option? ... don't know well. include this in class?
 		if (strcmp(name, "timer") == 0)
 			body.append(ssprintf("%s=\"%s\",", name, attr->Value()));
 		else
@@ -197,21 +177,11 @@ void XmlToLuaConverter::AppendSRC(const XMLElement *e) {
 // process single DST
 void XmlToLuaConverter::AppendDST(const XMLElement *dst) {
 	if (!dst) return;
-	// timer is get changed into event handler
-	const char *timer = dst->Attribute("timer");
-	if (!timer)
-		timer = "Init";
+	// add dst declaration
 	AppendIndentBody(indent);
-	body.append(ssprintf("On%s=DST{\n", timer));
+	body.append(ssprintf("%s=DST.\n", dst->Name()));
 	indent++;
-	// add basic dst attribute (loop, acc, rotatecenter, blend)
-	if (dst->Attribute("acc"))
-		AppendBody(ssprintf("acc=%s,", dst->Attribute("acc")));
-	if (dst->Attribute("rotatecenter"))
-		AppendBody(ssprintf("rotatecenter=%s,", dst->Attribute("acc")));
-	if (dst->Attribute("blend"))
-		AppendBody(ssprintf("blend=%s,", dst->Attribute("acc")));
-	// add dst frames
+	// add dst actions
 	for (const XMLElement *f = dst->FirstChildElement();
 		f;
 		f = f->NextSiblingElement())
@@ -222,17 +192,13 @@ void XmlToLuaConverter::AppendDST(const XMLElement *dst) {
 			attr = attr->Next())
 		{
 			const char *aname = attr->Name();
-			body.append(ssprintf("%s=%s,", aname, attr->Value()));
+			body.append(ssprintf("%s.(%s)", aname, attr->Value()));
 		}
 		body.push_back('\n');
 	}
 	body.pop_back();
-	// add loop on the last
-	if (dst->Attribute("loop")) {
-		body.append(ssprintf("loop=%s", dst->Attribute("loop")));
-	}
 	indent--;
-	body.append("};\n");
+	body.append(";\n");
 }
 void XmlToLuaConverter::AppendComment(const XMLComment *cmt) {
 	AppendIndentBody(indent);
@@ -255,24 +221,16 @@ void XmlToLuaConverter::AppendObject(const XMLElement *e, const char* name) {
 	AppendIndentBody(indent);
 	body.append(ssprintf("Def.%s{\n", name));
 	indent++;
-	if (e->Attribute("resid"))
-		AppendBody(ssprintf("file=\"%s\";", e->Attribute("resid")));
-	// process some object-specific attributes
-	const char *attrval;
-	if (attrval = e->Attribute("condition"))
-		AppendBody(ssprintf("class=\"%s\";", attrval));
-	if (attrval = e->Attribute("value"))
-		AppendBody(ssprintf("valuekey=\"%s\";", attrval));
-	if (attrval = e->Attribute("align"))
-		AppendBody(ssprintf("align=%s;", attrval));
-	if (attrval = e->Attribute("edit"))
-		AppendBody(ssprintf("edit=%s;", attrval));
-	if (attrval = e->Attribute("length"))
-		AppendBody(ssprintf("length=%s;", attrval));
-	if (attrval = e->Attribute("range"))
-		AppendBody(ssprintf("range=%s;", attrval));
-	if (attrval = e->Attribute("direction"))
-		AppendBody(ssprintf("direction=%s;", attrval));
+	// process general(static) attributes (file, key, value, class, ...)
+	for (auto attr = e->FirstAttribute(); attr; attr = attr->Next()) {
+		int ival = 0;
+		if (attr->QueryIntValue(&ival)) {
+			AppendBody(ssprintf("%s=%s;", attr->Name(), ival));
+		}
+		else {
+			AppendBody(ssprintf("%s=\"%s\";", attr->Name(), attr->Value()));
+		}
+	}
 	// add SRC if this tag isn't group object
 	if (!CheckTagGroup(e->Name(), nosrctags))
 		AppendSRC(e);
@@ -284,16 +242,14 @@ void XmlToLuaConverter::AppendObject(const XMLElement *e, const char* name) {
 }
 void XmlToLuaConverter::AppendElement(const XMLElement *e) {
 	const char* name = e->Name();
-	if (strcmp(name, "skin") == 0) {
-		Parse(e->FirstChild());
-	}
-	// in case of include
-	//
-	else if (strcmp(name, "include") == 0) {
+	/*
+	 * in case of special objects
+	 */
+	// cmd - include
+	if (strcmp(name, "include") == 0) {
 		AppendBody(ssprintf("LoadObject(\"%s\");", e->Attribute("path")));
 	}
-	// in case of resource,
-	// parse it and register it as cached resource
+	// cache resource path/attribute - image, font, texturefont
 	else if (strcmp(name, "image") == 0) {
 		std::string r = ssprintf("LoadImage(\"%s\", {path=\"%s\"});",
 			e->Attribute("name"), e->Attribute("path"));
@@ -317,7 +273,7 @@ void XmlToLuaConverter::AppendElement(const XMLElement *e) {
 		AppendHead(ssprintf("LoadTFont(\"%s\", {data=texturefont_data});", e->Attribute("name")));
 	}
 
-	// in case of conditional clause
+	// in case of conditional (if/elseif/else) clause
 	else if (strcmp(name, "condition") == 0) {
 		AppendBody("(function()");
 		for (const XMLElement *cond = e->FirstChildElement();
@@ -353,6 +309,7 @@ void XmlToLuaConverter::AppendElement(const XMLElement *e) {
 		AppendBody("}; end");
 		AppendBody("end)();");
 	}
+
 	// in case of Lua
 	else if (strcmp(name, "lua") == 0) {
 		const char *pn, *p = e->GetText();
@@ -367,19 +324,29 @@ void XmlToLuaConverter::AppendElement(const XMLElement *e) {
 			p = pn + 1;
 		} while (pn);
 	}
-	// in case of group / object / src / dst
+
+	/*
+	 * in case of general objects (group / object)
+	 */
 	else if (CheckTagGroup(name, objecttags) || CheckTagGroup(name, nosrctags)) {
 		depth++;
 		AppendObject(e, name);
 		depth--;
 	}
-	else if (CheckTagGroup(name, srctags)) {
+	/*
+	 * in case of special attributes (src / dst)
+	 */
+	else if (strnicmp(name, "SRC", 3) == 0) {
+		// SRC tag (starts with SRC)
 		AppendSRC(e);
 	}
-	else if (CheckTagGroup(name, dsttags)) {
+	else if (strnicmp(name, "On", 2) == 0) {
+		// starts with 'On' -> DST
 		AppendDST(e);
 	}
-	// unexpected tag
+	/*
+	 * unexpected tag
+	 */
 	else {
 		printf("XmlToLua - Unexpected tag(%s), ignore.\n", name);
 	}
@@ -389,9 +356,11 @@ void XmlToLuaConverter::Parse(const XMLNode *node) {
 		n;
 		n = n->NextSibling())
 	{
+		/* XML object - comment */
 		if (n->ToComment()) {
 			AppendComment(n->ToComment());
 		}
+		/* XML object - general element */
 		else if (n->ToElement()) {
 			AppendElement(n->ToElement());
 		}
