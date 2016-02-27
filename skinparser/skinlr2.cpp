@@ -1259,7 +1259,7 @@ _LR2SkinParser::OP _LR2SkinParser::ProcessDST(const args_read_& args, tinyxml2::
 		ADDCHILDFRONT(dst, "acc")->SetAttribute("v", acc);
 	if (blend > 1)
 		ADDCHILDFRONT(dst, "blend")->SetAttribute("v", blend);
-	if (rotatecenter >= 0)
+	if (rotatecenter > 0)
 		ADDCHILDFRONT(dst, "center")->SetAttribute("v", rotatecenter);
 
 	// condition of DST means `display or not`, not using alpha or visible command.

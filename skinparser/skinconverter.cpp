@@ -110,18 +110,13 @@ namespace {
 	const char* nosrctags[TAGMAXCOUNT] = {
 		// these object generally means group object
 		// which has no SRC attributes at all.
-		"notefield", "combo", "listview",
+		"field", "notefield", "judge", "listview",
 	};
 	const char *objecttags[TAGMAXCOUNT] = {
 		// generals
 		"sprite", "text", "number", "graph", "button", "slider",
 		// ingenerals
 		"bga", "groovegauge", "judgeline", "note", "scratch", "line",
-	};
-	const char* srcattr[TAGMAXCOUNT] = {
-		// SRC supports only general attributes
-		// so filter it in here
-		"x", "y", "w", "h", "divx", "divy", "timer", "loop",
 	};
 
 	// find out is tag included in this attribute
@@ -152,7 +147,7 @@ void XmlToLuaConverter::AppendSRC(const XMLElement *e) {
 	AppendIndentBody(indent);
 	// if it starts with name SRC~,
 	// then it's SRC specific object - use its own name.
-	if (strncmp(e->Name(), "SRC", 3) == 0)
+	if (strnicmp(e->Name(), "SRC", 3) == 0)
 		body.append(ssprintf("%s={", e->Name()));
 	else
 		body.append("Src={");
@@ -162,10 +157,7 @@ void XmlToLuaConverter::AppendSRC(const XMLElement *e) {
 		attr = attr->Next())
 	{
 		const char *name = attr->Name();
-		// skip attribute if its not general attribute
-		if (!CheckTagGroup(name, srcattr))
-			continue;
-		// COMMENT is timer depreciated option? ... don't know well. include this in class?
+		// COMMENT: is timer depreciated option? ... don't know well. include this in class?
 		if (strcmp(name, "timer") == 0)
 			body.append(ssprintf("%s=\"%s\",", name, attr->Value()));
 		else
@@ -179,24 +171,27 @@ void XmlToLuaConverter::AppendDST(const XMLElement *dst) {
 	if (!dst) return;
 	// add dst declaration
 	AppendIndentBody(indent);
-	body.append(ssprintf("%s=DST.\n", dst->Name()));
+	body.append(ssprintf("%s=DST", dst->Name()));
 	indent++;
 	// add dst actions
 	for (const XMLElement *f = dst->FirstChildElement();
 		f;
 		f = f->NextSiblingElement())
 	{
-		AppendIndentBody(indent);
-		for (const XMLAttribute *attr = f->FirstAttribute();
-			attr;
-			attr = attr->Next())
-		{
-			const char *aname = attr->Name();
-			body.append(ssprintf("%s.(%s)", aname, attr->Value()));
+		// if key==time, then break line
+		if (strcmp(f->Name(), "time") == 0) {
+			body.append("\n");
+			AppendIndentBody(indent);
 		}
-		body.push_back('\n');
+		int ival;
+		if (f->QueryIntAttribute("v", &ival) == 0) {
+			body.append(ssprintf(".%s(%s)", f->Name(), f->Attribute("v")).c_str());
+		}
+		else {
+			body.append(ssprintf(".%s(\"%s\")", f->Name(), f->Attribute("v")).c_str());
+		}
+		//body.push_back('\n');
 	}
-	body.pop_back();
 	indent--;
 	body.append(";\n");
 }
@@ -224,16 +219,14 @@ void XmlToLuaConverter::AppendObject(const XMLElement *e, const char* name) {
 	// process general(static) attributes (file, key, value, class, ...)
 	for (auto attr = e->FirstAttribute(); attr; attr = attr->Next()) {
 		int ival = 0;
-		if (attr->QueryIntValue(&ival)) {
-			AppendBody(ssprintf("%s=%s;", attr->Name(), ival));
+		if (attr->QueryIntValue(&ival) == 0) {
+			AppendBody(ssprintf("%s=%d;", attr->Name(), ival));
 		}
 		else {
 			AppendBody(ssprintf("%s=\"%s\";", attr->Name(), attr->Value()));
 		}
 	}
-	// add SRC if this tag isn't group object
-	if (!CheckTagGroup(e->Name(), nosrctags))
-		AppendSRC(e);
+	// basically object has SRC attribute, so don't make new SRC object.
 	// parse inner element
 	Parse(e->FirstChildElement());
 	indent--;
@@ -245,6 +238,10 @@ void XmlToLuaConverter::AppendElement(const XMLElement *e) {
 	/*
 	 * in case of special objects
 	 */
+	if (strcmp(name, "skin") == 0) {
+		Parse(e->FirstChild());
+		return;
+	}
 	// cmd - include
 	if (strcmp(name, "include") == 0) {
 		AppendBody(ssprintf("LoadObject(\"%s\");", e->Attribute("path")));
@@ -335,6 +332,7 @@ void XmlToLuaConverter::AppendElement(const XMLElement *e) {
 	}
 	/*
 	 * in case of special attributes (src / dst)
+	 * (COMMENT: process SRC in general way)
 	 */
 	else if (strnicmp(name, "SRC", 3) == 0) {
 		// SRC tag (starts with SRC)
@@ -345,7 +343,7 @@ void XmlToLuaConverter::AppendElement(const XMLElement *e) {
 		AppendDST(e);
 	}
 	/*
-	 * unexpected tag
+	 * other elements - parse it like general tree
 	 */
 	else {
 		printf("XmlToLua - Unexpected tag(%s), ignore.\n", name);
