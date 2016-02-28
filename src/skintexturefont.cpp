@@ -29,9 +29,6 @@ void SkinTextureFont::AddGlyph(uint32_t unicode, uint8_t image, uint16_t x, uint
 	}
 	AddGlyph(glyphs[unicode], image, x, y, w, h);
 }
-/*
- * depreciated
- *
 void SkinTextureFont::SetCycle(int cycle) {
 	this->cycle = cycle;
 }
@@ -39,7 +36,6 @@ void SkinTextureFont::SetTimer(const std::string& timername) {
 	timer = timername;
 }
 const char* SkinTextureFont::GetTimer() { return timer.c_str(); }
-*/
 bool SkinTextureFont::LoadFromFile(const char *filepath) {
 	FILE *f = fopen(filepath, "r");
 	if (!f)

@@ -38,6 +38,8 @@ public:
 	void Clear();
 	void AddImageSrc(const std::string& imagepath);
 	void AddGlyph(uint32_t unicode, uint8_t imageidx, uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+	void SetCycle(int cycle);
+	void SetTimer(const std::string& timername);
 	void SetFallbackWidth(int w);
 	int GetFallbackWidth();
 	const char* GetImagePath(int imgno);
@@ -51,7 +53,5 @@ public:
 
 	/** @brief use this method to get Texture SRC */
 	Glyph* GetGlyph(uint32_t unicode, uint32_t time = 0);
-	typedef std::map<uint32_t, Glyphs>::const_iterator GIter;
-	GIter GlyphBegin() { return glyphs.begin(); }
-	GIter GlyphEnd() { return glyphs.end(); }
+	const char* GetTimer();
 };

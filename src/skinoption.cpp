@@ -87,7 +87,7 @@ std::vector<SkinOption::CustomFile>& SkinOption::GetFiles() {
 #ifdef _USEPOOL
 void SkinOption::SetEnvironmentFromOption() {
 	for (auto it = switches.begin(); it != switches.end(); ++it) {
-		SWITCH_ON(it->switchname.c_str());
+		TIMERPOOL->Set(it->switchname.c_str());
 	}
 	for (auto it = values.begin(); it != values.end(); ++it) {
 		INTPOOL->Set(it->optionname.c_str(), it->value);

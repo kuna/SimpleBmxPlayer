@@ -1,41 +1,684 @@
 #include "skin.h"
+#include "skinconverter.h"
 #include "skinutil.h"
 #include "skintexturefont.h"
 using namespace SkinUtil;
 using namespace tinyxml2;
 #include <sstream>
 
-// temp use
+// functions/values commonly used here
 namespace {
 	char translated[1024];
 	const char empty_str_[] = "";
+	const char unknown_[] = "UNKNOWN";
+
+	char* Trim(char *p) {
+		char *r = p;
+		while (*p == ' ' || *p == '\t')
+			p++;
+		r = p;
+		while (*p != 0)
+			p++;
+		p--;
+		while (*p != ' ' && *p != '\t' && *p != '\r' && *p != '\n' && *p != 0)
+			p--;
+		*p = 0;
+		return r;
+	}
 }
 
-// temporarily used common function
-char* Trim(char *p) {
-	char *r = p;
-	while (*p == ' ' || *p == '\t')
-		p++;
-	r = p;
-	while (*p != 0)
-		p++;
-	p--;
-	while (*p != ' ' && *p != '\t' && *p != '\r' && *p != '\n' && *p != 0)
-		p--;
-	*p = 0;
-	return r;
+//
+// translator starts
+//
+#pragma region TRANSLATECODE
+
+//
+// OP code converter
+//
+// these code are supported by system/scripts/lr2.lua
+// all status are calculated before objects are created.
+//
+namespace {
+	const char* op_code_[1000] = { 
+		//
+		// 0
+		// code 0 is constant value - but should NOT given as an argument, I suspect...
+		//
+		"true",						"IsSelectBarFolder",
+		"IsSelectBarSong",			"IsSelectBarCourse",
+		"IsSelectBarNewCourse",		"IsSelectBarPlayable",
+		empty_str_,					empty_str_,
+		empty_str_,					empty_str_,
+		// 10
+		// 12: this includes battle
+		// 13: this includes ghost battle
+		"IsDoublePlay",             "IsBattlePlay",
+		"IsDoublePlay",             "IsBattlePlay",
+		empty_str_,                 empty_str_,
+		empty_str_,                 empty_str_,
+		empty_str_,                 empty_str_,
+		// 20
+		"Panel", "Panel1",
+		"Panel2", "Panel3",
+		"Panel4", "Panel5",
+		"Panel6", "Panel7",
+		"Panel8", "Panel9",
+		// 30
+		"IsBGANormal", "IsBGA",
+		"!IsAutoPlay", "IsAutoPlay",
+		"IsGhostOff", "IsGhostA",
+		"IsGhostB", "IsGhostC",
+		"!IsScoreGraph", "IsScoreGraph",
+		// 40
+		"!IsBGA", "IsBGA",
+		"IsP1GrooveGauge", "IsP1HardGauge",
+		"IsP2GrooveGauge", "IsP2HardGauge",
+		"IsDifficultyFilter", "!IsDifficultyFilter",
+		empty_str_, empty_str_,
+		// 50
+		"!IsOnline", "IsOnline",
+		"!IsExtraMode", "IsExtraMode",
+		"!IsP1AutoSC", "IsP1AutoSC",
+		"!IsP2AutoSC", "IsP2AutoSC",
+		empty_str_, empty_str_,
+		// 60
+		"!IsRecordable", "IsRecordable", "!IsRecordable", 
+		"IsEasyClear", "IsGrooveClear", "IsHardClear", "IsFCClear",
+		empty_str_, empty_str_, empty_str_,
+		// 70
+		"IsBeginnerSparkle", "IsNormalSparkle", "IsHyperSparkle", "IsAnotherSparkle", "IsInsaneSparkle",
+		"!IsBeginnerSparkle", "!IsNormalSparkle", "!IsHyperSparkle", "!IsAnotherSparkle", "!IsInsaneSparkle",
+		// 80
+		"OnSongLoading", "OnSongLoadingEnd", 
+		empty_str_, empty_str_,
+		"OnSongReplay", empty_str_,
+		empty_str_, empty_str_,
+		empty_str_, empty_str_,
+		// 90
+		"OnResultClear", "OnResultFail",
+		empty_str_, empty_str_,
+		empty_str_, empty_str_,
+		empty_str_, empty_str_,
+		empty_str_, empty_str_,
+		// 100 ~ 150: empty
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		// 150
+		"OnDiffNone", "OnDiffBeginner", "OnDiffNormal", "OnDiffHyper", "OnDiffAnother", "OnDiffInsane",
+		empty_str_, empty_str_, empty_str_, empty_str_, 
+		"Is7Keys", "Is5Keys", "Is14Keys", "Is10Keys", "Is9Keys",
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		// 170
+		"IsBGA", "!IsBGA",
+		"IsLongNote", "!IsLongNote",
+		"IsBmsReadme", "!IsBmsReadme",
+		"IsBpmChange", "!IsBpmChange",
+		"IsBmsRandomCommand", "!IsBmsRandomCommand",
+		// 180
+		"IsJudgeVERYHARD", "IsJudgeHARD", "IsJudgeNORMAL", "IsJudgeEASY",
+		"IsLevelSparkle", "!IsLevelSparkle", "IsLevelSparkle",
+		empty_str_, empty_str_, empty_str_,
+		// 190
+		"!IsStageFile", "IsStageFile",
+		"!IsBANNER", "IsBANNER",
+		"!IsBACKBMP", "IsBACKBMP",
+		"!IsReplayable", "!IsReplayable",
+		empty_str_, empty_str_,
+		//
+		// 200
+		// - during play
+		//
+		"IsP1AAA", "IsP1AA", "IsP1A", "IsP1B", "IsP1C", "IsP1D", "IsP1E", "IsP1F",
+		empty_str_, empty_str_,
+		"IsP2AAA", "IsP2AA", "IsP2A", "IsP2B", "IsP2C", "IsP2D", "IsP2E", "IsP2F",
+		empty_str_, empty_str_,
+		"IsP1ReachAAA", "IsP1ReachAA", "IsP1ReachA", "IsP1ReachB", "IsP1ReachC", "IsP1ReachD", "IsP1ReachE", "IsP1ReachF",
+		empty_str_, empty_str_,
+		"IsP2ReachAAA", "IsP2ReachAA", "IsP2ReachA", "IsP2ReachB", "IsP2ReachC", "IsP2ReachD", "IsP2ReachE", "IsP2ReachF",
+		empty_str_, empty_str_,
+		// 240
+		empty_str_, "P1JudgePerfect",
+		"P1JudgeGreat", "P1JudgeGood",
+		"P1JudgeBad", "P1JudgePoor",
+		"P1JudgeNPoor", "P1Miss",
+		"!P1Miss", empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		//  260
+		empty_str_, "P2JudgePerfect",
+		"P2JudgeGreat", "P2JudgeGood",
+		"P2JudgeBad", "P2JudgePoor",
+		"P2JudgeNPoor", "P2Miss",
+		"!P2Miss", empty_str_,
+		// 270
+		"OnP1SuddenChange", "OnP2SuddenChange",
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		// 280
+		"IsCourse1Stage", "IsCourse2Stage",
+		"IsCourse3Stage", "IsCourse4Stage",
+		"IsCourse5Stage", "IsCourse6Stage",
+		"IsCourse7Stage", "IsCourse8Stage",
+		"IsCourse9Stage", "IsCourseFinal",
+		// 290
+		// 291: ”´Í»Ï„Ô“
+		"IsCourse", "IsGrading", "IsExpertCourse", "IsClassCourse",
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		//
+		// 300
+		// result screen
+		//
+		"IsP1AAA", "IsP1AA", "IsP1A", "IsP1B", "IsP1C", "IsP1D", "IsP1E", "IsP1F",
+		empty_str_, empty_str_,
+		"IsP2AAA", "IsP2AA", "IsP2A", "IsP2B", "IsP2C", "IsP2D", "IsP2E", "IsP2F",
+		empty_str_, empty_str_,
+		"IsP1BeforeAAA", "IsP1BeforeAA", "IsP1BeforeA", "IsP1BeforeB", "IsP1BeforeC", "IsP1BeforeD", "IsP1BeforeE", "IsP1BeforeF",
+		empty_str_, empty_str_,
+		"IsP2BeforeAAA", "IsP2BeforeAA", "IsP2BeforeA", "IsP2BeforeB", "IsP2BeforeC", "IsP2BeforeD", "IsP2BeforeE", "IsP2BeforeF",
+		empty_str_, empty_str_,
+		"IsP1AfterAAA", "IsP1AfterAA", "IsP1AfterA", "IsP1AfterB", "IsP1AfterC", "IsP1AfterD", "IsP1AfterE", "IsP1AfterF",
+		empty_str_, empty_str_,
+		"IsP2AfterAAA", "IsP2AfterAA", "IsP2AfterA", "IsP2AfterB", "IsP2AfterC", "IsP2AfterD", "IsP2AfterE", "IsP2AfterF",
+		empty_str_, empty_str_,
+		// 350
+		"IsResultUpdated", "IsMaxcomboUpdated", "IsMinBPUpdated", "IsResultUpdated", "IsIRRankUpdated", "IsIRRankUpdated",
+		empty_str_, empty_str_, empty_str_, empty_str_,
+		// 360 ~ 400: empty
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		//
+		// 400
+		//
+		"Is714Key",
+		"Is9Key",
+		"Is510Key",
+		//
+		// end
+		//
+		empty_str_,
+	};
 }
+
+//
+// Timer code converter
+// - Well, these should be converted into handler!
+//
+namespace {
+	const char* timer_code_[1000] = { 
+		// 0
+		"Scene",		// this timer is automatically started when scene started, actually.
+		"StartInput",
+		"FadeOut",
+		"ShutDown",
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		// 20
+		empty_str_, "Panel1", "Panel2", "Panel3", "Panel4", "Panel5", "Panel6", "Panel7", "Panel8", "Panel9",
+		empty_str_, "Panel1Close", "Panel2Close", "Panel3Close", "Panel4Close",
+		"Panel5Close", "Panel6Close", "Panel7Close", "Panel8Close", "Panel9Close",
+		// 40
+		// - basic handler is P1GaugeChanged / P2GaugeChanged
+		//   we should make helper code out of there.
+		"Ready", "GameStart", 
+		"P1GaugeUp", "P2GaugeUp", 
+		"P1GaugeMax", "P2GaugeMax",
+		"P1Combo", "P2Combo", 
+		"P1FullCombo", "P2FullCombo",
+		// 50
+		"P1JudgeSCOkay", "P1Judge1Okay",
+		"P1Judge2Okay", "P1Judge3Okay",
+		"P1Judge4Okay", "P1Judge5Okay",
+		"P1Judge6Okay", "P1Judge7Okay",
+		"P1Judge8Okay", "P1Judge9Okay",
+		"P2JudgeSCOkay", "P2Judge1Okay",
+		"P2Judge2Okay", "P2Judge3Okay",
+		"P2Judge4Okay", "P2Judge5Okay",
+		"P2Judge6Okay", "P2Judge7Okay",
+		"P2Judge8Okay", "P2Judge9Okay",
+		// 70
+		"P1JudgeSCHold", "P1Judge1Hold",
+		"P1Judge2Hold", "P1Judge3Hold",
+		"P1Judge4Hold", "P1Judge5Hold",
+		"P1Judge6Hold", "P1Judge7Hold",
+		"P1Judge8Hold", "P1Judge9Hold",
+		"P2JudgeSCHold", "P2Judge1Hold",
+		"P2Judge2Hold", "P2Judge3Hold",
+		"P2Judge4Hold", "P2Judge5Hold",
+		"P2Judge6Hold", "P2Judge7Hold",
+		"P2Judge8Hold", "P2Judge9Hold",
+		// 90
+		empty_str_, empty_str_,
+		empty_str_, empty_str_,
+		empty_str_, empty_str_,
+		empty_str_, empty_str_,
+		empty_str_, empty_str_,
+		// 100
+		"P1KeySCPress", "P1Key1Press",
+		"P1Key2Press", "P1Key3Press",
+		"P1Key4Press", "P1Key5Press",
+		"P1Key6Press", "P1Key7Press",
+		"P1Key8Press", "P1Key9Press",
+		"P2KeySCPress", "P2Key1Press",
+		"P2Key2Press", "P2Key3Press",
+		"P2Key4Press", "P2Key5Press",
+		"P2Key6Press", "P2Key7Press",
+		"P2Key8Press", "P2Key9Press",
+		// 120
+		"P1KeySCUp", "P1Key1Up",
+		"P1Key2Up", "P1Key3Up",
+		"P1Key4Up", "P1Key5Up",
+		"P1Key6Up", "P1Key7Up",
+		"P1Key8Up", "P1Key9Up",
+		"P2KeySCUp", "P2Key1Up",
+		"P2Key2Up", "P2Key3Up",
+		"P2Key4Up", "P2Key5Up",
+		"P2Key6Up", "P2Key7Up",
+		"P2Key8Up", "P2Key9Up",
+		// 140
+		"Measure",
+		empty_str_,
+		empty_str_,
+		"P1LastNote",
+		"P2LastNote",
+		empty_str_,
+		empty_str_,
+		empty_str_,
+		empty_str_,
+		empty_str_,
+		// 150
+		"Result",
+		// end
+		empty_str_,
+	};
+}
+
+//
+// Number / Text / Double value
+// These values are calculated mostly at -
+// - selected song changed
+// - song decided
+// -
+// -
+// -
+//
+// so keep track with these event handler.
+//
+namespace {
+	const char* number_code_[300] = {
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		// 10
+		"P1Speed", "P2Speed",
+		"JudgeTiming", "TargetRate",
+		"P1Sudden", "P2Sudden",
+		"P1Lift", "P2Lift",			// actually, this doesn't supported in LR2
+		empty_str_, empty_str_,
+		// 20
+		/* these attrivute will updated per OnTick */
+		"FPS", "Year",
+		"Month", "Day",
+		"Hour", "Minute",
+		"Second", empty_str_,
+		empty_str_, empty_str_,
+		// 30
+		"PlayerPlayCount", "PlayerClearCount", "PlayerFailCount",
+		empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_,
+		// 40
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		"BeginnerLevel", "NormalLevel", "HyperLevel", "AnotherLevel", "InsaneLevel",
+		// 50
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		// 70
+		"Score", "ExScore",
+		"ExScore", "Rate",
+		"TotalNotes", "MaxCombo",
+		"MinBP", "PlayCount",
+		"ClearCount", "FailCount",
+		// 80
+		"Perfect", "Great", "Good", "Bad", "Poor",
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		// 90
+		"BPMMax", "BPMMin", "IRRank", "IRTotal", "IRRate", "RivalDiff",
+		empty_str_, empty_str_, empty_str_, empty_str_,
+		// 100
+		"P1Score", "P1ExScore",
+		"P1Rate", "P1Rate_d",
+		"P1Combo", "P1MaxCombo",
+		"P1TotalNotes", "P1Gauge",
+		"P1RivalDiff", empty_str_,
+		"P1Perfect", "P1Great",
+		"P1Good", "P1Bad", "P1Poor",
+		"P1TotalRate", "P1TotalRate_d", empty_str_,
+		empty_str_, empty_str_,
+		// 120
+		"P2Score", "P2ExScore",
+		"P2Rate", "P2Rate_d",
+		"P2Combo", "P2MaxCombo",
+		"P2TotalNotes", "P2Gauge",
+		"P2RivalDiff", empty_str_,
+		"P2Perfect", "P2Great",
+		"P2Good", "P2Bad", "P2Poor",
+		"P2TotalRate", "P2TotalRate_d", empty_str_,
+		empty_str_, empty_str_,
+		// 140: mybest (useless, so ignore ...?)
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		// 160
+		// - information related to play
+		"PlayBPM", "PlayMinute", "PlaySecond", "PlayRemainMinute", "PlayRemainSecond", "PlayProgress",
+		empty_str_, empty_str_, empty_str_, empty_str_,
+		// 170
+		"ResultExScoreBefore", "ResultExScoreNow", "ResultExScoreDiff",
+		"ResultMaxComboBefore", "ResultMaxComboNow", "ResultMaxComboDiff",
+		"ResultMinBPBefore", "ResultMinBPNow", "ResultMinBPDiff",
+		"ResultIRNow", "ResultIRTotal", "ResultIRRate", "ResultIRBefore",
+		"ResultRate", "ResultRate_d",
+		// 185
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		// 190 ~ 270: none
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		// 270 (Rival)
+		"P2Score", "P2ExScore",
+		"P2Rate", "P2Rate_d",
+		"P2Combo", "P2MaxCombo",
+		"P2TotalNotes", "P2Gauge",
+		"P2RivalDiff", empty_str_,
+		"P2Perfect", "P2Great",
+		"P2Good", "P2Bad", "P2Poor",
+		"P2TotalRate", "P2TotalRate_d", empty_str_,
+		empty_str_, empty_str_,
+		// 290 ~ depreciated
+		empty_str_,
+	};
+
+	const char* text_code_[300] = {
+		empty_str_, "RivalName", "PlayerName",
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		// 10
+		"Title", "SubTitle", "MainTitle",
+		"Genre", "Artist", "SubArtist",
+		"SearchTag", "PlayLevel", "PlayDifficulty", "TagLevel",
+		// 20 ~ 30: for editing
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_, empty_str_,
+		// 40
+		"KeySlot0", "KeySlot1",
+		"KeySlot2", "KeySlot3",
+		"KeySlot4", "KeySlot5",
+		"KeySlot6", "KeySlot7",
+		empty_str_, empty_str_,
+		// 50
+		"SkinName", "SkinAuthor",
+		empty_str_, empty_str_,
+		empty_str_, empty_str_,
+		empty_str_, empty_str_,
+		empty_str_, empty_str_,
+		// 60
+		// - play option related
+		//   most of them are *depreciated*
+		"PlayMode", "PlaySort", "PlayDifficulty", 
+		"RandomP1", "RandomP2", "GaugeP1", "GaugeP2",
+		"AssistP1", "AssistP2", "Battle", 
+		// 70
+		"Flip", "ScoreGraph", "Ghost", empty_str_, "ScrollType",
+		"BGASize", "IsBGA", "ScreenColor", "VSync", "ScreenMode",
+		// 80
+		"AutoJudge", "ReplaySave",
+		empty_str_, empty_str_,
+		empty_str_, empty_str_,
+		empty_str_, empty_str_,
+		empty_str_, empty_str_,
+		// 90 ~ end
+		empty_str_,
+	};
+
+	const char* graph_code_[300] = {
+		empty_str_,
+		"PlayProgress",
+		"SongLoadProgress",
+		"SongLoadProgress",
+		"BeginnerLevel",
+		"NormalLevel",
+		"HyperLevel",
+		"AnotherLevel",
+		"InsaneLevel",
+		"P1ExScore",
+		"P1ExScoreEsti",
+		"P1HighScore",
+		"P1HighScoreEsti",
+		"P2ExScore",
+		"P2ExScoreEsti",
+		"P2HighScore",
+		"P2HighScoreEsti",
+		empty_str_, empty_str_, empty_str_, empty_str_,
+		// 20
+		"P1Perfect",
+		"P1Great",
+		"P1Good",
+		"P1Bad",
+		"P1Poor",
+		"P1MaxCombo",
+		"P1Score",
+		"P1ExScore",
+		empty_str_, empty_str_,
+		// 30
+		"P2Perfect",
+		"P2Great",
+		"P2Good",
+		"P2Bad",
+		"P2Poor",
+		"P2MaxCombo",
+		"P2Score",
+		"P2ExScore",
+		empty_str_, empty_str_,
+		// 40 - depreciated (maybe this is mybest player)
+		empty_str_,
+	};
+
+	const char* slider_code_[100] = {
+		empty_str_,
+		"SelectBar",
+		"P1HighSpeed",
+		"P2HighSpeed",
+		"P1Sudden",
+		"P2Sudden",
+		"PlayProgress",
+		empty_str_, empty_str_, empty_str_,
+		// 10
+		empty_str_, empty_str_,
+		empty_str_, empty_str_,
+		empty_str_, empty_str_,
+		empty_str_, "Volume",
+		empty_str_, empty_str_,
+		// 20
+		empty_str_, empty_str_,
+		empty_str_, empty_str_,
+		empty_str_, empty_str_,
+		"Pitch", empty_str_,
+		empty_str_, empty_str_,
+		// 30 - end
+		empty_str_,
+	};
+}
+
+//
+// Button code
+// - well ... button should decide what to execute,
+//   but also decide what value it has. (in LR2)
+//   so it's actually responsive image -
+//   in Stepmania, ... (TODO)
+//
+
+namespace {
+	const char* button_code_[100] = {
+		empty_str_,
+		"TogglePanel1()",
+		"TogglePanel2()",
+		"TogglePanel3()",
+		"TogglePanel4()",
+		"TogglePanel5()",
+		"TogglePanel6()",
+		"TogglePanel7()",
+		"TogglePanel8()",
+		"TogglePanel9()",
+		// 10
+		"ChangeDiff()",
+		"ChangeMode()",
+		"ChangeSort()",
+		// 13
+		"StartKeyConfig()",
+		"StartSkinSetting()",
+		"StartPlay()",
+		"StartPlay()",			// this(autoplay) is depreciated. autoplay will be set in settings.
+		"StartTextView()",
+		empty_str_,
+		"StartReplay()",
+		// 20
+		// TODO: keyconfig, skinselect
+		empty_str_,
+	};
+}
+
+// this really does translation.
+namespace {
+	// TODO: exception / buffer overflow process
+	const char* TranslateOPs(int op) {
+		/*
+		 * In Rhythmus, there's no object called OP(condition) code. but, all conditions have timer code, and that does OP code's work.
+		 * So this function will translate OP code into a valid condition code.
+		 */
+		int negative = 0;
+		if (op < 0) {
+			strcpy(translated, "!");
+			op *= -1;
+			negative = 1;
+		}
+		else {
+			translated[0] = 0;
+		}
+
+		if (op == 0) {
+			return "";
+		}
+		else if (op == 999) {
+			strcpy(translated + negative, "false");
+		}
+		else if (op >= 900) {
+			// #CUSTOMOPTION code
+			itoa(op, translated + negative, 10);
+		}
+		else {
+			const char* code = op_code_[op];
+			if (!code) code = empty_str_;
+			strcpy(translated + negative, code);
+		}
+
+		// remove double negative expression
+		if (strncmp(translated, "!!", 2) == 0) {
+			for (int i = 2; i <= strlen(translated); i++) {
+				translated[i - 2] = translated[i];
+			}
+		}
+		return translated;
+	}
+
+	const char* TranslateTimer(int timer) {
+		const char* code = timer_code_[timer];
+		if (!code) code = empty_str_;
+		return code;
+	}
+
+	const char* TranslateButton(int code) {
+		const char* ret = button_code_[code];
+		if (!ret) ret = empty_str_;
+		return ret;
+	}
+
+	const char* TranslateSlider(int code) {
+		const char* ret = slider_code_[code];
+		if (!ret) ret = empty_str_;
+		return ret;
+	}
+
+	const char* TranslateGraph(int code) {
+		const char* ret = graph_code_[code];
+		if (!ret) ret = empty_str_;
+		return ret;
+	}
+
+	const char* TranslateNumber(int code) {
+		const char* ret = number_code_[code];
+		if (!ret) ret = empty_str_;
+		return ret;
+	}
+
+	const char* TranslateText(int code) {
+		const char* ret = text_code_[code];
+		if (!ret) ret = empty_str_;
+		return ret;
+	}
+}
+
+#pragma endregion
+//
+// translator end
+//
 
 // utility macros
 #define ADDCHILD(base, name)\
-	(base)->LinkEndChild((base)->GetDocument()->NewElement(name))
+	((XMLElement*)(base)->LinkEndChild((base)->GetDocument()->NewElement(name)))
+#define ADDCHILDFRONT(base, name)\
+	((XMLElement*)(base)->InsertFirstChild((base)->GetDocument()->NewElement(name)))
 #define ADDTEXT(base, name, val)\
 	((XMLElement*)ADDCHILD(base, name))->SetText(val);
 
 // ---------------------------------------------------------------
 
-bool _LR2SkinParser::ParseLR2Skin(const char *filepath, Skin *s) {
+bool _LR2SkinParser::ParseLR2Skin(const char *filepath, SkinMetric *s) {
 	// fill basic information to skin
+	Clear();
+	this->sm = s;
+
+	// load skin line
+	line_total = LoadSkin(filepath);
+	if (!line_total) {
+		printf("LR2Skin Warning - Cannot find file (%s)\n", filepath);
+		return false;
+	}
+
+	XMLElement *skin = s->tree.NewElement("skin");
+	s->tree.LinkEndChild(skin);
+	ADDCHILD(skin, "option");
+
+	// after we read all lines, skin parse start
+	filter_to_optionname.clear();			// clear filter_to_optionname in here.
+	condition_element[0] = cur_e = skin;
+	condition_level = 0;
+	currentline = 0;
+	while (currentline >= 0 && currentline < line_total) {
+		ParseSkinMetricLine();
+	}
+
+	// don't check condition here
+	return true;
+}
+
+bool _LR2SkinParser::ParseCSV(const char *filepath, Skin *s) {
+	// fill basic information to skin
+	Clear();
 	this->s = s;
 
 	strcpy(s->filepath, filepath);
@@ -48,14 +691,20 @@ bool _LR2SkinParser::ParseLR2Skin(const char *filepath, Skin *s) {
 	s->skinlayout.LinkEndChild(skin);
 
 	// load skin line
-	// because lr2skin file format has no end tag, 
-	//  it's better to load all lines before parsing
 	line_total = LoadSkin(filepath);
+	if (!line_total) {
+		printf("LR2Skin Warning - Cannot find file (%s)\n", filepath);
+		return false;
+	}
 
 	// after we read all lines, skin parse start
 	condition_element[0] = cur_e = skin;
 	condition_level = 0;
-	ParseSkin();
+	currentline = 0;
+	while (currentline >= 0 && currentline < line_total) {
+		ParseSkinCSVLine();
+	}
+
 
 	if (condition_level == 0) {
 		printf("lr2skin(%s) parsing successfully done\n", filepath);
@@ -64,15 +713,17 @@ bool _LR2SkinParser::ParseLR2Skin(const char *filepath, Skin *s) {
 	else {
 		// if this value is the final output,
 		// then there might be some #ENDIF was leaked.
+		printf("LR2Skin Warning - invalid #IF clause seems existing (not closed)\n");
 		return false;
 	}
 }
 
-int _LR2SkinParser::LoadSkin(const char *filepath, int linebufferpos) {
+int _LR2SkinParser::LoadSkin(const char *filepath) {
+	int lines = 0;
 	FILE *f = fopen(filepath, "r");
 	if (!f) {
-		printf("[ERROR] Cannot find Skin file %s - ignore\n", filepath);
-		return linebufferpos;
+		printf("LR2Skin - Cannot find Skin file %s - ignore\n", filepath);
+		return 0;
 	}
 	strcpy(this->filepath, filepath);
 
@@ -86,51 +737,30 @@ int _LR2SkinParser::LoadSkin(const char *filepath, int linebufferpos) {
 		p = Trim(line);
 
 		// ignore comment
+		// (or push the line as comment?)
 		if (strncmp("//", p, 2) == 0 || !strlen(p))
 			continue;
 
-		// if #include then read the file first
-		/*if (strncmp("#INCLUDE", p, 8) == 0) {
-			char *np = strchr(p + 9, ',');
-			if (np) *np = 0;
-			std::string relpath = p + 9;
-			std::string basepath = filepath;
-			ConvertLR2PathToRelativePath(relpath);
-			GetParentDirectory(basepath);
-			ConvertRelativePathToAbsPath(relpath, basepath);
-			linebufferpos += LoadSkin(relpath.c_str(), linebufferpos + 1);
-		}
-		else {*/
 		line_v_ line__;
 		strcpy(line__.line__, line);
 		lines_.push_back(line__);
-		//}
-		linebufferpos++;
+		lines++;
 	}
-
 	fclose(f);
 
 	// parse argument
 	for (int i = 0; i < lines_.size(); i++) {
 		args_v_ line_args__;
 		line_v_* line__stored_ = &lines_[i];
-		ParseSkinLineArgument(line__stored_->line__, line_args__.args__);
+		SplitCSVLine(line__stored_->line__, line_args__.args__);
 		line_args_.push_back(line_args__);
 	}
 
 	// returns how much lines we read
-	return linebufferpos;
+	return lines;
 }
 
-void _LR2SkinParser::ParseSkin() {
-	// start first line to end line
-	int current_line = 0;
-	while (current_line >= 0 && current_line < line_total) {
-		current_line = ParseSkinLine(current_line);
-	}
-}
-
-void _LR2SkinParser::ParseSkinLineArgument(char *p, const char **args) {
+void _LR2SkinParser::SplitCSVLine(char *p, const char **args) {
 	// first element is element name
 	args[0] = p;
 	int i;
@@ -147,7 +777,8 @@ void _LR2SkinParser::ParseSkinLineArgument(char *p, const char **args) {
 	}
 }
 
-/* a simple private macro for PLAYLANE (reset position) */
+/* a simple private macro for PLAYLANE (reset position) - DEPRECIATED */
+#if 0
 void MakeFrameRelative(int x, int y, XMLElement *frame) {
 	frame->SetAttribute("x", frame->IntAttribute("x") - x);
 	frame->SetAttribute("y", frame->IntAttribute("y") - y);
@@ -163,109 +794,122 @@ void MakeRelative(int x, int y, XMLElement *e) {
 		dst = e->NextSiblingElement("DST");
 	}
 }
+#endif
 
-
-int _LR2SkinParser::ParseSkinLine(int line) {
-	// get current line's string & argument
-	args_read_ args;			// contains linebuffer's address
-	args = line_args_[line].args__;
-	if (args[0] == 0)
-		return line + 1;
+/* *********************************************************
+ * LR2 csv parsing start
+ * *********************************************************/
 
 #define CMD_IS(v) (strcmp(args[0], (v)) == 0)
 #define OBJTYPE_IS(v) (strcmp(args[0]+5, (v)) == 0)
 #define CMD_STARTSWITH(v,l) (strncmp(args[0], (v), (l)) == 0)
 #define INT(v) (atoi(v))
-#define ADDTOHEADER(v) (v)
-	/*
-	* condition part
-	*/
+bool _LR2SkinParser::ProcessCondition(const args_read_& args) {
+	bool cond = false;
 	if (CMD_IS("#ENDIF")) {
 		// we just ignore this statement, so only 1st-level parsing is enabled.
 		// but if previous #IF clause exists, then close it
 		if (condition_level > 0)
 			cur_e = condition_element[--condition_level];
 		else
-			printf("Invalid #ENDIF (%d)\n", line);
-		return line + 1;
+			printf("LR2Skin - Invalid #ENDIF (%d)\n", currentline);
+		cond = true;
 	}
-	if (!cur_e)
-		return line + 1;
-	if (CMD_IS("#ELSE")) {
-		// #ELSE: find last #IF clause, and copy condition totally.
-		// not perfect, but maybe we can make a deal :)
-		XMLElement *prev_if = condition_element[condition_level - 1]->LastChildElement("if");
-		if (prev_if) {
-			XMLElement *group = s->skinlayout.NewElement("ifnot");
-			group->SetAttribute("condition", prev_if->Attribute("condition"));
-			cur_e = condition_element[--condition_level];
-			cur_e->LinkEndChild(group);
-			condition_element[++condition_level] = cur_e = group;
-			condition_status[condition_level]++;
-		}
-		else {
-			// we tend to ignore #ELSE clause ... it's wrong.
-			cur_e = 0;
-		}
-		return line + 1;
-	}
-	else if (CMD_IS("#IF") || CMD_IS("#ELSEIF")) {
-		// #ELSEIF: think as new #IF clause
-		XMLElement *group = s->skinlayout.NewElement("if");
-		if (CMD_IS("#IF")) {
-			condition_level++;
-			condition_status[condition_level] = 0;
-		}
-		condition_element[condition_level] = group;
-		condition_status[condition_level]++;
+	else if (CMD_IS("#ELSE")) {
+		XMLElement *cond_ = cur_e->Parent()->ToElement();
+		XMLElement *obj_ = (XMLElement*)ADDCHILD(cond_, "else");
+		cur_e = obj_;
 		ConditionAttribute cls;
 		for (int i = 1; i < 50 && args[i]; i++) {
-			const char *c = INT(args[i])?TranslateOPs(INT(args[i])):0;
-			if (c) cls.AddCondition(c);
+			cls.AddCondition(TranslateOPs(INT(args[i])));
 		}
-		group->SetAttribute("condition", cls.ToString());
-		// get parent object and link new group to there
-		cur_e = condition_element[condition_level - 1];	
-		cur_e->LinkEndChild(group);
-		cur_e = group;
-		return line + 1;
+		cond = true;
+	}
+	else if (CMD_IS("#IF")) {
+		//
+		// xml structure
+		//
+		// condition
+		//   if
+		//     ...
+		//   /if
+		//   elseif
+		//     ...
+		//   /elseif
+		//   else
+		//   ...
+		//   /else
+		// /condition
+		//
+		condition_element[condition_level] = cur_e;
+		XMLElement *cond_ = (XMLElement*)ADDCHILD(cur_e, "condition");
+		XMLElement *obj_ = (XMLElement*)ADDCHILD(cond_, "if");
+		cur_e = obj_;
+		condition_level++;
+		ConditionAttribute cls;
+		for (int i = 1; i < 50 && args[i]; i++) {
+			cls.AddCondition(TranslateOPs(INT(args[i])));
+		}
+		obj_->SetAttribute("condition", cls.ToString());
+		cond = true;
+	}
+	else if (CMD_IS("#ELSEIF")) {
+		XMLElement *cond_ = cur_e->Parent()->ToElement();
+		XMLElement *obj_ = (XMLElement*)ADDCHILD(cond_, "elseif");
+		cur_e = obj_;
+		ConditionAttribute cls;
+		for (int i = 1; i < 50 && args[i]; i++) {
+			cls.AddCondition(TranslateOPs(INT(args[i])));
+		}
+		obj_->SetAttribute("condition", cls.ToString());
+		cond = true; 
 	}
 
-	/*
-	* header/metadata parsing
-	*/
-	if (CMD_IS("#INCLUDE")) {
-		XMLElement *e = (XMLElement*)ADDCHILD(cur_e, "include");
+	return cond;
+}
 
-		std::string relpath = args[1];
-		std::string basepath = filepath;
-		ConvertLR2PathToRelativePath(relpath);
-		//GetParentDirectory(basepath);
-		//ConvertRelativePathToAbsPath(relpath, basepath);
+#define CMD_IS_(v) (strcmp(cmd, (v)) == 0)
+bool _LR2SkinParser::IsMetadata(const char* cmd) {
+	if (CMD_IS_("#CUSTOMOPTION") ||
+		CMD_IS_("#CUSTOMFILE") ||
+		CMD_IS_("#INFORMATION"))
+		return true;
+	else
+		return false;
+}
 
-		e->SetAttribute("path", relpath.c_str());
-	}
-	else if (CMD_IS("#CUSTOMOPTION")) {
+/*
+ * about options or info that related to skin
+ */
+bool _LR2SkinParser::ProcessMetadata(const args_read_& args) {
+	if (CMD_IS("#CUSTOMOPTION")) {
 		XMLElement *option = FindElement(cur_e, "option", &s->skinlayout);
-		XMLElement *customoption = s->skinlayout.NewElement("customswitch");
+		XMLElement *customoption = ADDCHILD(option, "customswitch")->ToElement();
 		option->LinkEndChild(customoption);
 
 		std::string name_safe = args[1];
 		ReplaceString(name_safe, " ", "_");
 		customoption->SetAttribute("name", name_safe.c_str());
 		int option_intvalue = atoi(args[2]);
+		std::string desc_txt = "";
+		std::string val_txt = "";
 		for (const char **p = args + 3; *p != 0 && strlen(*p) > 0; p++) {
-			XMLElement *options = s->skinlayout.NewElement("option");
-			options->SetAttribute("name", *p);
-			options->SetAttribute("value", option_intvalue);
-			option_intvalue++;
-			customoption->LinkEndChild(options);
+			desc_txt += *p;
+			desc_txt.push_back(';');
+			char t_[10];
+			itoa(option_intvalue, t_, 10);
+			val_txt += t_;
+			val_txt.push_back(';');
 		}
+		desc_txt.pop_back();
+		val_txt.pop_back();
+		customoption->SetAttribute("valuename", desc_txt.c_str());
+		customoption->SetAttribute("value", val_txt.c_str());
+		return true;
 	}
 	else if (CMD_IS("#CUSTOMFILE")) {
 		XMLElement *option = FindElement(cur_e, "option", &s->skinlayout);
-		XMLElement *customfile = s->skinlayout.NewElement("customfile");
-		option->LinkEndChild(customfile);
+		XMLElement *customfile = ADDCHILD(option, "customfile")->ToElement();
 
 		std::string name_safe = args[1];
 		ReplaceString(name_safe, " ", "_");
@@ -290,8 +934,9 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 
 		// register to filter_to_optionname for image change
 		AddPathToOption(args[2], name_safe);
-		XMLComment *cmt = s->skinlayout.NewComment(args[2]);
+		XMLComment *cmt = sm->tree.NewComment(args[2]);
 		option->LinkEndChild(cmt);
+		return true;
 	}
 	else if (CMD_IS("#INFORMATION")) {
 		// set skin's metadata
@@ -356,20 +1001,25 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			ADDTEXT(info, "key", key_);
 		}
 		else {
-			printf("[ERROR] unknown type of lr2skin(%d). consider as 7Key Play.\n", type_);
+			printf("LR2Skin error: unknown type of lr2skin(%d). consider as 7Key Play.\n", type_);
 			type_ = 0;
 		}
 
 		ADDTEXT(info, "name", args[2]);
 		ADDTEXT(info, "author", args[3]);
+		return true;
 	}
-	else if (CMD_IS("#IMAGE")) {
-		/*
-		 * Sometimes resource is added in IF form
-		 * then ONLY allow first one
-		 */
-		if (condition_level > 0 && condition_status[condition_level] > 1)
-			return line + 1;
+	return false;
+}
+
+bool _LR2SkinParser::ProcessResource(const args_read_& args) {
+	//
+	// all resources are splited into 
+	// - id
+	// - resource path
+	// LR2 has not so modern style skin structure :p
+	//
+	if (CMD_IS("#IMAGE")) {
 		XMLElement *resource = s->skinlayout.FirstChildElement("skin");
 		XMLElement *image = s->skinlayout.NewElement("image");
 		image->SetAttribute("name", image_cnt++);
@@ -388,9 +1038,8 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		image->SetAttribute("path", path_converted.c_str());
 
 		resource->InsertFirstChild(image);
-	}
-	else if (CMD_IS("#FONT")) {
-		printf("#FONT is depreciated option, ignore.\n");
+
+		return true;
 	}
 	else if (CMD_IS("#LR2FONT")) {
 		// we don't use bitmap fonts
@@ -404,15 +1053,15 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		if (strstr(args[1], "small")) size = 15;
 		if (strstr(args[1], "title")
 			|| strstr(args[1], "big")
-			|| strstr(args[1], "large")) 
+			|| strstr(args[1], "large"))
 			size = 42;
 		if (size > 20)
 			font->SetAttribute("texturepath", "default");
 		font->SetAttribute("size", size);
 #if 0
 		/*
-		 * these are available in #FONT, not #LR2FONT
-		 */
+		* these are available in #FONT, not #LR2FONT
+		*/
 		switch (INT(args[3])) {
 		case 0:
 			// normal
@@ -431,95 +1080,113 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 #endif
 		font->SetAttribute("border", size / 20 + 1);
 		resource->InsertFirstChild(font);
+		return true;
 	}
-	else if (CMD_IS("#SETOPTION")) {
-		// this clause is translated during render tree construction
-		XMLElement *setoption = s->skinlayout.NewElement("lua");
-		std::ostringstream luacode;
-		ConditionAttribute cls;
-		for (int i = 1; i < 50 && args[i]; i++) {
-			const char *c = INT(args[i]) ? TranslateOPs(INT(args[i])) : 0;
-			if (c)
-				luacode << "SetTimer(\"" << c << "\")\n";
-		}
-		setoption->SetText(("\n" + luacode.str()).c_str());
-		cur_e->LinkEndChild(setoption);
+	return false;
+}
+
+bool _LR2SkinParser::ProcessDepreciated(const args_read_& args) {
+	if (CMD_IS("#FONT") ||
+		CMD_IS("#ENDOFHEADER") ||
+		CMD_IS("#FLIPRESULT") ||
+		CMD_IS("TRANSCLOLR")) 
+	{
+		return true;
 	}
-	/* Just ignore these option */
-	else if (CMD_IS("#ENDOFHEADER")) {}
-	else if (CMD_IS("#FLIPRESULT")) {}
-	else if (CMD_IS("#TRANSCLOLR")) {}		// should we have to implement colorkey?
-	else if (CMD_STARTSWITH("#SRC_", 4)){
-		// we parse #DST with #SRC.
-		// process SRC
-		// SRC may have condition (attribute condition; normally not used)
-		XMLElement *obj;
-		obj = s->skinlayout.NewElement("sprite");
-		int resid = INT(args[2]);	// COMMENT: check out for pre-occupied resid
-		switch (resid) {
-		case 100:
-			obj->SetAttribute("resid", "_stagefile");
-			break;
-		case 101:
-			obj->SetAttribute("resid", "_backbmp");
-			break;
-		case 102:
-			obj->SetAttribute("resid", "_banner");
-			break;
-		case 110:
-			obj->SetAttribute("resid", "_black");
-			break;
-		case 111:
-			obj->SetAttribute("resid", "_white");
-			break;
-		default:
-			obj->SetAttribute("resid", resid);
-			break;
-		}
-		obj->SetAttribute("x", INT(args[3]));
-		obj->SetAttribute("y", INT(args[4]));
-		if (INT(args[5]) > 0) {
-			obj->SetAttribute("w", INT(args[5]));
-			obj->SetAttribute("h", INT(args[6]));
-		}
-		if (INT(args[7]) > 1 || INT(args[8]) > 1) {
-			obj->SetAttribute("divx", INT(args[7]));
-			obj->SetAttribute("divy", INT(args[8]));
-		}
-		if (INT(args[9]))
-			obj->SetAttribute("cycle", INT(args[9]));
-		int sop1 = 0, sop2 = 0, sop3 = 0;
-		if (INT(args[10]))
-			obj->SetAttribute("timer", TranslateTimer(INT(args[10])));
-		sop1 = INT(args[11]);
-		sop2 = INT(args[12]);
-		sop3 = INT(args[13]);
+	return false;
+}
 
-		/*
-		 * process NOT-general-objects first
-		 * these objects doesn't have #DST object directly
-		 * (bad-syntax >:( )
-		 */
-		// check for play area
-		int isPlayElement = ProcessLane(obj, line, resid);
-		if (isPlayElement) {
-			return isPlayElement;
-		}
+void _LR2SkinParser::ParseSkinMetricLine() {
+	args_read_ args;			// contains linebuffer's address
+	args = line_args_[currentline].args__;
+	int objectid = INT(args[1]);
 
-		/*
-		 * under these are objects which requires #DST object directly
-		 * (good syntax)
-		 * we have to make object now to parse #DST
-		 * and, if unable to figure out what this element is, it'll be considered as Image object.
-		 */
+	/*
+	 * depreciated ones
+	 */
+	if (ProcessDepreciated(args)) {
+		printf("LR2Skin - %s is depreciated command, ignore.\n", args[0]);
+		currentline++;
+		return;
+	}
 
-		int looptime = 0, blend = 0, timer = 0, rotatecenter = -1, acc = 0;
-		int op1 = 0, op2 = 0, op3 = 0;
-		XMLElement *dst = s->skinlayout.NewElement("DST");
+	/*
+	 * header/metadata parsing
+	 */
+	if (ProcessMetadata(args)) {
+		currentline++;
+		return;
+	}
+
+	// ignore all other elements
+
+	currentline++;
+}
+
+_LR2SkinParser::OP _LR2SkinParser::ProcessSRC(const args_read_& args, tinyxml2::XMLElement *obj) {
+	OP srcop;	memset(&srcop, 0, sizeof(OP));
+	srcop.op[0] = INT(args[11]);
+	srcop.op[1] = INT(args[12]);
+	srcop.op[2] = INT(args[13]);
+	srcop.op[3] = INT(args[14]);
+	int resid = INT(args[2]);	// COMMENT: check out for pre-occupied resid
+	switch (resid) {
+	case 100:
+		obj->SetAttribute("file", "_stagefile");
+		break;
+	case 101:
+		obj->SetAttribute("file", "_backbmp");
+		break;
+	case 102:
+		obj->SetAttribute("file", "_banner");
+		break;
+	case 110:
+		obj->SetAttribute("file", "_black");
+		break;
+	case 111:
+		obj->SetAttribute("file", "_white");
+		break;
+	default:
+		obj->SetAttribute("file", resid);
+		break;
+	}
+	obj->SetAttribute("sx", INT(args[3]));
+	obj->SetAttribute("sy", INT(args[4]));
+	if (INT(args[5]) > 0) {
+		obj->SetAttribute("sw", INT(args[5]));
+		obj->SetAttribute("sh", INT(args[6]));
+	}
+	if (INT(args[7]) > 1 || INT(args[8]) > 1) {
+		obj->SetAttribute("divx", INT(args[7]));
+		obj->SetAttribute("divy", INT(args[8]));
+	}
+	if (INT(args[9]))
+		obj->SetAttribute("cycle", INT(args[9]));
+	int sop1 = 0, sop2 = 0, sop3 = 0, sop4 = 0;		// sop4 used in scratch rotation
+	// COMMENT: SRC timer is necessary?
+	if (INT(args[10]))
+		obj->SetAttribute("timer", TranslateTimer(INT(args[10])));
+	// COMMENT: SRC loop is necessary?
+	
+	// we just processed 1 line
+	currentline++;
+
+	return srcop;
+}
+
+_LR2SkinParser::OP _LR2SkinParser::ProcessDST(const args_read_& args, tinyxml2::XMLElement *obj) {
+	int looptime = 0, blend = 0, timer = 0, rotatecenter = -1, acc = 0;
+	OP dstop;	memset(&dstop, 0, sizeof(OP));
+	int time = 0;
+	XMLElement *dst = s->skinlayout.NewElement("OnScene");
+	{
+		int a_ = 255, r_ = 255, g_ = 255, b_ = 255;
+		int x_ = 0, y_ = 0, w_ = 0, h_ = 0;
+		int angle_ = 0;
 		obj->LinkEndChild(dst);
-		for (int nl = line + 1; nl < line_total; nl++) {
-			args = line_args_[nl].args__;
-			if (!args[0]) continue;
+		for (int nl = currentline; nl < line_total; nl++) {
+			args_read_ args = line_args_[nl].args__;
+			if (strcmp(args[0], "") == 0) continue;
 			if (CMD_IS("#ENDIF"))
 				continue;			// we can ignore #ENDIF command, maybe
 			if (!CMD_STARTSWITH("#DST_", 5))
@@ -529,75 +1196,244 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 				looptime = INT(args[16]);
 				blend = INT(args[12]);
 				rotatecenter = INT(args[15]);
-				timer = INT(args[17]);
+				dstop.op[3] = timer = INT(args[17]);
 				acc = INT(args[7]);
-				if (args[18]) op1 = INT(args[18]);
-				if (args[19]) op2 = INT(args[19]);
-				if (args[20]) op3 = INT(args[20]);
+				dstop.op[0] = INT(args[18]);
+				dstop.op[1] = INT(args[19]);
+				dstop.op[2] = INT(args[20]);
 			}
-			XMLElement *frame = s->skinlayout.NewElement("frame");
-			frame->SetAttribute("x", args[3]);
-			frame->SetAttribute("y", args[4]);
-			frame->SetAttribute("w", args[5]);
-			frame->SetAttribute("h", args[6]);
-			frame->SetAttribute("time", args[2]);
-			if (!(INT(args[8]) == 255))
-				frame->SetAttribute("a", args[8]);
-			if (!(INT(args[9]) == 255 && INT(args[10]) == 255 && INT(args[11]) == 255)) {
-				frame->SetAttribute("r", args[9]);
-				frame->SetAttribute("g", args[10]);
-				frame->SetAttribute("b", args[11]);
+			/*
+			* frame attribute
+			* only add attribute if value is different from previous(default) one.
+			*/
+			time = atoi(args[2]);
+			ADDCHILD(dst, "time")->SetAttribute("v", time);
+			if (INT(args[3]) != x_) {
+				x_ = INT(args[3]);
+				ADDCHILD(dst, "x")->SetAttribute("v", x_);
 			}
-			if (INT(args[14]))
-				frame->SetAttribute("angle", args[14]);
-			dst->LinkEndChild(frame);
+			if (INT(args[4]) != y_) {
+				y_ = INT(args[4]);
+				ADDCHILD(dst, "y")->SetAttribute("v", y_);
+			}
+			if (INT(args[5]) != w_) {
+				w_ = INT(args[5]);
+				ADDCHILD(dst, "w")->SetAttribute("v", w_);
+			}
+			if (INT(args[6]) != h_) {
+				h_ = INT(args[6]);
+				ADDCHILD(dst, "h")->SetAttribute("v", h_);
+			}
+			if (INT(args[8]) != a_) {
+				a_ = INT(args[8]);
+				ADDCHILD(dst, "a")->SetAttribute("v", a_);
+			}
+			if (INT(args[9]) != r_) {
+				r_ = INT(args[9]);
+				ADDCHILD(dst, "r")->SetAttribute("v", r_);
+			}
+			if (INT(args[10]) != g_) {
+				g_ = INT(args[10]);
+				ADDCHILD(dst, "g")->SetAttribute("v", g_);
+			}
+			if (INT(args[11]) != b_) {
+				b_ = INT(args[11]);
+				ADDCHILD(dst, "b")->SetAttribute("v", b_);
+			}
+			if (INT(args[14]) != angle_) {
+				angle_ = INT(args[14]);
+				ADDCHILD(dst, "angle")->SetAttribute("v", angle_);
+			}
 		}
-		// set common draw attribute
-		dst->SetAttribute("acc", acc);
-		if (blend > 1)
-			dst->SetAttribute("blend", blend);
-		if (looptime >= 0)
-			dst->SetAttribute("loop", looptime);
-		if (rotatecenter > 0)
-			dst->SetAttribute(
-			"rotatecenter", rotatecenter);
-		if (TranslateTimer(timer))
-			dst->SetAttribute("timer", TranslateTimer(timer));
+	}
+	// set common draw attribute
+	const char* handlername = TranslateTimer(timer);
+	if (handlername && *handlername) {
+		char buf[128] = "On";
+		strcat(buf, handlername);
+		dst->SetName(buf);
+	}
+
+	// acc, blend, rotatecenter, condition are MUST defined at the very first of the actions.
+	if (acc)
+		ADDCHILDFRONT(dst, "acc")->SetAttribute("v", acc);
+	if (blend > 1)
+		ADDCHILDFRONT(dst, "blend")->SetAttribute("v", blend);
+	if (rotatecenter > 0)
+		ADDCHILDFRONT(dst, "center")->SetAttribute("v", rotatecenter);
+
+	// condition of DST means `display or not`, not using alpha or visible command.
+	ConditionAttribute cls;
+	const char *c;
+	c = dstop.op[0] ? TranslateOPs(dstop.op[0]) : 0;
+	if (c) cls.AddCondition(c);
+	c = dstop.op[1] ? TranslateOPs(dstop.op[1]) : 0;
+	if (c) cls.AddCondition(c);
+	c = dstop.op[2] ? TranslateOPs(dstop.op[2]) : 0;
+	if (c) cls.AddCondition(c);
+	if (cls.GetConditionNumber())
+		obj->SetAttribute("visible", cls.ToString());
+
+	// loop MUST be declared at the very last of the actions.
+	// and looptime should be different from last action time.
+	if (looptime >= 0 && looptime != time)
+		ADDCHILD(dst, "loop")->SetAttribute("v", looptime);
+
+	return dstop;
+}
+
+int GetDSTAttrFromObject(XMLElement *e, const char* name) {
+	for (XMLElement *c = e->FirstChildElement(); c; c = c->NextSiblingElement()) {
+		if (strnicmp(c->Name(), "On", 2) == 0) {
+			for (XMLElement *cmd = c->FirstChildElement(); cmd; cmd = cmd->NextSiblingElement()) {
+				if (stricmp(cmd->Name(), name) == 0) {
+					return cmd->IntAttribute("v");
+				}
+			}
+		}
+	}
+
+	// cannot find
+	return 0;
+}
+
+int GetSRCAttrFromObject(XMLElement *e, const char* name) {/*
+	for (XMLElement *c = e->FirstChildElement(); c; c = c->NextSiblingElement()) {
+		if (stricmp(c->Name(), "SRC") == 0) {
+			return c->IntAttribute(name);
+		}
+	}*/
+	return e->IntAttribute(name);
+
+	// cannot find
+	//return 0;
+}
+
+
+
+
+
+
+void _LR2SkinParser::ParseSkinCSVLine() {
+	// get current line's string & argument
+	args_read_ args;			// contains linebuffer's address
+	args = line_args_[currentline].args__;
+	int objectid = INT(args[1]);
+
+	/*
+	 * depreciated ones
+	 */
+	if (ProcessDepreciated(args)) {
+		printf("LR2Skin - %s is depreciated command, ignore.\n", args[0]);
+		currentline++;
+		return;
+	}
+
+	/*
+	 * Is it conditional clause?
+	 */
+	if (ProcessCondition(args)) {
+		currentline++;
+		return;
+	}
+
+	/*
+	 * header/metadata parsing
+	 * - ignore metadata here
+	 */
+	if (IsMetadata(args[0])) {
+		currentline++;
+		return;
+	}
+
+	/*
+	 * resource parsing
+	 */
+	if (ProcessResource(args)) {
+		currentline++;
+		return;
+	}
+
+
+	if (CMD_IS("#INCLUDE")) {
+		XMLElement *e = (XMLElement*)ADDCHILD(cur_e, "include");
+
+		std::string relpath = args[1];
+		std::string basepath = filepath;
+		ConvertLR2PathToRelativePath(relpath);
+		//GetParentDirectory(basepath);
+		//ConvertRelativePathToAbsPath(relpath, basepath);
+
+		e->SetAttribute("path", relpath.c_str());
+	}
+	else if (CMD_IS("#SETOPTION")) {
+		// this clause is translated during render tree construction
+		XMLElement *setoption = s->skinlayout.NewElement("lua");
+		std::ostringstream luacode;
 		ConditionAttribute cls;
-		const char *c;
-		c = op1?TranslateOPs(op1):0;
-		if (c) cls.AddCondition(c);
-		c = op2?TranslateOPs(op2):0;
-		if (c) cls.AddCondition(c);
-		c = op3?TranslateOPs(op3):0;
-		if (c) cls.AddCondition(c);
-		if (cls.GetConditionNumber())
-			obj->SetAttribute("condition", cls.ToString());
+		for (int i = 1; i < 50 && args[i]; i++) {
+			const char *c = INT(args[i]) ? TranslateOPs(INT(args[i])) : 0;
+			if (c)
+				luacode << "SetSwitch(\"" << c << "\");\n";
+		}
+		setoption->SetText(("\n" + luacode.str()).c_str());
+		cur_e->LinkEndChild(setoption);
+	}
+	else if (CMD_STARTSWITH("#SRC_", 4)){
+		// get ingeneral attributes first
+		int objidx = INT(args[2]);		// note index, etc ...
+		OP dstop, srcop;
+
+		// process SRC.
+		// SRC may have condition (attribute condition; normally not used)
+		XMLElement *obj;
+		obj = s->skinlayout.NewElement("sprite");
+		srcop = ProcessSRC(args, obj);
 
 		/*
-		* If object is select screen panel dependent(timer/op code 2x),
-		* then add object to there (ease of control)
-		* TODO: take care of 3x objects (OnPanelClose)
-		*/
-#define CHECK_PANEL(v) (op1 == (v) || op2 == (v) || op3 == (v) || timer == (v))
-		if (CHECK_PANEL(21))
-			FindElementWithAttribute(cur_e, "canvas", "id", "panel1", &s->skinlayout)->LinkEndChild(obj);
-		else if (CHECK_PANEL(22))
-			FindElementWithAttribute(cur_e, "canvas", "id", "panel2", &s->skinlayout)->LinkEndChild(obj);
-		else if (CHECK_PANEL(23))
-			FindElementWithAttribute(cur_e, "canvas", "id", "panel3", &s->skinlayout)->LinkEndChild(obj);
-		else if (CHECK_PANEL(24))
-			FindElementWithAttribute(cur_e, "canvas", "id", "panel4", &s->skinlayout)->LinkEndChild(obj);
-		else if (CHECK_PANEL(25))
-			FindElementWithAttribute(cur_e, "canvas", "id", "panel5", &s->skinlayout)->LinkEndChild(obj);
-		else if (CHECK_PANEL(26))
-			FindElementWithAttribute(cur_e, "canvas", "id", "panel6", &s->skinlayout)->LinkEndChild(obj);
-		else if (CHECK_PANEL(27))
-			FindElementWithAttribute(cur_e, "canvas", "id", "panel7", &s->skinlayout)->LinkEndChild(obj);
-		else if (CHECK_PANEL(28))
-			FindElementWithAttribute(cur_e, "canvas", "id", "panel8", &s->skinlayout)->LinkEndChild(obj);
-		else if (CHECK_PANEL(29))
-			FindElementWithAttribute(cur_e, "canvas", "id", "panel9", &s->skinlayout)->LinkEndChild(obj);
+		 * process NOT-general-objects first
+		 * these objects doesn't have #DST object directly
+		 */
+		// check for play area
+		int isPlayElement = ProcessLane(args, obj, objidx);
+		if (isPlayElement) {
+			currentline += isPlayElement;
+			return;
+		}
+
+		/*
+		 * under these are objects which requires #DST object directly
+		 * (good syntax)
+		 * we have to make object now to parse #DST
+		 * and, if unable to figure out what this element is, it'll be considered as Image object.
+		 */
+		dstop = ProcessDST(args, obj);
+
+
+		/*
+		 * just add each panel to frame
+		 * for ease of skin coding ...
+		 * (op4 for dst is `timer` code, in fact.)
+		 */
+#define CHECK_PANEL(v) (dstop.op[3] == (v))		// dstop.op[0] == (v) || dstop.op[1] == (v) || dstop.op[2] == (v) || 
+		if (CHECK_PANEL(21) || CHECK_PANEL(31))
+			FindElementWithAttribute(cur_e, "frame", "id", "panel1", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(22) || CHECK_PANEL(32))
+			FindElementWithAttribute(cur_e, "frame", "id", "panel2", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(23) || CHECK_PANEL(33))
+			FindElementWithAttribute(cur_e, "frame", "id", "panel3", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(24) || CHECK_PANEL(34))
+			FindElementWithAttribute(cur_e, "frame", "id", "panel4", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(25) || CHECK_PANEL(35))
+			FindElementWithAttribute(cur_e, "frame", "id", "panel5", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(26) || CHECK_PANEL(36))
+			FindElementWithAttribute(cur_e, "frame", "id", "panel6", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(27) || CHECK_PANEL(37))
+			FindElementWithAttribute(cur_e, "frame", "id", "panel7", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(28) || CHECK_PANEL(38))
+			FindElementWithAttribute(cur_e, "frame", "id", "panel8", &s->skinlayout)->LinkEndChild(obj);
+		else if (CHECK_PANEL(29) || CHECK_PANEL(39))
+			FindElementWithAttribute(cur_e, "frame", "id", "panel9", &s->skinlayout)->LinkEndChild(obj);
 		else
 			cur_e->LinkEndChild(obj);
 		
@@ -606,50 +1442,56 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		 * Check out for some special object (which requires #DST object)
 		 * COMMENT: most of them behaves like #IMAGE object.
 		 */
-		// reset arguments to figure out about object
-		args = line_args_[line].args__;
-		int objectid = INT(args[1]);
-
 		// combo (play)
-		int isComboElement = ProcessCombo(obj, line);
-		if (isComboElement)
-			return isComboElement;
+		int isComboElement = ProcessCombo(args, obj);
+		if (isComboElement) {
+			currentline += isComboElement;
+			return;
+		}
 
 		// select menu (select)
-		int isSelectBar = ProcessSelectBar(obj, line);
-		if (isSelectBar)
-			return isSelectBar;
+		int isSelectBar = ProcessSelectBar(args, obj);
+		if (isSelectBar) {
+			currentline += isSelectBar;
+			return;
+		}
 
 		/* 
 		 * under these are general individual object
 		 */
 		if (OBJTYPE_IS("IMAGE")) {
-			// nothing to do (general object)
-			// but it's not in some special OP/Timer code
-			// - include BOMB/LANE effect into PLAYLANE object
-			// (we may want to include BOMB/OnBeat, but it's programs's limit. Can't do it now.)
-			// (do it yourself)
-			if (!(obj->IntAttribute("w") < 100 && obj->IntAttribute("h") < 100)) {
-				if (//(timer >= 50 && timer < 60) ||
+			/*
+			 * nothing to do (general object) basically,
+			 * but some special objects (BOMB/HOLD/ONBEAT) may need special care.
+			 */
+			int timer = dstop.op[3];
+			if (!(GetDSTAttrFromObject(obj, "w") < 100 && GetDSTAttrFromObject(obj, "h") < 100)) {
+				if ((timer >= 50 && timer < 60) ||
 					(timer >= 70 && timer < 80) ||
 					(timer >= 100 && timer < 110) ||
 					(timer >= 120 && timer < 130)) {
 					// P1
-					XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", 0, &s->skinlayout);
-					MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
-					playarea->LinkEndChild(obj);
+					XMLElement *notefield = FindElementWithAttribute(cur_e, "notefield", "side", 0, &s->skinlayout);
+					notefield->LinkEndChild(obj);
+					// relocate notefield
+					cur_e->InsertEndChild(notefield);
 				}
-				else if (//(timer >= 60 && timer < 70) ||
+				else if ((timer >= 60 && timer < 70) ||
 					(timer >= 80 && timer < 90) ||
 					(timer >= 110 && timer < 120) ||
 					(timer >= 130 && timer < 140)) {
 					// P2
-					XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", 1, &s->skinlayout);
-					MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
-					playarea->LinkEndChild(obj);
+					XMLElement *notefield = FindElementWithAttribute(cur_e, "notefield", "side", 1, &s->skinlayout);
+					notefield->LinkEndChild(obj);
+					// relocate notefield
+					cur_e->InsertEndChild(notefield);
 				}
 			}
-			// however, BOMB SRC effect(SRC loop) MUST TURN OFF
+			// if sop4 == 1, then change object to scratch
+			if (srcop.op[3]) {
+				obj->SetName("scratch");
+			}
+			// BOMB SRC effect(SRC loop) MUST TURN OFF; don't loop.
 			if ((timer >= 50 && timer < 60) || (timer >= 60 && timer < 70))
 				obj->SetAttribute("loop", 0);
 		}
@@ -659,19 +1501,19 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 			// set bga side & remove redundant tag
 			// (LR2 doesn't support 'real' battle mode, so no side attribute.)
 			obj->SetAttribute("side", 0);
-			obj->DeleteAttribute("resid");
+			obj->DeleteAttribute("file");
 		}
 		else if (OBJTYPE_IS("NUMBER")) {
 			obj->SetName("number");
-			ProcessNumber(obj, sop1, sop2, sop3);
+			ProcessNumber(obj, srcop.op[0], srcop.op[1], srcop.op[2]);
 		}
 		else if (OBJTYPE_IS("SLIDER")) {
 			// change tag to slider and add attr
 			obj->SetName("slider");
-			obj->SetAttribute("direction", sop1);
-			obj->SetAttribute("range", sop2);
-			if (TranslateSlider(sop3))
-				obj->SetAttribute("value", TranslateSlider(sop3));
+			obj->SetAttribute("direction", srcop.op[0]);
+			obj->SetAttribute("range", srcop.op[1]);
+			if (TranslateSlider(srcop.op[2]))
+				obj->SetAttribute("value", TranslateSlider(srcop.op[2]));
 			//obj->SetAttribute("range", sop2); - disable option is ignored
 		}
 		else if (OBJTYPE_IS("TEXT")) {
@@ -691,9 +1533,9 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		}
 		else if (OBJTYPE_IS("BARGRAPH")) {
 			obj->SetName("graph");
-			if (TranslateGraph(sop1))
-				obj->SetAttribute("value", TranslateGraph(sop1));
-			obj->SetAttribute("direction", sop2);
+			if (TranslateGraph(srcop.op[0]))
+				obj->SetAttribute("value", TranslateGraph(srcop.op[0]));
+			obj->SetAttribute("direction", srcop.op[1]);
 		}
 		else if (OBJTYPE_IS("BUTTON")) {
 			// TODO: onclick event
@@ -704,18 +1546,18 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		 */
 		else if (OBJTYPE_IS("GROOVEGAUGE")) {
 			int side = INT(args[1]);
-			int addx = sop1;
-			int addy = sop2;
+			int addx = srcop.op[0];
+			int addy = srcop.op[1];
 			obj->SetAttribute("side", side);
 			obj->SetAttribute("addx", addx);
 			obj->SetAttribute("addy", addy);
 			// process SRC and make new SRC elements
-			int x = obj->IntAttribute("x");
-			int y = obj->IntAttribute("y");
-			int w = obj->IntAttribute("w");
-			int h = obj->IntAttribute("h");
-			int divx = obj->IntAttribute("divx");
-			int divy = obj->IntAttribute("divy");
+			int x = GetDSTAttrFromObject(obj, "x");
+			int y = GetDSTAttrFromObject(obj, "y");
+			int w = GetDSTAttrFromObject(obj, "w");
+			int h = GetDSTAttrFromObject(obj, "h");
+			int divx = GetSRCAttrFromObject(obj, "divy");
+			int divy = GetSRCAttrFromObject(obj, "divx");
 			int c = divx * divy;
 			int dw = w / divx;
 			int dh = h / divy;
@@ -771,40 +1613,40 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		else if (OBJTYPE_IS("JUDGELINE")) {
 			obj->SetName("judgeline");
 			XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", objectid, &s->skinlayout);
-			MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
 			playarea->LinkEndChild(obj);
 		}
 		else if (OBJTYPE_IS("LINE")) {
 			obj->SetName("line");
 			XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", objectid, &s->skinlayout);
-			MakeRelative(playarea->IntAttribute("x"), playarea->IntAttribute("y"), obj);
 			playarea->LinkEndChild(obj);
 		}
 		else if (OBJTYPE_IS("ONMOUSE")) {
 			// depreciated/ignore
-			// TODO: support this by SRC_HOVER tag.
-			printf("#XXX_ONMOUSE command is depreciated, ignore. (%dL) \n", line);
+			// TODO: support this by SRC_HOVER tag?
+			printf("#XXX_ONMOUSE command is depreciated, ignore. (%dL) \n", currentline);
 		}
 		else {
-			printf("Unknown General Object (%s), consider as IMAGE. (%dL)\n", args[0] + 5, line);
+			printf("Unknown General Object (%s), consider as IMAGE. (%dL)\n", args[0] + 5, currentline);
 		}
 
-		// return new line
-		return line+1;
+		// we already processed line in SRC/DST, so don't do anything in here
+		return;
 	}
 	/*
 	 * SELECT part 
 	 */
 	else if (CMD_STARTSWITH("#DST_BAR_BODY", 13)) {
 		// select menu part
-		int isProcessSelectBarDST = ProcessSelectBar_DST(line);
-		if (isProcessSelectBarDST)
-			return isProcessSelectBarDST;
+		int isProcessSelectBarDST = ProcessSelectBar_DST(args);
+		if (isProcessSelectBarDST) {
+			currentline += isProcessSelectBarDST;
+			return;
+		}
 	}
 	else if (CMD_IS("#BAR_CENTER")) {
 		// set center and property ...
 		XMLElement *selectmenu = FindElement(cur_e, "selectmenu");
-		selectmenu->SetAttribute("center", line_args_[line].args__[1]);
+		selectmenu->SetAttribute("center", args[1]);
 	}
 	else if (CMD_IS("#BAR_AVAILABLE")) {
 		// depreciated, not parse
@@ -812,16 +1654,17 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 	}
 	/*
 	 * PLAY part 
+	 * use notefield for ease of coding & lift supporting.
 	 */
 	else if (CMD_STARTSWITH("#DST_NOTE", 9)) {
-		args_read_ args = line_args_[line].args__;
 		int objectid = INT(args[1]);
 		XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", objectid / 10, &s->skinlayout);
-		XMLElement *lane = FindElementWithAttribute(playarea, "note", "index", objectid, &s->skinlayout);
-		lane->SetAttribute("x", INT(args[3]) - playarea->IntAttribute("x"));
-		lane->SetAttribute("y", INT(args[4]) - playarea->IntAttribute("y"));
-		lane->SetAttribute("w", INT(args[5]));
-		lane->SetAttribute("h", INT(args[6]));
+		XMLElement *note = FindElementWithAttribute(playarea, "note", "index", objectid, &s->skinlayout);
+		// COMMENT: we should make it in OnInit(), but I think supporting this method seems okay.
+		note->SetAttribute("x", INT(args[3]) - playarea->IntAttribute("x"));
+		note->SetAttribute("y", INT(args[4]) - playarea->IntAttribute("y"));
+		note->SetAttribute("w", INT(args[5]));
+		note->SetAttribute("h", INT(args[6]));
 	}
 	/*
 	 * etc
@@ -830,11 +1673,11 @@ int _LR2SkinParser::ParseSkinLine(int line) {
 		// just ignore
 	}
 	else {
-		printf("Unknown Type: %s (%dL) - Ignore.\n", args[0], line);
+		printf("LR2Skin - Unknown Type: %s (%dL) - Ignore.\n", args[0], currentline);
 	}
 
 	// parse next line
-	return line + 1;
+	currentline++;
 }
 
 // comment: maybe I need to process it with namespace ...?
@@ -882,18 +1725,17 @@ void _LR2SkinParser::ProcessNumber(XMLElement *obj, int sop1, int sop2, int sop3
  * if not lane, return 0
  * if lane, return next parsed line
  */
-int _LR2SkinParser::ProcessLane(XMLElement *src, int line, int resid) {
-	args_read_ args = line_args_[line].args__;
+int _LR2SkinParser::ProcessLane(const args_read_& args, XMLElement *src, int resid) {
 	int objectid = INT(args[1]);
 
 #define SETNOTE(name)\
 	XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", objectid / 10, &s->skinlayout);\
 	XMLElement *lane = FindElementWithAttribute(playarea, "note", "index", objectid, &s->skinlayout);\
-	lane->SetAttribute("resid", src->Attribute("resid"));\
-	src->DeleteAttribute("resid");\
+	lane->SetAttribute("file", src->Attribute("file"));\
+	src->DeleteAttribute("file");\
 	src->SetName(name);\
 	lane->LinkEndChild(src);\
-	return line + 1;
+	return 1;
 	if (OBJTYPE_IS("NOTE")) {
 		SETNOTE("SRC_NOTE");
 	}
@@ -927,7 +1769,7 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line, int resid) {
 	else if (OBJTYPE_IS("JUDGELINE")) {
 		XMLElement *playarea = FindElementWithAttribute(cur_e, "notefield", "side", objectid, &s->skinlayout);
 		// find DST object to set Lane attribute
-		for (int _l = line + 1; _l < line_total; _l++) {
+		for (int _l = currentline; _l < line_total; _l++) {
 			if (strcmp(line_args_[_l].args__[0], "#DST_JUDGELINE") == 0 &&
 				INT(line_args_[_l].args__[1]) == objectid) {
 				int x = INT(line_args_[_l].args__[3]);
@@ -938,12 +1780,6 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line, int resid) {
 				playarea->SetAttribute("y", y);
 				playarea->SetAttribute("w", w);
 				playarea->SetAttribute("h", h);
-				XMLElement *dst = FindElement(playarea, "DST", &s->skinlayout);
-				XMLElement *frame = FindElement(dst, "frame", &s->skinlayout);
-				frame->SetAttribute("x", x);
-				frame->SetAttribute("y", y);
-				frame->SetAttribute("w", w);
-				frame->SetAttribute("h", h);
 				break;
 			}
 		}
@@ -957,7 +1793,7 @@ int _LR2SkinParser::ProcessLane(XMLElement *src, int line, int resid) {
 
 std::string _getcomboconditionstring(int player, int level) {
 	char buf[256];
-	sprintf(buf, "OnP%dJudge", player);
+	sprintf(buf, "P%d", player);
 
 	switch (level) {
 	case 0:
@@ -986,8 +1822,7 @@ std::string _getcomboconditionstring(int player, int level) {
 }
 int __comboy = 0;
 int __combox = 0;
-int _LR2SkinParser::ProcessCombo(XMLElement *obj, int line) {
-	args_read_ args = line_args_[line].args__;
+int _LR2SkinParser::ProcessCombo(const args_read_& args, XMLElement *obj) {
 	int objectid = INT(args[1]);
 	int sop1 = 0, sop2 = 0, sop3 = 0;
 	if (args[11]) sop1 = INT(args[11]);
@@ -996,60 +1831,53 @@ int _LR2SkinParser::ProcessCombo(XMLElement *obj, int line) {
 
 #define GETCOMBOOBJ(side)\
 	std::string cond = _getcomboconditionstring(side, objectid);\
-	XMLElement *playcombo = FindElementWithAttribute(cur_e, "combo", "condition", cond.c_str(), &s->skinlayout);
+	XMLElement *playcombo = FindElementWithAttribute(cur_e, "judge", "visible", cond.c_str(), &s->skinlayout);
+
+	/*
+	 * only judge object has information about pos
+	 * (combo object has relative pos to judge object)
+	 */
 	if (OBJTYPE_IS("NOWJUDGE_1P")) {
-		GETCOMBOOBJ(1);
-		obj->SetName("sprite");
-		playcombo->LinkEndChild(obj);
-		__comboy = obj->FirstChildElement("DST")->FirstChildElement("frame")->IntAttribute("y");
-		__combox = obj->FirstChildElement("DST")->FirstChildElement("frame")->IntAttribute("x");
-		return line + 1;
+		std::string cond = _getcomboconditionstring(0, objectid);
+		obj->SetName("judge");
+		obj->SetAttribute("visible", cond.c_str());
+		obj->SetAttribute("judge", objectid);
+		obj->SetAttribute("side", 0);
+		cur_e->LinkEndChild(obj);
+		return 1;
 	}
 	else if (OBJTYPE_IS("NOWCOMBO_1P")) {
-		GETCOMBOOBJ(1);
+		GETCOMBOOBJ(0);
 		obj->SetName("number");
 		ProcessNumber(obj, 0, 0, 0);
 		obj->SetAttribute("value", "P1Combo");
 		obj->SetAttribute("align", 1);
-		for (XMLElement *e = obj->FirstChildElement("DST")->FirstChildElement("frame"); e;) {
-			e->SetAttribute("y", __comboy);
-			e->SetAttribute("x", e->IntAttribute("x") + __combox);
-			e->SetAttribute("w", 0);
-			e = e->NextSiblingElement("frame");
-		}
 		playcombo->LinkEndChild(obj);
-		return line + 1;
+		return 1;
 	}
 	else if (OBJTYPE_IS("NOWJUDGE_2P")) {
-		GETCOMBOOBJ(2);
-		obj->SetName("sprite");
-		playcombo->LinkEndChild(obj);
-		__comboy = obj->FirstChildElement("DST")->FirstChildElement("frame")->IntAttribute("y");
-		__combox = obj->FirstChildElement("DST")->FirstChildElement("frame")->IntAttribute("x");
-		return line + 1;
+		std::string cond = _getcomboconditionstring(1, objectid);
+		obj->SetName("judge");
+		obj->SetAttribute("visible", cond.c_str());
+		obj->SetAttribute("judge", objectid);
+		obj->SetAttribute("side", 1);
+		return 1;
 	}
 	else if (OBJTYPE_IS("NOWCOMBO_2P")) {
-		GETCOMBOOBJ(2);
+		GETCOMBOOBJ(1);
 		obj->SetName("number");
 		ProcessNumber(obj, 0, 0, 0);
 		obj->SetAttribute("value", "P2Combo");
 		obj->SetAttribute("align", 1);
-		for (XMLElement *e = obj->FirstChildElement("DST")->FirstChildElement("frame"); e;) {
-			e->SetAttribute("y", __comboy);
-			e->SetAttribute("x", e->IntAttribute("x") + __combox);
-			e->SetAttribute("w", 0);
-			e = e->NextSiblingElement("frame");
-		}
 		playcombo->LinkEndChild(obj);
-		return line + 1;
+		return 1;
 	}
 
 	// not a combo object
 	return 0;
 }
 
-int _LR2SkinParser::ProcessSelectBar(XMLElement *obj, int line) {
-	args_read_ args = line_args_[line].args__;
+int _LR2SkinParser::ProcessSelectBar(const args_read_& args, XMLElement *obj) {
 	int objectid = INT(args[1]);
 
 	// select menu part
@@ -1102,42 +1930,46 @@ int _LR2SkinParser::ProcessSelectBar(XMLElement *obj, int line) {
 			// ignore
 			s->skinlayout.DeleteNode(obj);
 		}
-		return line + 1;
+		return 1;
 	}
 
 	// not a select bar object
 	return 0;
 }
 
-int _LR2SkinParser::ProcessSelectBar_DST(int line) {
-	args_read_ args = line_args_[line].args__;
+/*
+ * it's not firmly decided yet ...
+ */
+int _LR2SkinParser::ProcessSelectBar_DST(const args_read_& args) {
 	int objectid = INT(args[1]);
 #define CMD_IS(v) (strcmp(args[0], (v)) == 0)
 	if (CMD_IS("#DST_BAR_BODY_ON")) {
-		XMLElement *selectmenu = FindElement(cur_e, "selectmenu", &s->skinlayout);
-		XMLElement *position = FindElement(selectmenu, "position", &s->skinlayout);
-		XMLElement *bodyoff = FindElement(position, "bar");
-		if (bodyoff) {
-			/*
-			* DST_SELECTED: only have delta_x, delta_y value
-			*/
-			XMLElement *frame = FindElement(bodyoff, "frame");
-			position->SetAttribute("delta_x", INT(args[3]) - frame->IntAttribute("x"));
-		}
-		return line + 1;
+		XMLElement *list = FindElement(cur_e, "songlist", &s->skinlayout);
+		XMLElement *bar = FindElementWithAttribute(list, "bar", "index", INT(args[1]), &s->skinlayout);
+		XMLElement *dst = FindElement(cur_e, "OnFocus", &s->skinlayout);
+		ADDCHILD(dst, "time")->SetAttribute("v", INT(args[2]));
+		ADDCHILD(dst, "x")->SetAttribute("v", INT(args[3]));
+		ADDCHILD(dst, "y")->SetAttribute("v", INT(args[4]));
+		ADDCHILD(dst, "w")->SetAttribute("v", INT(args[5]));
+		ADDCHILD(dst, "h")->SetAttribute("v", INT(args[6]));
+		ADDCHILD(dst, "a")->SetAttribute("v", INT(args[8]));
+		return 1;
 	}
 	else if (CMD_IS("#DST_BAR_BODY_OFF")) {
-		XMLElement *selectmenu = FindElement(cur_e, "selectmenu", &s->skinlayout);
-		XMLElement *position = FindElement(selectmenu, "position", &s->skinlayout);
-		XMLElement *bodyoff = FindElementWithAttribute(position, "bar", "index", INT(args[1]), &s->skinlayout);
-		XMLElement *frame = s->skinlayout.NewElement("frame");
-		frame->SetAttribute("time", INT(args[2]));
-		frame->SetAttribute("x", INT(args[3]));
-		frame->SetAttribute("y", INT(args[4]));
-		frame->SetAttribute("w", INT(args[5]));
-		frame->SetAttribute("h", INT(args[6]));
-		bodyoff->LinkEndChild(frame);
-		return line + 1;
+		XMLElement *list = FindElement(cur_e, "songlist", &s->skinlayout);
+		XMLElement *bar = FindElementWithAttribute(list, "bar", "index", INT(args[1]), &s->skinlayout);
+		XMLElement *dst = FindElement(cur_e, "OnInit", &s->skinlayout);
+		ADDCHILD(dst, "time")->SetAttribute("v", INT(args[2]));
+		ADDCHILD(dst, "x")->SetAttribute("v", INT(args[3]));
+		ADDCHILD(dst, "y")->SetAttribute("v", INT(args[4]));
+		ADDCHILD(dst, "w")->SetAttribute("v", INT(args[5]));
+		ADDCHILD(dst, "h")->SetAttribute("v", INT(args[6]));
+		ADDCHILD(dst, "a")->SetAttribute("v", INT(args[8]));
+		// TODO: a, r, g, b, angle
+		// TODO: set first attribute: acc, center, ...
+		// TODO: add func like DST
+		// TODO: compare with previous one?
+		return 1;
 	}
 	else {
 		// not a select bar object
@@ -1174,7 +2006,7 @@ void _LR2SkinParser::ConvertToTextureFont(XMLElement *obj) {
 	 */
 	int tfont_idx;
 	tfont_idx = GenerateTexturefontString(obj);
-	obj->SetAttribute("resid", tfont_idx);
+	obj->SetAttribute("file", tfont_idx);
 	/*
 	 * Processed little differently if it's 24mode.
 	 * only for LR2, LEGACY attribute.
@@ -1218,7 +2050,7 @@ int _LR2SkinParser::GenerateTexturefontString(XMLElement *obj) {
 
 	// get image file path from resource
 	XMLElement *resource = s->skinlayout.FirstChildElement("skin");
-	XMLElement *img = FindElementWithAttribute(resource, "image", "name", obj->Attribute("resid"));
+	XMLElement *img = FindElementWithAttribute(resource, "image", "name", obj->Attribute("file"));
 	// create font data
 	SkinTextureFont tfont;
 	tfont.AddImageSrc(img->Attribute("path"));
@@ -1248,1728 +2080,15 @@ int _LR2SkinParser::GenerateTexturefontString(XMLElement *obj) {
 	return font_cnt-1;
 }
 
-#define SETOPTION(s) (strcat_s(translated, 1024, s))
-#define SETNEGATIVEOPTION(s) \
-if (translated[0] == '!') translated[0] = 0;\
-else strcpy_s(translated, 1024, "!");\
-strcat_s(translated, 1024, s);
-const char* _LR2SkinParser::TranslateOPs(int op) {
-	/*
-	 * In Rhythmus, there's no object called OP(condition) code. but, all conditions have timer code, and that does OP code's work.
-	 * So this function will translate OP code into a valid condition code.
-	 */
-	if (op < 0) {
-		strcpy(translated, "!");
-		op *= -1;
-	}
-	else {
-		translated[0] = 0;
-	}
-
-	if (op == 0) {
-		/* this is an constant code - but should NOT given as argument, I suggest. */
-		strcat(translated, "true");
-	}
-	else if (op > 0 && op < 200) {
-		if (op == 1) {
-			SETOPTION("IsSelectBarFolder");
-		}
-		else if (op == 2) {
-			SETOPTION("IsSelectBarSong");
-		}
-		else if (op == 3) {
-			SETOPTION("IsSelectBarCourse");
-		}
-		else if (op == 4) {
-			SETOPTION("IsSelectBarNewCourse");
-		}
-		else if (op == 5) {
-			SETOPTION("IsSelectBarPlayable");
-		}
-		else if (op == 10) {
-			SETOPTION("IsDoublePlay");
-		}
-		else if (op == 11) {
-			SETOPTION("IsBattlePlay");
-		}
-		else if (op == 12) {
-			SETOPTION("IsDoublePlay");	// this includes battle
-		}
-		else if (op == 13) {
-			SETOPTION("IsBattlePlay");	// this includes ghost battle
-		}
-		else if (op == 20) {
-			SETOPTION("OnPanel");
-		}
-		else if (op == 21) {
-			SETOPTION("OnPanel1");
-		}
-		else if (op == 22) {
-			SETOPTION("OnPanel2");
-		}
-		else if (op == 23) {
-			SETOPTION("OnPanel3");
-		}
-		else if (op == 24) {
-			SETOPTION("OnPanel4");
-		}
-		else if (op == 25) {
-			SETOPTION("OnPanel5");
-		}
-		else if (op == 26) {
-			SETOPTION("OnPanel6");
-		}
-		else if (op == 27) {
-			SETOPTION("OnPanel7");
-		}
-		else if (op == 28) {
-			SETOPTION("OnPanel8");
-		}
-		else if (op == 29) {
-			SETOPTION("OnPanel9");
-		}
-		else if (op == 30) {
-			SETOPTION("IsBGANormal");		// Depreciated; won't be used
-		}
-		else if (op == 31) {
-			SETOPTION("IsBGA");
-		}
-		else if (op == 32) {
-			SETNEGATIVEOPTION("IsAutoPlay");
-		}
-		else if (op == 33) {
-			SETOPTION("IsAutoPlay");
-		}
-		else if (op == 34) {
-			SETOPTION("IsGhostOff");			// hmm ...
-		}
-		else if (op == 35) {
-			SETOPTION("IsGhostA");
-		}
-		else if (op == 36) {
-			SETOPTION("IsGhostB");
-		}
-		else if (op == 37) {
-			SETOPTION("IsGhostC");
-		}
-		else if (op == 38) {
-			SETNEGATIVEOPTION("IsScoreGraph");
-		}
-		else if (op == 39) {
-			SETOPTION("IsScoreGraph");
-		}
-		else if (op == 40) {
-			SETNEGATIVEOPTION("IsBGA");
-		}
-		else if (op == 41) {
-			SETOPTION("IsBGA");
-		}
-		else if (op == 42) {
-			SETOPTION("IsP1GrooveGauge");
-		}
-		else if (op == 43) {
-			SETOPTION("IsP1HardGauge");
-		}
-		else if (op == 44) {
-			SETOPTION("IsP2GrooveGauge");
-		}
-		else if (op == 45) {
-			SETOPTION("IsP2HardGauge");
-		}
-		else if (op == 46) {
-			SETOPTION("IsDiffFiltered");		// on select menu; but depreciated?
-		}
-		else if (op == 47) {
-			SETNEGATIVEOPTION("IsDifficultyFilter");
-		}
-		else if (op == 50) {
-			SETNEGATIVEOPTION("IsOnline");
-		}
-		else if (op == 51) {
-			SETOPTION("IsOnline");
-		}
-		else if (op == 52) {
-			SETNEGATIVEOPTION("IsExtraMode");			// DEMO PLAY
-		}
-		else if (op == 53) {
-			SETOPTION("IsExtraMode");
-		}
-		else if (op == 54) {
-			SETNEGATIVEOPTION("IsP1AutoSC");
-		}
-		else if (op == 55) {
-			SETOPTION("IsP1AutoSC");
-		}
-		else if (op == 56) {
-			SETNEGATIVEOPTION("IsP2AutoSC");
-		}
-		else if (op == 57) {
-			SETOPTION("IsP2AutoSC");
-		}
-		else if (op == 60) {
-			SETNEGATIVEOPTION("IsRecordable");
-		}
-		else if (op == 61) {
-			SETOPTION("IsRecordable");
-		}
-		else if (op == 62) {
-			SETNEGATIVEOPTION("IsRecordable");
-		}
-		else if (op == 63) {
-			SETOPTION("IsEasyClear");
-		}
-		else if (op == 64) {
-			SETOPTION("IsGrooveClear");
-		}
-		else if (op == 65) {
-			SETOPTION("IsHardClear");
-		}/* NO EXH in LR2
-		else if (op == 66) {
-		strcat(translated, "IsEXHClear");
-		}*/
-		else if (op == 66) {
-			SETOPTION("IsFCClear");
-		}
-		else if (op == 70) {
-			SETNEGATIVEOPTION("IsBeginnerSparkle");
-		}
-		else if (op == 71) {
-			SETNEGATIVEOPTION("IsNormalSparkle");
-		}
-		else if (op == 72) {
-			SETNEGATIVEOPTION("IsHyperSparkle");
-		}
-		else if (op == 73) {
-			SETNEGATIVEOPTION("IsAnotherSparkle");
-		}
-		else if (op == 74) {
-			SETNEGATIVEOPTION("IsInsaneSparkle");
-		}
-		else if (op == 75) {
-			SETOPTION("IsBeginnerSparkle");
-		}
-		else if (op == 76) {
-			SETOPTION("IsNormalSparkle");
-		}
-		else if (op == 77) {
-			SETOPTION("IsHyperSparkle");
-		}
-		else if (op == 78) {
-			SETOPTION("IsAnotherSparkle");
-		}
-		else if (op == 79) {
-			SETOPTION("IsInsaneSparkle");
-		}
-		else if (op == 80) {
-			SETOPTION("OnSongLoading");
-		}
-		else if (op == 81) {
-			SETOPTION("OnSongLoadingEnd");
-		}
-		else if (op == 84) {
-			SETOPTION("OnSongReplay");
-		}
-		else if (op == 90) {
-			SETOPTION("OnResultClear");
-		}
-		else if (op == 91) {
-			SETOPTION("OnResultFail");
-		}
-		else if (op == 150) {
-			SETOPTION("OnDiffNone");			// I suggest to use DiffValue == 0 then this.
-		}
-		else if (op == 151) {
-			SETOPTION("OnDiffBeginner");
-		}
-		else if (op == 152) {
-			SETOPTION("OnDiffNormal");
-		}
-		else if (op == 153) {
-			SETOPTION("OnDiffHyper");
-		}
-		else if (op == 154) {
-			SETOPTION("OnDiffAnother");
-		}
-		else if (op == 155) {
-			SETOPTION("OnDiffInsane");
-		}
-		else if (op == 160) {
-			SETOPTION("Is7Keys");
-		}
-		else if (op == 161) {
-			SETOPTION("Is5Keys");
-		}
-		else if (op == 162) {
-			SETOPTION("Is14Keys");
-		}
-		else if (op == 163) {
-			SETOPTION("Is10Keys");
-		}
-		else if (op == 164) {
-			SETOPTION("Is9Keys");
-		}
-		/* 165 ~ : should we work with it? (same with op 160 ~ 161) */
-		else if (op == 170) {
-			SETOPTION("IsBGA");
-		}
-		else if (op == 171) {
-			SETNEGATIVEOPTION("IsBGA");
-		}
-		else if (op == 172) {
-			SETOPTION("IsLongNote");
-		}
-		else if (op == 173) {
-			SETNEGATIVEOPTION("IsLongNote");
-		}
-		else if (op == 174) {
-			SETOPTION("IsBmsReadme");
-		}
-		else if (op == 175) {
-			SETNEGATIVEOPTION("IsBmsReadme");
-		}
-		else if (op == 176) {
-			SETOPTION("IsBpmChange");
-		}
-		else if (op == 177) {
-			SETNEGATIVEOPTION("IsBpmChange");
-		}
-		else if (op == 178) {
-			SETOPTION("IsBmsRandomCommand");
-		}
-		else if (op == 179) {
-			SETNEGATIVEOPTION("IsBmsRandomCommand");
-		}
-		else if (op == 180) {
-			SETOPTION("IsJudgeVERYHARD");
-		}
-		else if (op == 181) {
-			SETOPTION("IsJudgeHARD");
-		}
-		else if (op == 182) {
-			SETOPTION("IsJudgeNORMAL");
-		}
-		else if (op == 183) {
-			SETOPTION("IsJudgeEASY");
-		}
-		else if (op == 184) {
-			SETOPTION("IsLevelSparkle");
-		}
-		else if (op == 185) {
-			SETNEGATIVEOPTION("IsLevelSparkle");
-		}
-		else if (op == 186) {
-			SETOPTION("IsLevelSparkle");
-		}
-		else if (op == 190) {
-			SETNEGATIVEOPTION("IsStageFile");
-		}
-		else if (op == 191) {
-			SETOPTION("IsStageFile");
-		}
-		else if (op == 192) {
-			SETNEGATIVEOPTION("IsBANNER");
-		}
-		else if (op == 193) {
-			SETOPTION("IsBANNER");
-		}
-		else if (op == 194) {
-			SETNEGATIVEOPTION("IsBACKBMP");
-		}
-		else if (op == 195) {
-			SETOPTION("IsBACKBMP");
-		}
-		else if (op == 196) {
-			SETNEGATIVEOPTION("IsPlayable");
-		}
-		else if (op == 197) {
-			SETOPTION("IsReplayable");
-		}
-	}
-	/* during play */
-	else if (op >= 200 && op < 300) {
-		if (op == 200) {
-			SETOPTION("IsP1AAA");
-		}
-		else if (op == 201) {
-			SETOPTION("IsP1AA");
-		}
-		else if (op == 202) {
-			SETOPTION("IsP1A");
-		}
-		else if (op == 203) {
-			SETOPTION("IsP1B");
-		}
-		else if (op == 204) {
-			SETOPTION("IsP1C");
-		}
-		else if (op == 205) {
-			SETOPTION("IsP1D");
-		}
-		else if (op == 206) {
-			SETOPTION("IsP1E");
-		}
-		else if (op == 207) {
-			SETOPTION("IsP1F");
-		}
-		else if (op == 210) {
-			SETOPTION("IsP2AAA");
-		}
-		else if (op == 211) {
-			SETOPTION("IsP2AA");
-		}
-		else if (op == 212) {
-			SETOPTION("IsP2A");
-		}
-		else if (op == 213) {
-			SETOPTION("IsP2B");
-		}
-		else if (op == 214) {
-			SETOPTION("IsP2C");
-		}
-		else if (op == 215) {
-			SETOPTION("IsP2D");
-		}
-		else if (op == 216) {
-			SETOPTION("IsP2E");
-		}
-		else if (op == 217) {
-			SETOPTION("IsP2F");
-		}
-		else if (op == 220) {
-			SETOPTION("IsP1ReachAAA");
-		}
-		else if (op == 221) {
-			SETOPTION("IsP1ReachAA");
-		}
-		else if (op == 222) {
-			SETOPTION("IsP1ReachA");
-		}
-		else if (op == 223) {
-			SETOPTION("IsP1ReachB");
-		}
-		else if (op == 224) {
-			SETOPTION("IsP1ReachC");
-		}
-		else if (op == 225) {
-			SETOPTION("IsP1ReachD");
-		}
-		else if (op == 226) {
-			SETOPTION("IsP1ReachE");
-		}
-		else if (op == 227) {
-			SETOPTION("IsP1ReachF");
-		}
-		/* 23X : I dont want to implement these useless one ... hmm... don't want ... .... */
-		else if (op == 241) {
-			SETOPTION("OnP1JudgePerfect");
-		}
-		else if (op == 242) {
-			SETOPTION("OnP1JudgeGreat");
-		}
-		else if (op == 243) {
-			SETOPTION("OnP1JudgeGood");
-		}
-		else if (op == 244) {
-			SETOPTION("OnP1JudgeBad");
-		}
-		else if (op == 245) {
-			SETOPTION("OnP1JudgePoor");
-		}
-		else if (op == 246) {
-			SETOPTION("OnP1JudgePoor");		// ÕˆPOOR
-		}
-		else if (op == 247) {
-			SETOPTION("OnP1Miss");
-		}
-		else if (op == 248) {
-			SETNEGATIVEOPTION("OnP1Miss");
-		}/*
-		else if (op == 220) {
-		SETOPTION("IsP1ReachAAA");
-		}
-		else if (op == 221) {
-		SETOPTION("IsP1ReachAA");
-		}
-		else if (op == 222) {
-		SETOPTION("IsP1ReachA");
-		}
-		else if (op == 223) {
-		SETOPTION("IsP1ReachB");
-		}
-		else if (op == 224) {
-		SETOPTION("IsP1ReachC");
-		}
-		else if (op == 225) {
-		SETOPTION("IsP1ReachD");
-		}
-		else if (op == 226) {
-		SETOPTION("IsP1ReachE");
-		}
-		else if (op == 227) {
-		SETOPTION("IsP1ReachF");
-		}*/
-		/* 23X : I dont want to implement these useless one ... hmm... don't want ... .... */
-		else if (op == 261) {
-			SETOPTION("OnP2JudgePerfect");
-		}
-		else if (op == 262) {
-			SETOPTION("OnP2JudgeGreat");
-		}
-		else if (op == 263) {
-			SETOPTION("OnP2JudgeGood");
-		}
-		else if (op == 264) {
-			SETOPTION("OnP2JudgeBad");
-		}
-		else if (op == 265) {
-			SETOPTION("OnP2JudgePoor");
-		}
-		else if (op == 266) {
-			SETOPTION("OnP2JudgePoor");		// ÕˆPOOR
-		}
-		else if (op == 267) {
-			SETOPTION("OnP2Miss");
-		}
-		else if (op == 268) {
-			SETNEGATIVEOPTION("OnP2Miss");
-		}
-		/* SUD/LIFT */
-		else if (op == 270) {
-			SETOPTION("OnP1SuddenChange");
-		}
-		else if (op == 271) {
-			SETOPTION("OnP2SuddenChange");
-		}
-		/* Course related */
-		else if (op == 280) {
-			SETOPTION("IsCourse1Stage");
-		}
-		else if (op == 281) {
-			SETOPTION("IsCourse2Stage");
-		}
-		else if (op == 282) {
-			SETOPTION("IsCourse3Stage");
-		}
-		else if (op == 283) {
-			SETOPTION("IsCourse4Stage");
-		}
-		else if (op == 289) {
-			SETOPTION("IsCourseFinal");
-		}
-		else if (op == 290) {
-			SETOPTION("IsCourse");
-		}
-		else if (op == 291) {
-			SETOPTION("IsGrading");		// ”´Í»Ï„Ô“
-		}
-		else if (op == 292) {
-			SETOPTION("ExpertCourse");
-		}
-		else if (op == 293) {
-			SETOPTION("ClassCourse");
-		}
-	}
-	/* result screen */
-	else if (op >= 300 && op < 400) {
-		if (op == 300) {
-			SETOPTION("IsP1AAA");
-		}
-		else if (op == 301) {
-			SETOPTION("IsP1AA");
-		}
-		else if (op == 302) {
-			SETOPTION("IsP1A");
-		}
-		else if (op == 303) {
-			SETOPTION("IsP1B");
-		}
-		else if (op == 304) {
-			SETOPTION("IsP1C");
-		}
-		else if (op == 305) {
-			SETOPTION("IsP1D");
-		}
-		else if (op == 306) {
-			SETOPTION("IsP1E");
-		}
-		else if (op == 307) {
-			SETOPTION("IsP1F");
-		}
-		else if (op == 310) {
-			SETOPTION("IsP2AAA");
-		}
-		else if (op == 311) {
-			SETOPTION("IsP2AA");
-		}
-		else if (op == 312) {
-			SETOPTION("IsP2A");
-		}
-		else if (op == 313) {
-			SETOPTION("IsP2B");
-		}
-		else if (op == 314) {
-			SETOPTION("IsP2C");
-		}
-		else if (op == 315) {
-			SETOPTION("IsP2D");
-		}
-		else if (op == 316) {
-			SETOPTION("IsP2E");
-		}
-		else if (op == 317) {
-			SETOPTION("IsP2F");
-		}
-		else if (op == 320) {
-			SETOPTION("IsBeforeAAA");
-		}
-		else if (op == 321) {
-			SETOPTION("IsBeforeAA");
-		}
-		else if (op == 322) {
-			SETOPTION("IsBeforeA");
-		}
-		else if (op == 323) {
-			SETOPTION("IsBeforeB");
-		}
-		else if (op == 324) {
-			SETOPTION("IsBeforeC");
-		}
-		else if (op == 325) {
-			SETOPTION("IsBeforeD");
-		}
-		else if (op == 326) {
-			SETOPTION("IsBeforeE");
-		}
-		else if (op == 327) {
-			SETOPTION("IsBeforeF");
-		}
-		else if (op == 340) {
-			SETOPTION("IsAfterAAA");
-		}
-		else if (op == 341) {
-			SETOPTION("IsAfterAA");
-		}
-		else if (op == 342) {
-			SETOPTION("IsAfterA");
-		}
-		else if (op == 343) {
-			SETOPTION("IsAfterB");
-		}
-		else if (op == 344) {
-			SETOPTION("IsAfterC");
-		}
-		else if (op == 345) {
-			SETOPTION("IsAfterD");
-		}
-		else if (op == 346) {
-			SETOPTION("IsAfterE");
-		}
-		else if (op == 347) {
-			SETOPTION("IsAfterF");
-		}
-		else if (op == 330) {
-			SETOPTION("IsResultUpdated");
-		}
-		else if (op == 331) {
-			SETOPTION("IsMaxcomboUpdated");
-		}
-		else if (op == 332) {
-			SETOPTION("IsMinBPUpdated");
-		}
-		else if (op == 333) {
-			SETOPTION("IsResultUpdated");	// ??
-		}
-		else if (op == 334) {
-			SETOPTION("IsIRRankUpdated");
-		}
-		else if (op == 334) {
-			SETOPTION("IsIRRankUpdated");	// ??
-		}
-	}
-	/* TODO: change it into Lua script ...? */
-	else if (op == 400) {
-		SETOPTION("Is714KEY");
-	}
-	else if (op == 401) {
-		SETOPTION("Is9KEY");
-	}
-	else if (op == 402) {
-		SETOPTION("Is510KEY");
-	}
-	else if (op >= 900)
-	{
-		// #CUSTOMOPTION code
-		itoa(op, translated, 10);
-	}
-	else {
-		// unknown!
-		// we can return '0', but I think it's better to return "UNKNOWN", for safety.
-		return 0;
-		//return "UNKNOWN";
-	}
-	return translated;
-}
-
-#define SETTIMER(s)\
-	strcpy_s(translated, 1024, (s));
-const char* _LR2SkinParser::TranslateTimer(int timer) {
-	if (timer == 1) {
-		SETTIMER("OnStartInput");
-	}
-	else if (timer == 2) {
-		SETTIMER("OnFadeOut");	// FADEOUT
-	}
-	else if (timer == 3) {
-		SETTIMER("OnClose");		// Stage failed
-	}
-	else if (timer == 21) {
-		SETTIMER("OnPanel1");
-	}
-	else if (timer == 22) {
-		SETTIMER("OnPanel2");
-	}
-	else if (timer == 23) {
-		SETTIMER("OnPanel3");
-	}
-	else if (timer == 24) {
-		SETTIMER("OnPanel4");
-	}
-	else if (timer == 25) {
-		SETTIMER("OnPanel5");
-	}
-	else if (timer == 26) {
-		SETTIMER("OnPanel6");
-	}
-	else if (timer == 27) {
-		SETTIMER("OnPanel7");
-	}
-	else if (timer == 28) {
-		SETTIMER("OnPanel8");
-	}
-	else if (timer == 29) {
-		SETTIMER("OnPanel9");
-	}
-	/* Panel closing: DEPRECIATED */
-	else if (timer == 31) {
-		SETTIMER("OnPanel1Close");
-	}
-	else if (timer == 32) {
-		SETTIMER("OnPanel2Close");
-	}
-	else if (timer == 33) {
-		SETTIMER("OnPanel3Close");
-	}
-	else if (timer == 34) {
-		SETTIMER("OnPanel4Close");
-	}
-	else if (timer == 35) {
-		SETTIMER("OnPanel5Close");
-	}
-	else if (timer == 36) {
-		SETTIMER("OnPanel6Close");
-	}
-	else if (timer == 37) {
-		SETTIMER("OnPanel7Close");
-	}
-	else if (timer == 38) {
-		SETTIMER("OnPanel8Close");
-	}
-	else if (timer == 39) {
-		SETTIMER("OnPanel9Close");
-	}
-	else if (timer == 40) {
-		SETTIMER("OnReady");
-	}
-	else if (timer == 41) {
-		SETTIMER("OnGameStart");
-	}
-	else if (timer == 42) {
-		SETTIMER("OnP1GaugeUp");
-	}
-	else if (timer == 43) {
-		SETTIMER("OnP2GaugeUp");
-	}
-	else if (timer == 44) {
-		SETTIMER("OnP1GaugeMax");
-	}
-	else if (timer == 45) {
-		SETTIMER("OnP2GaugeMax");
-	}
-	else if (timer == 46) {
-		SETTIMER("OnP1Combo");
-	}
-	else if (timer == 47) {
-		SETTIMER("OnP2Combo");
-	}
-	else if (timer == 48) {
-		SETTIMER("OnP1FullCombo");
-	}
-	else if (timer == 49) {
-		SETTIMER("OnP2FullCombo");
-	}
-	else if (timer == 50) {
-		SETTIMER("OnP1JudgeSCOkay");
-	}
-	else if (timer == 51) {
-		SETTIMER("OnP1Judge1Okay");
-	}
-	else if (timer == 52) {
-		SETTIMER("OnP1Judge2Okay");
-	}
-	else if (timer == 53) {
-		SETTIMER("OnP1Judge3Okay");
-	}
-	else if (timer == 54) {
-		SETTIMER("OnP1Judge4Okay");
-	}
-	else if (timer == 55) {
-		SETTIMER("OnP1Judge5Okay");
-	}
-	else if (timer == 56) {
-		SETTIMER("OnP1Judge6Okay");
-	}
-	else if (timer == 57) {
-		SETTIMER("OnP1Judge7Okay");
-	}
-	else if (timer == 58) {
-		SETTIMER("OnP1Judge8Okay");
-	}
-	else if (timer == 59) {
-		SETTIMER("OnP1Judge9Okay");
-	}
-	else if (timer == 60) {
-		SETTIMER("OnP2JudgeSCOkay");
-	}
-	else if (timer == 61) {
-		SETTIMER("OnP2Judge1Okay");
-	}
-	else if (timer == 62) {
-		SETTIMER("OnP2Judge2Okay");
-	}
-	else if (timer == 63) {
-		SETTIMER("OnP2Judge3Okay");
-	}
-	else if (timer == 64) {
-		SETTIMER("OnP2Judge4Okay");
-	}
-	else if (timer == 65) {
-		SETTIMER("OnP2Judge5Okay");
-	}
-	else if (timer == 66) {
-		SETTIMER("OnP2Judge6Okay");
-	}
-	else if (timer == 67) {
-		SETTIMER("OnP2Judge7Okay");
-	}
-	else if (timer == 68) {
-		SETTIMER("OnP2Judge8Okay");
-	}
-	else if (timer == 69) {
-		SETTIMER("OnP2Judge9Okay");
-	}
-	else if (timer == 70) {
-		SETTIMER("OnP1JudgeSCHold");
-	}
-	else if (timer == 71) {
-		SETTIMER("OnP1Judge1Hold");
-	}
-	else if (timer == 72) {
-		SETTIMER("OnP1Judge2Hold");
-	}
-	else if (timer == 73) {
-		SETTIMER("OnP1Judge3Hold");
-	}
-	else if (timer == 74) {
-		SETTIMER("OnP1Judge4Hold");
-	}
-	else if (timer == 75) {
-		SETTIMER("OnP1Judge5Hold");
-	}
-	else if (timer == 76) {
-		SETTIMER("OnP1Judge6Hold");
-	}
-	else if (timer == 77) {
-		SETTIMER("OnP1Judge7Hold");
-	}
-	else if (timer == 78) {
-		SETTIMER("OnP1Judge8Hold");
-	}
-	else if (timer == 79) {
-		SETTIMER("OnP1Judge9Hold");
-	}
-	else if (timer == 80) {
-		SETTIMER("OnP2JudgeSCHold");
-	}
-	else if (timer == 81) {
-		SETTIMER("OnP2Judge1Hold");
-	}
-	else if (timer == 82) {
-		SETTIMER("OnP2Judge2Hold");
-	}
-	else if (timer == 83) {
-		SETTIMER("OnP2Judge3Hold");
-	}
-	else if (timer == 84) {
-		SETTIMER("OnP2Judge4Hold");
-	}
-	else if (timer == 85) {
-		SETTIMER("OnP2Judge5Hold");
-	}
-	else if (timer == 86) {
-		SETTIMER("OnP2Judge6Hold");
-	}
-	else if (timer == 87) {
-		SETTIMER("OnP2Judge7Hold");
-	}
-	else if (timer == 88) {
-		SETTIMER("OnP2Judge8Hold");
-	}
-	else if (timer == 89) {
-		SETTIMER("OnP2Judge9Hold");
-	}
-	else if (timer == 100) {
-		SETTIMER("OnP1KeySCPress");
-	}
-	else if (timer == 101) {
-		SETTIMER("OnP1Key1Press");
-	}
-	else if (timer == 102) {
-		SETTIMER("OnP1Key2Press");
-	}
-	else if (timer == 103) {
-		SETTIMER("OnP1Key3Press");
-	}
-	else if (timer == 104) {
-		SETTIMER("OnP1Key4Press");
-	}
-	else if (timer == 105) {
-		SETTIMER("OnP1Key5Press");
-	}
-	else if (timer == 106) {
-		SETTIMER("OnP1Key6Press");
-	}
-	else if (timer == 107) {
-		SETTIMER("OnP1Key7Press");
-	}
-	else if (timer == 108) {
-		SETTIMER("OnP1Key8Press");
-	}
-	else if (timer == 109) {
-		SETTIMER("OnP1Key9Press");
-	}
-	else if (timer == 110) {
-		SETTIMER("OnP2KeySCPress");
-	}
-	else if (timer == 111) {
-		SETTIMER("OnP2Key1Press");
-	}
-	else if (timer == 112) {
-		SETTIMER("OnP2Key2Press");
-	}
-	else if (timer == 113) {
-		SETTIMER("OnP2Key3Press");
-	}
-	else if (timer == 114) {
-		SETTIMER("OnP2Key4Press");
-	}
-	else if (timer == 115) {
-		SETTIMER("OnP2Key5Press");
-	}
-	else if (timer == 116) {
-		SETTIMER("OnP2Key6Press");
-	}
-	else if (timer == 117) {
-		SETTIMER("OnP2Key7Press");
-	}
-	else if (timer == 118) {
-		SETTIMER("OnP2Key8Press");
-	}
-	else if (timer == 119) {
-		SETTIMER("OnP2Key9Press");
-	}
-	else if (timer == 120) {
-		SETTIMER("OnP1KeySCUp");
-	}
-	else if (timer == 121) {
-		SETTIMER("OnP1Key1Up");
-	}
-	else if (timer == 122) {
-		SETTIMER("OnP1Key2Up");
-	}
-	else if (timer == 123) {
-		SETTIMER("OnP1Key3Up");
-	}
-	else if (timer == 124) {
-		SETTIMER("OnP1Key4Up");
-	}
-	else if (timer == 125) {
-		SETTIMER("OnP1Key5Up");
-	}
-	else if (timer == 126) {
-		SETTIMER("OnP1Key6Up");
-	}
-	else if (timer == 127) {
-		SETTIMER("OnP1Key7Up");
-	}
-	else if (timer == 128) {
-		SETTIMER("OnP1Key8Up");
-	}
-	else if (timer == 129) {
-		SETTIMER("OnP1Key9Up");
-	}
-	else if (timer == 130) {
-		SETTIMER("OnP2KeySCUp");
-	}
-	else if (timer == 131) {
-		SETTIMER("OnP2Key1Up");
-	}
-	else if (timer == 132) {
-		SETTIMER("OnP2Key2Up");
-	}
-	else if (timer == 133) {
-		SETTIMER("OnP2Key3Up");
-	}
-	else if (timer == 134) {
-		SETTIMER("OnP2Key4Up");
-	}
-	else if (timer == 135) {
-		SETTIMER("OnP2Key5Up");
-	}
-	else if (timer == 136) {
-		SETTIMER("OnP2Key6Up");
-	}
-	else if (timer == 137) {
-		SETTIMER("OnP2Key7Up");
-	}
-	else if (timer == 138) {
-		SETTIMER("OnP2Key8Up");
-	}
-	else if (timer == 139) {
-		SETTIMER("OnP2Key9Up");
-	}
-	else if (timer == 140) {
-		SETTIMER("OnBeat");
-	}
-	else if (timer == 143) {
-		SETTIMER("OnP1LastNote");
-	}
-	else if (timer == 144) {
-		SETTIMER("OnP2LastNote");
-	}
-	else if (timer == 150) {
-		SETTIMER("OnResult");
-	}
-	else {
-		// unknown timer!
-		// we can return '0', but I think it's better to return "UNKNOWN", for safety.
-		return 0;
-		//return "UNKNOWN";
-	}
-	return translated;
-}
-
-// TODO: quite things to consider
-const char* _LR2SkinParser::TranslateButton(int code) {
-	if (code == 1)
-		strcpy(translated, "TogglePanel1()");
-	else if (code == 2)
-		strcpy(translated, "TogglePanel2()");
-	else if (code == 3)
-		strcpy(translated, "TogglePanel3()");
-	else if (code == 4)
-		strcpy(translated, "TogglePanel4()");
-	else if (code == 5)
-		strcpy(translated, "TogglePanel5()");
-	else if (code == 6)
-		strcpy(translated, "TogglePanel6()");
-	else if (code == 7)
-		strcpy(translated, "TogglePanel7()");
-	else if (code == 8)
-		strcpy(translated, "TogglePanel8()");
-	else if (code == 9)
-		strcpy(translated, "TogglePanel9()");
-	else if (code == 10)
-		strcpy(translated, "ChangeDiff()");
-	else if (code == 11)
-		strcpy(translated, "ChangeMode()");
-	else if (code == 12)
-		strcpy(translated, "ChangeSort()");
-	/* change scene */
-	else if (code == 13)
-		strcpy(translated, "StartKeyConfig()");
-	else if (code == 14)
-		strcpy(translated, "StartSkinSetting()");
-	else if (code == 15)
-		strcpy(translated, "StartPlay()");
-	else if (code == 16)
-		strcpy(translated, "StartAutoPlay()");
-	else if (code == 17)
-		strcpy(translated, "StartTextView()");	// depreciated?
-	/* 18: reset tag - is depreciated */
-	else if (code == 19)
-		strcpy(translated, "StartReplay()");
-	// ignore FX button
-	/* options */
-	else if (code == 12)
-		strcpy(translated, "ChangeSort()");
-	/* options end */
-	/* keyconfig */
-	/* skinselect (used on skinsetting mode) */
-	else
-		return 0;
-	return translated;
-}
-
-#define SETSLIDER(s)\
-	strcpy_s(translated, 1024, (s))
-const char* _LR2SkinParser::TranslateSlider(int code) {
-	if (code == 1) {
-		SETSLIDER("SelectBar");
-	}
-	else if (code == 2) {
-		SETSLIDER("P1HighSpeed");
-	}
-	else if (code == 3) {
-		SETSLIDER("P2HighSpeed");
-	}
-	else if (code == 4) {
-		SETSLIDER("P1Sudden");
-	}
-	else if (code == 5) {
-		SETSLIDER("P2Sudden");
-	}
-	else if (code == 6) {
-		SETSLIDER("PlayProgress");
-	}
-	else if (code == 17) {
-		SETSLIDER("Volume");
-	}
-	else if (code == 26) {
-		SETSLIDER("Pitch");
-	}
-	// Lift isn't supported in LR2
-	/* else (skin scroll, FX, etc ...) are all depreciated, so ignore. */
-	else {
-		return 0;
-	}
-
-	return translated;
-}
-
-#define SETGRAPH(s)\
-	strcpy_s(translated, 1024, (s))
-const char* _LR2SkinParser::TranslateGraph(int code) {
-	if (code == 1) {
-		SETGRAPH("PlayProgress");			// shares with number
-	}
-	else if (code == 2) {
-		SETGRAPH("SongLoadProgress");
-	}
-	else if (code == 3) {
-		SETGRAPH("SongLoadProgress");
-	}
-	else if (code == 5) {
-		SETGRAPH("BeginnerLevel");	// graph only value
-	}
-	else if (code == 6) {
-		SETGRAPH("NormalLevel");
-	}
-	else if (code == 7) {
-		SETGRAPH("HyperLevel");
-	}
-	else if (code == 8) {
-		SETGRAPH("AnotherLevel");
-	}
-	else if (code == 9) {
-		SETGRAPH("InsaneLevel");
-	}
-	else if (code == 10) {
-		SETGRAPH("P1ExScore");
-	}
-	else if (code == 11) {
-		SETGRAPH("P1ExScoreEsti");
-	}
-	else if (code == 12) {
-		SETGRAPH("P1HighScore");
-	}
-	else if (code == 13) {
-		SETGRAPH("P1HighScoreEsti");
-	}
-	else if (code == 14) {
-		SETGRAPH("P2ExScore");
-	}
-	else if (code == 15) {
-		SETGRAPH("P2ExScoreEsti");
-	}
-	else if (code == 20) {
-		SETGRAPH("ResultPerfectPercent");
-	}
-	else if (code == 21) {
-		SETGRAPH("ResultGreatPercent");
-	}
-	else if (code == 22) {
-		SETGRAPH("ResultGoodPercent");
-	}
-	else if (code == 23) {
-		SETGRAPH("ResultBadPercent");
-	}
-	else if (code == 24) {
-		SETGRAPH("ResultPoorPercent");
-	}
-	else if (code == 25) {
-		SETGRAPH("ResultMaxComboPercent");
-	}
-	else if (code == 26) {
-		SETGRAPH("ResultScorePercent");
-	}
-	else if (code == 27) {
-		SETGRAPH("ResultExScorePercent");
-	}
-	else if (code == 30) {
-		SETGRAPH("GhostPerfectPercent");
-	}
-	else if (code == 31) {
-		SETGRAPH("GhostGreatPercent");
-	}
-	else if (code == 32) {
-		SETGRAPH("GhostGoodPercent");
-	}
-	else if (code == 33) {
-		SETGRAPH("GhostBadPercent");
-	}
-	else if (code == 34) {
-		SETGRAPH("GhostPoorPercent");
-	}
-	else if (code == 35) {
-		SETGRAPH("GhostMaxComboPercent");
-	}
-	else if (code == 36) {
-		SETGRAPH("GhostScorePercent");
-	}
-	else if (code == 37) {
-		SETGRAPH("GhostExScorePercent");
-	}
-	// 40 ~ 47 highscore is depreciated; ignore
-	else {
-		return 0;
-	}
-
-	return translated;
-}
-
-#define SETNUMBER(s)\
-	strcpy_s(translated, 1024, (s))
-const char* _LR2SkinParser::TranslateNumber(int code) {
-	if (code == 10) {
-		SETNUMBER("P1Speed");
-	}
-	else if (code == 11) {
-		SETNUMBER("P2Speed");
-	}
-	else if (code == 12) {
-		SETNUMBER("JudgeTiming");
-	}
-	else if (code == 13) {
-		SETNUMBER("TargetRate");
-	}
-	else if (code == 14) {
-		SETNUMBER("P1Sudden");
-	}
-	else if (code == 15) {
-		SETNUMBER("P2Sudden");
-	}/* LR2 doesn't support lift option
-	else if (code == 14) {
-		SETNUMBER("P2Lift");
-	}
-	else if (code == 15) {
-		SETNUMBER("P2Lift");
-	}*/
-	else if (code == 20) {
-		SETNUMBER("FPS");
-	}
-	else if (code == 21) {
-		SETNUMBER("Year");
-	}
-	else if (code == 22) {
-		SETNUMBER("Month");
-	}
-	else if (code == 23) {
-		SETNUMBER("Day");
-	}
-	else if (code == 24) {
-		SETNUMBER("Hour");
-	}
-	else if (code == 25) {
-		SETNUMBER("Minute");
-	}
-	else if (code == 26) {
-		SETNUMBER("Second");
-	}
-	else if (code == 30) {
-		SETNUMBER("TotalPlayCount");
-	}
-	else if (code == 31) {
-		SETNUMBER("TotalClearCount");
-	}
-	else if (code == 32) {
-		SETNUMBER("TotalFailCount");
-	}
-	else if (code == 45) {
-		SETNUMBER("BeginnerLevel");
-	}
-	else if (code == 46) {
-		SETNUMBER("NormalLevel");
-	}
-	else if (code == 47) {
-		SETNUMBER("HyperLevel");
-	}
-	else if (code == 48) {
-		SETNUMBER("AnotherLevel");
-	}
-	else if (code == 49) {
-		SETNUMBER("InsaneLevel");
-	}
-	else if (code == 70) {
-		SETNUMBER("Score");
-	}
-	else if (code == 71) {
-		SETNUMBER("ExScore");
-	}
-	else if (code == 72) {
-		SETNUMBER("ExScore");
-	}
-	else if (code == 73) {
-		SETNUMBER("Rate");
-	}
-	else if (code == 74) {
-		SETNUMBER("TotalNotes");
-	}
-	else if (code == 75) {
-		SETNUMBER("MaxCombo");
-	}
-	else if (code == 76) {
-		SETNUMBER("MinBP");
-	}
-	else if (code == 77) {
-		SETNUMBER("PlayCount");
-	}
-	else if (code == 78) {
-		SETNUMBER("ClearCount");
-	}
-	else if (code == 79) {
-		SETNUMBER("FailCount");
-	}
-	else if (code == 80) {
-		SETNUMBER("PerfectCount");
-	}
-	else if (code == 81) {
-		SETNUMBER("GreatCount");
-	}
-	else if (code == 82) {
-		SETNUMBER("GoodCount");
-	}
-	else if (code == 83) {
-		SETNUMBER("BadCount");
-	}
-	else if (code == 84) {
-		SETNUMBER("PoorCount");
-	}
-	else if (code == 90) {
-		SETNUMBER("BPMMax");
-	}
-	else if (code == 91) {
-		SETNUMBER("BPMMin");
-	}
-	else if (code == 92) {
-		SETNUMBER("IRRank");
-	}
-	else if (code == 93) {
-		SETNUMBER("IRTotal");
-	}
-	else if (code == 94) {
-		SETNUMBER("IRRate");
-	}
-	else if (code == 95) {
-		SETNUMBER("RivalDiff");		// abs(HighExScore - HighExScoreRival)
-	}
-	/* during play */
-	else if (code == 100) {
-		SETNUMBER("P1Score");
-	}
-	else if (code == 101) {
-		SETNUMBER("P1ExScore");
-	}
-	else if (code == 102) {
-		SETNUMBER("P1Rate");
-	}
-	else if (code == 103) {
-		SETNUMBER("P1Rate_decimal");
-	}
-	else if (code == 104) {
-		SETNUMBER("P1Combo");
-	}
-	else if (code == 105) {
-		SETNUMBER("P1MaxCombo");
-	}
-	else if (code == 106) {
-		SETNUMBER("P1TotalNotes");
-	}
-	else if (code == 107) {
-		SETNUMBER("P1Gauge");
-	}
-	else if (code == 108) {
-		SETNUMBER("P1RivalDiff");
-	}
-	else if (code == 110) {
-		SETNUMBER("P1PerfectCount");
-	}
-	else if (code == 111) {
-		SETNUMBER("P1GreatCount");
-	}
-	else if (code == 112) {
-		SETNUMBER("P1GoodCount");
-	}
-	else if (code == 113) {
-		SETNUMBER("P1BadCount");
-	}
-	else if (code == 114) {
-		SETNUMBER("P1PoorCount");
-	}
-	else if (code == 115) {
-		SETNUMBER("P1TotalRate");			// estimated value
-	}
-	else if (code == 116) {
-		SETNUMBER("P1TotalRate_decimal");	// TODO: process with Lua code
-	}
-	/* ghost */
-	else if (code == 120) {
-		SETNUMBER("P2Score");
-	}
-	else if (code == 121) {
-		SETNUMBER("P2ExScore");
-	}
-	else if (code == 122) {
-		SETNUMBER("P2Rate");
-	}
-	else if (code == 123) {
-		SETNUMBER("P2Rate_decimal");
-	}
-	else if (code == 124) {
-		SETNUMBER("P2Combo");
-	}
-	else if (code == 125) {
-		SETNUMBER("P2MaxCombo");
-	}
-	else if (code == 126) {
-		SETNUMBER("P2TotalNotes");
-	}
-	else if (code == 127) {
-		SETNUMBER("P2Gauge");
-	}
-	else if (code == 128) {
-		SETNUMBER("P2RivalDiff");
-	}
-	else if (code == 130) {
-		SETNUMBER("P2PerfectCount");
-	}
-	else if (code == 131) {
-		SETNUMBER("P2GreatCount");
-	}
-	else if (code == 132) {
-		SETNUMBER("P2GoodCount");
-	}
-	else if (code == 133) {
-		SETNUMBER("P2BadCount");
-	}
-	else if (code == 134) {
-		SETNUMBER("P2PoorCount");
-	}
-	else if (code == 135) {
-		SETNUMBER("P2TotalRate");	// estimated value
-	}
-	else if (code == 136) {
-		SETNUMBER("P2TotalRate_decimal");
-	}
-	/*
-	 * 150 ~ 158: TODO (useless?)
-	 */
-	else if (code == 160) {
-		SETNUMBER("PlayBPM");
-	}
-	else if (code == 161) {
-		SETNUMBER("PlayMinute");
-	}
-	else if (code == 162) {
-		SETNUMBER("PlaySecond");
-	}
-	else if (code == 163) {
-		SETNUMBER("PlayRemainMinute");
-	}
-	else if (code == 164) {
-		SETNUMBER("PlayRemainSecond");
-	}
-	else if (code == 165) {
-		SETNUMBER("PlayProgress");	// (%)
-	}
-	else if (code == 170) {
-		SETNUMBER("ResultExScoreBefore");
-	}
-	else if (code == 171) {
-		SETNUMBER("ResultExScoreNow");
-	}
-	else if (code == 172) {
-		SETNUMBER("ResultExScoreDiff");
-	}
-	else if (code == 173) {
-		SETNUMBER("ResultMaxComboBefore");
-	}
-	else if (code == 174) {
-		SETNUMBER("ResultMaxComboNow");
-	}
-	else if (code == 175) {
-		SETNUMBER("ResultMaxComboDiff");
-	}
-	else if (code == 176) {
-		SETNUMBER("ResultMinBPBefore");
-	}
-	else if (code == 177) {
-		SETNUMBER("ResultMinBPNow");
-	}
-	else if (code == 178) {
-		SETNUMBER("ResultMinBPDiff");
-	}
-	else if (code == 179) {
-		SETNUMBER("ResultIRRankNow");
-	}
-	else if (code == 180) {
-		SETNUMBER("ResultIRRankTotal");
-	}
-	else if (code == 181) {
-		SETNUMBER("ResultIRRankRate");
-	}
-	else if (code == 182) {
-		SETNUMBER("ResultIRRankBefore");
-	}
-	else if (code == 183) {
-		SETNUMBER("ResultRate");
-	}
-	else if (code == 184) {
-		SETNUMBER("ResultRate_decimal");
-	}
-	/* ignore IR Beta3: 200 ~ 250 */
-	/* rival (in select menu) */
-	else if (code == 270) {
-		SETNUMBER("RivalScore");
-	}
-	else if (code == 271) {
-		SETNUMBER("RivalExScore");
-	}
-	else if (code == 272) {
-		SETNUMBER("RivalRate");
-	}
-	else if (code == 273) {
-		SETNUMBER("RivalRate_decimal");
-	}
-	else if (code == 274) {
-		SETNUMBER("RivalCombo");
-	}
-	else if (code == 275) {
-		SETNUMBER("RivalMaxCombo");
-	}
-	else if (code == 276) {
-		SETNUMBER("RivalTotalNotes");
-	}
-	else if (code == 277) {
-		SETNUMBER("RivalGrooveGauge");
-	}
-	else if (code == 278) {
-		SETNUMBER("RivalRivalDiff");
-	}
-	else if (code == 280) {
-		SETNUMBER("RivalPerfectCount");
-	}
-	else if (code == 281) {
-		SETNUMBER("RivalGreatCount");
-	}
-	else if (code == 282) {
-		SETNUMBER("RivalGoodCount");
-	}
-	else if (code == 283) {
-		SETNUMBER("RivalBadCount");
-	}
-	else if (code == 284) {
-		SETNUMBER("RivalPoorCount");
-	}
-	/* 285 ~ is depreciated. ignore. */
-	else {
-		return 0;
-	}
-
-	return translated;
-}
-
-#define SETTEXT_(s)\
-	strcpy_s(translated, 1024, (s))
-const char* _LR2SkinParser::TranslateText(int code) {
-	if (code == 1) {
-		SETTEXT_("RivalName"); 
-	}
-	else if (code == 2) {
-		SETTEXT_("PlayerName");
-	}
-	else if (code == 10) {
-		SETTEXT_("Title");
-	}
-	else if (code == 11) {
-		SETTEXT_("Subtitle");
-	}
-	else if (code == 12) {
-		SETTEXT_("MainTitle");
-	}
-	else if (code == 13) {
-		SETTEXT_("Genre");
-	}
-	else if (code == 14) {
-		SETTEXT_("Artist");
-	}
-	else if (code == 15) {
-		SETTEXT_("SubArtist");
-	}
-	else if (code == 16) {
-		SETTEXT_("SearchTag");
-	}
-	else if (code == 17) {
-		SETTEXT_("PlayLevel");		// depreciated?
-	}
-	else if (code == 18) {
-		SETTEXT_("PlayDiff");			// depreciated?
-	}
-	else if (code == 19) {
-		SETTEXT_("PlayInsaneLevel");	// depreciated?
-	}
-	/*
-	 * 20 ~ 30: for editing (depreciated/ignore?)
-	 */
-	else if (code == 40) {
-		SETTEXT_("KeySlot0");
-	}
-	else if (code == 41) {
-		SETTEXT_("KeySlot1");
-	}
-	else if (code == 42) {
-		SETTEXT_("KeySlot2");
-	}
-	else if (code == 43) {
-		SETTEXT_("KeySlot3");
-	}
-	else if (code == 44) {
-		SETTEXT_("KeySlot4");
-	}
-	else if (code == 45) {
-		SETTEXT_("KeySlot5");
-	}
-	else if (code == 46) {
-		SETTEXT_("KeySlot6");
-	}
-	else if (code == 47) {
-		SETTEXT_("KeySlot7");
-	}
-	/* Skin select window */
-	else if (code == 50) {
-		SETTEXT_("SkinName");
-	}
-	else if (code == 51) {
-		SETTEXT_("SkinAuthor");
-	}
-	/* option */
-	else if (code == 60) {
-		SETTEXT_("PlayMode");
-	}
-	else if (code == 61) {
-		SETTEXT_("PlaySort");
-	}
-	else if (code == 62) {
-		SETTEXT_("PlayDiff");
-	}
-	else if (code == 63) {
-		SETTEXT_("RandomP1");
-	}
-	else if (code == 64) {
-		SETTEXT_("RandomP2");
-	}
-	else if (code == 65) {
-		SETTEXT_("GaugeP1");
-	}
-	else if (code == 66) {
-		SETTEXT_("GaugeP2");
-	}
-	else if (code == 67) {
-		SETTEXT_("AssistP1");
-	}
-	else if (code == 68) {
-		SETTEXT_("AssistP2");
-	}
-	else if (code == 69) {
-		SETTEXT_("Battle");		// depreciated?
-	}
-	else if (code == 70) {
-		SETTEXT_("Flip");			// depreciated?
-	}
-	else if (code == 71) {
-		SETTEXT_("ScoreGraph");	// depreciated?
-	}
-	else if (code == 72) {
-		SETTEXT_("Ghost");
-	}
-	else if (code == 74) {
-		SETTEXT_("ScrollType");
-	}
-	else if (code == 75) {
-		SETTEXT_("BGASize");		// depreciated
-	}
-	else if (code == 76) {
-		SETTEXT_("IsBGA");		// depreciated?
-	}/*
-	screen color: depreciated
-	else if (code == 60) {
-		SETTEXT_("ScreenColor");
-	}*/
-	else if (code == 78) {
-		SETTEXT_("VSync");
-	}
-	else if (code == 79) {
-		SETTEXT_("ScreenMode");	// full/window
-	}
-	else if (code == 80) {
-		SETTEXT_("AutoJudge");
-	}
-	else if (code == 81) {
-		SETTEXT_("ReplaySave");
-	}
-	// ignore trial lines / ignore effects
-	/*
-	 * 100 ~ is skin related; ignore. 
-	 * skin option select will be done in scrollbar / overflow option
-	 * (TODO)
-	 */
-	else {
-		return 0;
-	}
-
-	return translated;
-}
-
 void _LR2SkinParser::Clear() {
 	s = 0;
 	line_total = 0;
 	cur_e = 0;
 	image_cnt = 0;
 	font_cnt = 0;
-	filter_to_optionname.clear();
 	texturefont_id.clear();
 	lines_.clear();
 	line_args_.clear();
-	memset(condition_status, 0, sizeof(condition_status));
 }
 
 // ----------------------- LR2Skin part end ------------------------

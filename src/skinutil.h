@@ -4,7 +4,10 @@
 
 using namespace tinyxml2;
 
+#include <stdio.h>
+#include <string>
 #include <map>
+#include <stdarg.h>
 
 namespace SkinUtil {
 	/*
@@ -39,11 +42,18 @@ namespace SkinUtil {
 
 	// util about modifying string/path
 	void ConvertLR2PathToRelativePath(std::string& lr2path);
-	void GetParentDirectory(std::string& filepath);
+	std::string GetParentDirectory(const std::string& filepath);
 	void ConvertRelativePathToAbsPath(std::string& relativepath, std::string& basepath);
 	void ReplaceString(std::string& source, std::string const& find, std::string const& replace);
 	const char* FindString(const char *start, const char *target);
+	std::string ReplaceExtension(const std::string& filepath, const std::string& ext);
+	std::string GetAbsolutePath(const std::string& relpath);
+	void SetBasePath(const std::string& basepath);
 
 	// util about I/O
 	bool IsFileExists(const char* path);
+	FILE* OpenFile(const char* path, const char* mode);
 }
+
+std::string ssprintf(const char *fmt, ...);
+std::string vssprintf(const char *szFormat, va_list argList);
