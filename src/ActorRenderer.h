@@ -41,36 +41,6 @@ namespace ACCTYPE {
 #include "ActorPlay.h"
 
 
-/** @brief rendering tree which is used in real rendering */
-class Theme {
-protected:
-	std::vector<SkinRenderObject*> objpool_;
-	SkinRenderObject* base_;
-public:
-	SkinRenderObject* GetPtr();
-	void Update();
-	void Render();
-};
-
-/** @brief constructs rendering tree - based on Xml skin structure */
-class ThemeConstructor {
-protected:
-	//
-	// store file alias here
-	//
-	std::map<RString, RString> aliaspool_;
-	void ParseFileAlias();
-
-	//
-	// just store what resource we have currently.
-	//
-	std::vector<Display::Texture> texpool_;
-public:
-	ThemeConstructor(tinyxml2::XMLDocument* doc);
-	void ConstructTheme(Theme& t);
-};
-
-
 class SkinRenderTree: public SkinGroupObject {
 private:
 	friend SkinRenderObject;

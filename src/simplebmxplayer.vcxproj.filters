@@ -48,9 +48,6 @@
     <ClCompile Include="file.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="globalresources.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="skinlr2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -94,6 +91,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Surface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Pool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -149,9 +149,6 @@
     <ClInclude Include="file.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="globalresources.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="skinoption.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -189,6 +186,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Surface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Pool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

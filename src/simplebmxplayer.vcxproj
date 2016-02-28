@@ -96,7 +96,7 @@
     <ClCompile Include="file.cpp" />
     <ClCompile Include="font.cpp" />
     <ClCompile Include="gameresult.cpp" />
-    <ClCompile Include="globalresources.cpp" />
+    <ClCompile Include="Pool.cpp" />
     <ClCompile Include="logger.cpp" />
     <ClCompile Include="md5.cpp" />
     <ClCompile Include="playerinfo.cpp" />
@@ -125,7 +125,7 @@
     <ClInclude Include="Exception.h" />
     <ClInclude Include="file.h" />
     <ClInclude Include="gameresult.h" />
-    <ClInclude Include="globalresources.h" />
+    <ClInclude Include="Pool.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="md5.h" />
     <ClInclude Include="playerinfo.h" />

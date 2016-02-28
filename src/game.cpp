@@ -4,7 +4,7 @@
 
 #include "luamanager.h"
 #include "util.h"
-#include "globalresources.h"
+#include "Pool.h"
 #include "font.h"
 #include "file.h"
 #include "version.h"
@@ -73,18 +73,10 @@ namespace Game {
 	 * TODO: generating rendering object (after we're done enough)
 	 */
 	namespace {
-		int InitTimer(Lua* l) {
-			RString key = (const char*)lua_tostring(l, -1);
-			lua_pop(l, 1);
-			TIMERPOOL->Set(key, false);
-			// no return value
-			return 0;
-		}
-
 		int SetTimer(Lua* l) {
 			RString key = (const char*)lua_tostring(l, -1);
 			lua_pop(l, 1);
-			TIMERPOOL->Set(key);
+			SWITCH_OFF(key);
 			//lua_pushinteger(l, a + 1);
 			// no return value
 			return 0;
@@ -120,7 +112,7 @@ namespace Game {
 		int IsTimer(Lua *l) {
 			RString key = (const char*)lua_tostring(l, -1);
 			lua_pop(l, 1);
-			Timer* t = TIMERPOOL->Get(key);
+			Timer* t = SWITCH_GET(key);
 			if (t && t->IsStarted())
 				lua_pushboolean(l, 1);
 			else
@@ -131,7 +123,7 @@ namespace Game {
 		int GetTime(Lua *l) {
 			RString key = (const char*)lua_tostring(l, -1);
 			lua_pop(l, 1);
-			Timer *t = TIMERPOOL->Get(key);
+			Timer *t = SWITCH_GET(key);
 			if (t)
 				lua_pushinteger(l, t->GetTick());
 			else
@@ -177,8 +169,6 @@ namespace Game {
 			l = LUA->Get();
 			lua_register(l, "SetTimer", SetTimer);
 			lua_register(l, "SetSwitch", SetTimer);
-			lua_register(l, "InitTimer", InitTimer);
-			lua_register(l, "InitSwitch", InitTimer);
 			lua_register(l, "SetInt", SetInt);
 			lua_register(l, "SetFloat", SetFloat);
 			lua_register(l, "SetString", SetString);
@@ -258,18 +248,17 @@ namespace Game {
 		/*
 		 * prepare game basic resource
 		 */
-		/*
-		IMAGEPOOL->Register("_black", new ImageColor(0x000000FF));
-		IMAGEPOOL->Register("_white", new ImageColor(0xFFFFFFFF));*/
+		TEXPOOL->Register("_black", SurfaceUtil::CreateColorTexture(0x000000FF));
+		TEXPOOL->Register("_white", SurfaceUtil::CreateColorTexture(0xFFFFFFFF));
 		RString path;
 		path = "../system/resource/fastslow.png";
 		FileHelper::ConvertPathToSystem(path);
-		IMAGEPOOL->Register("_fastslow", new Image(path));
+		TEXPOOL->Register("_fastslow", SurfaceUtil::LoadTexture(path));
 		path = "../system/resource/number_float.png";
 		FileHelper::ConvertPathToSystem(path);
-		IMAGEPOOL->Register("_number_float", new Image(path));
-		oninputstart = TIMERPOOL->Get("OnInputStart");
-		onscene = TIMERPOOL->Get("OnScene");
+		TEXPOOL->Register("_number_float", SurfaceUtil::LoadTexture(path));
+		oninputstart = SWITCH_GET("OnInputStart");
+		onscene = SWITCH_GET("OnScene");
 		font = FONTPOOL->LoadTTFFont("_system", 
 			"../system/resource/NanumGothicExtraBold.ttf", 28, 0x909090FF, 0,
 			0x000000FF, 1, 0,
@@ -476,8 +465,7 @@ namespace Game {
 		for (int i = 0; i < nJoystickCnt; i++)
 			SDL_JoystickClose(JOYSTICK[i]);
 		Mix_CloseAudio();
-		//SDL_DestroyRenderer(RENDERER);
-		SDL_GL_DeleteContext(RENDERER);
+		delete DISPLAY;
 		SDL_DestroyWindow(WINDOW);
 	}
 }

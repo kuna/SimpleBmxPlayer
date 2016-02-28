@@ -15,9 +15,6 @@ public:
 
 	// skin layout data is here
 	tinyxml2::XMLDocument skinlayout;
-
-	// render tree used for rendering
-	//SkinRenderTree skinbody;
 public:
 	Skin();
 	~Skin();

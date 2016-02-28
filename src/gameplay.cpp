@@ -1,12 +1,10 @@
 #include "gameplay.h"
 #include "skin.h"
-#include "ActorRenderer.h"
-#include "handlerargs.h"
+#include "Theme.h"
 #include "bmsbel/bms_bms.h"
 #include "bmsbel/bms_parser.h"
 #include "bmsresource.h"
 #include "audio.h"
-#include "image.h"
 #include "game.h"
 #include "util.h"
 #include "file.h"
@@ -32,12 +30,8 @@ namespace GamePlay {
 	Timer*				On1PMiss;			// just for missing image
 	Timer*				On2PMiss;			// just for missing image
 
-	// bms skin resource
-	// skin resource will be loaded in GlobalResource, 
-	// so we don't need to take care of it
-	Skin				playskin;
-	SkinRenderTree*		rtree;
-	SkinOption			skinoption;
+	// game skin
+	Theme				theme;
 
 	// play related
 	int					playmode;			// PLAYTYPE..?
@@ -90,13 +84,6 @@ namespace GamePlay {
 	}
 
 	namespace {
-		void RenderObject(SkinRenderObject *obj) {
-			obj->Update();
-			obj->Render();
-		}
-	}
-
-	namespace {
 		int *pRivalDiff;
 		double *pRivalDiff_d;
 		double *pRivalDiff_d_total;
@@ -109,8 +96,8 @@ namespace GamePlay {
 
 		void Initalize_BmsValue() {
 			BMSVALUE.songloadprogress = DOUBLEPOOL->Get("SongLoadProgress");
-			BMSVALUE.OnSongLoading = TIMERPOOL->Get("OnSongLoading");
-			BMSVALUE.OnSongLoadingEnd = TIMERPOOL->Get("OnSongLoadingEnd");
+			BMSVALUE.OnSongLoading = SWITCH_GET("OnSongLoading");
+			BMSVALUE.OnSongLoadingEnd = SWITCH_GET("OnSongLoadingEnd");
 
 			BMSVALUE.PlayProgress = DOUBLEPOOL->Get("PlayProgress");
 			BMSVALUE.PlayBPM = INTPOOL->Get("PlayBPM");
@@ -119,10 +106,10 @@ namespace GamePlay {
 			BMSVALUE.PlayRemainSec = INTPOOL->Get("PlayRemainSecond");
 			BMSVALUE.PlayRemainMin = INTPOOL->Get("PlayRemainMinute");
 
-			BMSVALUE.OnBeat = TIMERPOOL->Get("OnBeat");
-			BMSVALUE.OnBgaMain = TIMERPOOL->Get("OnBgaMain");
-			BMSVALUE.OnBgaLayer1 = TIMERPOOL->Get("OnBgaLayer1");
-			BMSVALUE.OnBgaLayer2 = TIMERPOOL->Get("OnBgaLayer2");
+			BMSVALUE.OnBeat = SWITCH_GET("OnBeat");
+			BMSVALUE.OnBgaMain = SWITCH_GET("OnBgaMain");
+			BMSVALUE.OnBgaLayer1 = SWITCH_GET("OnBgaLayer1");
+			BMSVALUE.OnBgaLayer2 = SWITCH_GET("OnBgaLayer2");
 		}
 
 		void Initalize_P1_RenderValue() {
@@ -150,57 +137,57 @@ namespace GamePlay {
 			PLAYERVALUE[0].pRate_d = DOUBLEPOOL->Get("P1Rate");
 			PLAYERVALUE[0].pTotalRate_d = DOUBLEPOOL->Get("P1TotalRate");
 
-			PLAYERVALUE[0].pOnJudge[5] = TIMERPOOL->Set("OnP1JudgePerfect");
-			PLAYERVALUE[0].pOnJudge[4] = TIMERPOOL->Set("OnP1JudgeGreat");
-			PLAYERVALUE[0].pOnJudge[3] = TIMERPOOL->Set("OnP1JudgeGood");
-			PLAYERVALUE[0].pOnJudge[2] = TIMERPOOL->Set("OnP1JudgeBad");
-			PLAYERVALUE[0].pOnJudge[1] = TIMERPOOL->Set("OnP1JudgePoor");
-			PLAYERVALUE[0].pOnJudge[0] = TIMERPOOL->Set("OnP1JudgePoor");
+			PLAYERVALUE[0].pOnJudge[5] = SWITCH_OFF("OnP1JudgePerfect");
+			PLAYERVALUE[0].pOnJudge[4] = SWITCH_OFF("OnP1JudgeGreat");
+			PLAYERVALUE[0].pOnJudge[3] = SWITCH_OFF("OnP1JudgeGood");
+			PLAYERVALUE[0].pOnJudge[2] = SWITCH_OFF("OnP1JudgeBad");
+			PLAYERVALUE[0].pOnJudge[1] = SWITCH_OFF("OnP1JudgePoor");
+			PLAYERVALUE[0].pOnJudge[0] = SWITCH_OFF("OnP1JudgePoor");
 			PLAYERVALUE[0].pNotePerfect = INTPOOL->Get("P1PerfectCount");
 			PLAYERVALUE[0].pNoteGreat = INTPOOL->Get("P1GreatCount");
 			PLAYERVALUE[0].pNoteGood = INTPOOL->Get("P1GoodCount");
 			PLAYERVALUE[0].pNoteBad = INTPOOL->Get("P1BadCount");
 			PLAYERVALUE[0].pNotePoor = INTPOOL->Get("P1PoorCount");
-			PLAYERVALUE[0].pOnSlow = TIMERPOOL->Set("OnP1Slow");
-			PLAYERVALUE[0].pOnFast = TIMERPOOL->Set("OnP1Fast");
+			PLAYERVALUE[0].pOnSlow = SWITCH_OFF("OnP1Slow");
+			PLAYERVALUE[0].pOnFast = SWITCH_OFF("OnP1Fast");
 
-			PLAYERVALUE[0].pOnAAA = TIMERPOOL->Get("IsP1AAA");
-			PLAYERVALUE[0].pOnAA = TIMERPOOL->Get("IsP1AA");
-			PLAYERVALUE[0].pOnA = TIMERPOOL->Get("IsP1A");
-			PLAYERVALUE[0].pOnB = TIMERPOOL->Get("IsP1B");
-			PLAYERVALUE[0].pOnC = TIMERPOOL->Get("IsP1C");
-			PLAYERVALUE[0].pOnD = TIMERPOOL->Get("IsP1D");
-			PLAYERVALUE[0].pOnE = TIMERPOOL->Get("IsP1E");
-			PLAYERVALUE[0].pOnF = TIMERPOOL->Get("IsP1F");
-			PLAYERVALUE[0].pOnReachAAA = TIMERPOOL->Get("IsP1ReachAAA");
-			PLAYERVALUE[0].pOnReachAA = TIMERPOOL->Get("IsP1ReachAA");
-			PLAYERVALUE[0].pOnReachA = TIMERPOOL->Get("IsP1ReachA");
-			PLAYERVALUE[0].pOnReachB = TIMERPOOL->Get("IsP1ReachB");
-			PLAYERVALUE[0].pOnReachC = TIMERPOOL->Get("IsP1ReachC");
-			PLAYERVALUE[0].pOnReachD = TIMERPOOL->Get("IsP1ReachD");
-			PLAYERVALUE[0].pOnReachE = TIMERPOOL->Get("IsP1ReachE");
-			PLAYERVALUE[0].pOnReachF = TIMERPOOL->Get("IsP1ReachF");
+			PLAYERVALUE[0].pOnAAA = SWITCH_GET("IsP1AAA");
+			PLAYERVALUE[0].pOnAA = SWITCH_GET("IsP1AA");
+			PLAYERVALUE[0].pOnA = SWITCH_GET("IsP1A");
+			PLAYERVALUE[0].pOnB = SWITCH_GET("IsP1B");
+			PLAYERVALUE[0].pOnC = SWITCH_GET("IsP1C");
+			PLAYERVALUE[0].pOnD = SWITCH_GET("IsP1D");
+			PLAYERVALUE[0].pOnE = SWITCH_GET("IsP1E");
+			PLAYERVALUE[0].pOnF = SWITCH_GET("IsP1F");
+			PLAYERVALUE[0].pOnReachAAA = SWITCH_GET("IsP1ReachAAA");
+			PLAYERVALUE[0].pOnReachAA = SWITCH_GET("IsP1ReachAA");
+			PLAYERVALUE[0].pOnReachA = SWITCH_GET("IsP1ReachA");
+			PLAYERVALUE[0].pOnReachB = SWITCH_GET("IsP1ReachB");
+			PLAYERVALUE[0].pOnReachC = SWITCH_GET("IsP1ReachC");
+			PLAYERVALUE[0].pOnReachD = SWITCH_GET("IsP1ReachD");
+			PLAYERVALUE[0].pOnReachE = SWITCH_GET("IsP1ReachE");
+			PLAYERVALUE[0].pOnReachF = SWITCH_GET("IsP1ReachF");
 
-			PLAYERVALUE[0].pOnMiss = TIMERPOOL->Get("OnP1Miss");
-			PLAYERVALUE[0].pOnCombo = TIMERPOOL->Get("OnP1Combo");
-			PLAYERVALUE[0].pOnfullcombo = TIMERPOOL->Get("OnP1FullCombo");
-			PLAYERVALUE[0].pOnlastnote = TIMERPOOL->Get("OnP1LastNote");
-			PLAYERVALUE[0].pOnGameover = TIMERPOOL->Get("OnP1GameOver");
-			PLAYERVALUE[0].pOnGaugeMax = TIMERPOOL->Get("OnP1GaugeMax");
-			PLAYERVALUE[0].pOnGaugeUp = TIMERPOOL->Get("OnP1GaugeUp");
+			PLAYERVALUE[0].pOnMiss = SWITCH_GET("OnP1Miss");
+			PLAYERVALUE[0].pOnCombo = SWITCH_GET("OnP1Combo");
+			PLAYERVALUE[0].pOnfullcombo = SWITCH_GET("OnP1FullCombo");
+			PLAYERVALUE[0].pOnlastnote = SWITCH_GET("OnP1LastNote");
+			PLAYERVALUE[0].pOnGameover = SWITCH_GET("OnP1GameOver");
+			PLAYERVALUE[0].pOnGaugeMax = SWITCH_GET("OnP1GaugeMax");
+			PLAYERVALUE[0].pOnGaugeUp = SWITCH_GET("OnP1GaugeUp");
 
 			/*
 			 * SC : note-index 0
 			 */
-			PLAYERVALUE[0].pLanepress[0] = TIMERPOOL->Get("OnP1KeySCPress");
-			PLAYERVALUE[0].pLaneup[0] = TIMERPOOL->Get("OnP1KeySCUp");
-			PLAYERVALUE[0].pLanehold[0] = TIMERPOOL->Get("OnP1JudgeSCHold");
-			PLAYERVALUE[0].pLanejudgeokay[0] = TIMERPOOL->Get("OnP1JudgeSCOkay");
+			PLAYERVALUE[0].pLanepress[0] = SWITCH_GET("OnP1KeySCPress");
+			PLAYERVALUE[0].pLaneup[0] = SWITCH_GET("OnP1KeySCUp");
+			PLAYERVALUE[0].pLanehold[0] = SWITCH_GET("OnP1JudgeSCHold");
+			PLAYERVALUE[0].pLanejudgeokay[0] = SWITCH_GET("OnP1JudgeSCOkay");
 			for (int i = 1; i < 10; i++) {
-				PLAYERVALUE[0].pLanepress[i] = TIMERPOOL->Get(ssprintf("OnP1Key%dPress", i));
-				PLAYERVALUE[0].pLaneup[i] = TIMERPOOL->Get(ssprintf("OnP1Key%dUp", i));
-				PLAYERVALUE[0].pLanehold[i] = TIMERPOOL->Get(ssprintf("OnP1Judge%dHold", i));
-				PLAYERVALUE[0].pLanejudgeokay[i] = TIMERPOOL->Get(ssprintf("OnP1Judge%dOkay", i));
+				PLAYERVALUE[0].pLanepress[i] = SWITCH_GET(ssprintf("OnP1Key%dPress", i));
+				PLAYERVALUE[0].pLaneup[i] = SWITCH_GET(ssprintf("OnP1Key%dUp", i));
+				PLAYERVALUE[0].pLanehold[i] = SWITCH_GET(ssprintf("OnP1Judge%dHold", i));
+				PLAYERVALUE[0].pLanejudgeokay[i] = SWITCH_GET(ssprintf("OnP1Judge%dOkay", i));
 			}
 		}
 
@@ -229,54 +216,54 @@ namespace GamePlay {
 			PLAYERVALUE[1].pRate_d = DOUBLEPOOL->Get("P2Rate");
 			PLAYERVALUE[1].pTotalRate_d = DOUBLEPOOL->Get("P2TotalRate");
 
-			PLAYERVALUE[1].pOnJudge[5] = TIMERPOOL->Set("OnP2JudgePerfect");
-			PLAYERVALUE[1].pOnJudge[4] = TIMERPOOL->Set("OnP2JudgeGreat");
-			PLAYERVALUE[1].pOnJudge[3] = TIMERPOOL->Set("OnP2JudgeGood");
-			PLAYERVALUE[1].pOnJudge[2] = TIMERPOOL->Set("OnP2JudgeBad");
-			PLAYERVALUE[1].pOnJudge[1] = TIMERPOOL->Set("OnP2JudgePoor");
-			PLAYERVALUE[1].pOnJudge[0] = TIMERPOOL->Set("OnP2JudgePoor");
+			PLAYERVALUE[1].pOnJudge[5] = SWITCH_OFF("OnP2JudgePerfect");
+			PLAYERVALUE[1].pOnJudge[4] = SWITCH_OFF("OnP2JudgeGreat");
+			PLAYERVALUE[1].pOnJudge[3] = SWITCH_OFF("OnP2JudgeGood");
+			PLAYERVALUE[1].pOnJudge[2] = SWITCH_OFF("OnP2JudgeBad");
+			PLAYERVALUE[1].pOnJudge[1] = SWITCH_OFF("OnP2JudgePoor");
+			PLAYERVALUE[1].pOnJudge[0] = SWITCH_OFF("OnP2JudgePoor");
 			PLAYERVALUE[1].pNotePerfect = INTPOOL->Get("P2PerfectCount");
 			PLAYERVALUE[1].pNoteGreat = INTPOOL->Get("P2GreatCount");
 			PLAYERVALUE[1].pNoteGood = INTPOOL->Get("P2GoodCount");
 			PLAYERVALUE[1].pNoteBad = INTPOOL->Get("P2BadCount");
 			PLAYERVALUE[1].pNotePoor = INTPOOL->Get("P2PoorCount");
-			PLAYERVALUE[1].pOnSlow = TIMERPOOL->Set("OnP2Slow");
-			PLAYERVALUE[1].pOnFast = TIMERPOOL->Set("OnP2Fast");
+			PLAYERVALUE[1].pOnSlow = SWITCH_OFF("OnP2Slow");
+			PLAYERVALUE[1].pOnFast = SWITCH_OFF("OnP2Fast");
 
-			PLAYERVALUE[1].pOnAAA = TIMERPOOL->Get("IsP2AAA");
-			PLAYERVALUE[1].pOnAA = TIMERPOOL->Get("IsP2AA");
-			PLAYERVALUE[1].pOnA = TIMERPOOL->Get("IsP2A");
-			PLAYERVALUE[1].pOnB = TIMERPOOL->Get("IsP2B");
-			PLAYERVALUE[1].pOnC = TIMERPOOL->Get("IsP2C");
-			PLAYERVALUE[1].pOnD = TIMERPOOL->Get("IsP2D");
-			PLAYERVALUE[1].pOnE = TIMERPOOL->Get("IsP2E");
-			PLAYERVALUE[1].pOnF = TIMERPOOL->Get("IsP2F");
-			PLAYERVALUE[1].pOnReachAAA = TIMERPOOL->Get("IsP2ReachAAA");
-			PLAYERVALUE[1].pOnReachAA = TIMERPOOL->Get("IsP2ReachAA");
-			PLAYERVALUE[1].pOnReachA = TIMERPOOL->Get("IsP2ReachA");
-			PLAYERVALUE[1].pOnReachB = TIMERPOOL->Get("IsP2ReachB");
-			PLAYERVALUE[1].pOnReachC = TIMERPOOL->Get("IsP2ReachC");
-			PLAYERVALUE[1].pOnReachD = TIMERPOOL->Get("IsP2ReachD");
-			PLAYERVALUE[1].pOnReachE = TIMERPOOL->Get("IsP2ReachE");
-			PLAYERVALUE[1].pOnReachF = TIMERPOOL->Get("IsP2ReachF");
+			PLAYERVALUE[1].pOnAAA = SWITCH_GET("IsP2AAA");
+			PLAYERVALUE[1].pOnAA = SWITCH_GET("IsP2AA");
+			PLAYERVALUE[1].pOnA = SWITCH_GET("IsP2A");
+			PLAYERVALUE[1].pOnB = SWITCH_GET("IsP2B");
+			PLAYERVALUE[1].pOnC = SWITCH_GET("IsP2C");
+			PLAYERVALUE[1].pOnD = SWITCH_GET("IsP2D");
+			PLAYERVALUE[1].pOnE = SWITCH_GET("IsP2E");
+			PLAYERVALUE[1].pOnF = SWITCH_GET("IsP2F");
+			PLAYERVALUE[1].pOnReachAAA = SWITCH_GET("IsP2ReachAAA");
+			PLAYERVALUE[1].pOnReachAA = SWITCH_GET("IsP2ReachAA");
+			PLAYERVALUE[1].pOnReachA = SWITCH_GET("IsP2ReachA");
+			PLAYERVALUE[1].pOnReachB = SWITCH_GET("IsP2ReachB");
+			PLAYERVALUE[1].pOnReachC = SWITCH_GET("IsP2ReachC");
+			PLAYERVALUE[1].pOnReachD = SWITCH_GET("IsP2ReachD");
+			PLAYERVALUE[1].pOnReachE = SWITCH_GET("IsP2ReachE");
+			PLAYERVALUE[1].pOnReachF = SWITCH_GET("IsP2ReachF");
 
-			PLAYERVALUE[1].pOnMiss = TIMERPOOL->Get("OnP2Miss");
-			PLAYERVALUE[1].pOnCombo = TIMERPOOL->Get("OnP2Combo");
-			PLAYERVALUE[1].pOnfullcombo = TIMERPOOL->Get("OnP2FullCombo");
-			PLAYERVALUE[1].pOnlastnote = TIMERPOOL->Get("OnP2LastNote");
-			PLAYERVALUE[1].pOnGameover = TIMERPOOL->Get("OnP2GameOver");
-			PLAYERVALUE[1].pOnGaugeMax = TIMERPOOL->Get("OnP2GaugeMax");
-			PLAYERVALUE[1].pOnGaugeUp = TIMERPOOL->Get("OnP2GaugeUp");
+			PLAYERVALUE[1].pOnMiss = SWITCH_GET("OnP2Miss");
+			PLAYERVALUE[1].pOnCombo = SWITCH_GET("OnP2Combo");
+			PLAYERVALUE[1].pOnfullcombo = SWITCH_GET("OnP2FullCombo");
+			PLAYERVALUE[1].pOnlastnote = SWITCH_GET("OnP2LastNote");
+			PLAYERVALUE[1].pOnGameover = SWITCH_GET("OnP2GameOver");
+			PLAYERVALUE[1].pOnGaugeMax = SWITCH_GET("OnP2GaugeMax");
+			PLAYERVALUE[1].pOnGaugeUp = SWITCH_GET("OnP2GaugeUp");
 
-			PLAYERVALUE[1].pLanepress[0] = TIMERPOOL->Get("OnP2KeySCPress");
-			PLAYERVALUE[1].pLaneup[0] = TIMERPOOL->Get("OnP2KeySCUp");
-			PLAYERVALUE[1].pLanehold[0] = TIMERPOOL->Get("OnP2JudgeSCHold");
-			PLAYERVALUE[1].pLanejudgeokay[0] = TIMERPOOL->Get("OnP2JudgeSCOkay");
+			PLAYERVALUE[1].pLanepress[0] = SWITCH_GET("OnP2KeySCPress");
+			PLAYERVALUE[1].pLaneup[0] = SWITCH_GET("OnP2KeySCUp");
+			PLAYERVALUE[1].pLanehold[0] = SWITCH_GET("OnP2JudgeSCHold");
+			PLAYERVALUE[1].pLanejudgeokay[0] = SWITCH_GET("OnP2JudgeSCOkay");
 			for (int i = 1; i < 10; i++) {
-				PLAYERVALUE[1].pLanepress[i] = TIMERPOOL->Get(ssprintf("OnP2Key%dPress", i));
-				PLAYERVALUE[1].pLaneup[i] = TIMERPOOL->Get(ssprintf("OnP2Key%dUp", i));
-				PLAYERVALUE[1].pLanehold[i] = TIMERPOOL->Get(ssprintf("OnP2Judge%dHold", i));
-				PLAYERVALUE[1].pLanejudgeokay[i] = TIMERPOOL->Get(ssprintf("OnP2Judge%dOkay", i));
+				PLAYERVALUE[1].pLanepress[i] = SWITCH_GET(ssprintf("OnP2Key%dPress", i));
+				PLAYERVALUE[1].pLaneup[i] = SWITCH_GET(ssprintf("OnP2Key%dUp", i));
+				PLAYERVALUE[1].pLanehold[i] = SWITCH_GET(ssprintf("OnP2Judge%dHold", i));
+				PLAYERVALUE[1].pLanejudgeokay[i] = SWITCH_GET(ssprintf("OnP2Judge%dOkay", i));
 			}
 		}
 
@@ -532,9 +519,9 @@ namespace GamePlay {
 		 */
 		RString PlayskinPath = "";
 		if (playmode < 10)
-			PlayskinPath = Game::SETTING.skin_play_7key;
+			PlayskinPath = SETTING.skin_play_7key;
 		else
-			PlayskinPath = Game::SETTING.skin_play_14key;
+			PlayskinPath = SETTING.skin_play_14key;
 		LoadSkin(PlayskinPath);
 
 		/*
@@ -609,9 +596,10 @@ namespace GamePlay {
 
 	void ScenePlay::Render() {
 		/*
-		 * draw interface (make a render tree recursion)
+		 * draw skin tree
 		 */
-		RenderObject(rtree);
+		theme->Update();
+		theme->Render();
 	}
 
 	void ScenePlay::End() {

@@ -1,6 +1,5 @@
 #include "player.h"
 #include "global.h"
-#include "handlerargs.h"
 #include "bmsresource.h"
 #include "ActorRenderer.h"
 #include "util.h"
@@ -45,7 +44,7 @@ Player::Player(int playside, int playmode, int playertype) {
 	}
 	judgeoffset = playconfig->judgeoffset;
 	judgecalibration = playconfig->judgecalibration;
-	pBmstimer = TIMERPOOL->Get("OnGameStart");
+	pBmstimer = SWITCH_GET("OnGameStart");
 	memset(ispress_, 0, sizeof(ispress_));
 	memset(islongnote_, 0, sizeof(islongnote_));
 

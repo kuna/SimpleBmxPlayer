@@ -92,4 +92,10 @@ public:
 
 
 
-
+/*
+ * simple util
+ */
+namespace SurfaceUtil {
+	Display::Texture* LoadTexture(const char* filepath);
+	Display::Texture* CreateColorTexture(Uint32 clr);
+}

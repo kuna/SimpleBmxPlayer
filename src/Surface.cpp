@@ -285,3 +285,23 @@ void SurfaceMovie::ReleaseMovie() {
 }
 
 
+namespace SurfaceUtil {
+	Display::Texture* LoadTexture(const char* filepath) {
+		Surface *surf = new Surface();
+		if (!surf->Load(filepath)) {
+			delete surf;
+			return 0;
+		}
+		Texture* tex = DISPLAY->CreateTexture(surf);
+		delete surf;
+		return tex;
+	}
+
+	Display::Texture* CreateColorTexture(Uint32 clr) {
+		Surface *surf = new Surface();
+		surf->Create(1, 1, clr);
+		Texture* tex = DISPLAY->CreateTexture(surf);
+		delete surf;
+		return tex;
+	}
+}

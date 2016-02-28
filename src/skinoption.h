@@ -3,7 +3,7 @@
 #include <vector>
 #define _USEPOOL		// you can use SkinOption generally by disabling this definition
 #ifdef _USEPOOL
-#include "globalresources.h"
+#include "Pool.h"
 #endif
 
 /*

@@ -76,6 +76,8 @@ public:
 	void Clear();
 };
 
+/* DEPRECIATED */
+#if 0
 class TimerPool {
 private:
 public:
@@ -90,6 +92,7 @@ public:
 	bool Trigger(const RString &key, bool condition);
 	void Clear();
 };
+#endif
 
 /*
  * When handler called, not only all registered classes are called
@@ -114,8 +117,8 @@ public:
 
 	// handler related
 	bool Trigger(const RString &name, bool condition = true);
-	bool Reset(const RString &name);
-	void Stop(const RString &name);
+	Timer* Reset(const RString &name);
+	Timer* Stop(const RString &name);
 };
 
 class TexturePool {
@@ -175,9 +178,9 @@ public:
 extern StringPool* STRPOOL;
 extern DoublePool* DOUBLEPOOL;
 extern IntPool* INTPOOL;
-extern TimerPool* TIMERPOOL;
 extern HandlerPool* HANDLERPOOL;
 
+extern TexturePool* TEXPOOL;
 extern FontPool* FONTPOOL;
 extern SoundPool* SOUNDPOOL;
 
@@ -186,5 +189,11 @@ namespace PoolHelper {
 	void ReleaseAll();
 }
 
-#define SWITCH_ON(s) (TIMERPOOL->Set(s, true))
-#define SWITCH_OFF(s) (TIMERPOOL->Set(s, false))
+/*
+ * I suggest to use macro in switch -
+ * as internal structure can be changed in any case.
+ */
+#define SWITCH_ON(s) (HANDLERPOOL->Reset(s))
+#define SWITCH_OFF(s) (HANDLERPOOL->Stop(s))
+#define SWITCH_TRIGGER(s, cond) (HANDERPOOL->Trigger(s, cond))
+#define SWITCH_GET(s) (HANDLERPOOL->Get(s))

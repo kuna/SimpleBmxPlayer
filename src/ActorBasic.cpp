@@ -1,6 +1,6 @@
 #include "ActorBasic.h"
 #include "global.h"
-#include "globalresources.h"
+#include "Pool.h"
 #include "util.h"
 #include "luamanager.h"
 #include "game.h"

@@ -126,9 +126,10 @@ bool HandlerPool::IsExists(const RString &key) {
 	return _timerpool.find(key) != _timerpool.end();
 }
 
-void HandlerPool::Stop(const RString &key) {
-	if (!IsExists(key)) return;
+Timer* HandlerPool::Stop(const RString &key) {
+	//if (!IsExists(key)) return;
 	_timerpool[key].Stop();
+	return &_timerpool[key];
 }
 
 Timer* HandlerPool::Get(const RString &key) {
@@ -147,17 +148,18 @@ bool HandlerPool::IsExists(const RString &key) {
 }
 
 void HandlerPool::Register(Handler* h) {
+	if (!h) return;
 	_handlerpool.push_back(h);
 }
 
-bool HandlerPool::Reset(const RString &key) {
+Timer* HandlerPool::Reset(const RString &key) {
 	// active handlers first, then timer.
 	Message msg;
 	msg.name = key;
 	for (auto it = _handlerpool.begin(); it != _handlerpool.end(); ++it)
 		(*it)->Receive(msg);
 	_timerpool[key].Start();
-	return true;
+	return &_timerpool[key];
 }
 
 void HandlerPool::Remove(Handler* h) {
@@ -272,6 +274,7 @@ Texture* TexturePool::Load(const RString &path) {
 }
 
 Texture* TexturePool::Register(const RString& key, Texture *tex) {
+	if (!tex) return;
 	// only register available if no previous key exists
 	if (IsExists(key)) {
 		LOG->Warn("Texture - Attempt to overwrite texture in same key (ignored)");

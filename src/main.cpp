@@ -4,7 +4,7 @@
 
 #include "util.h"
 #include "file.h"
-#include "globalresources.h"
+#include "Pool.h"
 #include "game.h"
 #include "gameplay.h"
 #include "logger.h"
@@ -74,7 +74,7 @@ namespace Parameter {
 		/*
 		 * first figure out what player currently is
 		 */
-		Game::P.username = Game::SETTING.username;//"NONAME";
+		Game::P.username = SETTING.username;//"NONAME";
 		for (int i = 2; i < argc; i++) {
 			if (BeginsWith(argv[i], "-n")) {
 				Game::P.username = argv[i];
@@ -87,7 +87,7 @@ namespace Parameter {
 		 */
 		if (!PlayerInfoHelper::LoadPlayerInfo(PLAYERINFO[0], Game::P.username.c_str())) {
 			LOG->Warn("Cannot find userdata %s. Set default.", Game::P.username.c_str());
-			PLAYERINFO[0].name = Game::SETTING.username;
+			PLAYERINFO[0].name = SETTING.username;
 			PlayerInfoHelper::DefaultPlayerInfo(PLAYERINFO[0]);
 		}
 
@@ -137,7 +137,7 @@ namespace Parameter {
 		//GamePlay::P.op2 = PLAYERINFO[0].playconfig.op_2p;
 		GamePlay::P.rate = 1;
 		
-		GamePlay::P.bga = Game::SETTING.bga;
+		GamePlay::P.bga = SETTING.bga;
 		GamePlay::P.startmeasure = 0;
 		GamePlay::P.endmeasure = 1000;
 		GamePlay::P.repeat = 1;
