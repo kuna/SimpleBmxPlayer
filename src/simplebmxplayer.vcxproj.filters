@@ -96,6 +96,9 @@
     <ClCompile Include="Pool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Theme.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="player.h">
@@ -189,6 +192,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Pool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Theme.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

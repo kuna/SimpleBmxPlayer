@@ -105,6 +105,7 @@
     <ClCompile Include="skinoption.cpp" />
     <ClCompile Include="skintexturefont.cpp" />
     <ClCompile Include="skinutil.cpp" />
+    <ClCompile Include="Theme.cpp" />
     <ClCompile Include="util.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="gameplay.cpp" />
@@ -132,6 +133,7 @@
     <ClInclude Include="skinoption.h" />
     <ClInclude Include="skintexturefont.h" />
     <ClInclude Include="skinutil.h" />
+    <ClInclude Include="Theme.h" />
     <ClInclude Include="util.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="font.h" />
