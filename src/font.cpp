@@ -311,7 +311,7 @@ bool Font::UploadGlyph(uint32_t code, Surface* surf) {
 		m_TexX = m_TexY = 0;
 	}
 	// ok, now upload texture to glyph
-	DISPLAY->UpdateTexture(&m_Tex[m_TexCnt - 1], surf, m_TexX, m_TexY);
+	DISPLAY->UpdateTexture(m_Tex[m_TexCnt - 1], surf, m_TexX, m_TexY);
 	// add new glyph
 	FontGlyph g;
 	g.m_src = { m_TexX, m_TexY, surf->GetWidth(), surf->GetHeight()};

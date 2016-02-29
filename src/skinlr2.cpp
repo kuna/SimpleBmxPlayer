@@ -686,8 +686,8 @@ bool _LR2SkinParser::ParseCSV(const char *filepath, Skin *s) {
 		"Converted from LR2Skin.\n"
 		"LR2 project origins from lavalse, All rights reserved.");
 	s->skinlayout.LinkEndChild(cmt);
-	/* 4 elements are necessary */
-	XMLElement *skin = s->skinlayout.NewElement("skin");
+	/* start with frame element */
+	XMLElement *skin = s->skinlayout.NewElement("frame");
 	s->skinlayout.LinkEndChild(skin);
 
 	// load skin line
@@ -705,6 +705,11 @@ bool _LR2SkinParser::ParseCSV(const char *filepath, Skin *s) {
 		ParseSkinCSVLine();
 	}
 
+	// after structure parsing finished,
+	// add resource lua code
+	// (MUST add element at very first position)
+	std::string lua_resource = m_Res.ToString();
+	ADDCHILDFRONT(skin, "lua")->SetText(lua_resource.c_str());
 
 	if (condition_level == 0) {
 		printf("lr2skin(%s) parsing successfully done\n", filepath);
@@ -1020,9 +1025,6 @@ bool _LR2SkinParser::ProcessResource(const args_read_& args) {
 	// LR2 has not so modern style skin structure :p
 	//
 	if (CMD_IS("#IMAGE")) {
-		XMLElement *resource = s->skinlayout.FirstChildElement("skin");
-		XMLElement *image = s->skinlayout.NewElement("image");
-		image->SetAttribute("name", image_cnt++);
 		// check for optionname path
 		std::string path_converted = args[1];
 		for (auto it = filter_to_optionname.begin(); it != filter_to_optionname.end(); ++it) {
@@ -1033,60 +1035,29 @@ bool _LR2SkinParser::ProcessResource(const args_read_& args) {
 			}
 		}
 		// convert path to relative
-		ReplaceString(path_converted, "\\", "/");
 		ConvertLR2PathToRelativePath(path_converted);
-		image->SetAttribute("path", path_converted.c_str());
 
-		resource->InsertFirstChild(image);
+		m_Res.AddImage(path_converted.c_str());
 
 		return true;
 	}
 	else if (CMD_IS("#LR2FONT")) {
-		// we don't use bitmap fonts
-		// So if cannot found, we'll going to use default font/texture.
-		// current font won't support TTF, so basically we're going to use default font.
-		XMLElement *resource = s->skinlayout.FirstChildElement("skin");
-		XMLElement *font = s->skinlayout.NewElement("font");
-		font->SetAttribute("name", font_cnt++);
-		font->SetAttribute("path", "default");
-		int size = 18;
-		if (strstr(args[1], "small")) size = 15;
-		if (strstr(args[1], "title")
-			|| strstr(args[1], "big")
-			|| strstr(args[1], "large"))
-			size = 42;
-		if (size > 20)
-			font->SetAttribute("texturepath", "default");
-		font->SetAttribute("size", size);
-#if 0
-		/*
-		* these are available in #FONT, not #LR2FONT
-		*/
-		switch (INT(args[3])) {
-		case 0:
-			// normal
-			font->SetAttribute("style", "normal");
-			break;
-		case 1:
-			// italic
-			font->SetAttribute("style", "italic");
-			break;
-		case 2:
-			// bold
-			font->SetAttribute("style", "bold");
-			break;
-		}
-		font->SetAttribute("thickness", INT(args[2]));
-#endif
-		font->SetAttribute("border", size / 20 + 1);
-		resource->InsertFirstChild(font);
+		// if lr2font isn't exists or converted or something else,
+		// dont worry, game program will automatically use fallback ttf font.
+		std::string path_converted = args[1];
+		ConvertLR2PathToRelativePath(path_converted);
+		m_Res.AddText(path_converted.c_str());
 		return true;
 	}
 	return false;
 }
 
 bool _LR2SkinParser::ProcessDepreciated(const args_read_& args) {
-	if (CMD_IS("#FONT") ||
+	if (CMD_IS("#FONT")) {
+		// it's depreciated, but I'm going to add size attribute
+		m_Res.AddTextAttr(atoi(args[1]), atoi(args[2]));
+		return true;
+	} else if (
 		CMD_IS("#ENDOFHEADER") ||
 		CMD_IS("#FLIPRESULT") ||
 		CMD_IS("TRANSCLOLR")) 
@@ -2055,7 +2026,6 @@ int _LR2SkinParser::GenerateTexturefontString(XMLElement *obj) {
 	SkinTextureFont tfont;
 	tfont.AddImageSrc(img->Attribute("path"));
 	tfont.SetCycle(obj->IntAttribute("cycle"));
-	if (timer) tfont.SetTimer(timer);
 	tfont.SetFallbackWidth(dw);
 	char glyphs[] = "0123456789*+ABCDEFGHIJ#-";
 	for (int r = 0; r < repcnt; r++) {
@@ -2089,6 +2059,82 @@ void _LR2SkinParser::Clear() {
 	texturefont_id.clear();
 	lines_.clear();
 	line_args_.clear();
+	m_Res.Clear();
 }
 
 // ----------------------- LR2Skin part end ------------------------
+
+
+
+
+
+
+void _LR2SkinParser::Resource::AddImage(const char* path) {
+	image.push_back(path);
+}
+
+void _LR2SkinParser::Resource::AddTFont(const char* data) {
+	tfont.push_back(data);
+}
+
+void _LR2SkinParser::Resource::AddText(const char* path) {
+	if (font.size() > fntpath_idx) {
+		font[fntpath_idx].path = path;
+	}
+	else {
+		Font fnt;
+		fnt.size = 10;
+		fnt.thick = 1;
+		fnt.path = path;
+		font.push_back(fnt);
+	}
+	fntpath_idx++;
+}
+
+void _LR2SkinParser::Resource::AddTextAttr(int size, int thick) {
+	if (font.size() > fntattr_idx) {
+		font[fntattr_idx].size = size;
+		font[fntattr_idx].thick = thick;
+	}
+	else {
+		Font fnt;
+		fnt.size = size;
+		fnt.thick = thick;
+		font.push_back(fnt);
+	}
+	fntattr_idx++;
+}
+
+std::string _LR2SkinParser::Resource::ToString() {
+	std::ostringstream ss;
+	ss << "\n";
+
+	// image
+	for (int i = 0; i < image.size(); i++) {
+		ss << "LoadImage{path=\"" << image[i] << "\", id=\"" << i << "\"}\n";
+	}
+
+	// font (ttf or bitmap)
+	for (int i = 0; i < font.size(); i++) {
+		ss << "LoadFont{path=\"" << font[i].path <<
+			"\", size=\"" << font[i].size <<
+			"\", thick=\"" << font[i].thick <<
+			"\", id=\"" << i << "\"}\n";
+	}
+
+	// tfont
+	// (in fact, tfont is same as font, only it has data on program)
+	for (int i = 0; i < tfont.size(); i++) {
+		ss << "LoadFont{raw=\"" << tfont[i] <<
+			"\", id=\"" << font.size() + i + 1 << "\"}\n";
+	}
+
+	return ss.str();
+}
+
+void _LR2SkinParser::Resource::Clear() {
+	font.clear();
+	tfont.clear();
+	image.clear();
+	fntpath_idx = fntattr_idx = 0;
+}

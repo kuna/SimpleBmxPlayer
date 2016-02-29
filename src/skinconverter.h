@@ -51,6 +51,26 @@ private:
 	int currentline;
 	tinyxml2::XMLElement *condition_element[100];
 	int condition_level;
+	class Resource {
+		struct Font {
+			const char* path;
+			int size;
+			int thick;
+		};
+		std::vector<Font> font;
+		std::vector<std::string> tfont;
+		std::vector<std::string> image;
+		int fntattr_idx;
+		int fntpath_idx;
+	public:
+		void AddImage(const char* path);
+		void AddText(const char* path);
+		void AddTextAttr(int size, int thick);
+		void AddTFont(const char* data);
+		std::string ToString();
+		void Clear();
+	};
+	Resource m_Res;
 
 	/*
 	* local translator

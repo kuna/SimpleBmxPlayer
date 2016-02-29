@@ -238,7 +238,7 @@ void XmlToLuaConverter::AppendElement(const XMLElement *e) {
 	/*
 	 * in case of special objects
 	 */
-	if (strcmp(name, "skin") == 0) {
+	if (strcmp(name, "skin") == 0) {	// DEPRECIATED
 		Parse(e->FirstChild());
 		return;
 	}
@@ -246,6 +246,11 @@ void XmlToLuaConverter::AppendElement(const XMLElement *e) {
 	if (strcmp(name, "include") == 0) {
 		AppendBody(ssprintf("LoadObject(\"%s\");", e->Attribute("path")));
 	}
+
+	/*
+	 * resource - actually depreciated.
+	 */
+#if 0
 	// cache resource path/attribute - image, font, texturefont
 	else if (strcmp(name, "image") == 0) {
 		std::string r = ssprintf("LoadImage(\"%s\", {path=\"%s\"});",
@@ -269,6 +274,7 @@ void XmlToLuaConverter::AppendElement(const XMLElement *e) {
 		AppendHead(ssprintf("texturefont_data=[[%s]]", e->GetText()));
 		AppendHead(ssprintf("LoadTFont(\"%s\", {data=texturefont_data});", e->Attribute("name")));
 	}
+#endif
 
 	// in case of conditional (if/elseif/else) clause
 	else if (strcmp(name, "condition") == 0) {
@@ -429,11 +435,8 @@ namespace SkinTest {
 		bool r = LuaHelper::RunScriptFile(l, luapath, 1);
 		printf("stack after run: %d\n", lua_gettop(l));
 		{
-			// parse table with STree object
-			STree tree;
 			if (lua_istable(l, -1)) {
-				tree.ParseLua(l);
-				printf("parsing result:\n%s\n", tree.NodeToString().c_str());
+				printf("received table\n");
 			}
 			else {
 				printf("invalid argument(not table), cannot parse.\n");

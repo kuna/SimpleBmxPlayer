@@ -74,15 +74,16 @@ public:
 	virtual void SetColorMod(unsigned char r, unsigned char g, unsigned char b, unsigned char a) = 0;
 	virtual void SetSRC(const Display::Rect* r) = 0;
 	virtual void SetDST(const Display::Rect* r) = 0;
-	virtual void SetZPos(float z) = 0;
 	virtual void SetCenter(int x, int y) = 0;
 	virtual void SetRotateX(float angle) = 0;
 	virtual void SetRotateY(float angle) = 0;
 	virtual void SetRotateZ(float angle) = 0;
-	virtual void SetTilt(float sx, float sy) = 0;
+	virtual void SetShear(float sx, float sy) = 0;
 	virtual void SetOffset(int x, int y) = 0;
 	virtual void SetClip(const Display::Rect* r) = 0;
 	virtual void SetZoom(float zx, float zy) = 0;
+	virtual void SetZWrite(bool b) = 0;
+	virtual void SetZPos(float z) = 0;
 	virtual void ResetDrawing() = 0;
 	virtual void DrawPrimitives() = 0;
 };
@@ -122,6 +123,7 @@ protected:
 	Display::PointF m_Tilt;
 	Display::PointF m_Zoom;
 	float m_ZPos;
+	bool m_ZWrite;
 
 	// COMMENT: should it better to make these static?
 	float v_Color[4 * 3];		// colormod
@@ -154,15 +156,16 @@ public:
 	virtual void SetColorMod(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 	virtual void SetSRC(const Display::Rect* r);
 	virtual void SetDST(const Display::Rect* r);
-	virtual void SetZPos(float z);
 	virtual void SetCenter(int x, int y);
 	virtual void SetRotateX(float angle);
 	virtual void SetRotateY(float angle);
 	virtual void SetRotateZ(float angle);
-	virtual void SetTilt(float sx, float sy);
+	virtual void SetShear(float sx, float sy);
 	virtual void SetOffset(int x, int y);
 	virtual void SetZoom(float zx, float zy);
 	virtual void SetClip(const Display::Rect* r);
+	virtual void SetZPos(float z);
+	virtual void SetZWrite(bool b);
 	virtual void ResetDrawing();
 	virtual void DrawPrimitives();
 };

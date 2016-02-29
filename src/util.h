@@ -113,3 +113,5 @@ void md5(const char *in, int in_len, char *out);
 bool GetFileContents(const RString &sPath, RString &sOut, bool bOneLine = false);
 bool GetFileContents(const RString &sFile, vector<RString> &asOut);
 RString GetHash(const RString &sPath);
+
+uint32_t MakeRGBAInt(const RString& s);

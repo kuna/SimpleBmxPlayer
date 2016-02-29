@@ -61,7 +61,7 @@ protected:
 	float m_ScaleX, m_ScaleY;
 
 	// managing glyphs
-	Display::Texture m_Tex[MAX_SURFACE_COUNT];
+	Display::Texture* m_Tex[MAX_SURFACE_COUNT];
 	int m_TexCnt;
 	int m_TexY;
 	int m_TexX;
@@ -73,9 +73,6 @@ protected:
 		int offsetx, int offsety, uint32_t (Font::*ColorFunc)(int, int));
 	uint32_t GetFontForegroundColor(int x, int y);
 	uint32_t GetFontBorderColor(int x, int y);
-
-	// rendering
-	Sprite spr;
 public:
 	Font();
 	~Font();

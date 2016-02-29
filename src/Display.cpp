@@ -132,6 +132,11 @@ void DisplaySDLGlew::SetDST(const Rect* r) {
 	}
 }
 
+void DisplaySDLGlew::SetZWrite(bool v) {
+	m_ZWrite = v;
+	glDepthMask(m_ZWrite ? GL_TRUE : GL_FALSE);
+}
+
 void DisplaySDLGlew::SetZPos(float z) {
 	m_ZPos = z;
 }
@@ -256,7 +261,7 @@ void DisplaySDLGlew::SetRotateZ(float angle) {
 	m_Rotation.z = angle;
 }
 
-void DisplaySDLGlew::SetTilt(float sx, float sy) {
+void DisplaySDLGlew::SetShear(float sx, float sy) {
 	m_Tilt.x = sx;
 	m_Tilt.y = sy;
 }

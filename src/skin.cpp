@@ -27,7 +27,7 @@ bool Skin::Save(const char *filepath) {
 
 
 // ---------- STree Part begin ------------------------------
-
+#if 0
 #include "LuaHelper.h"
 void SNode::ParseLua(lua_State *l) {
 	if (!lua_istable(l, -1)) {
@@ -128,7 +128,7 @@ void STree::ClearTree() {
 		delete nodepool_[i];
 	nodepool_.clear();
 }
-
+#endif
 // ---------- STree part end --------------------------------
 
 // https://eliasdaler.wordpress.com/2014/11/01/using-lua-with-c-luabridge-part-2-using-scripts-for-object-behaviour/
@@ -155,12 +155,12 @@ bool Skin::SaveToLua(const char* filepath) {
 	return true;
 }
 
-void Skin::Release() {
+void Skin::Clear() {
 	skinlayout.Clear();
 }
 
 Skin::Skin(): skinlayout(false) {}
-Skin::~Skin() { Release(); }
+Skin::~Skin() { Clear(); }
 
 // --------------------- Skin End --------------------------
 
@@ -203,4 +203,12 @@ void SkinMetric::GetDefaultOption(SkinOption *o) {
 
 bool SkinMetric::Save(const char *filepath) {
 	return (tree.SaveFile(filepath) == XML_SUCCESS);
+}
+
+bool SkinMetric::Load(const char* filename) {
+	return (tree.LoadFile(filename) == XML_SUCCESS);
+}
+
+void SkinMetric::Clear() {
+	tree.Clear();
 }

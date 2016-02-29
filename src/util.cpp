@@ -1288,3 +1288,28 @@ RString GetHash(const RString &sPath) {
 	f.Close();
 	return hash;
 }
+
+
+uint32_t MakeRGBAInt(const RString& s) {
+	const char* s_ = s.c_str();
+	if (*s_ && s_[0] == '#') s_++;
+	std::string as, rs, gs, bs;
+	int a = 0, r = 0, g = 0, b = 0;
+	if (s.size() == 8) {
+		as = std::string(s_, 0, 2);
+		rs = std::string(s_, 2, 2);
+		gs = std::string(s_, 4, 2);
+		bs = std::string(s_, 6, 2);
+	}
+	else {
+		rs = std::string(s_, 0, 2);
+		gs = std::string(s_, 2, 2);
+		bs = std::string(s_, 4, 2);
+	}
+	std::istringstream(as) >> std::hex >> a;
+	std::istringstream(rs) >> std::hex >> r;
+	std::istringstream(gs) >> std::hex >> g;
+	std::istringstream(bs) >> std::hex >> b;
+
+	return (r << 24) | (g << 16) | (b << 8) | a;
+}

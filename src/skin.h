@@ -21,19 +21,19 @@ public:
 
 	// skin layout data is here
 	tinyxml2::XMLDocument skinlayout;
-
-	// render tree used for rendering
-	//SkinRenderTree skinbody;
 public:
 	Skin();
 	~Skin();
-	void Release();
+	void Clear();
 	// load skin xml file
 	bool Load(const char* filepath);
+	// load & parse lua
+	bool LoadLua(const char* filepath);
 	// save skin file
 	bool Save(const char* filepath);
 	// save skin file as lua code
 	bool SaveToLua(const char* filepath);
+	tinyxml2::XMLElement* GetBaseElement() { skinlayout.FirstChildElement(); }
 };
 
 /*
@@ -90,19 +90,25 @@ public:
 public:
 	SkinMetric();
 	~SkinMetric();
+	bool Load(const char* filename);
 	// save skin metric in xml formatted file
 	bool Save(const char* filename);
 	// get default useable option from this object ... 
 	// COMMENT: this function shouldn't be in skinconverter. remove this.
 	void GetDefaultOption(SkinOption *o);
+
+	void Clear();
 };
+
 
 /*
  * @description
  * parsed node by Lua/Xml
  * basic skin structure, but not an rendering tree.
  * independent to tinyxml2.
+ * - it's future implementation, not using now.
  */
+#if 0
 #include "LuaManager.h"
 #include "LuaHelper.h"
 
@@ -149,3 +155,4 @@ public:
 	virtual SNode* NewNode();
 	virtual void ClearTree();
 };
+#endif

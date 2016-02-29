@@ -114,6 +114,8 @@ const char* SkinTextureFont::GetImagePath(int imgno) {
 int SkinTextureFont::GetImageCount() {
 	return imgcnt;
 }
+void SkinTextureFont::SetCycle(int c) { cycle = c; }
+int SkinTextureFont::GetCycle() { return cycle; }
 void SkinTextureFont::SetFallbackWidth(int w) { fallback_width = w; }
 int SkinTextureFont::GetFallbackWidth() { return fallback_width; }
 bool SkinTextureFont::SaveToFile(const char* filepath) {

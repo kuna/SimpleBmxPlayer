@@ -5,6 +5,37 @@
 #include <vector>
 #include "tinyxml2.h"
 using namespace tinyxml2;
+#include "Pool.h"
+#include "Theme.h"
+
+
+namespace ROTATIONCENTER {
+	enum ROTATIONCENTER {
+		TOPLEFT = 7,
+		TOPCENTER = 8,
+		TOPRIGHT = 9,
+		CENTERLEFT = 4,
+		CENTER = 5,
+		CENTERRIGHT = 6,
+		BOTTOMLEFT = 1,
+		BOTTOMCENTER = 2,
+		BOTTOMRIGHT = 3,
+	};
+}
+namespace ACCTYPE {
+	enum ACCTYPE {
+		LINEAR = 0,
+		ACCEL = 1,
+		DECEL = 2,
+		NONE = 3,
+	};
+}
+
+
+
+
+
+
 
 // Texture pos
 struct ImageSRC {
@@ -14,7 +45,9 @@ struct ImageSRC {
 	int loop;
 
 	ImageSRC();
-	void SetSRCFromXNode(tinyxml2::XMLElement *e);
+	void Clear();
+	void SetFromXml(const tinyxml2::XMLElement *e);
+	Display::Rect Calculate();
 };
 
 // State that tweens between each state
@@ -22,26 +55,27 @@ struct TweenState {
 	Display::Rect dst;
 	Display::Color color;
 	Display::Rotate rotate;
-	Display::PointF tilt;
-	TweenState();
-	TweenState(const TweenState &t);
+	Display::PointF shear;
+	Display::PointF zoom;
 };
 // static information about current tweening
 struct TweenInfo {
 	TweenState state;
-	int blend, acc, center, loop;
+	int acc, loop;
+	TweenInfo();
 };
 // Compiled tween state (by lua script or some ...)
 struct ImageDST {
 	Timer timer;
-	std::map<int, TweenInfo>::iterator tween_cur;
-	std::map<int, TweenInfo>::iterator tween_next;
 	std::map<int, TweenInfo> tweens;
-	void SetDSTFromCommand(const RString& cmd);
+	int blend, center;
+	bool zwrite;
+	int zpos;
+
 	ImageDST();
-	// TODO
-	//void SetDSTFromLua(const RString& lua);
-	//void SetDSTFromLua(LuaFunction *luafunc);
+	void Clear();
+	void SetFromCmd(const RString& cmd);
+	void CalculateTween(TweenInfo &t);
 };
 
 /*
@@ -71,30 +105,35 @@ public:
 
 
 
-/* redeclaration */
-class SkinRenderTree;
-class ActorFrame;
-class SkinBgaObject;
-class SkinNoteFieldObject;
 
 /** @brief very basic rendering object which does nothing. */
 class Actor {
 protected:
 	/** @brief type of this object */
 	int objtype;
+	Actor* m_pParent;
+
 	/** @brief handlers & functions when handler called */
 	//std::map<RString, LuaFunction*> handlers;
+	friend class ActorHandler;
 	class ActorHandler : public HandlerAuto {
-		virtual void Receive(const Message& msg) {
-			// TODO
-		}
+	private:
+		Actor* pActor;
+	public:
+		ActorHandler(Actor* p) : pActor(p) {}
+		virtual void Receive(const Message& msg);
 	};
 	ActorHandler handler;
+
 	/** @brief current DST (compiled when proper handler called) */
-	ImageSRC m_Src;					// Render From
-	ImageDST m_Dst;					// Render To
-	TweenInfo m_Tweeninfo;			// Current, calculated tween(rendering) state
-	RenderCondition m_Condition;	// Is object currently drawable?
+	Display::Texture *m_Tex;				// Texture (default: none)
+	ImageSRC m_Src;						// Render From
+	ImageDST m_Dst;						// Render To (compiled state)
+	std::map<RString, RString> m_Cmds;	// Prepare to be compiled
+	TweenInfo m_Tweeninfo;				// Current, calculated tween(rendering) state
+	int m_SrcValue;						// basic integer value (used for src switching)
+	
+	RenderCondition m_Condition;		// Is object currently drawable?
 	/** @brief different from visible(condition). decided by Renderer(Update() method) */
 	bool drawable;
 
@@ -106,13 +145,13 @@ protected:
 	// TODO: we need this? (to get skin width/height)
 	//SkinRenderTree* rtree;
 public:
-	Actor(SkinRenderTree* owner, int type = ACTORTYPE::NONE);
+	Actor(int type = ACTORTYPE::NONE);
 	int GetType();
 
 	/** @brief Clear all attribute of actor */
 	virtual void Clear();
-	virtual void LoadFromXML(XMLElement *e);
-	virtual void SetCondition(const RString &str);
+	virtual void SetFromXml(const XMLElement *e);
+	virtual void SetParent(Actor* pActor);
 
 	/* @brief must call before update object or do something */
 	virtual void Update();
@@ -122,137 +161,128 @@ public:
 	virtual bool Click(int x, int y);
 	/** @brief tests collsion and if true then do own work & return true. otherwise false. */
 	virtual bool Hover(int x, int y);
+
+	// get/set
+	virtual void SetCondition(const RString &str);
 	virtual int GetWidth();
 	virtual int GetHeight();
 	virtual int GetX();
 	virtual int GetY();
-
-	bool IsGroup();
-	bool IsGeneral();
-
-	ActorFrame* ToGroup();
-	SkinNoteFieldObject* ToNoteFieldObject();
-};
-
-class SkinUnknownObject : public Actor {
-private:
-public:
-	SkinUnknownObject(SkinRenderTree* owner);
-};
-
-class SkinImageObject : public Actor {
-protected:
-	ImageSRC imgsrc;
-	Display::Texture tex;
-public:
-	SkinImageObject(SkinRenderTree* owner, int type = ACTORTYPE::IMAGE);
-	void SetSRC(const ImageSRC& imgsrc);
-	void SetImage(Display::Texture* tex);
-
-	void SetImageObject(XMLElement *e);
-	virtual void SetObject(XMLElement *e);
-	virtual void Update();
-	virtual void Render();
+	void SetBlend(int blend);
+	void SetCenter(int center);
 };
 
 class ActorFrame : public Actor {
 protected:
 	/** @brief base elements */
-	std::vector<Actor*> _childs;
+	std::vector<Actor*> m_Children;
 public:
-	ActorFrame(SkinRenderTree* owner);
+	ActorFrame();
 	~ActorFrame();
-	void AddChild(Actor* obj);
 	std::vector<Actor*>::iterator begin();
 	std::vector<Actor*>::iterator end();
-	void UpdateChilds();
 
-	// CAUTION: this doesn't parses recursively
-	virtual void SetObject(XMLElement *e);
+	// resursively parses
+	virtual void SetFromXml(const XMLElement *e);
 	virtual void Update();
 	virtual void Render();
 };
 
-class SkinTextObject : public Actor {
+class ActorSprite : public Actor {
+public:
+	ActorSprite(int type = ACTORTYPE::IMAGE);
+
+	virtual void SetFromXml(const XMLElement *e);
+	virtual void Update();
+	virtual void Render();
+};
+
+class ActorText : public Actor {
 private:
 	/* elements needed for drawing */
 	int align;
 	bool editable;
-	Font *fnt;
+	Font *m_Font;
 	RString *v;
 public:
-	SkinTextObject(SkinRenderTree* owner);
-	void SetFont(const char* resid);
+	ActorText();
 	void SetEditable(bool editable);
 	void SetAlign(int align);
 	void SetValue(RString* s);
-	virtual void SetObject(XMLElement *e);
+	void SetFont(const char* fontid);
+	virtual void SetFromXml(const XMLElement *e);
 	virtual void Render();
 	virtual int GetWidth();
 	int GetTextWidth(const RString& s);
 	void RenderText(const char* s);
 };
 
-class SkinNumberObject : public SkinTextObject {
+class ActorNumber : public ActorText {
 private:
 	char buf[20];
 	bool mode24;
 	int length;
 	int *v;
 public:
-	SkinNumberObject(SkinRenderTree* owner);
+	ActorNumber();
 	void SetValue(int *i);
 	void SetLength(int length);
 	void Set24Mode(bool b);
-	virtual void SetObject(XMLElement *e);
+	virtual void SetFromXml(const XMLElement *e);
 	virtual void Render();
 	virtual int GetWidth();
 	/** @brief make string for rendering and call SkinTextObject::RenderText() */
 	void CacheInt(int n);
 };
 
-class SkinGraphObject : public SkinImageObject {
+class ActorGraph : public ActorSprite {
 private:
 	/* elements needed for drawing */
 	int type;
 	int direction;
-	double *v;
+	double m_Value;
+	double *m_Key;
 public:
-	SkinGraphObject(SkinRenderTree* owner);
+	ActorGraph();
 	void SetType(int type);
 	void SetDirection(int direction);
-	void SetValue(double* pv);
-	virtual void SetObject(XMLElement *e);
+	void SetKey(const char* key);
+	void SetValue(double v);
+	virtual void SetFromXml(const XMLElement *e);
+	virtual void Update();
 	virtual void Render();
 	// TODO
 	void EditValue(int dx, int dy);
 };
 
-class SkinSliderObject : public SkinImageObject {
+class ActorSlider : public ActorSprite {
 private:
 	/* elements needed for drawing */
 	int direction;
 	int range;
-	double *v;
+	double m_Value;
+	double *m_Key;
 	//bool editable;	this part is manually controlled in program...?
 public:
-	SkinSliderObject(SkinRenderTree* owner);
+	ActorSlider();
 	void SetDirection(int direction);
 	void SetRange(int range);
-	void SetValue(double* pv);
-	virtual void SetObject(XMLElement *e);
+	void SetKey(const char* key);
+	void SetValue(double v);
+	virtual void SetFromXml(const XMLElement *e);
+	virtual void Update();
 	virtual void Render();
 	// TODO
 	void EditValue(int dx, int dy);
 };
 
-class SkinButtonObject : public SkinImageObject {
+class ActorButton : public ActorSprite {
 private:
 	ImageSRC hover;
 	// only we need more is: handler.
 	//_Handler handler;
 public:
-	SkinButtonObject(SkinRenderTree* owner);
+	ActorButton();
 	//virtual void Render();
 };
 
@@ -267,28 +297,40 @@ public:
 * May better to extend this class to draw something you want.
 * Use it on your own.
 */
-class SkinListObject : public Actor {
+class ActorList : public Actor {
 private:
 	Uint32				listsize;
 	double				listscroll;
 	Uint32				x, y, w, h;
 	Uint32				select_dx, select_dy;
 public:
+	ActorList();
 	void RenderListItem(int idx, Actor *obj);
 };
 
 
-/** @brief it actually doesn't renders anything, but able to work with Render() method. */
-class SkinScriptObject : public Actor {
-	bool runoneveryframe;
-	int runtime;
+/** @brief DEPRECIATED - compatibility for Xml */
+class ActorScript : public Actor {
 	RString script;
 public:
-	SkinScriptObject(SkinRenderTree *);
-	void SetRunCondition(bool oneveryframe = false);
+	ActorScript();
 	void LoadFile(const RString &filepath);
-	void SetScript(const RString &script);
-	virtual void SetObject(XMLElement *e);
+	virtual void SetFromXml(const XMLElement *e);
 	virtual void Update();
 	virtual void Render();
 };
+
+
+
+
+
+// simple macro for registering actor
+#define REGISTER_ACTOR_WITH_NAME(v, name)\
+	Actor* CreateActor_##name() { return new name(); }\
+	struct RegisterActor_##name {\
+		RegisterActor_##name() { Theme::RegisterActor(v, CreateActor_##name); }\
+	} _RegisterActor_##name;
+
+
+#define REGISTER_ACTOR(name)\
+	REGISTER_ACTOR_WITH_NAME(#name, name);

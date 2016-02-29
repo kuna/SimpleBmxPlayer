@@ -125,13 +125,15 @@ namespace SkinUtil {
 		int islr2path;
 		islr2path = lr2path.find("LR2files");
 		if (islr2path != std::string::npos) {
+			// remove first folder
 			ReplaceString(lr2path, "\\", "/");
 			ReplaceString(lr2path, "./", "");
 			ReplaceString(lr2path, "LR2files/Theme/", "");
-			int p = lr2path.find('/');
+			// remove 2 level folder, if exists
+			int p = lr2path.find_first_of("/\\");
 			if (p != std::string::npos) {
 				lr2path = "./" + lr2path.substr(p + 1);
-				p = lr2path.find('/', 3);
+				p = lr2path.find_first_of("/\\");
 				if (p != std::string::npos)
 					lr2path = "./" + lr2path.substr(p + 1);
 			}
