@@ -116,7 +116,16 @@ void DisplaySDLGlew::SetColorMod(unsigned char r, unsigned char g, unsigned char
 }
 
 void DisplaySDLGlew::SetSRC(const Rect* r) {
-	m_SRC = *r;
+	// if r == 0, then use texture's total size
+	if (r == 0) {
+		m_SRC.x = 0;
+		m_SRC.y = 0;
+		m_SRC.w = m_Texture.width;
+		m_SRC.h = m_Texture.height;
+	}
+	else {
+		m_SRC = *r;
+	}
 }
 
 void DisplaySDLGlew::SetDST(const Rect* r) {

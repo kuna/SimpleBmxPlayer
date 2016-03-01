@@ -1,7 +1,7 @@
 #include "player.h"
 #include "global.h"
 #include "bmsresource.h"
-#include "ActorRenderer.h"
+#include "Pool.h"
 #include "util.h"
 #include <time.h>
 

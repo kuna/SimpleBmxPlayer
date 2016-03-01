@@ -9,7 +9,6 @@
 #include "bmsbel/bms_bms.h"
 #include "playrecord.h"
 #include "timer.h"
-#include "image.h"
 #include "global.h"
 #include "playerinfo.h"
 #include "gameplay.h"

@@ -7,6 +7,13 @@
 #include "file.h"
 #include "logger.h"
 
+/*
+ * TODO
+ *
+ * - set SRC / DST basic size to image width
+ * - if actorframe, DST default size to Theme's fullscreen
+ * - advanced cmd - addx, addy, addrotx, addroty, queuecommand
+ */
 
 void ImageSRC::Clear() {
 	x = y = w = h = cycle = 0;
@@ -315,67 +322,70 @@ void Actor::Clear() {
 	m_Dst.Clear();
 }
 
+void Actor::SetRenderState() {
+	// precalculate something - center pos
+	Display::Point center = { m_Tweeninfo.state.dst.x, m_Tweeninfo.state.dst.y };
+	switch (m_Dst.center) {
+	case ROTATIONCENTER::TOPLEFT:
+		break;
+	case ROTATIONCENTER::TOPCENTER:
+		center.x += m_Tweeninfo.state.dst.w / 2;
+		break;
+	case ROTATIONCENTER::TOPRIGHT:
+		center.x += m_Tweeninfo.state.dst.w;
+		break;
+	case ROTATIONCENTER::CENTERLEFT:
+		center.y += m_Tweeninfo.state.dst.h / 2;
+		break;
+	case ROTATIONCENTER::CENTERRIGHT:
+		center.x += m_Tweeninfo.state.dst.w;
+		center.y += m_Tweeninfo.state.dst.h / 2;
+		break;
+	case ROTATIONCENTER::BOTTOMLEFT:
+		center.y += m_Tweeninfo.state.dst.h;
+		break;
+	case ROTATIONCENTER::BOTTOMCENTER:
+		center.x += m_Tweeninfo.state.dst.w / 2;
+		center.y += m_Tweeninfo.state.dst.h;
+		break;
+	case ROTATIONCENTER::BOTTOMRIGHT:
+		center.x += m_Tweeninfo.state.dst.w;
+		center.y += m_Tweeninfo.state.dst.h;
+		break;
+	case ROTATIONCENTER::CENTER:
+	default:
+		center.x += m_Tweeninfo.state.dst.w / 2;
+		center.y += m_Tweeninfo.state.dst.h / 2;
+		break;
+	}
+
+	// check and set z-writing
+	DISPLAY->SetBlendMode(m_Dst.blend);
+	DISPLAY->SetCenter(center.x, center.y);
+	DISPLAY->SetZWrite(m_Dst.zwrite);
+	DISPLAY->SetZPos(m_Dst.zpos);
+	// rotate
+	DISPLAY->SetRotateX(m_Tweeninfo.state.rotate.x);
+	DISPLAY->SetRotateY(m_Tweeninfo.state.rotate.y);
+	DISPLAY->SetRotateZ(m_Tweeninfo.state.rotate.z);
+	// shear
+	DISPLAY->SetShear(m_Tweeninfo.state.shear.x, m_Tweeninfo.state.shear.y);
+	// colormod
+	DISPLAY->SetColorMod(m_Tweeninfo.state.color.r,
+		m_Tweeninfo.state.color.g,
+		m_Tweeninfo.state.color.b,
+		m_Tweeninfo.state.color.a);
+}
+
 // draw primitive
 void Actor::Render() {
 	if (m_Tex && drawable) {
 		DISPLAY->PushState();
 
-		// precalculate something - center pos
-		Display::Point center = { m_Tweeninfo.state.dst.x, m_Tweeninfo.state.dst.y };
-		switch (m_Dst.center) {
-		case ROTATIONCENTER::TOPLEFT:
-			break;
-		case ROTATIONCENTER::TOPCENTER:
-			center.x += m_Tweeninfo.state.dst.w / 2;
-			break;
-		case ROTATIONCENTER::TOPRIGHT:
-			center.x += m_Tweeninfo.state.dst.w;
-			break;
-		case ROTATIONCENTER::CENTERLEFT:
-			center.y += m_Tweeninfo.state.dst.h / 2;
-			break;
-		case ROTATIONCENTER::CENTERRIGHT:
-			center.x += m_Tweeninfo.state.dst.w;
-			center.y += m_Tweeninfo.state.dst.h / 2;
-			break;
-		case ROTATIONCENTER::BOTTOMLEFT:
-			center.y += m_Tweeninfo.state.dst.h;
-			break;
-		case ROTATIONCENTER::BOTTOMCENTER:
-			center.x += m_Tweeninfo.state.dst.w / 2;
-			center.y += m_Tweeninfo.state.dst.h;
-			break;
-		case ROTATIONCENTER::BOTTOMRIGHT:
-			center.x += m_Tweeninfo.state.dst.w;
-			center.y += m_Tweeninfo.state.dst.h;
-			break;
-		case ROTATIONCENTER::CENTER:
-		default:
-			center.x += m_Tweeninfo.state.dst.w / 2;
-			center.y += m_Tweeninfo.state.dst.h / 2;
-			break;
-		}
-
-		// check and set z-writing
+		SetRenderState();
 		Display::Rect r = m_Src.Calculate();
 		DISPLAY->SetSRC(&r);
-		DISPLAY->SetBlendMode(m_Dst.blend);
-		DISPLAY->SetCenter(center.x, center.y);
 		DISPLAY->SetDST(&m_Tweeninfo.state.dst);
-		DISPLAY->SetZWrite(m_Dst.zwrite);
-		DISPLAY->SetZPos(m_Dst.zpos);
-		// rotate
-		DISPLAY->SetRotateX(m_Tweeninfo.state.rotate.x);
-		DISPLAY->SetRotateY(m_Tweeninfo.state.rotate.y);
-		DISPLAY->SetRotateZ(m_Tweeninfo.state.rotate.z);
-		// shear
-		DISPLAY->SetShear(m_Tweeninfo.state.shear.x, m_Tweeninfo.state.shear.y);
-		// colormod
-		DISPLAY->SetColorMod(m_Tweeninfo.state.color.r,
-			m_Tweeninfo.state.color.g,
-			m_Tweeninfo.state.color.b,
-			m_Tweeninfo.state.color.a);
-
 		DISPLAY->SetTexture(m_Tex);
 		DISPLAY->DrawPrimitives();
 
@@ -654,7 +664,7 @@ void ActorText::RenderText(const char* s) {
 			break;
 		}
 		DISPLAY->PushState();
-		// TODO: SetRenderState
+		Actor::SetRenderState();
 		m_Font->Render(s, m_Tweeninfo.state.dst.x + left_offset, m_Tweeninfo.state.dst.y);
 		DISPLAY->PopState();
 	}

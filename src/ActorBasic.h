@@ -152,11 +152,13 @@ public:
 	virtual void Clear();
 	virtual void SetFromXml(const XMLElement *e);
 	virtual void SetParent(Actor* pActor);
+	Actor* GetParent() { return m_pParent };
 
 	/* @brief must call before update object or do something */
 	virtual void Update();
 	/* @brief draw object to screen with it's own basic style */
 	virtual void Render();
+	void SetRenderState();
 	/** @brief tests collsion and if true then do own work & return true. otherwise false. */
 	virtual bool Click(int x, int y);
 	/** @brief tests collsion and if true then do own work & return true. otherwise false. */

@@ -1,89 +1,64 @@
 #include "ActorPlay.h"
-#include "ActorRenderer.h"
 #include "logger.h"
 #include "bmsresource.h"
 #include "player.h"
 
-SkinComboObject::SkinComboObject(SkinRenderTree *owner)
-	: SkinRenderObject(owner, ACTORTYPE::GENERAL), makeoffset(true),
-	combo(0), judge(0) {}
+ActorJudge::ActorJudge()
+	: ActorSprite(), combo(0) {}
 
-void SkinComboObject::Update() {
-	// combo object itself isn't a group, so we don't do UpdateBasic();
-	// (that is, don't calculate DST attribute)
-	drawable = condition.Evaluate();
+void ActorJudge::Update() {
+	ActorSprite::Update();
 	if (!drawable) return;
-	if (combo) combo->Update();
-	if (judge) {
-		if (makeoffset && combo)
-			rtree->PushRenderOffset(-combo->GetWidth() / 2, 0);
-		else
-			rtree->PushRenderOffset(0, 0);
-		judge->Update();
-		rtree->PopRenderOffset();
+	// combo position is relative to ActorJudge
+	if (combo) {
+		combo->Update();
+		m_Tweeninfo.state.dst.x += -combo->GetWidth() / 2;
 	}
 }
 
-void SkinComboObject::Render() {
-	if (drawable) {
-		if (combo) {
-			combo->Render();
-		}
-		if (judge) {
-			judge->Render();
-		}
+void ActorJudge::Render() {
+	ActorSprite::Render();
+	if (drawable && combo) {
+		// a little like ActorFrame does.
+		DISPLAY->PushState();
+		DISPLAY->SetOffset(m_Tweeninfo.state.dst.x, m_Tweeninfo.state.dst.y);
+		combo->Render();
+		DISPLAY->PopState();
 	}
 }
 
-void SkinComboObject::SetOffset(bool offset) {
-	makeoffset = offset;
-}
-
-void SkinComboObject::SetObject(XMLElement *e) {
-	SetBasicObject(e);	// parse condition
-	judge = 0;
+void ActorJudge::SetFromXml(const XMLElement *e) {
 	combo = 0;
-	XMLElement *e_judge = e->FirstChildElement("sprite");
-	XMLElement *e_combo = e->FirstChildElement("number");
-	if (e_judge) {
-		judge = rtree->NewSkinImageObject();
-		judge->SetObject(e_judge);
-	}
+	ActorSprite::SetFromXml(e);
+	const XMLElement *e_combo = e->FirstChildElement("number");
 	if (e_combo) {
-		combo = rtree->NewSkinNumberObject();
-		combo->SetObject(e_combo);
+		combo = (ActorNumber*)Theme::MakeActor(e_combo, this);
 	}
 }
 
-void SkinComboObject::SetComboObject(SkinNumberObject* obj) { combo = obj; }
-
-void SkinComboObject::SetJudgeObject(SkinImageObject* obj) { judge = obj; }
 
 
 
 
 
 
+ActorGrooveGauge::ActorGrooveGauge()
+	: ActorSprite(), dotcnt(0), m_Key(0), m_Value(0), addx(0), addy(0) { }
 
-SkinGrooveGaugeObject::SkinGrooveGaugeObject(SkinRenderTree* owner)
-	: SkinImageObject(owner), dotcnt(0), v(0), addx(0), addy(0) { }
-
-void SkinGrooveGaugeObject::SetObject(XMLElement *e) {
-	using namespace SkinRenderHelper;
+void ActorGrooveGauge::SetFromXml(const XMLElement *e) {
 	// set basic property
-	SetBasicObject(e);
-	SetImageObject(e);
+	ActorSprite::SetFromXml(e);
+
 	addx = e->IntAttribute("addx");
 	addy = e->IntAttribute("addy");
 	if (e->IntAttribute("side") == 0) {
-		v = DOUBLEPOOL->Get("P1Gauge");
+		m_Key = DOUBLEPOOL->Get("P1Gauge");
 		Gaugetype = INTPOOL->Get("P1GaugeType");
 	}
 	else {
-		v = DOUBLEPOOL->Get("P2Gauge");
+		m_Key = DOUBLEPOOL->Get("P2Gauge");
 		Gaugetype = INTPOOL->Get("P2GaugeType");
 	}
-	t = TIMERPOOL->Get("OnScene");
 	dotcnt = 50;
 	// set SRC
 	int w = e->IntAttribute("w");
@@ -96,31 +71,44 @@ void SkinGrooveGaugeObject::SetObject(XMLElement *e) {
 	int x = e->IntAttribute("x");
 	int y = e->IntAttribute("y");
 	// TEMP; TODO
-	XMLElement *active, *inactive;
+	const XMLElement *active, *inactive;
 	active = e->FirstChildElement("SRC_GROOVE_ACTIVE");
 	inactive = e->FirstChildElement("SRC_GROOVE_INACTIVE");
-	if (active) ConstructSRCFromElement(src_combo_active[0], active);
-	if (inactive) ConstructSRCFromElement(src_combo_inactive[0], inactive);
+	if (active) src_combo_active[0].SetFromXml(active);
+	if (inactive) src_combo_inactive[0].SetFromXml(inactive);
 	active = e->FirstChildElement("SRC_HARD_ACTIVE");
 	inactive = e->FirstChildElement("SRC_HARD_INACTIVE");
-	if (active) ConstructSRCFromElement(src_combo_active[1], active);
-	if (inactive) ConstructSRCFromElement(src_combo_inactive[1], inactive);
+	if (active) src_combo_active[1].SetFromXml(active);
+	if (inactive) src_combo_inactive[1].SetFromXml(inactive);
 	active = e->FirstChildElement("SRC_EX_ACTIVE");
 	inactive = e->FirstChildElement("SRC_EX_INACTIVE");
-	if (active) ConstructSRCFromElement(src_combo_active[2], active);
-	if (inactive) ConstructSRCFromElement(src_combo_inactive[2], inactive);
+	if (active) src_combo_active[2].SetFromXml(active);
+	if (inactive) src_combo_inactive[2].SetFromXml(inactive);
 }
 
-void SkinGrooveGaugeObject::Render() {
+void ActorGrooveGauge::Update() {
+	ActorSprite::Update();
+
+	// TODO: receive value if new one exists
+	if (m_Key) {
+		m_Value = *m_Key;
+	}
+}
+
+void ActorGrooveGauge::Render() {
 	// work like a graph
-	if (drawable && v && img) {
-		ImageDSTFrame f = dst_cached.frame;
+	if (drawable && m_Tex) {
+		// before start, do basic settings
+		Actor::SetRenderState();
+		DISPLAY->SetTexture(m_Tex);
+
+		Display::Rect f = m_Tweeninfo.state.dst;
 		ImageSRC *currentsrc;
 		int inactive = 0;
 		int Gaugetype_now = *Gaugetype;
-		int activedot = (int)(*v * dotcnt) - 1;	// till when we should display gauge as active cell
+		int activedot = (int)(m_Value * dotcnt) - 1;	// till when we should display gauge as active cell
 		int groovedot = (int)(0.8 * dotcnt);	// starting point of turning red when groove gauge
-		int blink = t->GetTick() % 4;	// used when blinking gauge
+		int blink = m_Dst.timer.GetTick() % 4;	// used when blinking gauge
 		for (int i = 0; i < dotcnt; i++) {
 			// check for current status to decide SRC
 			inactive = (i > activedot) ? 1 : 0;
@@ -143,9 +131,12 @@ void SkinGrooveGaugeObject::Render() {
 				currentsrc = &src_combo_inactive[Gaugetype_now];
 			else
 				currentsrc = &src_combo_active[Gaugetype_now];
+
 			// do render
-			SkinRenderHelper::Render(img, currentsrc, &f,
-				dst_cached.dst->blend, dst_cached.dst->rotatecenter);
+			Display::Rect sr = currentsrc->Calculate();
+			DISPLAY->SetSRC(&sr);
+			DISPLAY->SetDST(&f);
+			DISPLAY->DrawPrimitives();
 
 			f.x += addx;
 			f.y += addy;
@@ -160,46 +151,22 @@ void SkinGrooveGaugeObject::Render() {
 
 
 #pragma region PLAYOBJECT
-SkinNoteFieldObject::SkinNoteFieldObject(SkinRenderTree* owner) :
-SkinGroupObject(owner) {
+ActorNoteField::ActorNoteField() : ActorFrame() {
 	objtype = ACTORTYPE::PLAYLANE;
 }
 
-void SkinNoteFieldObject::SetObject(XMLElement *e) {
-	SetBasicObject(e);
+void ActorNoteField::SetFromXml(const XMLElement *e) {
+	ActorFrame::SetFromXml(e);
 
-	// fetch player object first
+	// fetch player object
 	// if not battle, then ignore side attribute
-	if (rtree->_keycount == 15 ||
+	// (TODO)
+	/*if (rtree->_keycount == 15 ||
 		rtree->_keycount == 17)
 		side = e->IntAttribute("side");
 	else
-		side = 0;
+		side = 0;*/
 	p = PLAYER[side];
-
-	// similar with SkinRenderHelper::ConstructObject()
-	// but in here, only parses Image / Note / JudgeLine / Line objects.
-#define ISNAME(name) (strcmp(child->Name(), name) == 0)
-#define APPENDCHILD(objtype)\
-	SkinRenderObject *obj = rtree->New##objtype();\
-	obj->SetObject(child);\
-	AddChild(obj);
-	for (XMLElement *child = e->FirstChildElement(); child; child = child->NextSiblingElement()) {
-		if (ISNAME("sprite")) {
-			APPENDCHILD(SkinImageObject);
-		}
-		if (ISNAME("line")) {
-			APPENDCHILD(SkinNoteLineObject);
-			((SkinNoteLineObject*)obj)->SetPlayer(p);
-		}
-		if (ISNAME("judgeline")) {
-			APPENDCHILD(SkinNoteJudgeLineObject);
-		}
-		if (ISNAME("note")) {
-			APPENDCHILD(SkinNoteObject);
-			((SkinNoteObject*)obj)->SetPlayer(p);
-		}
-	}
 }
 
 
@@ -207,94 +174,52 @@ void SkinNoteFieldObject::SetObject(XMLElement *e) {
 
 
 
-SkinNoteObject::SkinNoteObject(SkinRenderTree *tree)
-	: SkinRenderObject(tree), lane(0) {
+ActorNote::ActorNote()
+	: ActorSprite(), laneidx(0) {
 	memset(&note, 0, sizeof(note));
 }
 
-void SkinNoteObject::RenderNote(double pos) {
-	ImageDSTFrame frame = note.f;
-	frame.y *= 1 - pos;
-
-	frame.x += rx;
-	frame.y += ry;
-	SkinRenderHelper::Render(note.img, &note.normal, &frame);
-}
-
-void SkinNoteObject::RenderMineNote(double pos) {
-	ImageDSTFrame frame = note.f;
-	frame.y *= 1 - pos;
-
-	frame.x += rx;
-	frame.y += ry;
-	SkinRenderHelper::Render(note.img, &note.normal, &frame);
-}
-
-void SkinNoteObject::RenderNote(double pos_start, double pos_end) {
-	ImageDSTFrame frame = note.f;
-	ImageDSTFrame bodyframe = frame;
-	ImageDSTFrame endframe = frame;
-	frame.y *= 1 - pos_start;
-	endframe.y *= 1 - pos_end;
-	bodyframe.y = endframe.y + endframe.h;
-	bodyframe.h = frame.y - endframe.y - endframe.h;
-
-	frame.x += rx;
-	frame.y += ry;
-	bodyframe.x += rx;
-	bodyframe.y += ry;
-	endframe.x += rx;
-	endframe.y += ry;
-	SkinRenderHelper::Render(note.img, &note.ln_body, &bodyframe);
-	SkinRenderHelper::Render(note.img, &note.ln_end, &endframe);
-	SkinRenderHelper::Render(note.img, &note.ln_start, &frame);
-}
-
-void SkinNoteObject::SetObject(XMLElement *lane)
+void ActorNote::SetFromXml(const XMLElement *lane)
 {
-	// COMMENT: no dst in noteobject
-	// SetBasicObject(lane);
-
 	if (!lane) return;
-	using namespace SkinRenderHelper;
-	this->lane = lane->IntAttribute("index");
-	note.f.x = lane->IntAttribute("x");
-	note.f.y = lane->IntAttribute("y");
-	note.f.w = lane->IntAttribute("w");
-	note.f.h = lane->IntAttribute("h");
-	note.f.a = 255;
-	note.f.r = 255;
-	note.f.g = 255;
-	note.f.b = 255;
-	note.f.angle = 0;
-	note.img = rtree->_imagekey[lane->Attribute("resid")];
-	XMLElement *src_element;
+	Actor::SetFromXml(lane);
+
+	this->laneidx = lane->IntAttribute("index");
+	int player = laneidx / 10;
+	p = PLAYER[player];
+
+	const XMLElement *src_element;
 	src_element = lane->FirstChildElement("SRC_NOTE");
-	if (src_element) ConstructSRCFromElement(note.normal, src_element);
+	if (src_element) note.normal.SetFromXml(src_element);
 	src_element = lane->FirstChildElement("SRC_LN_START");
-	if (src_element) ConstructSRCFromElement(note.ln_start, src_element);
+	if (src_element) note.ln_start.SetFromXml(src_element);
 	src_element = lane->FirstChildElement("SRC_LN_BODY");
-	if (src_element) ConstructSRCFromElement(note.ln_body, src_element);
+	if (src_element) note.ln_body.SetFromXml(src_element);
 	src_element = lane->FirstChildElement("SRC_LN_END");
-	if (src_element) ConstructSRCFromElement(note.ln_end, src_element);
+	if (src_element) note.ln_end.SetFromXml(src_element);
 	src_element = lane->FirstChildElement("SRC_MINE");
-	if (src_element) ConstructSRCFromElement(note.mine, src_element);
+	if (src_element) note.mine.SetFromXml(src_element);
 	src_element = lane->FirstChildElement("SRC_AUTO_NOTE");
-	if (src_element) ConstructSRCFromElement(note.auto_normal, src_element);
+	if (src_element) note.auto_normal.SetFromXml(src_element);
 	src_element = lane->FirstChildElement("SRC_AUTO_LN_START");
-	if (src_element) ConstructSRCFromElement(note.auto_ln_start, src_element);
+	if (src_element) note.auto_ln_start.SetFromXml(src_element);
 	src_element = lane->FirstChildElement("SRC_AUTO_LN_BODY");
-	if (src_element) ConstructSRCFromElement(note.auto_ln_body, src_element);
+	if (src_element) note.auto_ln_body.SetFromXml(src_element);
 	src_element = lane->FirstChildElement("SRC_AUTO_LN_END");
-	if (src_element) ConstructSRCFromElement(note.auto_ln_end, src_element);
+	if (src_element) note.auto_ln_end.SetFromXml(src_element);
 	src_element = lane->FirstChildElement("SRC_AUTO_MINE");
-	if (src_element) ConstructSRCFromElement(note.auto_mine, src_element);
+	if (src_element) note.auto_mine.SetFromXml(src_element);
 }
 
-void SkinNoteObject::Render() {
-	if (!note.img) return;
-	if (!drawable) return;
-	if (!p) return;
+void ActorNote::Update() {
+	Actor::Update();
+	// copy dst information
+	m_Tweenobj = m_Tweeninfo;
+}
+
+void ActorNote::Render() {
+	if (!drawable) return;	// should be drawable
+	if (!p) return;			// player object should exist
 
 	double speed = p->GetSpeedMul();
 	double pos = BmsHelper::GetCurrentPos();	// current scroll pos
@@ -302,7 +227,7 @@ void SkinNoteObject::Render() {
 	// only draw notes that is not judged yet
 	bool isln = false;
 	double lnprevpos;
-	for (auto it = p->GetNoteIter(lane); it != p->GetNoteEndIter(lane); ++it) {
+	for (auto it = p->GetNoteIter(laneidx); it != p->GetNoteEndIter(laneidx); ++it) {
 		double notepos = it->second.pos - pos;
 		notepos *= speed;
 		if (notepos < 0) notepos = 0;
@@ -321,7 +246,7 @@ void SkinNoteObject::Render() {
 			if (!isln) {
 				lnprevpos = 0;
 			}
-			RenderNote(lnprevpos, notepos);
+			RenderLongNote(lnprevpos, notepos);
 			isln = false;
 			break;
 		}
@@ -330,10 +255,10 @@ void SkinNoteObject::Render() {
 	}
 	// there might be longnote that isn't drawn (judge failed)
 	// in LR2, that also should be drawn, so scan it
-	BmsNoteLane::Iterator it_prev = p->GetNoteIter(lane);
-	if (it_prev == p->GetNoteBeginIter(lane)) return;
+	BmsNoteLane::Iterator it_prev = p->GetNoteIter(laneidx);
+	if (it_prev == p->GetNoteBeginIter(laneidx)) return;
 	isln = false;
-	for (--it_prev; it_prev != p->GetNoteBeginIter(lane); --it_prev) {
+	for (--it_prev; it_prev != p->GetNoteBeginIter(laneidx); --it_prev) {
 		double notepos = it_prev->second.pos - pos;
 		notepos *= speed;
 		// only break loop when out-of-screen
@@ -346,18 +271,46 @@ void SkinNoteObject::Render() {
 			break;
 		case BmsNote::NOTE_LNSTART:
 			if (!isln) break;
-			RenderNote(notepos, lnprevpos);
+			RenderLongNote(notepos, lnprevpos);
 			isln = false;
 			break;
 		}
 	}
 }
 
-void SkinNoteObject::Update() {
-	// only update drawable & relative position
-	drawable = condition.Evaluate();
-	rx = rtree->GetOffsetX();
-	ry = rtree->GetOffsetY();
+void ActorNote::RenderNote(double pos) {
+	m_Src = note.normal;
+	m_Tweeninfo.state.dst.y = m_Tweenobj.state.dst.y * (1 - pos);
+	ActorSprite::Render();
+}
+
+void ActorNote::RenderMineNote(double pos) {
+	m_Src = note.normal;
+	m_Tweeninfo.state.dst.y = m_Tweenobj.state.dst.y * (1 - pos);
+	ActorSprite::Render();
+}
+
+void ActorNote::RenderLongNote(double pos_start, double pos_end) {
+	double p_start = m_Tweenobj.state.dst.y * (1 - pos_start);
+	double p_end = m_Tweenobj.state.dst.y * (1 - pos_end);
+
+	// render bodyframe
+	m_Src = note.ln_body;
+	m_Tweeninfo.state.dst.y = p_start + m_Tweenobj.state.dst.h;
+	m_Tweeninfo.state.dst.h = p_start - p_end - m_Tweenobj.state.dst.h;
+	ActorSprite::Render();
+
+	// render endframe
+	m_Src = note.ln_end;
+	m_Tweeninfo.state.dst.y = p_end;
+	m_Tweeninfo.state.dst.h = m_Tweenobj.state.dst.h;
+	ActorSprite::Render();
+	
+	// render frame
+	m_Src = note.ln_start;
+	m_Tweeninfo.state.dst.y = p_start;
+	m_Tweeninfo.state.dst.h = m_Tweenobj.state.dst.h;
+	ActorSprite::Render();
 }
 #pragma endregion PLAYOBJECT
 
@@ -366,16 +319,20 @@ void SkinNoteObject::Update() {
 
 
 
-SkinNoteLineObject::SkinNoteLineObject(SkinRenderTree *t) : SkinImageObject(t) {}
+ActorBeatLine::ActorBeatLine() : ActorSprite() {}
 
-void SkinNoteLineObject::RenderLine(double pos) {
-	ImageDSTFrame f;
-	f = dst_cached.frame;
-	f.y *= 1 - pos;
-	SkinRenderHelper::Render(img, &imgsrc, &f);
+void ActorBeatLine::SetFromXml(const XMLElement* e) {
+	ActorSprite::SetFromXml(e);
+	// get player object
+	p = PLAYER[e->IntAttribute("side")];
 }
 
-void SkinNoteLineObject::Render() {
+void ActorBeatLine::RenderLine(double pos) {
+	m_Tweeninfo.state.dst.y = m_Tweenobj.state.dst.y * (1 - pos);
+	ActorSprite::Render();
+}
+
+void ActorBeatLine::Render() {
 	if (!p) return;
 	// render barrrrrrrrrrs
 	using namespace BmsResource;
@@ -392,12 +349,18 @@ void SkinNoteLineObject::Render() {
 	}
 }
 
+void ActorBeatLine::Update() {
+	// copy tween information
+	ActorSprite::Update();
+	m_Tweenobj = m_Tweeninfo;
+}
 
 
 
 
 
-SkinNoteJudgeLineObject::SkinNoteJudgeLineObject(SkinRenderTree *t) : SkinImageObject(t) {}
+
+ActorJudgeLine::ActorJudgeLine() : ActorSprite() {}
 
 
 
@@ -406,33 +369,49 @@ SkinNoteJudgeLineObject::SkinNoteJudgeLineObject(SkinRenderTree *t) : SkinImageO
 
 
 #pragma region BGAOBJECT
-SkinBgaObject::SkinBgaObject(SkinRenderTree *t) : SkinRenderObject(t, ACTORTYPE::BGA) {}
+ActorBga::ActorBga() : Actor(ACTORTYPE::BGA) {
+	// get black tex
+	m_TexBlack = TEXPOOL->Get("_black");
+}
 
-void SkinBgaObject::SetObject(XMLElement *e) {
-	SetBasicObject(e);
+void ActorBga::SetFromXml(const XMLElement *e) {
+	Actor::SetFromXml(e);
 	side = e->IntAttribute("side");
 	miss = PLAYERVALUE[side].pOnMiss;
 }
 
-void SkinBgaObject::RenderBGA(Image *img) {
-	if (!img) return;
-	ImageSRC src = { 0, 0, 0, 0, 0, 1, 1, 0, 0 };
-	SkinRenderHelper::Render(img, &src, &dst_cached.frame, 0, 5);
+void ActorBga::RenderBGA(Display::Texture *tex, bool transparent) {
+	if (!tex) return;
+	DISPLAY->SetDST(&m_Tweeninfo.state.dst);
+	// if not transparent, then render black background once
+	// TODO: draw target by keeping aspect ratio
+	if (!transparent) {
+		DISPLAY->SetTexture(m_TexBlack);
+		DISPLAY->SetSRC(0);
+		DISPLAY->DrawPrimitives();
+	}
+	DISPLAY->SetTexture(tex);
+	DISPLAY->SetSRC(0);
+	DISPLAY->DrawPrimitives();
 }
 
-void SkinBgaObject::Update() { UpdateBasic(); }
+void ActorBga::Update() { Actor::Update(); }
 
-void SkinBgaObject::Render() {
+void ActorBga::Render() {
 	if (!drawable) return;
 	/*
 	 * BGA is common resource so get it from BmsResource, it's easy.
 	 * but one thing should be taken care of - 
 	 * Miss timer is different from player.
 	 */
-	RenderBGA(BmsHelper::GetMainBGA());
+	RenderBGA(BmsHelper::GetMainBGA(), false);
 	RenderBGA(BmsHelper::GetLayer1BGA());
 	RenderBGA(BmsHelper::GetLayer2BGA());
 	if (miss->IsStarted() && miss->GetTick() < 1000)
-		RenderBGA(BmsHelper::GetMissBGA());
+		RenderBGA(BmsHelper::GetMissBGA(), false);
 }
 #pragma endregion BGAOBJECT
+
+
+REGISTER_ACTOR_WITH_NAME("Judge", ActorJudge);
+REGISTER_ACTOR_WITH_NAME("Bga", ActorBga);

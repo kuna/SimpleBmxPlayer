@@ -9,52 +9,50 @@ class Player;
 /*
  * special object for playing
  */
-class SkinComboObject : public SkinRenderObject {
-	SkinImageObject *judge;
-	SkinNumberObject *combo;
-	bool makeoffset;
+class ActorJudge : public ActorSprite {
+	ActorNumber *combo;
 public:
-	SkinComboObject(SkinRenderTree *owner);
+	ActorJudge();
 	/** @brief should we need to move judge image object left, or not? */
-	void SetOffset(bool offset);
-	void SetJudgeObject(SkinImageObject *);
-	void SetComboObject(SkinNumberObject *);
-	virtual void SetObject(XMLElement *e);
+	virtual void SetFromXml(const XMLElement *e);
 	virtual void Update();
 	virtual void Render();
 };
 
-class SkinGrooveGaugeObject : public SkinImageObject {
-	SkinImageObject *obj;
+/* DEPRECIATED form? */
+class ActorGrooveGauge : public ActorSprite {
+	ActorSprite *obj;
 	/*
 	* 0: groove, 1: hard blank, 2: ex blank
 	*/
 	ImageSRC src_combo_active[5];
 	ImageSRC src_combo_inactive[5];
-	Timer *t;			// general-purpose timer for blink
 	int addx, addy;
 	int *Gaugetype;
-	double *v;
 	int dotcnt;
+
+	double *m_Key;
+	double m_Value;
 public:
-	SkinGrooveGaugeObject(SkinRenderTree *owner);
-	virtual void SetObject(XMLElement *e);
+	ActorGrooveGauge();
+	virtual void SetFromXml(const XMLElement *e);
+	virtual void Update();
 	virtual void Render();
 };
 
 /** @brief specific object used during play */
-class SkinNoteFieldObject : public SkinGroupObject {
+class ActorNoteField : public ActorFrame {
 public:
 	int			side;			// decide what player this object render
 	Player*		p;
 public:
-	SkinNoteFieldObject(SkinRenderTree* owner);
-	void SetObject(XMLElement *e);
-	// Render() uses basic function of SkinGroupObject::Render()
+	ActorNoteField();
+	void SetFromXml(const XMLElement *e);
+	// Render() uses basic function of ActorFrame::Render()
 };
 
 // draws a lane's note - repeatedly
-class SkinNoteObject : public SkinRenderObject {
+class ActorNote : public ActorSprite {
 private:
 	struct NOTE {
 		ImageSRC normal;
@@ -67,54 +65,57 @@ private:
 		ImageSRC auto_ln_body;
 		ImageSRC auto_ln_start;
 		ImageSRC auto_mine;
-		ImageDSTFrame f;
+		ImageDST f;
 		Display::Texture tex;			// COMMENT: do we need to have multiple image?
 	} note;
 
-	int			lane;
-	Player*		p;				// get from NoteFieldObject
-
-	int			rx, ry;			// relative pos
+	int			laneidx;
+	Player*		p;				// get from parent
+	TweenInfo	m_Tweenobj;		// copy of m_Tweeninfo
 
 	/** @brief `pos = 1` means note on the top of the lane */
 	void RenderNote(double pos);
 	void RenderMineNote(double pos);
 	/** @brief for longnote. */
-	void RenderNote(double pos_start, double pos_end);
+	void RenderLongNote(double pos_start, double pos_end);
 public:
-	SkinNoteObject(SkinRenderTree *);
-	virtual void SetObject(XMLElement *e);
+	ActorNote();
+	virtual void SetFromXml(const XMLElement *e);
 	virtual void Update();
 	virtual void Render();
 	void SetPlayer(Player *p) { this->p = p; }
 };
 
 // draws object repeatedly
-class SkinNoteLineObject : public SkinImageObject {
-	Player *p;				// get from NoteFieldObject
+class ActorBeatLine : public ActorSprite {
+	Player *p;					// get from parent
+	TweenInfo	m_Tweenobj;		// copy of m_Tweeninfo
 public:
-	SkinNoteLineObject(SkinRenderTree *);
+	ActorBeatLine();
 	void RenderLine(double pos);
+	virtual void SetFromXml(const XMLElement *e);
 	virtual void Render();
+	virtual void Update();
 	void SetPlayer(Player *p) { this->p = p; }
 };
 
 // nothing much, just an tedious object (beatmania/LR2 specific style)
-class SkinNoteJudgeLineObject : public SkinImageObject {
+class ActorJudgeLine : public ActorSprite {
 public:
-	SkinNoteJudgeLineObject(SkinRenderTree *);
+	ActorJudgeLine();
 };
 
 
 /** @brief do nothing; just catch this object if you want to draw BGA. */
-class SkinBgaObject : public SkinRenderObject {
+class ActorBga : public Actor {
 private:
 	int side;		// which player?
 	Timer *miss;	// the player's miss timer
+	Display::Texture* m_TexBlack;
 public:
-	SkinBgaObject(SkinRenderTree *);
-	virtual void SetObject(XMLElement *e);
-	void RenderBGA(Display::Texture* tex);
+	ActorBga();
+	virtual void SetFromXml(const XMLElement *e);
+	void RenderBGA(Display::Texture* tex, bool transparent = true);
 	virtual void Update();
 	virtual void Render();
 };
