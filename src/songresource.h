@@ -8,17 +8,17 @@
 #pragma once
 
 #include "audio.h"
-#include "image.h"
 #include "timer.h"
+#include "Surface.h"
 
 #include "bmsbel\bms_bms.h"
 #include "bmsbel\bms_define.h"
 #include <vector>
 
-namespace BmsResource {
+class SongResource {
+protected:
 	typedef Audio BmsWav;
-	typedef Image BmsBmp;
-
+	typedef Display::Texture BmsBmp;
 	class SoundPool {
 	private:
 		BmsWav *wav_table[BmsConst::WORD_MAX_COUNT];
@@ -34,6 +34,7 @@ namespace BmsResource {
 	class ImagePool {
 	private:
 		BmsBmp *bmp_table[BmsConst::WORD_MAX_COUNT];
+		Surface *mov_table[BmsConst::WORD_MAX_COUNT];	// only store movie surface
 	public:
 		ImagePool();
 		BmsBmp* Get(BmsWord channel);
@@ -41,13 +42,16 @@ namespace BmsResource {
 		void UnloadAll();
 	};
 
-	bool IsBmsResourceLoaded();
-	double GetBmsResourceLoadingProgress();
+	SoundPool m_Sound;
+	ImagePool m_Image;
+	BmsBms m_Bms;
+public:
+	bool LoadBms(const RString &bmspath);
+	void Cleanup();
+};
 
-	extern SoundPool		SOUND;
-	extern ImagePool		IMAGE;
-	extern BmsBms			BMS;
-}
+// load bms only once at a time
+extern SongResource SONGRESOURCE;
 
 //
 // TODO:	BmsHelper isn't an independent module, but kind of a tool of BmsResource.
@@ -78,10 +82,10 @@ namespace BmsHelper {
 		BmsWord layer2bga;
 	};
 
-	Image* GetMissBGA();
-	Image* GetMainBGA();
-	Image* GetLayer1BGA();
-	Image* GetLayer2BGA();
+	Display::Texture* GetMissBGA();
+	Display::Texture* GetMainBGA();
+	Display::Texture* GetLayer1BGA();
+	Display::Texture* GetLayer2BGA();
 
 	/** @brief get cached scroll bar value. */
 	double GetCurrentBar();
