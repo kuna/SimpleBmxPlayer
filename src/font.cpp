@@ -240,7 +240,7 @@ bool Font::CacheGlyph(uint32_t code) {
 		FT_BitmapGlyph bitmapGlyph = reinterpret_cast<FT_BitmapGlyph>(glyph);
 		SetSurfaceFromGlyph(surf, &bitmapGlyph->bitmap,
 			0, 0,
-			Font::GetFontForegroundColor);
+			&Font::GetFontForegroundColor);
 		FT_Done_Glyph(glyph);
 	}
 	// render thickness: foreground bitmap
@@ -258,14 +258,14 @@ bool Font::CacheGlyph(uint32_t code) {
 		SetSurfaceFromGlyph(surf, &bitmapGlyph->bitmap,
 			m_TTFArgs.thickness,
 			m_TTFArgs.thickness,
-			Font::GetFontForegroundColor);
+			&Font::GetFontForegroundColor);
 	}
 	// render text: foreground bitmap
 	FT_Render_Glyph(m_TTF->glyph, FT_RENDER_MODE_NORMAL);
 	SetSurfaceFromGlyph(surf, &m_TTF->glyph->bitmap, 
 		m_TTFArgs.border + m_TTFArgs.thickness, 
 		m_TTFArgs.border + m_TTFArgs.thickness, 
-		Font::GetFontForegroundColor);
+		&Font::GetFontForegroundColor);
 	// upload to texture/glyph
 	bool r = UploadGlyph(code, surf);
 	// cleanup & return
@@ -364,10 +364,10 @@ void Font::Render(const char* text, int x, int y) {
 			dst.y = y * m_ScaleY;
 			dst.w = g->m_src.w;
 			dst.h = g->m_src.h;
-			spr.SetTexture(m_Tex[g->m_Texidx]);
-			spr.SetSrc(&g->m_src);
-			spr.SetDest(&dst);
-			spr.Render();
+			DISPLAY->SetTexture(m_Tex[g->m_Texidx]);
+			DISPLAY->SetSRC(&g->m_src);
+			DISPLAY->SetDST(&dst);
+			DISPLAY->DrawPrimitives();
 
 			cx += g->m_src.w;
 		}

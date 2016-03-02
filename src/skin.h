@@ -33,7 +33,7 @@ public:
 	bool Save(const char* filepath);
 	// save skin file as lua code
 	bool SaveToLua(const char* filepath);
-	tinyxml2::XMLElement* GetBaseElement() { skinlayout.FirstChildElement(); }
+	tinyxml2::XMLElement* GetBaseElement() { return skinlayout.FirstChildElement(); }
 };
 
 /*

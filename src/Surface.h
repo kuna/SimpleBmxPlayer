@@ -36,7 +36,7 @@ public:
 	void Create(int width, int height, uint32_t color = 0);
 	void SetPixel(int x, int y, uint32_t color);
 	uint32_t GetPixel(int x, int y);
-	bool RemoveColor(uint32_t clr);		// sets specific color's alpha to zero
+	void RemoveColor(uint32_t clr);		// sets specific color's alpha to zero
 
 	int GetWidth() const { return width; }
 	int GetHeight() const { return height; }

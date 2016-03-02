@@ -117,7 +117,7 @@ std::map<std::string, Font*> lua_fontmap;
 
 // input: table(path:string, key:string)
 // output: bool
-bool Lua_LoadImage(Lua* L) {
+int Lua_LoadImage(Lua* L) {
 	if (!lua_istable(L, -1)) {
 		LOG->Warn("Lua_LoadImage: invalid argument - table should given as argument.");
 		lua_pop(L, 1);
@@ -153,7 +153,7 @@ bool Lua_LoadImage(Lua* L) {
 //
 // if path ends with .ttf, then attempt to load with TTF font
 // else, then load as bitmap font.
-bool Lua_LoadFont(Lua* L) {
+int Lua_LoadFont(Lua* L) {
 	if (!lua_istable(L, -1)) {
 		LOG->Warn("Lua_LoadFont: invalid argument - table should given as argument.");
 		lua_pop(L, 1);
@@ -258,15 +258,11 @@ bool Lua_LoadFont(Lua* L) {
 }
 
 #include "LuaHelper.h"
-template <class Theme>
-class LuaBinding {
-public:
-	void Register(Lua *L, int iMethods, int iMetatable) {
-		luabridge::getGlobalNamespace(L)
-			.addCFunction("LoadImage", Lua_LoadImage)
-			.addCFunction("LoadFont", Lua_LoadFont);
-	}
-};
+void LuaBinding<Theme>::Register(Lua *L, int iMethods, int iMetatable) {
+	luabridge::getGlobalNamespace(L)
+		.addCFunction("LoadImage", Lua_LoadImage)
+		.addCFunction("LoadFont", Lua_LoadFont);
+}
 
 
 void Theme::ClearAllResource() {

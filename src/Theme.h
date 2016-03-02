@@ -1,3 +1,5 @@
+#pragma once
+
 #define _USEPOOL				// to use SetEnvironmentFromOption()
 #include "Pool.h"
 #include "skin.h"

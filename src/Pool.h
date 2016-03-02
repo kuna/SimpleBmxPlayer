@@ -78,7 +78,9 @@ class Switch: public Timer {
 protected:
 	RString m_Switchname;
 public:
-	Switch(const RString& name, int state = TIMERSTATUS::UNKNOWN);
+	/* Although non-type switch is bad choice, but std::map requies default constructor, 
+	   so There's only way to filter it with assert() */
+	Switch(const RString& name = "", int state = TIMERSTATUS::UNKNOWN);
 	virtual void Start();
 	virtual void Stop();
 	virtual bool Trigger(bool condition = true);

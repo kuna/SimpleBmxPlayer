@@ -82,7 +82,7 @@ public:
 	SongPlayer();
 	~SongPlayer();
 
-	void LoadBmsResource(const BmsBms& bms);
+	void LoadBmsResource(BmsBms& bms);
 	void Cleanup();
 	bool IsBmsLoading() { return m_BmsLoading; }
 	void SetRate(double v) { m_Rate = v; }

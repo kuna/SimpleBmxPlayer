@@ -87,7 +87,7 @@ Texture* DisplaySDLGlew::CreateEmptyTexture(int width, int height) {
 	return tex;
 }
 
-void DisplaySDLGlew::UpdateTexture(Texture* tex, const Surface* surf, int x = 0, int y = 0) {
+void DisplaySDLGlew::UpdateTexture(Texture* tex, const Surface* surf, int x, int y) {
 	assert(surf);
 	glBindTexture(GL_TEXTURE_2D, tex->id);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, surf->GetWidth(), surf->GetHeight(),

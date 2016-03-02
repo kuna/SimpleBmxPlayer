@@ -44,7 +44,7 @@ bool Surface::LoadFromMemory(const unsigned char* ptr, int len) {
 	return pixdata != 0;
 }
 
-void Surface::Create(int width, int height, uint32_t color = 0) {
+void Surface::Create(int width, int height, uint32_t color) {
 	pixdata = (unsigned char*)malloc(width * height * 4);
 	for (int i = 0; i < width * height; i++) {
 		((uint32_t*)pixdata)[i] = color;
@@ -63,7 +63,7 @@ uint32_t Surface::GetPixel(int x, int y) {
 	return ((uint32_t*)pixdata)[width * y + x];
 }
 
-bool Surface::RemoveColor(uint32_t clr) {
+void Surface::RemoveColor(uint32_t clr) {
 	unsigned char r_ = R(clr);
 	unsigned char g_ = G(clr);
 	unsigned char b_ = B(clr);

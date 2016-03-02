@@ -91,16 +91,19 @@
     <ClCompile Include="ActorBasic.cpp" />
     <ClCompile Include="ActorPlay.cpp" />
     <ClCompile Include="audio.cpp" />
-    <ClCompile Include="bmsresource.cpp" />
+    <ClCompile Include="Song.cpp" />
+    <ClCompile Include="SongPlayer.cpp" />
     <ClCompile Include="Display.cpp" />
     <ClCompile Include="file.cpp" />
     <ClCompile Include="font.cpp" />
     <ClCompile Include="gameresult.cpp" />
+    <ClCompile Include="LuaHelper.cpp" />
     <ClCompile Include="Pool.cpp" />
     <ClCompile Include="logger.cpp" />
     <ClCompile Include="md5.cpp" />
     <ClCompile Include="playerinfo.cpp" />
     <ClCompile Include="skin.cpp" />
+    <ClCompile Include="skinconverter.cpp" />
     <ClCompile Include="skinlr2.cpp" />
     <ClCompile Include="skinoption.cpp" />
     <ClCompile Include="skintexturefont.cpp" />
@@ -114,22 +117,24 @@
     <ClCompile Include="luamanager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="player.cpp" />
-    <ClCompile Include="ActorRenderer.cpp" />
     <ClCompile Include="timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ActorBasic.h" />
     <ClInclude Include="ActorPlay.h" />
     <ClInclude Include="audio.h" />
-    <ClInclude Include="bmsresource.h" />
+    <ClInclude Include="Song.h" />
+    <ClInclude Include="SongPlayer.h" />
     <ClInclude Include="Display.h" />
     <ClInclude Include="Exception.h" />
     <ClInclude Include="file.h" />
     <ClInclude Include="gameresult.h" />
+    <ClInclude Include="LuaHelper.h" />
     <ClInclude Include="Pool.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="md5.h" />
     <ClInclude Include="playerinfo.h" />
+    <ClInclude Include="skinconverter.h" />
     <ClInclude Include="skinoption.h" />
     <ClInclude Include="skintexturefont.h" />
     <ClInclude Include="skinutil.h" />
@@ -146,7 +151,6 @@
     <ClInclude Include="playrecord.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="skin.h" />
-    <ClInclude Include="ActorRenderer.h" />
     <ClInclude Include="StdString.h" />
     <ClInclude Include="timer.h" />
     <ClInclude Include="version.h" />

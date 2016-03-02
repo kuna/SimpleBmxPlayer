@@ -1,5 +1,5 @@
 #include "file.h"
-#include "globalresources.h"
+#include "Pool.h"
 #include "logger.h"
 #include "libarchive/archive.h"
 #include "libarchive/archive_entry.h"

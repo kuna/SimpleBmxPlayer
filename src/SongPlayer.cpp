@@ -156,12 +156,12 @@ SongPlayer::SongPlayer() {
 	Reset(0);
 }
 
-void SongPlayer::LoadBmsResource(const BmsBms& bms) {
+void SongPlayer::LoadBmsResource(BmsBms& bms) {
 	// automatically cleanup
 	Cleanup();
 
 	// copy
-	m_Bms = bms;
+	bms.Copy(m_Bms);
 
 	// reset iterators
 	BmsChannel& bgmchannel = m_Bms.GetChannelManager()[BmsWord(1)];
@@ -406,7 +406,7 @@ namespace BmsHelper {
 		m_AllowBmsResourceLoad = 1;
 	}
 
-	void* _LoadBms(void*) { SONGPLAYER->LoadBmsResource(*m_bms); }
+	void* _LoadBms(void*) { SONGPLAYER->LoadBmsResource(*m_bms); return 0; }
 	void LoadBmsOnThread(BmsBms& bms) {
 		m_bms = &bms;
 		pthread_create(&t_bmsresource, 0, _LoadBms, 0);

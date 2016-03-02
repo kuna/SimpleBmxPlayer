@@ -121,7 +121,10 @@ void IntPool::Clear() { _intpool.clear(); }
 
 
 
-Switch::Switch(const RString& name, int state) : m_Switchname(name), Timer(state) {}
+Switch::Switch(const RString& name, int state) : m_Switchname(name), Timer(state) {
+	// noname isn't accepted
+	ASSERT(!m_Switchname.empty());
+}
 
 void Switch::Start() {
 	// active handlers first, then timer.
@@ -295,7 +298,7 @@ Texture* TexturePool::Load(const RString &path) {
 }
 
 Texture* TexturePool::Register(const RString& key, Texture *tex) {
-	if (!tex) return;
+	if (!tex) return 0;
 	// only register available if no previous key exists
 	if (IsExists(key)) {
 		LOG->Warn("Texture - Attempt to overwrite texture in same key (ignored)");
@@ -303,8 +306,8 @@ Texture* TexturePool::Register(const RString& key, Texture *tex) {
 	else {
 		_texpool[key] = tex;
 		_loadcount[tex]++;
-		return tex;
 	}
+	return tex;
 }
 
 void TexturePool::Update(Display::Texture* tex, Uint32 msec) {
