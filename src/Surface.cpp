@@ -35,7 +35,7 @@ bool Surface::Load(const char* path) {
 	return pixdata != 0;
 }
 
-bool Surface::LoadFromMemory(const unsigned char* ptr, int len, int width, int height) {
+bool Surface::LoadFromMemory(const unsigned char* ptr, int len) {
 	Release();
 	int channels;
 	pixdata =
@@ -282,6 +282,10 @@ void SurfaceMovie::ReleaseMovie() {
 	if (codecctxorig) { avcodec_close(codecctxorig); codecctxorig = 0; }
 	if (codecctx) { avcodec_close(codecctx); codecctx = 0; }
 	if (moviectx) { avformat_close_input(&moviectx); moviectx = 0; }
+}
+
+bool SurfaceMovie::IsMovie() {
+	return (moviectx != 0);
 }
 
 

@@ -28,7 +28,7 @@ public:
 	void Update();
 	void Render();
 	bool Load(const char* skinname);
-	void Release();
+	void ClearElements();
 
 	// create actor from element
 	static Actor* MakeActor(const tinyxml2::XMLElement* e, Actor* parent = 0);

@@ -13,7 +13,7 @@ std::map<std::string, CreateActorFn> actormap;
 
 bool Theme::Load(const char* skinname) {
 	// if previously theme loaded, then release it.
-	Release();
+	ClearElements();
 
 	// make metric path / skin path from skinname
 	RString metricpath = RString(skinname) + ".skin.xml";
@@ -50,7 +50,7 @@ bool Theme::Load(const char* skinname) {
 	return true;
 }
 
-void Theme::Release() {
+void Theme::ClearElements() {
 	// before release rendertree and else, 
 	// reset options from skinoption
 	// (TODO)

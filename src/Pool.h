@@ -184,6 +184,11 @@ extern TexturePool* TEXPOOL;
 extern FontPool* FONTPOOL;
 extern SoundPool* SOUNDPOOL;
 
+
+
+
+
+
 namespace PoolHelper {
 	void InitalizeAll();
 	void ReleaseAll();
@@ -197,3 +202,93 @@ namespace PoolHelper {
 #define SWITCH_OFF(s) (HANDLERPOOL->Stop(s))
 #define SWITCH_TRIGGER(s, cond) (HANDERPOOL->Trigger(s, cond))
 #define SWITCH_GET(s) (HANDLERPOOL->Get(s))
+
+
+
+
+
+/*
+ * ValueSets used in various structures
+ */
+
+typedef struct {
+	Timer*				pOnMiss;			// timer used when miss occured (DP)
+	Timer*				pOnCombo;
+	Timer*				pOnJudge[6];		// pf/gr/gd/bd/pr
+	Timer*				pOnSlow;
+	Timer*				pOnFast;
+	Timer*				pOnfullcombo;		// needless to say?
+	Timer*				pOnlastnote;		// when last note ends
+	Timer*				pOnGameover;		// game is over! (different from OnClose)
+	Timer*				pOnGaugeMax;		// guage max?
+	Timer*				pOnGaugeUp;
+	Timer*				pLanepress[10];
+	Timer*				pLanehold[10];
+	Timer*				pLaneup[10];
+	Timer*				pLanejudgeokay[10];
+	int*				pNotePerfect;
+	int*				pNoteGreat;
+	int*				pNoteGood;
+	int*				pNoteBad;
+	int*				pNotePoor;
+	Timer*				pOnAAA;
+	Timer*				pOnAA;
+	Timer*				pOnA;
+	Timer*				pOnB;
+	Timer*				pOnC;
+	Timer*				pOnD;
+	Timer*				pOnE;
+	Timer*				pOnF;
+	Timer*				pOnReachAAA;
+	Timer*				pOnReachAA;
+	Timer*				pOnReachA;
+	Timer*				pOnReachB;
+	Timer*				pOnReachC;
+	Timer*				pOnReachD;
+	Timer*				pOnReachE;
+	Timer*				pOnReachF;
+	double*				pExscore_d;
+	double*				pHighscore_d;
+	int*				pScore;
+	int*				pExscore;
+	int*				pCombo;
+	int*				pMaxCombo;
+	int*				pTotalnotes;
+	int*				pRivaldiff;		// TODO where to process it?
+	double*				pGauge_d;
+	int*				pGaugeType;
+	int*				pGauge;
+	double*				pRate_d;
+	int*				pRate;
+	double*				pTotalRate_d;
+	int*				pTotalRate;
+	int*				pNoteSpeed;
+	int*				pFloatSpeed;
+	int*				pSudden;
+	int*				pLift;
+	double*				pSudden_d;
+	double*				pLift_d;
+} PlayerRenderValue;
+
+extern PlayerRenderValue PLAYERVALUE[4];
+
+typedef struct {
+	double*			songloadprogress;
+	Timer*			OnSongLoading;
+	Timer*			OnSongLoadingEnd;
+
+	double*			PlayProgress;
+	int*			PlayBPM;
+	int*			PlayMin;
+	int*			PlaySec;
+	int*			PlayRemainMin;
+	int*			PlayRemainSec;
+
+	Timer*			SongTime;
+	Timer*			OnBeat;
+	Timer*			OnBgaMain;
+	Timer*			OnBgaLayer1;
+	Timer*			OnBgaLayer2;
+} SongValue;
+
+extern SongValue SONGVALUE;
