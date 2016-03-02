@@ -4,6 +4,7 @@
 #include "bmsbel/bms_bms.h"
 #include "bmsbel/bms_parser.h"
 #include "SongPlayer.h"
+#include "Song.h"
 #include "audio.h"
 #include "game.h"
 #include "util.h"
@@ -37,15 +38,6 @@ namespace GamePlay {
 	int					playmode;			// PLAYTYPE..?
 	PlayerSongRecord	record;
 
-	void LoadBms(const char *path) {
-		if (BmsHelper::LoadBms(path)) {
-			LOG->Info("BMS loading finished successfully (%s)\n", path);
-		}
-		else {
-			LOG->Critical("BMS loading failed (%s)\n", path);
-		}
-	}
-
 	namespace {
 		int *pRivalDiff;
 		double *pRivalDiff_d;
@@ -59,10 +51,11 @@ namespace GamePlay {
 
 		void InitalizePlayer() {
 			/*
-			 * delete player if previouse existed
+			 * delete player if previously existed
 			 */
-			if (PLAYER[0]) SAFE_DELETE(PLAYER[0]);
-			if (PLAYER[1]) SAFE_DELETE(PLAYER[1]);
+			if (PLAYER[0]) SAFE_DELETE(PLAYER[0]);	// player
+			if (PLAYER[1]) SAFE_DELETE(PLAYER[1]);	// 2p(battlemode) or auto-player(pacemaker)
+			if (PLAYER[2]) SAFE_DELETE(PLAYER[2]);	// replay(mybest)
 
 			/*
 			 * Create player object for playing
@@ -73,7 +66,7 @@ namespace GamePlay {
 			// in courseplay, player object shouldn't be created many times
 			// so, before scene start, check round, and decide to create player.
 			if (P.autoplay) {
-				PLAYER[0] = new PlayerAuto(0, playmode);
+				PLAYER[0] = new PlayerAuto(0);
 			}
 			else if (P.replay) {
 				/*
@@ -86,17 +79,20 @@ namespace GamePlay {
 					LOG->Critical("Failed to load replay file.");
 					return;		// ??
 				}
-				PlayerReplay *pRep = new PlayerReplay(0, playmode);
+				PlayerReplay *pRep = new PlayerReplay(0);
 				PLAYER[0] = pRep;
 				pRep->SetReplay(rep);
 			}
 			else {
-				PLAYER[0] = new Player(0, playmode);
+				PLAYER[0] = new Player(0);
 			}
 			// other side is pacemaker
-			PLAYER[1] = new PlayerAuto(1, playmode);	// MUST always single?
-			PLAYER[1]->Silent();
+			PLAYER[1] = new PlayerAuto(1);	// MUST always single?
+			PLAYER[1]->SetPlaySound(false);	// Pacemaker -> Silent!
 			((PlayerAuto*)PLAYER[1])->SetGoal(P.pacemaker);
+
+			// generate replay object
+			PLAYER[2] = new PlayerReplay(2);
 		}
 	}
 
@@ -121,76 +117,54 @@ namespace GamePlay {
 	}
 
 	void ScenePlay::Start() {
-		/*
-		 * initalize timers
-		 */
-		GameTimer::Tick();
-		OnSongLoadingEnd->Stop();
-		OnReady->Stop();
-		OnGameStart->Stop();
-		OnSongLoading->Stop();
-
-		/*
+		/* ---------------------------------------------------------------------------
+		 * Load settings from parameter
 		 * Load bms first
 		 * (bms resource is loaded with thread)
 		 * (load bms first to find out what key skin is proper)
 		 * COMMENT: if bms load failed, then continue with empty bms file.
+		 *          Make SongInfo structure, and load detailed information to there.
 		 */
-		/*
-		TODO
 		BmsHelper::SetLoadOption(
-			GamePlay::P.startmeasure,
-			GamePlay::P.endmeasure,
-			GamePlay::P.repeat
-		);*/
-		LoadBms(P.bmspath[P.round - 1]);
-		playmode = BmsResource::BMS.GetKey();
-		BmsHelper::SetRate(P.rate);
+			P.startmeasure,
+			P.endmeasure,
+			P.repeat,
+			P.bga
+		);
 
-		/*
-		 * if no bga, then remove Bga channel from Bms
-		 */
-		if (!P.bga) {
-			bms.GetChannelManager().DeleteChannel(BmsWord("01"));
-			SWITCH_OFF("IsBGA");
+		BmsBms bms;
+		RString bmspath = P.bmspath[P.round - 1];
+		if (BmsHelper::LoadBms(bmspath, bms)) {
+			LOG->Info("BMS loading finished successfully (%s)\n", bmspath.c_str());
 		}
+		else {
+			LOG->Critical("BMS loading failed (%s)\n", bmspath.c_str());
+		}
+		SONGPLAYER->SetRate(P.rate);
 
-		/*
-		 * Bms metadata apply (switches/values)
-		 * - if BACKBMP, then SET and load _backbmp
+
+
+		/* ---------------------------------------------------------------------------
+		 * Set Players after Bms is loaded
 		 */
-		std::string title = "";
-		std::string subtitle = "";
-		std::string genre = "";
-		std::string artist = "";
-		std::string subartist = "";
-		BmsResource::BMS.GetHeaders().Query("TITLE", title);
-		BmsResource::BMS.GetHeaders().Query("SUBTITLE", subtitle);
-		BmsResource::BMS.GetHeaders().Query("ARTIST", artist);
-		BmsResource::BMS.GetHeaders().Query("SUBARTIST", subartist);
-		BmsResource::BMS.GetHeaders().Query("GENRE", genre);
-		std::string maintitle = title;
-		if (subtitle.size())
-			maintitle = maintitle + " [" + subtitle + "]";
 
-		STRPOOL->Set("MainTitle", maintitle);
-		STRPOOL->Set("Title", title);
-		STRPOOL->Set("Subtitle", subtitle);
-		STRPOOL->Set("Genre", genre);
-		STRPOOL->Set("Artist", artist);
-		STRPOOL->Set("SubArtist", subartist);
+		/* if round 1, then create(reset) player object */
+		if (P.round == 1)
+			InitalizePlayer();
 
 		//
-		// TODO: load backbmp
+		// bms note should be created, 
+		// when creating note data, cautions:
+		// - MUST Bms file is loaded
+		// - ONLY rseed is argument. op is setted in player information.
+		// - each player has its own note data.
 		//
-		SWITCH_OFF("IsBACKBMP");
+		if (PLAYER[0]) PLAYER[0]->InitalizeNote(&bms);
+		if (PLAYER[1]) PLAYER[1]->InitalizeNote(&bms);	// COMMENT: player 2 may use different bms file if is battle mode ...
+		if (PLAYER[2]) PLAYER[2]->InitalizeNote(&bms);
 
-		/*
-		 * before create play object,
-		 * load previouse play record
-		 * (also creates mybest player)
-		 */
-		if (PLAYER[2]) SAFE_DELETE(PLAYER[2]);	// remove previous existing mybest object
+
+		// load player record
 		if (PlayerRecordHelper::LoadPlayerRecord(
 			record, PLAYERINFO[0].name, P.bmshash[P.round - 1]
 			)) {
@@ -203,8 +177,8 @@ namespace GamePlay {
 			//
 			// create mybest object
 			//
-			PLAYER[1] = new PlayerAuto(1, playmode);	// MUST always single?
-			PLAYER[1]->Silent();
+			PLAYER[1] = new PlayerAuto(1);	// MUST always single?
+			PLAYER[1]->SetPlaySound(false);
 			((PlayerAuto*)PLAYER[1])->SetGoal(record.score.CalculateRate());
 
 			//
@@ -215,36 +189,65 @@ namespace GamePlay {
 			if (PLAYER[1]) PLAYER[1]->InitalizeGauge();
 		}
 
-		/*
-		 * if round 1, then create(reset) player object
+
+
+		/* ---------------------------------------------------------------------------
+		 * Set rendervalue/switches before skin is loaded
 		 */
-		if (P.round == 1)
-			InitalizePlayer();
+		GameTimer::Tick();
+		OnSongLoadingEnd->Stop();
+		OnReady->Stop();
+		OnGameStart->Stop();
+		OnSongLoading->Stop();
 
-		//
-		// bms note should be created, 
-		// when creating note data, cautions:
-		// - MUST Bms file is loaded
-		// - ONLY rseed is argument. op is setted in player information.
-		// - each player has its own note data.
-		//
-		if (PLAYER[0]) {
-			PLAYER[0]->InitalizeNote();
-			PLAYER[0]->InitalizeScore();
+		SongInfo songinfo;
+		BmsHelper::GetBmsMetadata(bms, songinfo);
+
+		SONGVALUE.sMainTitle->assign(songinfo.sMainTitle);
+		SONGVALUE.sTitle->assign(songinfo.sTitle);
+		SONGVALUE.sSubTitle->assign(songinfo.sSubTitle);
+		SONGVALUE.sGenre->assign(songinfo.sGenre);
+		SONGVALUE.sArtist->assign(songinfo.sArtist);
+		SONGVALUE.sSubArtist->assign(songinfo.sSubArtist);
+
+		SWITCH_OFF("OnDiffBeginner");
+		SWITCH_OFF("OnDiffNormal");
+		SWITCH_OFF("OnDiffHyper");
+		SWITCH_OFF("OnDiffAnother");
+		SWITCH_OFF("OnDiffInsane");
+		switch (songinfo.iDifficulty) {
+		case 0:
+			SWITCH_ON("OnDiffNone");
+			break;
+		case 1:
+			SWITCH_ON("OnDiffBeginner");
+			break;
+		case 2:
+			SWITCH_ON("OnDiffNormal");
+			break;
+		case 3:
+			SWITCH_ON("OnDiffHyper");
+			break;
+		case 4:
+			SWITCH_ON("OnDiffAnother");
+			break;
+		case 5:
+		default:
+			SWITCH_ON("OnDiffInsane");
+			break;
 		}
-		if (PLAYER[1]) {
-			PLAYER[1]->InitalizeNote();
-			PLAYER[1]->InitalizeScore();
+		INTPOOL->Set("PlayLevel", songinfo.iLevel);
+
+		if (songinfo.sBackBmp.size()) {
+			// TODO: load backbmp
+			SWITCH_ON("IsBACKBMP");
+		}
+		else {
+			SWITCH_OFF("IsBACKBMP");
 		}
 
-		//
-		// gameplay setting
-		// depends on :
-		// - Game global setting
-		// - PLAYER1
-		// - BMS
-		// these elements should prepared.
-		//
+
+
 		SWITCH_OFF("IsGhostOff");
 		SWITCH_OFF("IsGhostA");
 		SWITCH_OFF("IsGhostB");
@@ -285,45 +288,34 @@ namespace GamePlay {
 		case PACEMAKERTYPE::PACE0:
 			break;
 		}
-		// TODO
-		SWITCH_OFF("OnDiffBeginner");
-		SWITCH_OFF("OnDiffNormal");
-		SWITCH_OFF("OnDiffHyper");
-		SWITCH_ON("OnDiffAnother");
-		SWITCH_OFF("OnDiffInsane");
 		SWITCH_ON("IsScoreGraph");
 		SWITCH_OFF("IsAutoPlay");
 		SWITCH_ON("IsBGA");
 		SWITCH_ON("IsExtraMode");
 		DOUBLEPOOL->Set("TargetExScore", 0.5);
 		DOUBLEPOOL->Set("TargetExScore", 0.5);
-		INTPOOL->Set("PlayLevel", 12);	// TODO
 		INTPOOL->Set("MyBest", 12);		// TODO
 
-		/*
+
+
+		/* ---------------------------------------------------------------------------
 		 * Load skin
+		 * - from here, something will show up in the screen.
 		 */
 		RString PlayskinPath = "";
 		if (playmode < 10)
 			PlayskinPath = SETTING.skin_play_7key;
 		else
 			PlayskinPath = SETTING.skin_play_14key;
-		LoadSkin(PlayskinPath);
+		if (!theme.Load(PlayskinPath))
+			LOG->Critical("Failed to load play skin: %s", PlayskinPath.c_str());
 
-		/*
+
+
+		/* ---------------------------------------------------------------------------
 		 * Load bms resource
 		 */
-#if _DEBUG
-		BmsHelper::LoadBmsResource();
-#else
-		BmsHelper::LoadBmsResourceOnThread();
-#endif
-
-		/*
-		 * must call at the end of the scene preparation
-		 */
-		OnSongLoading->Start();
-
+		BmsHelper::LoadBmsOnThread(bms);
 	}
 
 	void ScenePlay::Update() {
@@ -336,15 +328,17 @@ namespace GamePlay {
 			OnSongLoadingEnd->Stop();
 		// OnClose is called when all player is dead
 		bool close = true;
-		if (close && PLAYER[0] && !PLAYER[0]->IsSilent()) close = close && PLAYER[0]->IsDead();
-		if (close && PLAYER[1] && !PLAYER[1]->IsSilent()) close = close && PLAYER[1]->IsDead();
+		if (close && PLAYER[0] && PLAYER[0]->GetPlayerType() == PLAYERTYPE::HUMAN)
+			close = close && PLAYER[0]->IsDead();
+		if (close && PLAYER[1] && PLAYER[1]->GetPlayerType() == PLAYERTYPE::HUMAN)
+			close = close && PLAYER[1]->IsDead();
 		if (OnClose->Trigger(close)) {
 			// stop all sound
 			SONGPLAYER->StopAllSound();
 		}
 		// OnFadeout is called when endtime is over
 		// COMMENT: EndTime == lastnote + 2 sec.
-		OnFadeOut->Trigger(BmsHelper::GetEndTime() + 2000 < OnGameStart->GetTick());
+		OnFadeOut->Trigger(SONGPLAYER->GetEndTime() + 2000 < OnGameStart->GetTick());
 		// If OnClose/OnFadeout has enough time, then go to next scene
 		if (OnClose->GetTick() > 3000 || OnFadeOut->GetTick() > 3000) {
 			GameResult::P.roundcnt = P.courseplay;

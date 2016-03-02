@@ -46,6 +46,7 @@ protected:
 	bool					dieonnohealth;		// should I die when there's no health?
 	double					notehealth[6];		// health up/down per note (good, great, pgreat)
 	double					health;				// player's health
+	bool					m_PlaySound;		// decide to play key sound (if pacemaker, then make this false)
 
 	// note/time information
 	uint32_t				m_BmsTime;
@@ -80,12 +81,14 @@ protected:
 	/* internal function */
 	void					PlaySound(BmsWord& value);
 public:
-	Player(int playside = 0, int playertype = PLAYERTYPE::NORMAL);
+	Player(int playside = 0, int playertype = PLAYERTYPE::HUMAN);
 	~Player();
 
 	void					SetKey(int keycount);			// Must set to play properly in DP
 	void					InitalizeNote(BmsBms* bms);		// create note data (must called after bms loaded)
 	void					InitalizeGauge();				// initalize gauge - not called in course mode stage.
+	void					SetPlaySound(bool v) { m_PlaySound = v; }
+	int						GetPlayerType() { return playertype; }
 
 	/* used for rendering notes */
 	BmsNoteManager*			GetNoteData() { return bmsnote; };

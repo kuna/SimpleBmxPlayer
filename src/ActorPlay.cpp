@@ -227,7 +227,12 @@ void ActorNote::Render() {
 	// only draw notes that is not judged yet
 	bool isln = false;
 	double lnprevpos;
-	for (auto it = p->GetNoteIter(laneidx); it != p->GetNoteEndIter(laneidx); ++it) {
+	BmsNoteManager* note = p->GetNoteData();
+	BmsNoteLane* lane = &(*note)[laneidx];
+	BmsNoteLane::Iterator iter_cur = lane->Begin(SONGPLAYER->GetCurrentBar());
+	BmsNoteLane::Iterator iter_begin = lane->Begin();
+	BmsNoteLane::Iterator iter_end = lane->End();
+	for (auto it = iter_cur; it != iter_end; ++it) {
 		double notepos = it->second.pos - pos;
 		notepos *= speed;
 		if (notepos < 0) notepos = 0;
@@ -255,10 +260,10 @@ void ActorNote::Render() {
 	}
 	// there might be longnote that isn't drawn (judge failed)
 	// in LR2, that also should be drawn, so scan it
-	BmsNoteLane::Iterator it_prev = p->GetNoteIter(laneidx);
-	if (it_prev == p->GetNoteBeginIter(laneidx)) return;
+	BmsNoteLane::Iterator it_prev = iter_cur;
+	if (it_prev == iter_begin) return;
 	isln = false;
-	for (--it_prev; it_prev != p->GetNoteBeginIter(laneidx); --it_prev) {
+	for (--it_prev; it_prev != iter_begin; --it_prev) {
 		double notepos = it_prev->second.pos - pos;
 		notepos *= speed;
 		// only break loop when out-of-screen

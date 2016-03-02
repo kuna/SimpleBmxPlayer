@@ -19,6 +19,7 @@ Player::Player(int playside, int playertype) {
 	// 
 	this->playconfig = &PLAYERINFO[playside].playconfig;
 	this->playertype = playertype;
+	this->m_PlaySound = true;
 
 	// initalize basic variables/timers
 	pv = &PLAYERVALUE[playside];
@@ -269,7 +270,7 @@ void Player::SetGauge(double v) {
 }
 
 void Player::PlaySound(BmsWord& value) {
-	if (!SONGVALUE.SongTime->IsStarted()) return;
+	if (!SONGVALUE.SongTime->IsStarted() || !m_PlaySound) return;
 	PLAYSOUND(value);
 }
 

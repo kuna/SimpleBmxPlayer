@@ -533,6 +533,13 @@ void Initalize_BmsValue() {
 	SONGVALUE.OnBgaLayer1 = SWITCH_GET("OnBgaLayer1");
 	SONGVALUE.OnBgaLayer2 = SWITCH_GET("OnBgaLayer2");
 	SONGVALUE.SongTime = SWITCH_GET("OnGameStart");
+
+	SONGVALUE.sMainTitle = STRPOOL->Get("MainTitle");
+	SONGVALUE.sTitle = STRPOOL->Get("Title");
+	SONGVALUE.sSubTitle = STRPOOL->Get("SubTitle");
+	SONGVALUE.sGenre = STRPOOL->Get("Genre");
+	SONGVALUE.sArtist = STRPOOL->Get("Artist");
+	SONGVALUE.sSubArtist = STRPOOL->Get("SubArtist");
 }
 
 void Initalize_P1_RenderValue() {

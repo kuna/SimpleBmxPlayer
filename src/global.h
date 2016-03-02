@@ -68,7 +68,8 @@ namespace GRADETYPE {
 }
 
 namespace PLAYERTYPE {
-	const int NORMAL = 0;
+	const int NONE = -1;
+	const int HUMAN = 0;
 	const int AUTO = 1;
 	const int REPLAY = 2;
 	const int NETWORK = 3;	// not implemented

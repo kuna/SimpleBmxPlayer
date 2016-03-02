@@ -282,6 +282,20 @@ typedef struct {
 	Switch*			OnBgaMain;
 	Switch*			OnBgaLayer1;
 	Switch*			OnBgaLayer2;
+
+	RString*		sMainTitle;
+	RString*		sTitle;
+	RString*		sSubTitle;
+	RString*		sGenre;
+	RString*		sArtist;
+	RString*		sSubArtist;
+	int*			iPlayLevel;
+	int*			iPlayDifficulty;
+
 } SongValue;
+
+typedef struct {
+	// TODO
+} SelectValue;
 
 extern SongValue SONGVALUE;
