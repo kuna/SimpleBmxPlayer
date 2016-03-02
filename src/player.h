@@ -1,5 +1,8 @@
 /*
- * @description processor for each player.
+ * Manages playing state of a player.
+ * Setup value: Bms object, speed.
+ * Input value: time, keypress, keyup.
+ *
  * player type: Normal(Basic) / CPU(Auto) / Replay
  * player contains: BGA status / Combo / Score Rate / Health / Note / Lain Lift / Speed
  */
@@ -8,12 +11,10 @@
 
 #include "bmsbel/bms_bms.h"
 #include "playrecord.h"
-#include "timer.h"
+#include "Pool.h"
 #include "global.h"
 #include "playerinfo.h"
 #include "gameplay.h"
-
-class SkinPlayObject;
 
 
 /*
@@ -24,93 +25,80 @@ class SkinPlayObject;
  */
 class Player {
 protected:
-	PlayerPlayConfig*	playconfig;
-	PlayerReplayRecord	replay_cur;
-	int					playside;
-	int					playmode;
-	int					playertype;
+	// player's basic information
+	PlayerPlayConfig*		playconfig;
+	PlayerRenderValue*		pv;					// general current player
+	PlayerRenderValue*		pv_dp;				// in case of DP
 
-	double				notespeed;			// current note speed
-	double				notefloat;			// current note float speed (note visible time; dropping time from lane, strictly.)
-	double				speed_mul;			// speed multiplicator (for MAX/MINBPM)
-	double				suddenheight;		// 0 ~ 1
-	double				liftheight;			// 0 ~ 1
+	// playing settings
+	int						playside;
+	int						playmode;			// used for DP keyinput supporting
+	int						playertype;
 
-	// some prefetched(pointer) timers/values
-	Timer*				pBmstimer;
-	PlayerRenderValue*	pv;					// general current player
-	PlayerRenderValue*	pv_dp;				// in case of DP
-	Timer*				pLanepress[20];
-	Timer*				pLaneup[20];
-	Timer*				pLanehold[20];
-	Timer*				pLanejudgeokay[20];
+	double					notespeed;			// current note speed
+	double					notefloat;			// current note float speed (note visible time; dropping time from lane, strictly.)
+	double					speed_mul;			// speed multiplicator (for MAX/MINBPM)
+	double					suddenheight;		// 0 ~ 1
+	double					liftheight;			// 0 ~ 1
 
-	// guage
-	double				playergauge;
-	int					playergaugetype;
-	bool				dieonnohealth;		// should I die when there's no health?
-	double				notehealth[6];		// health up/down per note (good, great, pgreat)
-
-	// current judge/bar/channel related information
-	double					health;						// player's health
-	int						*combo;						// combo (currently displaying) TODO
+	double					playergauge;
+	int						playergaugetype;
+	bool					dieonnohealth;		// should I die when there's no health?
+	double					notehealth[6];		// health up/down per note (good, great, pgreat)
+	double					health;				// player's health
 
 	// note/time information
+	uint32_t				m_BmsTime;
 	PlayerScore				score;
-	BmsNoteManager*			bmsnote;
-	BmsNoteLane::Iterator	iter_judge_[20];			// current judging iterator
-	BmsNoteLane::Iterator	iter_end_[20];				// 
-	BmsNoteLane::Iterator	iter_begin_[20];			// 
-	bool					islongnote_[20];			// currently longnote pressing?
-	bool					ispress_[20];				// currently pressing?
+	PlayerReplayRecord		replay_cur;
+	BmsNoteManager*			bmsnote;			// Don't store total bms object, only store note object
+	struct Lane {
+		int idx;
+		BmsNoteLane::Iterator iter_judge;
+		BmsNoteLane::Iterator iter_end;
+		BmsNoteLane::Iterator iter_begin;		// used when find pressing keysound (iter >= 0)
+		Switch* pLanePress;
+		Switch* pLaneHold;
+		Switch* pLaneUp;
+		Switch* pLaneOkay;
 
-	BmsNote*				GetCurrentNote(int lane) {
-		if (iter_judge_[lane] == iter_end_[lane]) return 0;
-		else return &iter_judge_[lane]->second;
+		bool IsPressing();
+		bool IsLongNote();
+		BmsNote* GetCurrentNote();
+		BmsNote* GetSoundNote();				// returns 0 if no soundable note
+		void Next();
+		bool IsEndOfNote();
 	};
+	Lane					m_Lane[20];
 
-	// judge
-	/** @brief judge timing offset (LR2's judge offset) */
+	/* check, make judge */
 	int						judgeoffset;
 	int						judgecalibration;
 	int						CheckJudgeByTiming(int delta);
-	/** @brief make judgement. silent = true will not set JUDGE timer. */
 	void					MakeJudge(int delta, int time, int channel, int fastslow = 0, bool silent = false);
-	/** @brief is there any more note to draw/judge? */
-	bool					IsNoteAvailable(int lane);
-	void					NextNote(int lane);
 	
 	/* internal function */
 	void					PlaySound(BmsWord& value);
 public:
-	void					InitalizeNote();			// create note data (must called after bms loaded)
-	void					InitalizeScore();
-	void					InitalizeGauge();
-
-	BmsNoteLane::Iterator	GetNoteIter(int lane) { return iter_judge_[lane]; };
-	BmsNoteLane::Iterator	GetNoteEndIter(int lane) { return iter_end_[lane]; };
-	BmsNoteLane::Iterator	GetNoteBeginIter(int lane) { return iter_begin_[lane]; };
-	BmsNoteManager*			GetNoteData() { return bmsnote; };
-	PlayerScore*			GetScoreData() { return &score; };
-
-	// etc
-	bool					issilent;		// only score, don't play sound / graph / timer.
-
-	/*
-	 * @description
-	 * playside: main player is always 0. 1 is available when BATTLE mode.
-	 *           if player is flipped, then you should enter value 1.
-	 * playmode: SINGLE or DOUBLE or BATTLE? (check PLAYTYPE)
-	 * playertype: NORMAL or AUTO or what? (check PLAYERTYPE)
-	 */
-	Player(int playside = 0, int playmode = PLAYTYPE::KEY7, 
-		int playertype = PLAYERTYPE::NORMAL);
+	Player(int playside = 0, int playertype = PLAYERTYPE::NORMAL);
 	~Player();
+
+	void					SetKey(int keycount);			// Must set to play properly in DP
+	void					InitalizeNote(BmsBms* bms);		// create note data (must called after bms loaded)
+	void					InitalizeGauge();				// initalize gauge - not called in course mode stage.
+
+	/* used for rendering notes */
+	BmsNoteManager*			GetNoteData() { return bmsnote; };
+	/* used for saving score */
+	PlayerScore*			GetScoreData() { return &score; };
+	/* used for saving replay */
+	PlayerReplayRecord*		GetRecordData() { return &replay_cur; }
+
 
 	/*
 	 * @brief 
 	 * Update late note/note position
-	 * Uses Global Game(BmsResource) Timer
+	 * Uses Global Game(BmsResource) Switch
 	 */
 	virtual void Update();
 	/* 
@@ -148,10 +136,6 @@ public:
 	/** @brief is player dead? */
 	bool IsDead();
 
-	/** @brief should play sound? (related to pacemaker) */
-	void Silent(bool silent = true);
-	bool IsSilent() { return issilent; };
-
 	/** @brief save play record & replay data */
 	void Save();
 };
@@ -159,29 +143,32 @@ public:
 /*
  * @description
  * Played by CPU
- * If this player activated, 'Autoplay' mark should be show up.
+ * Also available in network versus player.
  */
 class PlayerAuto : public Player {
 	double targetrate;
 
 public:
-	PlayerAuto(int playside = 0, int playmode = PLAYTYPE::KEY7);
+	PlayerAuto(int playside = 0);
 
 	virtual void Update();
 	virtual void PressKey(int channel);
 	virtual void UpKey(int channel);
 
 	void SetGoal(double rate);
+	void SetGauge(double gauge);
+	void SetAsDead();
+	void SetCombo(int combo);
+	void BreakCombo();
 };
 
 /*
  * @description
- * Played from Replay data.
- * If this player activated, `Replay` mark will show up.
+ * Play from Replay data.
  */
 class PlayerReplay : public Player {
 public:
-	PlayerReplay(int playside = 0, int playmode = PLAYTYPE::KEY7);
+	PlayerReplay(int playside = 0);
 
 	void SetReplay(const PlayerReplayRecord &rep);
 	virtual void Update();
@@ -211,5 +198,4 @@ namespace PlayHelper {
 
 // global-accessible
 // real object used during playing game
-extern PlayerRenderValue	PLAYERVALUE[4];
 extern Player*				PLAYER[4];

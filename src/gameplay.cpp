@@ -102,9 +102,6 @@ namespace GamePlay {
 
 	// sceneplay part
 	void ScenePlay::Initialize() {
-		// initalize skin tree
-		rtree = new SkinRenderTree(1280, 760);
-
 		// initalize global resources
 		//HANDLERPOOL->Add("OnGamePlaySound", OnBmsSound);
 		//HANDLERPOOL->Add("OnGamePlayBga", OnBmsBga);
@@ -121,9 +118,6 @@ namespace GamePlay {
 		// initalize player rendering values
 		// (don't initalize player object. initialize it when start scene.)
 		Initalize_commonValue();
-		Initalize_BmsValue();
-		Initalize_P1_RenderValue();
-		Initalize_P2_RenderValue();
 	}
 
 	void ScenePlay::Start() {
@@ -142,11 +136,13 @@ namespace GamePlay {
 		 * (load bms first to find out what key skin is proper)
 		 * COMMENT: if bms load failed, then continue with empty bms file.
 		 */
+		/*
+		TODO
 		BmsHelper::SetLoadOption(
 			GamePlay::P.startmeasure,
 			GamePlay::P.endmeasure,
 			GamePlay::P.repeat
-		);
+		);*/
 		LoadBms(P.bmspath[P.round - 1]);
 		playmode = BmsResource::BMS.GetKey();
 		BmsHelper::SetRate(P.rate);
@@ -155,7 +151,7 @@ namespace GamePlay {
 		 * if no bga, then remove Bga channel from Bms
 		 */
 		if (!P.bga) {
-			BmsResource::BMS.GetChannelManager().DeleteChannel(BmsWord("01"));
+			bms.GetChannelManager().DeleteChannel(BmsWord("01"));
 			SWITCH_OFF("IsBGA");
 		}
 

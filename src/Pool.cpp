@@ -121,26 +121,28 @@ void IntPool::Clear() { _intpool.clear(); }
 
 
 
+Switch::Switch(const RString& name, int state) : m_Switchname(name), Timer(state) {}
 
-bool HandlerPool::IsExists(const RString &key) {
-	return _timerpool.find(key) != _timerpool.end();
+void Switch::Start() {
+	// active handlers first, then timer.
+	HANDLERPOOL->CallHandler(m_Switchname);
+	Timer::Start();
 }
 
-Timer* HandlerPool::Stop(const RString &key) {
-	//if (!IsExists(key)) return;
-	_timerpool[key].Stop();
-	return &_timerpool[key];
+void Switch::Stop() {
+	// nothing special ...
+	Timer::Stop();
 }
 
-Timer* HandlerPool::Get(const RString &key) {
-	// don't make null string timer
-	if (!key.size())
-		return 0;
-	// if no timer exists, then create on as unknown State
-	if (!IsExists(key)) {
-		_timerpool.insert(std::pair<RString, Timer>(key, Timer(TIMERSTATUS::UNKNOWN)));
+// redeclaration for rewriting Timer::Start() function 
+bool Switch::Trigger(bool condition) {
+	if (!IsStarted() && condition) {
+		Start();
+		return true;
 	}
-	return &_timerpool[key];
+	else {
+		return false;
+	}
 }
 
 bool HandlerPool::IsExists(const RString &key) {
@@ -152,13 +154,32 @@ void HandlerPool::Register(Handler* h) {
 	_handlerpool.push_back(h);
 }
 
-Timer* HandlerPool::Reset(const RString &key) {
-	// active handlers first, then timer.
+void HandlerPool::CallHandler(const RString &key) {
 	Message msg;
 	msg.name = key;
 	for (auto it = _handlerpool.begin(); it != _handlerpool.end(); ++it)
 		(*it)->Receive(msg);
+}
+
+Switch* HandlerPool::Get(const RString &key) {
+	// don't make null string timer
+	if (!key.size())
+		return 0;
+	// if no timer exists, then create on as unknown State
+	if (!IsExists(key)) {
+		_timerpool.insert(std::pair<RString, Switch>(key, Switch(key)));
+	}
+	return &_timerpool[key];
+}
+
+Switch* HandlerPool::Start(const RString &key) {
 	_timerpool[key].Start();
+	return &_timerpool[key];
+}
+
+Switch* HandlerPool::Stop(const RString &key) {
+	//if (!IsExists(key)) return;
+	_timerpool[key].Stop();
 	return &_timerpool[key];
 }
 
@@ -511,6 +532,7 @@ void Initalize_BmsValue() {
 	SONGVALUE.OnBgaMain = SWITCH_GET("OnBgaMain");
 	SONGVALUE.OnBgaLayer1 = SWITCH_GET("OnBgaLayer1");
 	SONGVALUE.OnBgaLayer2 = SWITCH_GET("OnBgaLayer2");
+	SONGVALUE.SongTime = SWITCH_GET("OnGameStart");
 }
 
 void Initalize_P1_RenderValue() {

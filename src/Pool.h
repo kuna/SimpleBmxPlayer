@@ -21,29 +21,6 @@ using namespace std;
 
 
 
-// basic util
-
-struct Message {
-	RString name;
-};
-
-class Handler {
-public:
-	virtual void Receive(const Message& msg) = 0;
-};
-
-class HandlerAuto : public Handler {
-public:
-	HandlerAuto();
-	~HandlerAuto();
-	virtual void Receive(const Message& msg) = 0;
-};
-
-
-
-
-
-
 // pools
 
 class StringPool {
@@ -95,6 +72,19 @@ public:
 #endif
 
 /*
+ * Switch is an extended class from timer:
+ */
+class Switch: public Timer {
+protected:
+	RString m_Switchname;
+public:
+	Switch(const RString& name, int state = TIMERSTATUS::UNKNOWN);
+	virtual void Start();
+	virtual void Stop();
+	virtual bool Trigger(bool condition = true);
+};
+
+/*
  * When handler called, not only all registered classes are called
  * but also inner timer starts.
  * - If timer off, then only timer goes off (don't effect to timerpool)
@@ -104,7 +94,10 @@ public:
 class HandlerPool {
 private:
 	std::vector<Handler*> _handlerpool;
-	std::map<RString, Timer> _timerpool;
+	std::map<RString, Switch> _timerpool;
+
+	friend class Switch;
+	void CallHandler(const RString &name);
 public:
 	// basic element operation
 	void Clear();
@@ -113,12 +106,12 @@ public:
 	bool IsExists(const RString &key);
 	bool IsRegistered(Handler* h);
 	bool IsStarted(const RString& name);
-	Timer* Get(const RString &name);
 
 	// handler related
-	bool Trigger(const RString &name, bool condition = true);
-	Timer* Reset(const RString &name);
-	Timer* Stop(const RString &name);
+	Switch* Start(const RString &name);
+	Switch* Stop(const RString &name);
+
+	Switch* Get(const RString &name);
 };
 
 class TexturePool {
@@ -198,7 +191,7 @@ namespace PoolHelper {
  * I suggest to use macro in switch -
  * as internal structure can be changed in any case.
  */
-#define SWITCH_ON(s) (HANDLERPOOL->Reset(s))
+#define SWITCH_ON(s) (HANDLERPOOL->Start(s))
 #define SWITCH_OFF(s) (HANDLERPOOL->Stop(s))
 #define SWITCH_TRIGGER(s, cond) (HANDERPOOL->Trigger(s, cond))
 #define SWITCH_GET(s) (HANDLERPOOL->Get(s))
@@ -212,41 +205,41 @@ namespace PoolHelper {
  */
 
 typedef struct {
-	Timer*				pOnMiss;			// timer used when miss occured (DP)
-	Timer*				pOnCombo;
-	Timer*				pOnJudge[6];		// pf/gr/gd/bd/pr
-	Timer*				pOnSlow;
-	Timer*				pOnFast;
-	Timer*				pOnfullcombo;		// needless to say?
-	Timer*				pOnlastnote;		// when last note ends
-	Timer*				pOnGameover;		// game is over! (different from OnClose)
-	Timer*				pOnGaugeMax;		// guage max?
-	Timer*				pOnGaugeUp;
-	Timer*				pLanepress[10];
-	Timer*				pLanehold[10];
-	Timer*				pLaneup[10];
-	Timer*				pLanejudgeokay[10];
+	Switch*				pOnMiss;			// Switch used when miss occured (DP)
+	Switch*				pOnCombo;
+	Switch*				pOnJudge[6];		// pf/gr/gd/bd/pr
+	Switch*				pOnSlow;
+	Switch*				pOnFast;
+	Switch*				pOnfullcombo;		// needless to say?
+	Switch*				pOnlastnote;		// when last note ends
+	Switch*				pOnGameover;		// game is over! (different from OnClose)
+	Switch*				pOnGaugeMax;		// guage max?
+	Switch*				pOnGaugeUp;
+	Switch*				pLanepress[10];
+	Switch*				pLanehold[10];
+	Switch*				pLaneup[10];
+	Switch*				pLanejudgeokay[10];
 	int*				pNotePerfect;
 	int*				pNoteGreat;
 	int*				pNoteGood;
 	int*				pNoteBad;
 	int*				pNotePoor;
-	Timer*				pOnAAA;
-	Timer*				pOnAA;
-	Timer*				pOnA;
-	Timer*				pOnB;
-	Timer*				pOnC;
-	Timer*				pOnD;
-	Timer*				pOnE;
-	Timer*				pOnF;
-	Timer*				pOnReachAAA;
-	Timer*				pOnReachAA;
-	Timer*				pOnReachA;
-	Timer*				pOnReachB;
-	Timer*				pOnReachC;
-	Timer*				pOnReachD;
-	Timer*				pOnReachE;
-	Timer*				pOnReachF;
+	Switch*				pOnAAA;
+	Switch*				pOnAA;
+	Switch*				pOnA;
+	Switch*				pOnB;
+	Switch*				pOnC;
+	Switch*				pOnD;
+	Switch*				pOnE;
+	Switch*				pOnF;
+	Switch*				pOnReachAAA;
+	Switch*				pOnReachAA;
+	Switch*				pOnReachA;
+	Switch*				pOnReachB;
+	Switch*				pOnReachC;
+	Switch*				pOnReachD;
+	Switch*				pOnReachE;
+	Switch*				pOnReachF;
 	double*				pExscore_d;
 	double*				pHighscore_d;
 	int*				pScore;
@@ -274,8 +267,8 @@ extern PlayerRenderValue PLAYERVALUE[4];
 
 typedef struct {
 	double*			songloadprogress;
-	Timer*			OnSongLoading;
-	Timer*			OnSongLoadingEnd;
+	Switch*			OnSongLoading;
+	Switch*			OnSongLoadingEnd;
 
 	double*			PlayProgress;
 	int*			PlayBPM;
@@ -284,11 +277,11 @@ typedef struct {
 	int*			PlayRemainMin;
 	int*			PlayRemainSec;
 
-	Timer*			SongTime;
-	Timer*			OnBeat;
-	Timer*			OnBgaMain;
-	Timer*			OnBgaLayer1;
-	Timer*			OnBgaLayer2;
+	Switch*			SongTime;
+	Switch*			OnBeat;
+	Switch*			OnBgaMain;
+	Switch*			OnBgaLayer1;
+	Switch*			OnBgaLayer2;
 } SongValue;
 
 extern SongValue SONGVALUE;

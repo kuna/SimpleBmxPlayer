@@ -1,6 +1,6 @@
 #include "ActorPlay.h"
 #include "logger.h"
-#include "bmsresource.h"
+#include "songplayer.h"
 #include "player.h"
 
 ActorJudge::ActorJudge()
@@ -222,7 +222,7 @@ void ActorNote::Render() {
 	if (!p) return;			// player object should exist
 
 	double speed = p->GetSpeedMul();
-	double pos = BmsHelper::GetCurrentPos();	// current scroll pos
+	double pos = SONGPLAYER->GetCurrentPos();	// current scroll pos
 	// basic note drawing
 	// only draw notes that is not judged yet
 	bool isln = false;
@@ -335,17 +335,17 @@ void ActorBeatLine::RenderLine(double pos) {
 void ActorBeatLine::Render() {
 	if (!p) return;
 	// render barrrrrrrrrrs
-	using namespace BmsResource;
+	BmsBms* bms = SONGPLAYER->GetBmsObject();
 	double speed = p->GetSpeedMul();
-	double pos = BmsHelper::GetCurrentPos();
-	measureindex m = BMS.GetBarManager().GetMeasureByBarNumber(BmsHelper::GetCurrentBar());
-	barindex bar = BMS.GetBarManager().GetBarNumberByMeasure(m);
+	double pos = SONGPLAYER->GetCurrentPos();
+	measureindex m = bms->GetBarManager().GetMeasureByBar(SONGPLAYER->GetCurrentBar());
+	barindex bar = bms->GetBarManager().GetBarNumberByMeasure(m);
 	for (; m < BmsConst::BAR_MAX_COUNT; m++) {
-		double measurepos = BMS.GetBarManager().GetPosByBar(bar) - pos;
+		double measurepos = bms->GetBarManager().GetPosByBar(bar) - pos;
 		measurepos *= speed;
 		if (measurepos > 1) break;
 		RenderLine(measurepos);
-		bar += BMS.GetBarManager()[m];
+		bar += bms->GetBarManager()[m];
 	}
 }
 
@@ -404,11 +404,11 @@ void ActorBga::Render() {
 	 * but one thing should be taken care of - 
 	 * Miss timer is different from player.
 	 */
-	RenderBGA(BmsHelper::GetMainBGA(), false);
-	RenderBGA(BmsHelper::GetLayer1BGA());
-	RenderBGA(BmsHelper::GetLayer2BGA());
+	RenderBGA(SONGPLAYER->GetMainBGA(), false);
+	RenderBGA(SONGPLAYER->GetLayer1BGA());
+	RenderBGA(SONGPLAYER->GetLayer2BGA());
 	if (miss->IsStarted() && miss->GetTick() < 1000)
-		RenderBGA(BmsHelper::GetMissBGA(), false);
+		RenderBGA(SONGPLAYER->GetMissBGA(), false);
 }
 #pragma endregion BGAOBJECT
 

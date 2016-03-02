@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SDL/SDL_timer.h"
+#include "global.h"
 
 namespace TIMERSTATUS {
 	const int STOP = 0;
@@ -29,16 +30,13 @@ public:
 	bool IsUnknown();
 	bool IsStarted();
 	Uint32 GetTick();
-	void Start();
 	void Pause();
 	void UnPause();
-	void Stop();
 
+	virtual void Start();
+	virtual void Stop();
 	/** @brief return true when (!IsStarted() && condition). Doesn't effect if timer is already started. */
-	bool Trigger(bool condition = true);
-	bool OffTrigger(bool condition = true);
-	/** @brief toggle timer. */
-	void Toggle();
+	virtual bool Trigger(bool condition = true);
 };
 
 /*
@@ -48,3 +46,26 @@ namespace GameTimer {
 	extern Uint32 globalTick;
 	void Tick();
 }
+
+
+
+
+
+
+// handlers
+
+struct Message {
+	RString name;
+};
+
+class Handler {
+public:
+	virtual void Receive(const Message& msg) = 0;
+};
+
+class HandlerAuto : public Handler {
+public:
+	HandlerAuto();
+	~HandlerAuto();
+	virtual void Receive(const Message& msg) = 0;
+};

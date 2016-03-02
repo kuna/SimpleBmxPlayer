@@ -152,7 +152,7 @@ public:
 	virtual void Clear();
 	virtual void SetFromXml(const XMLElement *e);
 	virtual void SetParent(Actor* pActor);
-	Actor* GetParent() { return m_pParent };
+	Actor* GetParent() { return m_pParent; };
 
 	/* @brief must call before update object or do something */
 	virtual void Update();

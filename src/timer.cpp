@@ -122,13 +122,3 @@ bool Timer::Trigger(bool condition) {
 		return false;
 	}
 }
-
-bool Timer::OffTrigger(bool condition) {
-	if (IsStarted() && condition) {
-		Stop();
-		return true;
-	}
-	else {
-		return false;
-	}
-}

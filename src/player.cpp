@@ -1,25 +1,24 @@
 #include "player.h"
 #include "global.h"
-#include "bmsresource.h"
+#include "SongPlayer.h"
 #include "Pool.h"
 #include "util.h"
 #include <time.h>
 
 // global
 Player*					PLAYER[4];			// player object
-PlayerRenderValue		PLAYERVALUE[4];		// player variables for play
 
 // macro
-#define PLAYSOUND(k)	BmsResource::SOUND.Play(k)
+#define PLAYSOUND(k)	SONGPLAYER->PlayKeySound(k)
 
 // ------- Player ----------------------------------------
 
-Player::Player(int playside, int playmode, int playertype) {
+Player::Player(int playside, int playertype) {
+	//
+	// basic player object setting
+	// 
 	this->playconfig = &PLAYERINFO[playside].playconfig;
-	this->playside = playside;
-	this->playmode = playmode;
 	this->playertype = playertype;
-	this->issilent = false;
 
 	// initalize basic variables/timers
 	pv = &PLAYERVALUE[playside];
@@ -28,47 +27,33 @@ Player::Player(int playside, int playmode, int playertype) {
 	else pv_dp = 0;
 
 	for (int i = 0; i < 10; i++) {
-		pLanepress[i] = pv->pLanepress[i];
-		pLaneup[i] = pv->pLaneup[i];
-		pLanehold[i] = pv->pLanehold[i];
-		pLanejudgeokay[i] = pv->pLanejudgeokay[i];
+		m_Lane[i].pLanePress = pv->pLanepress[i];
+		m_Lane[i].pLaneUp = pv->pLaneup[i];
+		m_Lane[i].pLaneHold = pv->pLanehold[i];
+		m_Lane[i].pLaneOkay = pv->pLanejudgeokay[i];
 		if (pv_dp) {
-			pLanepress[i + 10] = pv_dp->pLanepress[i];
-			pLaneup[i + 10] = pv_dp->pLaneup[i];
-			pLanehold[i + 10] = pv_dp->pLanehold[i];
-			pLanejudgeokay[i + 10] = pv_dp->pLanejudgeokay[i];
+			m_Lane[i + 10].pLanePress = pv_dp->pLanepress[i];
+			m_Lane[i + 10].pLaneUp = pv_dp->pLaneup[i];
+			m_Lane[i + 10].pLaneHold = pv_dp->pLanehold[i];
+			m_Lane[i + 10].pLaneOkay = pv_dp->pLanejudgeokay[i];
 		}
 		else {
-			pLanehold[i + 10] = 0;
+			m_Lane[i + 10].pLaneHold = 0;
 		}
 	}
 	judgeoffset = playconfig->judgeoffset;
 	judgecalibration = playconfig->judgecalibration;
-	pBmstimer = SWITCH_GET("OnGameStart");
-	memset(ispress_, 0, sizeof(ispress_));
-	memset(islongnote_, 0, sizeof(islongnote_));
 
+	//
 	// initalize note iterator (dummy)
-	// also score / gauge.
-	bmsnote = new BmsNoteManager();
-	Reset(0);
+	//
+	InitalizeNote(0);
 	InitalizeGauge();
-	InitalizeScore();
 
-	// initialize play speed
-	speed_mul = 1;
-	switch (playconfig->speedtype) {
-	case SPEEDTYPE::MAXBPM:
-		speed_mul = 120.0 / BmsResource::BMS.GetTimeManager().GetMaxBPM();
-		break;
-	case SPEEDTYPE::MINBPM:
-		speed_mul = 120.0 / BmsResource::BMS.GetTimeManager().GetMinBPM();
-		break;
-	case SPEEDTYPE::MEDIUM:
-		speed_mul = 120.0 / BmsResource::BMS.GetTimeManager().GetMediumBPM();
-		break;
-	}
-	// set sudden/lift first (floatspeed is relative to them)
+	//
+	// set basic play option (sudden/lift)
+	// - sudden/lift first (floatspeed is relative to them)
+	//
 	SetSudden(playconfig->sudden);
 	SetLift(playconfig->lift);
 	if (playconfig->usefloatspeed) {
@@ -77,8 +62,6 @@ Player::Player(int playside, int playmode, int playertype) {
 	else {
 		SetSpeed(playconfig->speed);
 	}
-
-	// TODO: set OP switch... no, in main?
 }
 
 Player::~Player() {
@@ -86,18 +69,33 @@ Player::~Player() {
 	SAFE_DELETE(bmsnote);
 }
 
-void Player::InitalizeNote() {
+void Player::Reset(barindex bar) {
+	// set iterator
+	for (int i = 0; i < 20; i++) {
+		m_Lane[i].iter_begin = m_Lane[i].iter_judge = (*bmsnote)[i].Begin(bar);
+		m_Lane[i].iter_end = (*bmsnote)[i].End();
+	}
+}
+
+void Player::InitalizeNote(BmsBms* bms) {
 	//
 	// remove note data if previously existed
 	//
 	if (bmsnote)
 		SAFE_DELETE(bmsnote);
+	bmsnote = new BmsNoteManager();
 
 	//
-	// create note object
+	// if bms note exists, then `empty note data, default BPM`
+	// otherwise, generate new note data
 	//
-	bmsnote = new BmsNoteManager();
-	BmsResource::BMS.GetNoteData(*bmsnote);
+	if (!bms) {
+
+	}
+	else {
+
+	}
+	bms->GetNoteData(*bmsnote);
 	memset(&score, 0, sizeof(score));
 	score.totalnote = bmsnote->GetNoteCount();
 
@@ -106,7 +104,7 @@ void Player::InitalizeNote() {
 	// (IIDX style gauge TOTAL)
 	//
 	double total_iidx = bmsnote->GetTotalFromNoteCount();
-	double total = BmsResource::BMS.GetTotal(total_iidx);
+	double total = bms->GetTotal(total_iidx);
 	int notecnt = score.totalnote;
 	if (notecnt <= 0)
 		notecnt = 1;			// div by 0
@@ -203,10 +201,29 @@ void Player::InitalizeNote() {
 		break;
 	}
 
+	// initialize play speed
+	speed_mul = 1;
+	switch (playconfig->speedtype) {
+	case SPEEDTYPE::MAXBPM:
+		speed_mul = 120.0 / bms->GetTimeManager().GetMaxBPM();
+		break;
+	case SPEEDTYPE::MINBPM:
+		speed_mul = 120.0 / bms->GetTimeManager().GetMinBPM();
+		break;
+	case SPEEDTYPE::MEDIUM:
+		speed_mul = 120.0 / bms->GetTimeManager().GetMediumBPM();
+		break;
+	}
+
 	//
 	// reset iterator
 	//
 	Reset(0);
+
+	//
+	// clear score
+	//
+	score.Clear();
 }
 
 /*
@@ -232,14 +249,6 @@ void Player::InitalizeGauge() {
 	memset(notehealth, 0, sizeof(notehealth));
 }
 
-/*
- * MUST reset for every game
- */
-void Player::InitalizeScore() {
-	// clear score
-	score.Clear();
-}
-
 void Player::SetGauge(double v) {
 	if (v >= 1) {
 		pv->pOnGaugeMax->Trigger();
@@ -259,13 +268,9 @@ void Player::SetGauge(double v) {
 	*pv->pGauge = newgauge_int;
 }
 
-void Player::Silent(bool b) {
-	issilent = b;
-}
-
 void Player::PlaySound(BmsWord& value) {
-	if (!pBmstimer->IsStarted()) return;
-	if (!issilent) PLAYSOUND(value);
+	if (!SONGVALUE.SongTime->IsStarted()) return;
+	PLAYSOUND(value);
 }
 
 
@@ -301,7 +306,7 @@ void Player::SetSpeed(double speed) {
 		= speed;
 	playconfig->floatspeed
 		= notefloat
-		= ConvertSpeedToFloat(speed, BmsHelper::GetCurrentBPM());
+		= ConvertSpeedToFloat(speed, SONGPLAYER->GetCurrentBpm());
 
 	/*
 	 * set the pointer values
@@ -314,7 +319,7 @@ void Player::SetSpeed(double speed) {
 void Player::DeltaSpeed(double speed) { SetSpeed(notespeed + speed); }
 
 void Player::SetFloatSpeed(double speed) {
-	double _s = ConvertFloatToSpeed(speed, BmsHelper::GetCurrentBPM());
+	double _s = ConvertFloatToSpeed(speed, SONGPLAYER->GetCurrentBpm());
 	playconfig->speed
 		= notespeed
 		= _s;
@@ -421,9 +426,8 @@ void Player::MakeJudge(int judgetype, int time, int channel, int fastslow, bool 
 	*pv->pNotePoor = score.score[1] + score.score[0];
 
 	//
-	// if currently slient mode, then don't process timers / values.
+	// TODO: cut this function
 	//
-	if (issilent) return;
 
 	/*
 	 * timer part
@@ -504,14 +508,14 @@ void Player::MakeJudge(int judgetype, int time, int channel, int fastslow, bool 
 	pv->pOnD->Trigger(scoregrade == GRADETYPE::GRADE_D);
 	pv->pOnE->Trigger(scoregrade == GRADETYPE::GRADE_E);
 	pv->pOnF->Trigger(scoregrade == GRADETYPE::GRADE_F);
-	pv->pOnAAA->OffTrigger(scoregrade != GRADETYPE::GRADE_AAA);
-	pv->pOnAA->OffTrigger(scoregrade != GRADETYPE::GRADE_AA);
-	pv->pOnA->OffTrigger(scoregrade != GRADETYPE::GRADE_A);
-	pv->pOnB->OffTrigger(scoregrade != GRADETYPE::GRADE_B);
-	pv->pOnC->OffTrigger(scoregrade != GRADETYPE::GRADE_C);
-	pv->pOnD->OffTrigger(scoregrade != GRADETYPE::GRADE_D);
-	pv->pOnE->OffTrigger(scoregrade != GRADETYPE::GRADE_E);
-	pv->pOnF->OffTrigger(scoregrade != GRADETYPE::GRADE_F);
+	if (scoregrade != GRADETYPE::GRADE_AAA) pv->pOnAAA->Stop();
+	if (scoregrade != GRADETYPE::GRADE_AA) pv->pOnAA->Stop();
+	if (scoregrade != GRADETYPE::GRADE_A) pv->pOnA->Stop();
+	if (scoregrade != GRADETYPE::GRADE_B) pv->pOnB->Stop();
+	if (scoregrade != GRADETYPE::GRADE_C) pv->pOnC->Stop();
+	if (scoregrade != GRADETYPE::GRADE_D) pv->pOnD->Stop();
+	if (scoregrade != GRADETYPE::GRADE_E) pv->pOnE->Stop();
+	if (scoregrade != GRADETYPE::GRADE_F) pv->pOnF->Stop();
 	// TODO pacemaker
 	// update gauge
 	SetGauge(playergauge + notehealth[judgetype]);
@@ -605,112 +609,132 @@ void Player::Save() {
  *------------------------------------------------------------------*/
 
 namespace {
+	// TODO: change this to class SongInfo
 	double GetTimeFromBar(barindex bar) {
-		return BmsResource::BMS.GetTimeManager().GetTimeFromBar(bar);
+		return SONGPLAYER->GetBmsObject()->GetTimeManager().GetTimeFromBar(bar);
 	}
 }
 
-void Player::Reset(barindex bar) {
-	//
-	// use this function ONLY for resetting player to play again
-	//
+bool Player::Lane::IsPressing() {
+	return (pLaneHold && pLanePress->IsStarted());
+}
 
-	// currently pressing longnote? reset.
-	memset(islongnote_, 0, sizeof(islongnote_));
-	// reset each of the note index
-	for (int i = 0; i < 20; i++) {
-		iter_judge_[i] = (*bmsnote)[i].Begin(bar);
-		iter_begin_[i] = (*bmsnote)[i].Begin();
-		iter_end_[i] = (*bmsnote)[i].End();
+bool Player::Lane::IsLongNote() {
+	return (pLaneHold && pLaneHold->IsStarted());
+}
+
+BmsNote* Player::Lane::GetCurrentNote() {
+	return &iter_judge->second;
+}
+
+BmsNote* Player::Lane::GetSoundNote() {
+	// COMMENT: if judge note is MINE, then it won't work properly.
+
+	if (iter_judge == iter_end) {
+		if (iter_judge == iter_begin)
+			return 0;
+		// if no more note exists(end of the game), find previous note to play
+		BmsNoteLane::Iterator iter_sound = iter_judge;
+		--iter_sound;
+		return &iter_sound->second;
 	}
+	return &iter_judge->second;
 }
 
-bool Player::IsNoteAvailable(int lane) {
-	return iter_judge_[lane] != iter_end_[lane];
+void Player::Lane::Next() {
+	if (IsEndOfNote()) return;
+	iter_judge++;
 }
 
-void Player::NextNote(int lane) {
-	// search for next judged note
-	if (IsNoteAvailable(lane)) ++iter_judge_[lane];
+bool Player::Lane::IsEndOfNote() {
+	return (!pLaneHold || iter_judge == iter_end);
 }
 
 void Player::UpdateBasic() {
+	// get time
+	Uint32 m_BmsTime = SONGVALUE.SongTime->GetTick();
+
 	// basic timer/value update
-	pv->pOnCombo->OffTrigger(pv->pOnCombo->GetTick() > 500);
-	pv->pOnMiss->OffTrigger(pv->pOnMiss->GetTick() > 1000);
-	pv->pOnFast->OffTrigger(pv->pOnFast->GetTick() > 500);
-	pv->pOnSlow->OffTrigger(pv->pOnSlow->GetTick() > 500);
+	if (pv->pOnCombo->GetTick() > 500) pv->pOnCombo->Stop();
+	if (pv->pOnMiss->GetTick() > 1000) pv->pOnMiss->Stop();
+	if (pv->pOnFast->GetTick() > 500) pv->pOnFast->Stop();
+	if (pv->pOnSlow->GetTick() > 500) pv->pOnSlow->Stop();
 	if (pv_dp) {
-		pv_dp->pOnCombo->OffTrigger(pv_dp->pOnCombo->GetTick() > 500);
-		pv_dp->pOnMiss->OffTrigger(pv_dp->pOnMiss->GetTick() > 1000);
-		pv_dp->pOnFast->OffTrigger(pv_dp->pOnFast->GetTick() > 500);
-		pv_dp->pOnSlow->OffTrigger(pv_dp->pOnSlow->GetTick() > 500);
+		if (pv_dp->pOnCombo->GetTick() > 500) pv_dp->pOnCombo->Stop();
+		if (pv_dp->pOnMiss->GetTick() > 1000) pv_dp->pOnMiss->Stop();
+		if (pv_dp->pOnFast->GetTick() > 500) pv_dp->pOnFast->Stop();
+		if (pv_dp->pOnSlow->GetTick() > 500) pv_dp->pOnSlow->Stop();
+	}
+
+	for (int i = 0; i < 20; i++) {
+		Lane* lane = &m_Lane[i];
+		BmsNote* note;
+
+		/*
+		* If (next note exists)
+		* - skip all none / near-time hidden note / mine note
+		*/
+		while (!lane->IsEndOfNote()) {
+			// skip hidden note
+			note = lane->GetCurrentNote();
+			if ((note->type == BmsNote::NOTE_HIDDEN && note->time - BmsJudgeTiming::POOR < m_BmsTime) ||
+				(note->type == BmsNote::NOTE_MINE && note->time <= m_BmsTime) ||
+				note->type == BmsNote::NOTE_NONE)
+			{
+				lane->Next();
+			}
+			else break;
+		}
 	}
 }
 
+/*
+ * must call after song is updated
+ */
 void Player::Update() {
-	UpdateBasic();
-
 	// if gameover then don't update
 	if (IsDead()) return;
 
-	// get time
-	Uint32 currenttime = pBmstimer->GetTick() + judgeoffset;
+	// do basic updates (MUST be called)
+	UpdateBasic();
 
 	// check for note judgement
 	// COMMENT: `int i` means lane index, NOT channel number.
 	for (int i = 0; i < 20; i++) {
-		/*
-		 * If (next note exists)
-		 */
-		while (IsNoteAvailable(i)) {
-			// skip hidden note
-			BmsNote& note = iter_judge_[i]->second;
-			if ((note.type == BmsNote::NOTE_HIDDEN && 
-				note.time - BmsJudgeTiming::POOR < currenttime) ||
-				note.type == BmsNote::NOTE_NONE)
-				NextNote(i);
-			else break;
-		}
+		Lane* lane = &m_Lane[i];
+		BmsNote* note;
+
 		/*
 		 * If (next note exists && note is at the bottom; hit timing)
+		 * - judge if note is too late
 		 */
-		while (
-			IsNoteAvailable(i) && 
-			iter_judge_[i]->second.time <= currenttime
-			) {
-			BmsNote& note = iter_judge_[i]->second;
-			// if note is mine, then lets ignore as fast as we can
-			if (note.type == BmsNote::NOTE_MINE) {
-				NextNote(i);
-			}
+		while (!lane->IsEndOfNote() && (note = lane->GetCurrentNote())->time <= m_BmsTime) {
 			// if note is press(HELL CHARGE), judge from pressing status
-			else if (note.type == BmsNote::NOTE_PRESS) {
-				MakeJudge(ispress_[i] ? JUDGETYPE::JUDGE_PGREAT : JUDGETYPE::JUDGE_POOR,
-					currenttime, i);
-				NextNote(i);
+			if (note->type == BmsNote::NOTE_PRESS) {
+				MakeJudge(lane->IsPressing() ? JUDGETYPE::JUDGE_PGREAT : JUDGETYPE::JUDGE_POOR,
+					m_BmsTime, i);
+				lane->Next();
 			}
 			// if not autoplay, check timing for poor
-			else if (CheckJudgeByTiming(note.time - currenttime)
+			else if (CheckJudgeByTiming(note->time - m_BmsTime)
 				== JUDGETYPE::JUDGE_POOR) {
 				//
 				// if late, POOR judgement is always occured
 				// but we need to take care of in case of LongNote
 				//
 				// if LNSTART late, get POOR for LNEND (2 miss)
-				if (note.type == BmsNote::NOTE_LNSTART) {
-					MakeJudge(JUDGETYPE::JUDGE_POOR, currenttime, i);	// LNEND's poor
+				if (note->type == BmsNote::NOTE_LNSTART) {
+					MakeJudge(JUDGETYPE::JUDGE_POOR, m_BmsTime, i);	// LNEND's poor
 				}
 				// if LNEND late, reset longnote pressing
-				else if (note.type == BmsNote::NOTE_LNEND && islongnote_[i]) {
-					islongnote_[i] = false;
-					pLanehold[i]->Stop();
+				else if (note->type == BmsNote::NOTE_LNEND && lane->IsLongNote()) {
+					lane->pLaneHold->Stop();
 				}
 				// make POOR judge
 				// (CLAIM) if hidden note isn't ignored by NextAvailableNote(), 
 				//         you have to hit it or you'll get miss.
-				MakeJudge(JUDGETYPE::JUDGE_POOR, currenttime, i);
-				NextNote(i);
+				MakeJudge(JUDGETYPE::JUDGE_POOR, m_BmsTime, i);
+				lane->Next();
 			}
 			else {
 				// Don't skip note; it's not timing yet. wait next turn.
@@ -721,133 +745,121 @@ void Player::Update() {
 }
 
 // key input
-void Player::UpKey(int lane) {
+void Player::UpKey(int laneidx) {
 	// if gameover then ignore
 	if (IsDead()) return;
 	// if not DP then make lane single
-	if (playmode < 10) lane = lane % 10;
+	if (playmode < 10) laneidx = laneidx % 10;
 
 	// record to replay
-	Uint32 currenttime = pBmstimer->GetTick() + judgeoffset;
-	replay_cur.AddPress(currenttime, lane, 0);
+	Uint32 currenttime = SONGVALUE.SongTime->GetTick() + judgeoffset;
+	replay_cur.AddPress(currenttime, laneidx, 0);
 
 	// if scratch, then set timer
-	// (TODO)
+	// (TODO) - maybe we have to accept reverse direction.
 
 	// convert SCDOWN to SCUP
 	// (comment: in popn music, we don't do it.)
-	if (lane == PlayerKeyIndex::P1_BUTTONSCDOWN) lane = PlayerKeyIndex::P1_BUTTONSCUP;
-	if (lane == PlayerKeyIndex::P2_BUTTONSCDOWN) lane = PlayerKeyIndex::P2_BUTTONSCUP;
+	if (laneidx == PlayerKeyIndex::P1_BUTTONSCDOWN) laneidx = PlayerKeyIndex::P1_BUTTONSCUP;
+	if (laneidx == PlayerKeyIndex::P2_BUTTONSCDOWN) laneidx = PlayerKeyIndex::P2_BUTTONSCUP;
 
 	// generally upkey do nothing
 	// but works only if you pressing longnote
-	if (islongnote_[lane] && GetCurrentNote(lane)->type == BmsNote::NOTE_LNEND) {
+	Lane *lane = &m_Lane[laneidx];
+	BmsNote* note;
+	if (lane->IsLongNote() && (note = lane->GetCurrentNote())->type == BmsNote::NOTE_LNEND) {
 		// get judge
-		int delta = iter_judge_[lane]->second.time - currenttime;
+		int delta = note->time - currenttime;
 		int judge = CheckJudgeByTiming(delta);
 		if (judge == JUDGETYPE::JUDGE_EARLY || judge == JUDGETYPE::JUDGE_NPOOR)
 			judge = JUDGETYPE::JUDGE_POOR;
-		MakeJudge(judge, currenttime, lane, delta > 0 ? 1 : 2);
+		MakeJudge(judge, currenttime, laneidx, delta > 0 ? 1 : 2);
 		// you're not longnote anymore~
-		pLanehold[lane]->Stop();
-		islongnote_[lane] = false;
+		lane->pLaneHold->Stop();
 		// focus judging note to next one
-		NextNote(lane);
+		lane->Next();
 	}
 
-
 	// trigger time & set value
-	pLanepress[lane]->Stop();
-	pLaneup[lane]->Start();
-	ispress_[lane] = false;
+	lane->pLanePress->Stop();
+	lane->pLaneUp->Start();
 }
 
-void Player::PressKey(int lane) {
+void Player::PressKey(int laneidx) {
+	BmsNote *note;
+	Lane *lane;
+
 	// if gameover then ignore
 	if (IsDead()) return;
-	// if already pressed then ignore
-	if (ispress_[lane]) return;
 	// if not DP then make lane single
-	if (playmode < 10) lane = lane % 10;
+	if (playmode < 10) laneidx = laneidx % 10;
+	// if already pressed then ignore
+	if ((lane = &m_Lane[laneidx])->IsPressing()) return;
 
 	//
 	// record to replay
 	//
-	Uint32 currenttime = pBmstimer->GetTick() + judgeoffset;
-	replay_cur.AddPress(currenttime, lane, 1);
+	Uint32 currenttime = SONGVALUE.SongTime->GetTick() + judgeoffset;
+	replay_cur.AddPress(currenttime, laneidx, 1);
 
 	// if scratch, then set timer
 	// (TODO)
 
 	// convert SCDOWN to SCUP (do it before judge)
 	// (comment: in popn music, we don't do it.)
-	if (lane == PlayerKeyIndex::P1_BUTTONSCDOWN) lane = PlayerKeyIndex::P1_BUTTONSCUP;
-	if (lane == PlayerKeyIndex::P2_BUTTONSCDOWN) lane = PlayerKeyIndex::P2_BUTTONSCUP;
+	if (laneidx == PlayerKeyIndex::P1_BUTTONSCDOWN) laneidx = PlayerKeyIndex::P1_BUTTONSCUP;
+	if (laneidx == PlayerKeyIndex::P2_BUTTONSCDOWN) laneidx = PlayerKeyIndex::P2_BUTTONSCUP;
 
 	/*
 	 * judge process start
 	 */
 
 	// pressed!
-	ispress_[lane] = true;
-	pLanepress[lane]->Start();
-	pLaneup[lane]->Stop();
+	lane->pLanePress->Start();
+	lane->pLaneUp->Stop();
 
 	//
-	// cache current judge index first
+	// Play sound first
 	// because current key index will be changed after making judgement
 	//
-	BmsNoteLane::Iterator iter_sound_ = iter_judge_[lane];
+	BmsNote *soundnote = lane->GetSoundNote();
+	if (soundnote) PlaySound(soundnote->value);
 
 	//
 	// make judge
 	//
-	if (IsNoteAvailable(lane)) {
-		int delta = iter_judge_[lane]->second.time - currenttime;
+	if (!lane->IsEndOfNote()) {
+		note = lane->GetCurrentNote();
+		int delta = note->time - currenttime;
 		int fastslow = delta > 0 ? 1 : 2;
 		int judge = CheckJudgeByTiming(delta);
 		// only continue judging if judge isn't too fast (no judge)
 		if (judge != JUDGETYPE::JUDGE_EARLY) {
-			// if ÍöPOOR,
-			// then don't process note - just judge as NPOOR
+			// if ÍöPOOR, then don't go to next note
 			if (judge == JUDGETYPE::JUDGE_NPOOR) {
-				MakeJudge(judge, currenttime, lane, fastslow);
+				MakeJudge(judge, currenttime, laneidx, fastslow);
 			}
+			// if over poor, then process and go to next note
 			else {
-				if (GetCurrentNote(lane)->type == BmsNote::NOTE_LNSTART) {
+				if (note->type == BmsNote::NOTE_LNSTART) {
 					// set longnote status
-					MakeJudge(judge, currenttime, lane, fastslow, true);
-					pLanehold[lane]->Start();
-					islongnote_[lane] = true;
+					MakeJudge(judge, currenttime, laneidx, fastslow, true);
+					lane->pLaneHold->Start();
 				}
-				else if (GetCurrentNote(lane)->type == BmsNote::NOTE_MINE) {
+				else if (note->type == BmsNote::NOTE_MINE) {
 					// mine damage
-					if (GetCurrentNote(lane)->value == BmsWord::MAX)
+					if (note->value == BmsWord::MAX)
 						health = 0;
 					else
-						health -= GetCurrentNote(lane)->value.ToInteger();
+						health -= note->value.ToInteger();
 				}
-				else if (GetCurrentNote(lane)->type == BmsNote::NOTE_NORMAL) {
-					MakeJudge(judge, currenttime, lane, fastslow);
+				else if (note->type == BmsNote::NOTE_NORMAL) {
+					MakeJudge(judge, currenttime, laneidx, fastslow);
 				}
-
-				// only go for next note if judge is over poor
-				// (don't allow Íöpoor)
-				NextNote(lane);
+				lane->Next();
 			}
 		}
 	}
-
-	//
-	// play sound
-	// - if current lane has no note, then don't play
-	//
-	if (iter_sound_ == iter_end_[lane]) {
-		// if no more note exists(end of the game), find previous note to play
-		if (iter_sound_ == iter_begin_[lane]) return;
-		--iter_sound_;
-	}
-	PlaySound(iter_sound_->second.value);
 }
 
 bool Player::IsDead() {
@@ -861,35 +873,25 @@ bool Player::IsDead() {
 
 // ------ PlayerAuto -----------------------------------
 
-PlayerAuto::PlayerAuto(int playside, int playmode)
-	: Player(playside, playmode, PLAYERTYPE::AUTO) {
+PlayerAuto::PlayerAuto(int playside)
+	: Player(playside, PLAYERTYPE::AUTO) {
+	// target to 100%!
 	targetrate = 1;
 }
 
 void PlayerAuto::Update() {
-	// timer/value update
-	pv->pOnCombo->OffTrigger(pv->pOnCombo->GetTick() > 500);
-	pv->pOnMiss->OffTrigger(pv->pOnMiss->GetTick() > 1000);
-	if (pv_dp) {
-		pv_dp->pOnCombo->OffTrigger(pv_dp->pOnCombo->GetTick() > 500);
-		pv_dp->pOnMiss->OffTrigger(pv_dp->pOnMiss->GetTick() > 1000);
-	}
-
-	// get time
-	Uint32 currenttime = pBmstimer->GetTick();
-	double time_sec = currenttime / 1000.0;
-
-	// and recalculate note index/bgm index/position
-	barindex currentbar = BmsHelper::GetCurrentBar();
+	// update basic things
+	UpdateBasic();
 
 	// check for note judgement
 	for (int i = 0; i < 20; i++) {
+		Lane* lane = &m_Lane[i];
+		BmsNote* note;
+
 		/*
 		 * If (next note exists && note is at the bottom; hit timing)
 		 */
-		while (IsNoteAvailable(i) && iter_judge_[i]->first <= currentbar) {
-			BmsNote& note = iter_judge_[i]->second;
-
+		while (!lane->IsEndOfNote() && (note = lane->GetCurrentNote())->time <= m_BmsTime) {
 			/*
 			 * should decide what judge is proper for next
 			 */
@@ -900,50 +902,47 @@ void PlayerAuto::Update() {
 			else if (updateexscore >= 2) newjudge = JUDGETYPE::JUDGE_PGREAT;
 
 			// if note is mine, then lets ignore as fast as we can
-			if (note.type == BmsNote::NOTE_MINE) {
+			if (note->type == BmsNote::NOTE_MINE) {
 			}
 			// if note is press, just combo up
-			else if (note.type == BmsNote::NOTE_PRESS) {
-				MakeJudge(newjudge, currenttime, i);
+			else if (note->type == BmsNote::NOTE_PRESS) {
+				MakeJudge(newjudge, m_BmsTime, i);
 			}
 			else {
 				// Autoplay -> Automatically play
-				if (note.type == BmsNote::NOTE_LNSTART) {
-					PlaySound(note.value);
-					MakeJudge(newjudge, currenttime, i, true);
-					// we won't judge on LNSTART
-					islongnote_[i] = true;
-					pLanehold[i]->Start();
-					pLaneup[i]->Stop();
-					pLanepress[i]->Start();
+				if (note->type == BmsNote::NOTE_LNSTART) {
+					PlaySound(note->value);
+					MakeJudge(newjudge, m_BmsTime, i, true);	// we won't display judge on LNSTART
+					lane->pLaneHold->Start();
+					lane->pLanePress->Start();
+					lane->pLaneUp->Stop();
 				}
-				else if (note.type == BmsNote::NOTE_LNEND) {
+				else if (note->type == BmsNote::NOTE_LNEND) {
 					// TODO we won't play sound(turn off) on LNEND
-					MakeJudge(newjudge, currenttime, i);
-					islongnote_[i] = false;
-					pLanehold[i]->Stop();
+					MakeJudge(newjudge, m_BmsTime, i);
+					lane->pLaneHold->Stop();
 				}
-				else if (note.type == BmsNote::NOTE_NORMAL) {
-					PlaySound(note.value);
-					MakeJudge(newjudge, currenttime, i);
-					pLaneup[i]->Stop();
-					pLanepress[i]->Start();
+				else if (note->type == BmsNote::NOTE_NORMAL) {
+					PlaySound(note->value);
+					MakeJudge(newjudge, m_BmsTime, i);
+					lane->pLanePress->Start();
+					lane->pLaneUp->Stop();
 				}
 			}
 
 			// fetch next note
-			NextNote(i);
+			lane->Next();
 		}
 
 		/*
 		 * pressing lane is automatically up-ped
 		 * about after 50ms.
 		 */
-		if (!pLanehold[i]) continue;
-		if (pLanehold[i]->IsStarted())
-			pLanepress[i]->Start();
-		if (pLaneup[i]->Trigger(pLanepress[i]->GetTick() > 50))
-			pLanepress[i]->Stop();
+		if (!lane->pLaneHold) continue;
+		if (lane->pLaneHold->IsStarted())
+			lane->pLanePress->Start();
+		if (lane->pLaneUp->Trigger(lane->pLanePress->GetTick() > 50))
+			lane->pLanePress->Stop();
 	}
 }
 
@@ -957,6 +956,25 @@ void PlayerAuto::UpKey(int channel) {
 
 void PlayerAuto::SetGoal(double rate) {
 	targetrate = rate;
+
+	// also reset current ex score
+	// (TODO)
+}
+
+void PlayerAuto::SetGauge(double gauge) {
+
+}
+
+void PlayerAuto::SetAsDead() {
+
+}
+
+void PlayerAuto::SetCombo(int combo) {
+
+}
+
+void PlayerAuto::BreakCombo() {
+
 }
 
 
@@ -966,8 +984,8 @@ void PlayerAuto::SetGoal(double rate) {
 
 // ------ PlayerGhost ----------------------------
 
-PlayerReplay::PlayerReplay(int playside, int playmode)
-	: Player(playside, playmode, PLAYERTYPE::AUTO) {}
+PlayerReplay::PlayerReplay(int playside)
+	: Player(playside, PLAYERTYPE::AUTO) {}
 
 void PlayerReplay::SetReplay(const PlayerReplayRecord &rep) {
 	replay = rep;
@@ -975,20 +993,13 @@ void PlayerReplay::SetReplay(const PlayerReplayRecord &rep) {
 }
 
 void PlayerReplay::Update() {
-	// timer/value update
-	pv->pOnCombo->OffTrigger(pv->pOnCombo->GetTick() > 500);
-	pv->pOnMiss->OffTrigger(pv->pOnMiss->GetTick() > 1000);
-	if (pv_dp) {
-		pv_dp->pOnCombo->OffTrigger(pv_dp->pOnCombo->GetTick() > 500);
-		pv_dp->pOnMiss->OffTrigger(pv_dp->pOnMiss->GetTick() > 1000);
-	}
-
-	// get time
-	Uint32 currenttime = pBmstimer->GetTick();
-	double time_sec = currenttime / 1000.0;
+	Lane* lane;
+	BmsNote* note;
+	UpdateBasic();
 
 	// update judge & note press
-	while (iter_ != replay.End() && iter_->time <= currenttime) {
+	while (iter_ != replay.End() && iter_->time <= m_BmsTime) {
+		// COMMENT: refactor this
 		if (iter_->lane >= 0xA0) {
 			// score up! (SP/DP)
 			int silent = iter_->value / 256;
@@ -1000,21 +1011,23 @@ void PlayerReplay::Update() {
 		else {
 			// just press / up lane
 			// keysound, pressing effect should available here ...
-			int lane = iter_->lane;
+			int laneidx = iter_->lane;
+			lane = &m_Lane[laneidx];
+
 			if (iter_->value == 1) {
-				pLaneup[lane]->Stop();
-				pLanepress[lane]->Start();
+				lane->pLaneUp->Stop();
+				lane->pLanePress->Start();
 			}
 			else {
-				pLaneup[lane]->Stop();
-				pLanepress[lane]->Start();
+				lane->pLaneUp->Stop();
+				lane->pLanePress->Start();
 			}
-			switch (iter_judge_[lane]->second.type) {
+			switch (lane->GetCurrentNote()->type) {
 			case BmsNote::NOTE_LNSTART:
-				pLanehold[lane]->Start();
+				lane->pLaneHold->Start();
 				break;
 			case BmsNote::NOTE_LNEND:
-				pLanehold[lane]->Stop();
+				lane->pLaneHold->Stop();
 				break;
 			case BmsNote::NOTE_NORMAL:
 				break;
@@ -1028,19 +1041,10 @@ void PlayerReplay::Update() {
 
 	// basic update; ignore transparent & mine note
 	for (int i = 0; i < 20; i++) {
-		int notetime = iter_judge_[i]->second.time;
-		int notetype = iter_judge_[i]->second.type;
-		while (
-			notetime - BmsJudgeTiming::POOR / 1000.0 < currenttime && notetype == BmsNote::NOTE_HIDDEN ||
-			notetime < currenttime && notetype == BmsNote::NOTE_MINE ||
-			notetype == BmsNote::NOTE_NONE
-			) {
-			iter_judge_[i]++;
-		}
-
+		lane = &m_Lane[i];
 		// if holdnote, then lanepress -> stay active!
-		if (pLanehold[i]->IsStarted())
-			pLanepress[i]->Start();
+		if (lane->pLaneHold->IsStarted())
+			lane->pLanePress->Start();
 	}
 }
 
