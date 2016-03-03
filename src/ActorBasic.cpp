@@ -15,6 +15,10 @@
  * - advanced cmd - addx, addy, addrotx, addroty, queuecommand
  */
 
+ImageSRC::ImageSRC() {
+	Clear();
+}
+
 void ImageSRC::Clear() {
 	x = y = w = h = cycle = 0;
 	divx = divy = 1;
@@ -65,6 +69,8 @@ TweenInfo::TweenInfo() {
 	state.zoom.x =
 		state.zoom.y = 0;
 }
+
+ImageDST::ImageDST() { Clear(); }
 
 void ImageDST::Clear() {
 	tweens.clear();

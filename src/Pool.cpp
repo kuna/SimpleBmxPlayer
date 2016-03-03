@@ -217,6 +217,8 @@ bool TexturePool::Release(Texture *tex) {
 	// if loadcount <= 0, then release object from memory
 	if (_loadcount.find(tex) != _loadcount.end()) {
 		int loadcount = --_loadcount[tex];
+		// if loadcount is zero,
+		// release texture && delete from pool.
 		if (loadcount <= 0) {
 			for (auto it = _texpool.begin(); it != _texpool.end(); ++it) {
 				if (it->second == tex) {
@@ -224,14 +226,9 @@ bool TexturePool::Release(Texture *tex) {
 					break;
 				}
 			}
-			// if related surface exists, then delete it
-			if (_surface.find(tex) != _surface.end()) {
-				delete _surface[tex];
-				_surface.erase(tex);
-			}
 			// remove loadcount, of course
 			_loadcount.erase(tex);
-			delete tex;
+			DISPLAY->DeleteTexture(tex);
 		}
 		return true;
 	}

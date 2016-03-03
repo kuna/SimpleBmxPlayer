@@ -16,9 +16,10 @@
 class Surface;
 namespace Display {
 	typedef struct Texture {
-		unsigned id;
+		unsigned id;	// COMMENT: this might be changed later.
 		unsigned width;
 		unsigned height;
+		Surface *surf;
 	};
 
 	struct Rect {
@@ -46,7 +47,7 @@ namespace Display {
 
 
 // interface of display object
-// (2.5D)
+// (Mainly for 2.5D?)
 class IDisplay {
 public:
 	virtual void BeginRender() = 0;
@@ -102,6 +103,12 @@ public:
 
 #include "SDL/SDL.h"
 #include "GL/glew.h"
+/*
+* To lock threading during loading texture.
+* It may be a good solution to make a different context per thread,
+* but it's a little complicated to implement ...
+*/
+#include <mutex>
 
 // this object can be generated at each thread
 // (needs to be generated at each thread if we want to load texture)
@@ -124,6 +131,7 @@ protected:
 	Display::PointF m_Zoom;
 	float m_ZPos;
 	bool m_ZWrite;
+	std::mutex m_mutex;
 
 	// COMMENT: should it better to make these static?
 	float v_Color[4 * 3];		// colormod
@@ -178,4 +186,3 @@ public:
 namespace RenderHelper {
 	void Render(IDisplay *d, Display::Texture* tex, const Display::Rect* src, const Display::Rect* dst);
 }
-

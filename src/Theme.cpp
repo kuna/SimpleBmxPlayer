@@ -104,6 +104,13 @@ Actor* Theme::MakeActor(const XMLElement *e, Actor* parent) {
 	return pActor;
 }
 
+void Theme::RegisterActor(const std::string& name, CreateActorFn fn) {
+	auto iter = actormap.find(name);
+	if (iter != actormap.end()) {
+		LOG->Warn("RegisterActor - Duplicate Actor already registered (%s), ignored.", name.c_str());
+	}
+	else actormap[name] = fn;
+}
 
 
 

@@ -51,9 +51,12 @@ const char* DisplaySDLGlew::GetErrorStr() {
 };
 
 Texture* DisplaySDLGlew::CreateTexture(const Surface* surf) {
-	Texture* tex = new Texture();
-	glGenTextures(1, &tex->id);
+	Texture* tex = 0;
 	if (surf) {
+		m_mutex.lock();
+		tex = new Texture();
+		tex->surf = 0;		// don't set surface ptr. it's your own work.
+		glGenTextures(1, &tex->id);
 		glBindTexture(GL_TEXTURE_2D, tex->id);
 		tex->width = surf->GetWidth();
 		tex->height = surf->GetHeight();
@@ -66,12 +69,15 @@ Texture* DisplaySDLGlew::CreateTexture(const Surface* surf) {
 			GL_RGBA,
 			GL_UNSIGNED_BYTE,
 			surf->GetPtr());
+		m_mutex.unlock();
 	}
 	return tex;
 }
 
 Texture* DisplaySDLGlew::CreateEmptyTexture(int width, int height) {
+	m_mutex.lock();
 	Texture* tex = new Texture();
+	tex->surf = 0;
 	glGenTextures(1, &tex->id);
 	glBindTexture(GL_TEXTURE_2D, tex->id);
 	tex->width = width; tex->height = height;
@@ -84,19 +90,35 @@ Texture* DisplaySDLGlew::CreateEmptyTexture(int width, int height) {
 		GL_RGBA,
 		GL_UNSIGNED_BYTE,
 		0);
+	m_mutex.unlock();
 	return tex;
 }
 
+/*
+ * This is low-level? function, so don't provide method
+ * which directly update textures from surface.
+ * (refer that function in SurfaceHelper::UpdateTexture()
+ */
 void DisplaySDLGlew::UpdateTexture(Texture* tex, const Surface* surf, int x, int y) {
-	assert(surf);
+	// don't assert - I want to make low-level function safe as possible.
+	//assert(surf);
+	//
+	if (!surf) return;
+	m_mutex.lock();
 	glBindTexture(GL_TEXTURE_2D, tex->id);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, surf->GetWidth(), surf->GetHeight(),
 		GL_RGB, GL_UNSIGNED_BYTE, surf->GetPtr());
+	m_mutex.unlock();
 }
 
 void DisplaySDLGlew::DeleteTexture(Texture* tex) {
-	ASSERT(tex);
+	// don't assert - I want to make low-level function safe as possible.
+	//ASSERT(tex);
+	//
+	if (!tex) return;
 	glDeleteTextures(1, &tex->id);
+	// if surface exists, then remove that also.
+	if (tex->surf) delete tex->surf;
 	delete tex;
 }
 
@@ -335,6 +357,23 @@ void DisplaySDLGlew::DrawPrimitives() {
 	// render
 	glBindTexture(GL_TEXTURE_2D, m_Texture.id);
 	DrawPrimitives();
+}
+
+void DisplaySDLGlew::BeginRender() {
+	m_mutex.lock();
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLoadIdentity();
+}
+
+void DisplaySDLGlew::EndRender() {
+	//SDL_RenderPresent(RENDERER);
+	//glFinish();
+	SDL_GL_SwapWindow(m_SDL);
+	m_mutex.unlock();
+}
+
+void DisplaySDLGlew::Release() {
+	SDL_GL_DeleteContext(m_glCtx);
 }
 
 

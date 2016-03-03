@@ -33,6 +33,7 @@ public:
 	bool IsLoaded();
 	virtual bool Load(const char* path);
 	virtual bool LoadFromMemory(const unsigned char* fileptr, int len);
+	virtual void UpdateSurface(Uint32 msec);
 	void Create(int width, int height, uint32_t color = 0);
 	void SetPixel(int x, int y, uint32_t color);
 	uint32_t GetPixel(int x, int y);
@@ -81,11 +82,11 @@ public:
 
 	virtual bool Load(const char* path);
 	virtual bool LoadFromMemory(const unsigned char* fileptr, int len);
+	virtual void UpdateSurface(Uint32 msec);
 	
 	bool IsMovie();
 	bool LoadMovie(const char* path);
 	void ReleaseMovie();
-	bool UpdateSurface(Uint32 msec);
 };
 
 
@@ -98,5 +99,6 @@ public:
  */
 namespace SurfaceUtil {
 	Display::Texture* LoadTexture(const char* filepath);
+	void UpdateTexture(Display::Texture* tex);
 	Display::Texture* CreateColorTexture(Uint32 clr);
 }

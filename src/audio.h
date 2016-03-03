@@ -24,3 +24,5 @@ public:
 	Uint32 GetLength();
 	void Resample(double rate);
 };
+
+// COMMENT: change load function to high-level one (using file method, to make available from archive.)

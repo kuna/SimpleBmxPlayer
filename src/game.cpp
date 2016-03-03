@@ -418,10 +418,7 @@ namespace Game {
 			 *   so keypress will be out of lag
 			 *   (TODO)
 			 */
-			RMUTEX.lock();
-			
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			glLoadIdentity();
+			DISPLAY->BeginRender();
 
 			glBegin(GL_QUADS);
 			glColor3f(1, 0, 0); glVertex3f(0, 0, 0);
@@ -434,10 +431,7 @@ namespace Game {
 			SCENE->Render();
 			if (showfps) Render_FPS();
 
-			//SDL_RenderPresent(RENDERER);
-			//glFinish();
-			SDL_GL_SwapWindow(WINDOW);
-			RMUTEX.unlock();
+			DISPLAY->EndRender();
 		}
 	}
 

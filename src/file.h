@@ -104,11 +104,9 @@ private:
 
 namespace FileHelper {
 	/*
-	 * @brief
-	 * set basepath. useful for ConvertPathToAbsolute()
-	 * TODO: if archive file given as input, then open archive file(mount).
+	 * Archive/Mount supporting
 	 */
-	void PushBasePath(const char *path);
+	void PushBasePath(const char *path);	// first pushed path = system path (MUST necessary)
 	void PopBasePath();
 	RString& GetBasePath();
 	RString& GetSystemPath();
@@ -117,6 +115,11 @@ namespace FileHelper {
 	/* returns relative file path */
 	void GetFileList(std::vector<RString>& filelist);
 	void FilterFileList(const char *extfilters, std::vector<RString>& filelist);
+	int IsFileMemory(const RString& path);
+
+	/*
+	 * Basic I/O Related
+	 */
 	/** @brief is path exists & file? */
 	bool IsFile(const RString& path);
 	/** @brief is path exists & folder? */

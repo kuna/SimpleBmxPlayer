@@ -44,6 +44,10 @@ bool Surface::LoadFromMemory(const unsigned char* ptr, int len) {
 	return pixdata != 0;
 }
 
+void Surface::UpdateSurface(Uint32 msec) {
+	// do nothing
+}
+
 void Surface::Create(int width, int height, uint32_t color) {
 	pixdata = (unsigned char*)malloc(width * height * 4);
 	for (int i = 0; i < width * height; i++) {
@@ -114,6 +118,10 @@ SurfaceMovie::SurfaceMovie() {
 	duration = 0;
 }
 
+SurfaceMovie::~SurfaceMovie() {
+	Release();
+}
+
 bool SurfaceMovie::Load(const char* path) {
 	Initalize_ffmpeg();
 	std::string ext = get_fileext(path);	MakeLower(ext);
@@ -128,6 +136,12 @@ bool SurfaceMovie::Load(const char* path) {
 	else {
 		return ((Surface*)this)->Load(path);
 	}
+}
+
+bool SurfaceMovie::LoadFromMemory(const unsigned char* data, int len) {
+	// not supported; just call Surface::LoadFromMemory()
+	// TODO
+	return Surface::LoadFromMemory(data, len);
 }
 
 bool SurfaceMovie::LoadMovie(const char* path) {
@@ -212,14 +226,14 @@ bool SurfaceMovie::LoadMovie(const char* path) {
 	return true;
 }
 
-bool SurfaceMovie::UpdateSurface(Uint32 t) {
+void SurfaceMovie::UpdateSurface(Uint32 t) {
 	// if not loaded, then return
 	if (moviectx == 0)
-		return false;
+		return;
 
 	// less then movie time, then return
 	if (t < moviepts)
-		return false;
+		return;
 
 	int uvPitch = codecctx->width / 2;
 	AVPacket *packet;
@@ -269,8 +283,7 @@ bool SurfaceMovie::UpdateSurface(Uint32 t) {
 			break;
 		}
 	}
-	av_packet_free(&packet);
-	return true;
+	av_packet_free(&packet);;
 }
 
 void SurfaceMovie::ReleaseMovie() {
@@ -289,16 +302,43 @@ bool SurfaceMovie::IsMovie() {
 }
 
 
+#include "File.h"
+
 namespace SurfaceUtil {
+	Display::Texture* LoadFromFile(const char* filepath) {
+		// TODO
+		RString _path = path;
+		FileHelper::GetAnyAvailableFilePath(_path);
+		//if (!IsExists(_path)) {
+	}
+
 	Display::Texture* LoadTexture(const char* filepath) {
+		bool ismovie = false;
 		Surface *surf = new Surface();
 		if (!surf->Load(filepath)) {
+			// attempt to load with surfacemovie
 			delete surf;
-			return 0;
+			surf = new SurfaceMovie();
+			if (!surf->Load(filepath)) {
+				// failed to load surface
+				delete surf;
+				return 0;
+			}
+			ismovie = true;
 		}
 		Texture* tex = DISPLAY->CreateTexture(surf);
-		delete surf;
+		// if movie surface,
+		// then store it to texture for updating texture.
+		if (ismovie) {
+			tex->surf = surf;
+		} else delete surf;
 		return tex;
+	}
+
+	void UpdateTexture(Display::Texture* tex) {
+		if (tex && tex->surf) {
+			DISPLAY->UpdateTexture(tex, tex->surf);
+		}
 	}
 
 	Display::Texture* CreateColorTexture(Uint32 clr) {

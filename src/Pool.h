@@ -119,7 +119,6 @@ public:
 class TexturePool {
 private:
 	std::map<RString, Display::Texture*> _texpool;
-	std::map<Display::Texture*, Surface*> _surface;
 	std::map<Display::Texture*, int> _loadcount;
 public:
 	~TexturePool();
@@ -130,7 +129,6 @@ public:
 	Display::Texture* Register(const RString& key, Display::Texture *tex);
 	bool Release(Display::Texture *img);
 	Display::Texture* Get(const RString &path);		// this doesn't make load count up
-	void Update(Display::Texture* tex, Uint32 msec);	// update texture surface, in case of movie
 };
 
 // FontPool is a little different from imagepool 
