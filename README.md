@@ -1,22 +1,22 @@
 # SimpleBmxPlayer
 
 ### Abstract
-- Just plays \*.bmx(bms, bme, bml, etc.) file.
+- Plays \*.bmx(bms, bme, bml, etc.) file with customizable skin.
+- Trying to develop with minimum & clear structure.
 - Actually, This program is close to emulator rather then player, as this program has options & supports options for player. HoweveA, as this program is demo project, I won't support other scenes like song selection. that will be implemented in other later project.
 
 ### Dependency
 - ```SDL2```
-- ```SDL2_image```
 - ```SDL2_mixer```
-- ```SDL2_ttf```
-- ```SDL_FontCache```
+- ```SOIL```
+- ```glew```
 - ```Zeranoe FFmpeg```
 - ```bmsbel+```
 - ```Lua```
 - ```pthread (Win32)```
 - ```tinyxml2```
 - ```zlib```
-- ```zziplib```
+- ```libarchive```
 
 ##### This Project doesn't include ```libSDL 2.0```, ```SDL2_ttf```, ```FFmpeg```
   - download ```Dev Lib / Runtime Binaries``` directly from [SDL](https://www.libsdl.org/download-2.0.php), and extract file to ```include/SDL, lib/x86, Release```.
