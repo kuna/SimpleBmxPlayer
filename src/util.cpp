@@ -1144,14 +1144,8 @@ void md5(const char *in, int in_size, char *out) {
 bool GetFileContents(const RString &sPath, RString &sOut, bool bOneLine)
 {
 	// Don't warn if the file doesn't exist, but do warn if it exists and fails to open.
-	// TODO
-	//if (!IsAFile(sPath))
-	//	return false;
-
-	File file;
-	if (!file.Open(sPath))
-	{
-		LOG->Warn("GetFileContents(%s): Cannot open file.", sPath.c_str());
+	FileBasic *file;
+	if ((file = FILEMANAGER->LoadFile(sPath)) == 0) {
 		return false;
 	}
 
@@ -1159,13 +1153,14 @@ bool GetFileContents(const RString &sPath, RString &sOut, bool bOneLine)
 	RString sData;
 	int iGot;
 	if (bOneLine)
-		iGot = file.ReadLine(sData);
+		iGot = file->ReadLine(sData);
 	else
-		iGot = file.Read(sData, file.GetSize());
+		iGot = file->Read(sData, file->GetSize());
 
 	if (iGot == -1)
 	{
-		LOG->Warn("GetFileContents(%s): Can't read file..", sPath.c_str());
+		LOG->Warn("File(%s) exists but cannot read.", sPath.c_str());
+		delete file;
 		return false;
 	}
 
@@ -1173,6 +1168,7 @@ bool GetFileContents(const RString &sPath, RString &sOut, bool bOneLine)
 		StripCrnl(sData);
 
 	sOut = sData;
+	delete file;
 	return true;
 }
 

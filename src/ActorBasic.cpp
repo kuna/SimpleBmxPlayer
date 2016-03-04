@@ -868,7 +868,6 @@ void ActorScript::SetFromXml(const XMLElement *e) {
 
 void ActorScript::LoadFile(const RString &filepath) {
 	RString _filepath = filepath;
-	FileHelper::ConvertPathToAbsolute(_filepath);
 	RString out;
 	if (GetFileContents(_filepath, out)) {
 		script = out;

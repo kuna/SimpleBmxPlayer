@@ -64,7 +64,7 @@ namespace Parameter {
 		* (Don't know this behaviour is either occured in Linux/Mac ...)
 		*/
 		RString basepath = get_filedir(argv[0]);
-		FileHelper::PushBasePath(basepath.c_str());
+		FILEMANAGER->PushBasePath(basepath.c_str());
 
 		/*
 		 * set default values (from option)

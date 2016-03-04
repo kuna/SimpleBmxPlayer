@@ -39,8 +39,7 @@ namespace GameSettingHelper {
 	}
 
 	bool LoadSetting(GameSetting& setting) {
-		RString file(SETTINGFILEPATH);
-		FileHelper::ConvertPathToAbsolute(file);
+		RString file = FILEMANAGER->GetAbsolutePath(SETTINGFILEPATH);
 
 		XMLDocument *doc = new XMLDocument();
 		if (doc->LoadFile(file) != 0) {
@@ -97,10 +96,9 @@ namespace GameSettingHelper {
 	}
 
 	bool SaveSetting(const GameSetting& setting) {
-		RString file(SETTINGFILEPATH);
-		FileHelper::ConvertPathToAbsolute(file);
-		RString dir = FileHelper::GetParentDirectory(file);
-		if (!FileHelper::CreateFolder(dir))
+		RString file = FILEMANAGER->GetAbsolutePath(SETTINGFILEPATH);
+		RString dir = FILEMANAGER->GetDirectory(file);
+		if (!FILEMANAGER->CreateDirectory(dir))
 			return false;
 
 		XMLDocument *doc = new XMLDocument();

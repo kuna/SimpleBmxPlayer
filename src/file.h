@@ -18,6 +18,7 @@
 #include "SDL/SDL.h"
 #include "global.h"
 #include <vector>
+#include <map>
 
 class FileBasic {
 public:
@@ -102,51 +103,108 @@ private:
 	size_t m_pos;
 };
 
+enum FILETYPE {
+	TYPE_MOUNT = 3,
+	TYPE_FOLDER = 2,
+	TYPE_FILE = 1,
+	TYPE_NULL = 0,
+};
+
+struct FileInfo {
+	RString filename;
+	FILETYPE type;
+	time_t createtime;
+	time_t updatetime;
+	size_t size;
+	void* data;
+};
+
+/*
+ * @description
+ * This class only accesses to OS basic I/O, not archive.
+ */
+class FileManagerBasic {
+protected:
+	std::vector<RString> m_Basepath;
+	std::vector<RString> m_Filterext;
+	bool m_SearchMountPath;
+
+	typedef struct {
+		RString mountpath;		// only absolute directory path!
+		FileInfo mountinfo;
+		std::vector<FileInfo> files;
+		void* handle;
+	} MountInfo;
+	std::map<RString, MountInfo> m_Mount;
+public:
+	/* Set base path or relative path (must be called at once) */
+	virtual void PushBasePath(const RString& path);
+	virtual void PopBasePath();
+	RString GetBasePath();
+	void SetFileFilter(const RString& filter);
+	void SearchMountFolder(bool v) { m_SearchMountPath = v; }
+
+	/* info */
+	virtual bool GetFileInfo(const RString& path, FileInfo &info);	// also available for directory
+	virtual void GetDirectoryFileList(const RString& dirpath, std::vector<RString> files);	// this function isn't thread safe - caution
+	virtual void GetDirectoryFileInfo(const RString& dirpath, std::vector<FileInfo> files);	// this function isn't thread safe - caution
+	bool IsFile(const RString& path);
+	bool IsDirectory(const RString& path);
+	bool IsMountedFile(const RString& path);
+
+	/* these functions doesn't gurantee file existing */
+	static bool IsAbsolutePath(const RString& path);
+	RString GetAbsolutePath(const RString& path);
+	bool GetExistingAbsolutePath(const RString& path, RString& out);
+	RString GetRelativePath(const RString& path);	// returns relative path to basepath
+	RString GetRelativePath(const RString& path, const RString& basepath);
+	static RString GetDirectory(const RString& path);
+	static RString GetParentDirectory(const RString& path);
+
+	/* mounting */
+	virtual bool Mount(const RString& path);
+	virtual void UnMount(const RString& path);
+	
+	/* I/O */
+	virtual FileBasic* LoadFile(const RString& path);
+	virtual bool ReadAllFile(const RString& path, char **p, int *len);
+	virtual bool CreateFile(const RString& path);
+	virtual bool CreateDirectory(const RString& path);
+};
+
+/*
+ * @description
+ * This class is available to mount archive file.
+ */
+class FileManager: public FileManagerBasic {
+public:
+	FileManager();
+	~FileManager();
+
+	virtual void PushBasePath(const RString& path);
+
+	virtual bool Mount(const RString& path);
+	virtual void UnMount(const RString& path);
+
+	virtual FileBasic* LoadFile(const RString& path);
+	virtual bool ReadAllFile(const RString& path, char **p, int *len);
+};
+
+// global accessible
+extern FileManager* FILEMANAGER;
+
+
 namespace FileHelper {
 	/*
-	 * Archive/Mount supporting
+	 * Mostly used by Skin
 	 */
-	void PushBasePath(const char *path);	// first pushed path = system path (MUST necessary)
-	void PopBasePath();
-	RString& GetBasePath();
-	RString& GetSystemPath();
-	/* returns absolute file path */
-	void GetFileList(const char *folderpath, std::vector<RString>& filelist, bool getfileonly = true);
-	/* returns relative file path */
-	void GetFileList(std::vector<RString>& filelist);
-	void FilterFileList(const char *extfilters, std::vector<RString>& filelist);
-	int IsFileMemory(const RString& path);
+	RString ReplacePathEnv(const RString& path);
+	bool GetAnyAvailableFilePath(RString &path);
 
 	/*
-	 * Basic I/O Related
+	 * low-level
 	 */
-	/** @brief is path exists & file? */
+	bool GetFileInfo(const RString& path, FileInfo &info);
 	bool IsFile(const RString& path);
-	/** @brief is path exists & folder? */
-	bool IsFolder(const RString& path);
-
-	bool IsRelativeFile(const RString& relpath);
-	/** @brief create folder (recursively), return false if failed. */
-	bool CreateFolder(const RString& path);
-	/** @brief just get parent directory path. no IO function. */
-	RString GetParentDirectory(const RString& path);
-	/** @brief replace some env into valid string (refers STRINGPOOL) */
-	void ReplacePathEnv(RString& path);
-	/** @brief converts path to absolute path */
-	void ConvertPathToAbsolute(RString& path);
-	void ConvertPathToSystem(RString& path);
-	RString RelativePathToAbsolute(const RString& path);
-	RString RelativePathToSystem(const RString& path);
-	/* @description
-	 * this method tries these paths:
-	 * 1. path itself
-	 * 2. converted absolute path
-	 * 3. any(random) file in that directory (with same extension)
-	 * if all of these are failed, return false.
-	 */
-	bool GetAnyAvailableFilePath(RString& path);
-
-	bool LoadFile(const char *relpath, FileBasic **f);
-	bool CurrentDirectoryIsZipFile();
-	bool GetDirDate(const char* relpath);
+	bool IsDirectory(const RString& path);
 }

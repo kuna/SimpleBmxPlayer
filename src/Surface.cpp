@@ -79,6 +79,8 @@ void Surface::RemoveColor(uint32_t clr) {
 	}
 }
 
+bool Surface::IsMovie() { return false; }
+
 void Surface::Release() {
 	if (pixdata) {
 		free(pixdata);
@@ -305,31 +307,35 @@ bool SurfaceMovie::IsMovie() {
 #include "File.h"
 
 namespace SurfaceUtil {
-	Display::Texture* LoadFromFile(const char* filepath) {
-		// TODO
-		RString _path = path;
-		FileHelper::GetAnyAvailableFilePath(_path);
-		//if (!IsExists(_path)) {
-	}
-
 	Display::Texture* LoadTexture(const char* filepath) {
-		bool ismovie = false;
 		Surface *surf = new Surface();
-		if (!surf->Load(filepath)) {
-			// attempt to load with surfacemovie
-			delete surf;
-			surf = new SurfaceMovie();
+		if (FILEMANAGER->IsMountedFile(filepath)) {
 			if (!surf->Load(filepath)) {
-				// failed to load surface
+				// attempt to load with surfacemovie
 				delete surf;
-				return 0;
+				surf = new SurfaceMovie();
+				surf->Load(filepath));
 			}
-			ismovie = true;
 		}
+		else {
+			char *p;
+			int len;
+			if (FILEMANAGER->ReadAllFile(filepath, &p, &len)) {
+				surf->LoadFromMemory(p, len);
+				free(p);
+			}
+		}
+
+		if (!surf->IsLoaded()) {
+			delete surf;
+			surf = 0;
+			return 0;
+		}
+
 		Texture* tex = DISPLAY->CreateTexture(surf);
-		// if movie surface,
+		// if movie is surface,
 		// then store it to texture for updating texture.
-		if (ismovie) {
+		if (surf->IsMovie()) {
 			tex->surf = surf;
 		} else delete surf;
 		return tex;

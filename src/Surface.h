@@ -39,6 +39,7 @@ public:
 	uint32_t GetPixel(int x, int y);
 	void RemoveColor(uint32_t clr);		// sets specific color's alpha to zero
 
+	virtual bool IsMovie();
 	int GetWidth() const { return width; }
 	int GetHeight() const { return height; }
 	const unsigned char* GetPtr() const { return pixdata; }
@@ -84,7 +85,7 @@ public:
 	virtual bool LoadFromMemory(const unsigned char* fileptr, int len);
 	virtual void UpdateSurface(Uint32 msec);
 	
-	bool IsMovie();
+	virtual bool IsMovie();
 	bool LoadMovie(const char* path);
 	void ReleaseMovie();
 };

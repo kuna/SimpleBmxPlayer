@@ -7,6 +7,10 @@
 #include "util.h"
 #include "md5.h"
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
 #define READLINE_MAX 10240
 #define READALL_MAX 10240000	// about 10mib
 
@@ -275,507 +279,369 @@ SDL_RWops* FileMemory::GetSDLRW() {
 
 
 
-
-/*
- * helper for file class
- */
-
-namespace FileHelper {
-	/* used for checking current mounting */
-	struct mount_fileinfo_ {
-		void* raw_;		// only meaningful to archive file
-		size_t size;
-		time_t time;
-		bool isfolder;
-	};
-	struct mount_status_ {
-		RString path_;
-		bool isarchive_;
-		struct archive *a;
-		std::map<RString, mount_fileinfo_> filelist_;
-	};
-
-	/* all mount status are stored in here */
-	std::vector<mount_status_> basepath_stack;
-
-	/* private */
-	namespace {
-		bool IsAbsolutePath(const char *path) {
-			return (path[0] != 0 && (path[0] == '/' || path[1] == ':'));
-		}
-
-		void InitArchive(struct archive **a) {
-			*a = archive_read_new();
-			//archive_read_support_format_7zip(*a);
-			//archive_read_support_format_rar(*a);
-			//archive_read_support_format_zip(*a);
-			archive_read_support_format_all(*a);
-			archive_read_support_compression_all(*a);
-		}
-
-		int OpenArchive(struct archive *a, const RString& path) {
-#ifdef _WIN32
-			std::wstring wpath = RStringToWstring(path);
-			return archive_read_open_filename_w(a, wpath.c_str(), 10240);
-#else
-			return archive_read_open_filename(a, path, 10240);
-#endif
-		}
+namespace {
+	// also checks for archive format file path
+	bool IsArchiveFileName(const RString& path) {
+		RString tmp = path;
+		if (tmp.back() == '/' || tmp.back() == '\\') tmp.pop_back();
+		return EndsWith(tmp, ".zip") ||
+			EndsWith(tmp, ".rar") ||
+			EndsWith(tmp, ".7z");
 	}
+}
 
-	/* mount (MUST insert absolute path) */
-	void PushBasePath(const char *path) {
-		ASSERT(IsAbsolutePath(path));
-		RString basepath = path;
+void FileManagerBasic::PushBasePath(const RString& path) {
+	// convert path to directory before push
+	m_Basepath.push_back(GetDirectory(path));
+}
 
-		mount_status_ stat_;
-		if (EndsWith(basepath, ".zip") ||
-			EndsWith(basepath, ".rar") ||
-			EndsWith(basepath, ".7z"))
-		{
-			stat_.isarchive_ = true;
-			InitArchive(&stat_.a);
-			if (OpenArchive(stat_.a, basepath) == 0)
-			{
-				// scan total archive files
-				struct archive_entry *aent;
-				int r;
-				for (r = archive_read_next_header(stat_.a, &aent); 
-					r != ARCHIVE_EOF; 
-					r = archive_read_next_header(stat_.a, &aent))
-				{
-					if (r == ARCHIVE_OK) {
-						const char* fn = archive_entry_pathname(aent);
-						if (!fn) continue;
-						mount_fileinfo_ finfo_;
-						finfo_.size = archive_entry_size(aent);
-						finfo_.time = archive_entry_atime(aent);
-						finfo_.isfolder = archive_entry_filetype(aent) == AE_IFDIR;
-						RString fname = fn;
-						//
-						// don't call read_data_block now, it costs too much
-						// call it later when called LoadFile()
-						//
-						//archive_read_data_block(stat_.a, (void**)&finfo_.raw_, &finfo_.size, 0);
-						//archive_seek_data
-						archive_read_data_skip(stat_.a);
-						finfo_.raw_ = 0;
-						stat_.filelist_[fname] = finfo_;
-					}
-					else if (r == ARCHIVE_FATAL) {
-						break;
+void FileManagerBasic::PopBasePath() {
+	m_Basepath.pop_back();
+}
+
+RString FileManagerBasic::GetBasePath() {
+	return m_Basepath.back();
+}
+
+void FileManagerBasic::SetFileFilter(const RString& filter) {
+	split(filter, ";", m_Filterext);
+}
+
+/* info */
+bool FileManagerBasic::GetFileInfo(const RString& path, FileInfo &info) {
+	RString abspath = GetAbsolutePath(path);
+	// if there's no information in real file system ...
+	if (!FileHelper::GetFileInfo(abspath, info)) {
+		// search for mounted file
+		RString dirpath = GetDirectory(abspath);
+		RString filename = abspath.substr(dirpath.size() + 1);
+		for (auto it = m_Mount.begin(); it != m_Mount.end(); ++it) {
+			if (stricmp(it->first, dirpath) == 0) {
+				for (auto fit = it->second.files.begin(); fit != it->second.files.end(); ++fit) {
+					if (stricmp(fit->filename, filename) == 0) {
+						info = *fit;
+						return true;
 					}
 				}
-				//archive_entry_free(aent);
-			}
-		}
-		else {
-			stat_.isarchive_ = false;
-			// scan all directory files
-#ifdef _WIN32
-			HANDLE dir;
-			WIN32_FIND_DATA file_data;
-
-			std::wstring directory_w = RStringToWstring(basepath);
-			if ((dir = FindFirstFileW((directory_w + L"/*").c_str(), &file_data)) != INVALID_HANDLE_VALUE)
-			{
-				do {
-					const wstring file_name = file_data.cFileName;
-					const bool is_directory =
-						(file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-
-					if (file_name[0] == '.')
-						continue;
-
-					const RString fname = WStringToRString(file_name);
-					mount_fileinfo_ info_;
-					info_.size = file_data.nFileSizeLow;
-					info_.time = file_data.ftLastWriteTime.dwHighDateTime;
-					info_.raw_ = 0;
-					info_.isfolder = is_directory;
-					stat_.filelist_[fname] = info_;
-				} while (FindNextFile(dir, &file_data));
-				FindClose(dir);
-			}
-#else
-			DIR *dir;
-			class dirent *ent;
-			class stat st;
-
-			dir = opendir(directory);
-			while ((ent = readdir(dir)) != NULL) {
-				const RString file_name = ent->d_name;
-
-				if (file_name[0] == '.')
-					continue;
-
-				if (stat(full_file_name.c_str(), &st) == -1)
-					continue;
-
-				const bool is_directory = (st.st_mode & S_IFDIR) != 0;
-
-				mount_fileinfo_ info_;
-				info_.size = ent->d_size;
-				info_.time = ent->d_time;
-				info_.raw_ = 0;
-				info_.isfolder = is_directory;
-				stat_.filelist_[file_name] = info_;
-			}
-			closedir(dir);
-#endif
-		}
-
-		// (directory should end with `/`)
-		if (basepath[strlen(basepath) - 1] != '/' && basepath[strlen(basepath) - 1] != '\\') {
-			basepath += "/";
-		}
-
-		stat_.path_ = basepath;
-		basepath_stack.push_back(stat_);
-	}
-
-	/* unmount */
-	void PopBasePath() {
-		mount_status_ stat_ = basepath_stack.back();
-		if (stat_.isarchive_) {
-			for (auto it = stat_.filelist_.begin(); it != stat_.filelist_.end(); ++it) {
-				if (it->second.raw_)
-					free((void*)it->second.raw_);
-			}
-			archive_read_close(stat_.a);
-			archive_read_free(stat_.a);
-		}
-		basepath_stack.pop_back();
-	}
-
-	/*
-	 * COMMENT: bug can occur
-	 * if basepath zipfile & target normalfile /
-	 *    basepath normalfile & target zipfile.
-	 * use it at own risk..
-	 * COMMENT: path should be relative. (suggest)
-	 *          if not relative, then this code will convert path into relative one.
-	 */
-	bool LoadFile(const char *relpath, FileBasic **f) {
-		RString path_ = relpath;
-		mount_status_ *stat_ = &basepath_stack.back();
-		if (stat_->isarchive_) {
-			path_ = RelativePathToSystem(path_);
-			if (stat_->filelist_.find(path_) == stat_->filelist_.end())
-				return false;
-			mount_fileinfo_ file_ = stat_->filelist_[path_];
-
-			//
-			// if file is zero:
-			// invalid file, return false
-			//
-			// if archive isn't decompressed,
-			// then do it now
-			//
-			if (file_.size == 0) {
-				return false;
-			}
-			else if (file_.raw_ == 0) {
-				// reset
-				archive_read_close(stat_->a);
-				archive_read_finish(stat_->a);
-				InitArchive(&stat_->a);
-				RString dir = get_filedir(stat_->path_);
-				OpenArchive(stat_->a, dir);
-				// 
-				struct archive_entry *aent;
-				int r;
-				for (r = archive_read_next_header(stat_->a, &aent);
-					r != ARCHIVE_EOF; 
-					r = archive_read_next_header(stat_->a, &aent)) 
-				{
-					if (r == ARCHIVE_OK) {
-						const char *fn = archive_entry_pathname(aent);
-						if (!fn) continue;
-						mount_fileinfo_ *f_ = &stat_->filelist_[fn];
-						const void* ptr_;
-						int64_t offset_;
-						size_t size_;
-
-						f_->raw_ = malloc(f_->size);
-						while ((r = archive_read_data_block(stat_->a, &ptr_, &size_, &offset_)) == 0) {
-							memcpy((char*)f_->raw_ + offset_, ptr_, size_);
-						}
-						if (r == ARCHIVE_FAILED) {
-							LOG->Warn(archive_error_string(stat_->a));
-							free(f_->raw_);
-							f_->raw_ = 0;
-						}
-					}
-					else if (r == ARCHIVE_FATAL) {
-						break;
-					}
-				}
-				if (r == ARCHIVE_FATAL) return false;
-				else return LoadFile(path_, f);
-			}
-			else {
-				*f = new FileMemory((char*)file_.raw_, file_.size);
-			}
-		}
-		else {
-			// normal file return
-			ConvertPathToAbsolute(path_);
-			if (!IsFile(path_)) {
-				*f = 0;
-				return false;
-			}
-			else {
-				*f = new File(path_, "rb");
-			}
-		}
-		return true;
-	}
-
-	bool CurrentDirectoryIsZipFile() {
-		mount_status_ stat_ = basepath_stack.back();
-		return stat_.isarchive_;
-	}
-
-	/*
-	* get current directory's file date
-	*/
-	bool GetDirDate(const char* relpath) {
-		return false;
-	}
-
-	/*
-	 * get current directory's file list (include dir)
-	 */
-	void GetFileList(std::vector<RString>& list) {
-		mount_status_ stat_ = basepath_stack.back();
-		for (auto it = stat_.filelist_.begin(); it != stat_.filelist_.end(); ++it)
-			list.push_back(it->first);
-	}
-
-	RString& GetBasePath() {
-		ASSERT(basepath_stack.size() > 0);
-		return basepath_stack.back().path_;
-	}
-
-	RString& GetSystemPath() {
-		ASSERT(basepath_stack.size() > 0);
-		return basepath_stack.front().path_;
-	}
-
-	void ReplacePathEnv(RString& path) {
-		int p = 0, p2 = 0;
-		while (p != RString::npos) {
-			p = path.find("$(", p);
-			if (p == RString::npos)
-				break;
-			p2 = path.find(")", p);
-			if (p2 != RString::npos) {
-				RString key = path.substr(p + 2, p2 - p - 2);
-				RString val = "";
-				if (STRPOOL->IsExists(key))
-					val = *STRPOOL->Get(key);
-				path = path.substr(0, p) + val + path.substr(p2 + 1);
-				p = p2 + 1;
-				if (p >= path.size())
-					break;
-			}
-			else {
 				break;
 			}
 		}
 	}
+	return false;
+}
 
-	void ConvertPathToAbsolute(RString &path, RString &base) {
-		// no empty path
-		if (path == "")
-			return;
-		ReplacePathEnv(path);
-		if (path[0] == '/' || path.substr(1, 2) == ":\\" || path.substr(1, 2) == ":/")
-			return;		// it's already absolute path, dont touch it.
-		// if relative, then translate it into absolute
-		if (path.substr(0, 2) == "./" || path.substr(0, 2) == ".\\")
-			path = path.substr(2);
-		path = base + path;
-	}
-
-	void ConvertPathToAbsolute(RString &path) {
-		return ConvertPathToAbsolute(path, GetBasePath());
-	}
-
-	void ConvertPathToSystem(RString &path) {
-		return ConvertPathToAbsolute(path, GetSystemPath());
-	}
-
-	RString RelativePathToAbsolute(const RString& path) {
-		RString relpath = path;
-		if (IsAbsolutePath(relpath)) {
-			return relpath.substr(GetBasePath().size());
-		}
-		if (BeginsWith(relpath, "./") || BeginsWith(relpath, ".\\"))
-			relpath = relpath.substr(2);
-		return relpath;
-	}
-
-	RString RelativePathToSystem(const RString& path) {
-		RString relpath = path;
-		if (IsAbsolutePath(relpath)) {
-			return relpath.substr(GetSystemPath().size());
-		}
-		if (BeginsWith(relpath, "./") || BeginsWith(relpath, ".\\"))
-			relpath = relpath.substr(2);
-		return relpath;
-	}
-
-	bool GetAnyAvailableFilePath(RString &path) {
-		if (IsFile(path)) return true;
-		ConvertPathToAbsolute(path);
-		if (IsFile(path)) return true;
-		int p = path.find_last_of("./\\");
-		if (p == std::string::npos) return false;
-		RString ext = path.substr(p);
-		RString folder = GetParentDirectory(path);
-		std::vector<RString> filelist;
-		GetFileList(folder, filelist);
-		FilterFileList(ext, filelist);
-		if (filelist.size() > 0) {
-			path = filelist[rand() % filelist.size()];
-			return true;
+namespace {
+	bool IsFileFiltered(const RString& filename, std::vector<RString>& filters) {
+		for (auto ext = filters.begin(); ext != filters.end(); ++ext) {
+			if (EndsWith(filename, *ext)) {
+				return true;
+			}
 		}
 		return false;
 	}
+}
+
+void FileManagerBasic::GetDirectoryFileList(const RString& dirpath, std::vector<RString> files) {
+	std::vector<FileInfo> _tmp;
+	GetDirectoryFileInfo(dirpath, _tmp);
+	for (auto it = _tmp.begin(); it != _tmp.end(); it++)
+		files.push_back(it->filename);
+}
+
+// TODO: filter file list
+void FileManagerBasic::GetDirectoryFileInfo(const RString& dirpath, std::vector<FileInfo> files) {
+	// convert to absolute, valid directory path
+	RString directory = GetDirectory(dirpath);
+
+	// scan for mount path first
+	std::map<RString, MountInfo>::iterator iter;
+	if (m_SearchMountPath && (iter = m_Mount.find(directory)) != m_Mount.end()) {
+		files = iter->second.files;
+		return;
+	}
+
+	// scan for base path
+	directory = GetAbsolutePath(directory);
 
 #ifdef _WIN32
-#include <Windows.h>
-#endif
-	void GetFileList(const char* folderpath, std::vector<RString>& out, bool getfileonly) {
-		RString directory = folderpath;
-		ConvertPathToAbsolute(directory);
+	HANDLE dir;
+	WIN32_FIND_DATA file_data;
 
-#ifdef _WIN32
-		HANDLE dir;
-		WIN32_FIND_DATA file_data;
-
-		std::wstring directory_w = RStringToWstring(directory);
-		if ((dir = FindFirstFileW((directory_w + L"/*").c_str(), &file_data)) == INVALID_HANDLE_VALUE)
-			return; /* No files found */
-
+	std::wstring directory_w = RStringToWstring(directory);
+	if ((dir = FindFirstFileW((directory_w + L"/*").c_str(), &file_data)) != INVALID_HANDLE_VALUE) {
 		do {
 			const wstring file_name = file_data.cFileName;
-			const bool is_directory = 
-				(file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0 ||
-				file_name.substr(file_name.size()-4) == L".zip";
 
+			// ignore `.`, `..`
 			if (file_name[0] == '.')
 				continue;
 
-			if (getfileonly && is_directory)
+			RString fn_utf8 = WStringToRString(file_name);
+
+			// check for file filter
+			if (IsFileFiltered(fn_utf8, m_Filterext))
 				continue;
 
-			const wstring full_file_name = directory_w + L"/" + file_name;
-			RString full_file_name_utf8 = WStringToRString(full_file_name);
-			out.push_back(full_file_name_utf8);
+			// fill file information
+			const bool is_directory =
+				(file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+			FileInfo finfo;
+			finfo.type = is_directory ? FILETYPE::TYPE_FOLDER : FILETYPE::TYPE_FILE;
+			finfo.data = 0;
+			finfo.createtime = file_data.ftCreationTime.dwHighDateTime;
+			finfo.updatetime = file_data.ftLastWriteTime.dwHighDateTime;
+			finfo.size = file_data.nFileSizeHigh;
+
+			files.push_back(finfo);
 		} while (FindNextFile(dir, &file_data));
 
 		FindClose(dir);
-#else
-		DIR *dir;
-		class dirent *ent;
-		class stat st;
-
-		dir = opendir(directory);
-		while ((ent = readdir(dir)) != NULL) {
-			const string file_name = ent->d_name;
-			const string full_file_name = directory + "/" + file_name;
-
-			if (file_name[0] == '.')
-				continue;
-
-			if (stat(full_file_name.c_str(), &st) == -1)
-				continue;
-
-			const bool is_directory = (st.st_mode & S_IFDIR) != 0;
-
-			if (getfileonly && is_directory)
-				continue;
-
-			out.push_back(full_file_name);
-		}
-		closedir(dir);
-#endif
 	}
+#else
+	DIR *dir;
+	class dirent *ent;
+	class stat st;
 
-	void FilterFileList(const char *extfilters, std::vector<RString>& filelist) {
-		std::vector<RString> filters;
-		split(extfilters, ";", filters);
+	dir = opendir(directory);
+	while ((ent = readdir(dir)) != NULL) {
+		const string file_name = ent->d_name;
+		//const string full_file_name = directory + "/" + file_name;
 
-		for (auto filepath = filelist.begin(); filepath != filelist.end(); ) {
-			bool update = false;
-			for (auto ext = filters.begin(); ext != filters.end(); ++ext) {
-				if (EndsWith(*filepath, *ext)) {
-					update = true;
-					break;
+		// ignore `.`, `..`
+		if (file_name[0] == '.')
+			continue;
+
+		// ??
+		if (stat(full_file_name.c_str(), &st) == -1)
+			continue;
+
+		// check for file filter
+		if (IsFileFiltered(file_name, m_Filterext))
+			continue;
+
+		// fill file information
+		const bool is_directory = (st.st_mode & S_IFDIR) != 0;
+		struct stat st;
+		stat(ent->d_name, &st);
+		FileInfo finfo;
+		finfo.type = is_directory ? FILETYPE::TYPE_FOLDER : FILETYPE::TYPE_FILE;
+		finfo.data = 0;
+		finfo.createtime = st->st_ctime;
+		finfo.updatetime = st->st_mtime;
+		finfo.size = ent->d_size;
+
+		files.push_back(finfo);
+	}
+	closedir(dir);
+#endif
+
+}
+
+bool FileManagerBasic::IsMountedFile(const RString& path) {
+	RString abspath = GetAbsolutePath(path);
+	RString dirpath = GetDirectory(abspath);
+	RString filename = abspath.substr(dirpath.size() + 1);
+	for (auto it = m_Mount.begin(); it != m_Mount.end(); ++it) {
+		if (stricmp(it->first, dirpath) == 0) {
+			for (auto fit = it->second.files.begin(); fit != it->second.files.end(); ++fit) {
+				if (stricmp(fit->filename, filename) == 0) {
+					return true;
 				}
 			}
-			if (!update) filepath = filelist.erase(filepath);
-			else ++filepath;
+			break;
 		}
 	}
+	return false;
+}
 
-	/*
-	 * uses relative file path (supports zip)
-	 */
-	bool IsRelativeFile(const RString& path) {
-		if (EndsWith(path, ".zip")) return false;
-		RString relpath = path;
-		ConvertPathToAbsolute(relpath);
-		if (IsFile(relpath)) return true;
-		//
-		// still not exists, then search archive if it does.
-		//
-		if (CurrentDirectoryIsZipFile()) {
-			std::vector<RString> files;
-			GetFileList(files);
-			for (int i = 0; i < files.size(); i++) {
-				if (files[i] == path) return true;
-			}
-		}
+bool FileManagerBasic::IsFile(const RString& path) {
+	if (FileHelper::IsFile(path))
+		return FILETYPE::TYPE_FILE;
+	else {
+		// search for mounted file
+		FileInfo finfo;
+		if (GetFileInfo(path, finfo))
+			return finfo.type == FILETYPE::TYPE_FILE;
+		// cannot found
+		return false;
+	}
+}
+
+bool FileManagerBasic::IsDirectory(const RString& path) {
+	if (FileHelper::IsDirectory(path))
+		return FILETYPE::TYPE_FOLDER;
+	else {
+		// search for mounted file
+		FileInfo finfo;
+		if (GetFileInfo(path, finfo))
+			return finfo.type == FILETYPE::TYPE_FOLDER;
 
 		return false;
 	}
+}
 
-	bool IsFile(const RString& path) {
-		if (EndsWith(path, ".zip")) return false;
-#ifdef _WIN32
-		std::wstring path_w = RStringToWstring(path);
-		struct _stat64i32 s;
-		if (_wstat(path_w.c_str(), &s) != 0) return false;
-		if (s.st_mode & S_IFREG) return true;
-		else return false;
-#else
-		struct stat s;
-		if (stat(path.c_str(), &s) != 0) return false;
-		if (s.st_mode & S_IFREG) return true;
-		else return false;
-#endif
+/* these functions doesn't gurantee file existing */
+bool FileManagerBasic::IsAbsolutePath(const RString& path) {
+	return (path[0] != 0 && (path[0] == '/' || path[1] == ':'));
+}
+
+namespace {
+	// remove ./ or .\
+	//
+	inline void TidyPath(RString& path) {
+		if (path.size() >= 2 && path.substr(0, 2) == "./" || path.substr(0, 2) == ".\\")
+			path = path.substr(2);
+	}
+}
+
+RString FileManagerBasic::GetAbsolutePath(const RString& path) {
+	// no empty path
+	if (path.size() == 0)
+		return "";
+	if (IsAbsolutePath(path))
+		return path;		// it's already absolute path, dont touch it.
+
+	// start converting
+	RString newpath = path;
+	TidyPath(newpath);
+
+	// make it absolute!
+	// - this always considers basepath, not mounting.
+	newpath = GetBasePath() + newpath;
+	return newpath;
+}
+
+bool FileManagerBasic::GetExistingAbsolutePath(const RString& path, RString& out) {
+	// no empty path
+	if (path.size() == 0)
+		return "";
+	if (IsAbsolutePath(path))
+		return path;		// it's already absolute path, dont touch it.
+
+	// start converting
+	RString newpath = path;
+	TidyPath(newpath);
+
+	// only difference: this searches IO / mountpath for all stacked base paths.
+	for (int i = m_Basepath.size() - 1; i >= 0; i--) {
+		RString path2 = m_Basepath[i] + newpath;
+		if (m_Mount.find(path2) != m_Mount.end() || IsFile(path2) || IsDirectory(path2)) {
+			out = path2;
+			return true;
+		}
 	}
 
-	bool IsFolder(const RString& path) {
-		if (EndsWith(path, ".zip")) return true;
-#ifdef _WIN32
-		std::wstring path_w = RStringToWstring(path);
-		struct _stat64i32 s;
-		if (_wstat(path_w.c_str(), &s) != 0) return false;
-		if (s.st_mode & S_IFDIR) return true;
-		else return false;
-#else
-		struct stat s;
-		if (stat(path.c_str(), &s) != 0) return false;
-		if (s.st_mode & S_IFDIR) return true;
-		else return false;
-#endif
+	// cannot find available/existing path
+	return false;
+}
+
+RString FileManagerBasic::GetRelativePath(const RString& path) {
+	return GetRelativePath(path, GetBasePath());
+}
+
+// Absolutepath from Relativepath
+// remove first part of path if it exists in basepath
+RString FileManagerBasic::GetRelativePath(const RString& path, const RString& basepath) {
+	// TODO: process .. if necessary
+	RString relpath = path;
+	TidyPath(relpath);
+	if (!IsAbsolutePath(relpath)) relpath = GetAbsolutePath(relpath);
+	if (BeginsWith(relpath, basepath)) relpath = relpath.substr(basepath.size() + 1);
+	return relpath;
+}
+
+RString FileManagerBasic::GetDirectory(const RString& path) {
+	// (directory should end with `/`)
+	ASSERT(path.size() != 0);	// don't allow empty path
+	int pos = path.find_last_of("/\\");
+	if (pos == path.size() - 1) return path;	// already directory
+	else return path.substr(0, pos);
+}
+
+RString FileManagerBasic::GetParentDirectory(const RString& path) {
+	RString dir = GetDirectory(path);
+	dir.pop_back();
+	return GetDirectory(dir);
+}
+
+/* mounting */
+bool FileManagerBasic::Mount(const RString& path) {
+	// if not directory, then don't mount.
+	if (!IsDirectory(path)) return false;
+
+	// do mount!
+	RString abspath = GetAbsolutePath(GetDirectory(path));
+	// ignore if already mounted
+	if (m_Mount.find(abspath) != m_Mount.end()) {
+		MountInfo *minfo = &m_Mount[abspath];
+		GetDirectoryFileInfo(abspath, minfo->files);
+		minfo->handle = 0;
+		minfo->mountpath = abspath;
+		GetFileInfo(abspath, minfo->mountinfo);
+	}
+}
+
+void FileManagerBasic::UnMount(const RString& path) {
+	// CAUTION: handle/data isn't released by itself, so you should overwrite this function to process that.
+	RString abspath = GetAbsolutePath(GetDirectory(path));
+	m_Mount.erase(abspath);
+}
+
+/* I/O */
+FileBasic* FileManagerBasic::LoadFile(const RString& path) {
+	// attempt to search normal file first
+	RString abspath = GetAbsolutePath(path);
+	if (IsFile(abspath)) {
+		return new File(abspath, "rb");
 	}
 
+	// check mounted file
+	RString dirpath = GetDirectory(path);
+	auto iter = m_Mount.find(dirpath);
+	if (iter != m_Mount.end()) {
+		RString filename = path.substr(dirpath.size() + 1);
+		for (int i = 0; i < iter->second.files.size(); i++) {
+			FileInfo& finfo = iter->second.files[i];
+			if (stricmp(finfo.filename, filename) == 0 && finfo.data) {
+				FileMemory *f = new FileMemory((char*)finfo.data, finfo.size);
+				return f;
+			}
+		}
+	}
+
+	// cannot found
+	return 0;
+}
+
+bool FileManagerBasic::ReadAllFile(const RString& path, char **p, int *len) {
+	FileBasic* f = LoadFile(path);
+	if (!f)
+		return false;
+
+	*len = f->GetSize();
+	f->Reset();
+	*p = (char*)malloc(*len);
+	f->ReadAll(*p);
+	f->Close();
+	return true;
+}
+
+/*
+ * In case of symbol collision
+ */
+#ifdef CreateFile
+#undef CreateFile
+#endif
+#ifdef CreateDirectory
+#undef CreateDirectory
+#endif
+
+bool FileManagerBasic::CreateFile(const RString& path) {
+	// TODO ...?
+	return false;
+}
+
+namespace {
 	// private
 	bool _create_directory(const char* filepath) {
 #ifdef _WIN32
@@ -785,27 +651,349 @@ namespace FileHelper {
 		return (mkdir(filepath) == 0);
 #endif
 	}
+}
 
-	bool CreateFolder(const RString& path) {
-		// if current directory is not exist
-		// then get parent directory
-		// and check it recursively
-		// after that, create own.
-		if (IsFolder(path))
-			return true;
-		if (IsFile(path))
+bool FileManagerBasic::CreateDirectory(const RString& path) {
+	// if current directory is not exist
+	// then get parent directory
+	// and check it recursively
+	// after that, create own.
+	if (IsDirectory(path))
+		return true;
+	if (IsFile(path))
+		return false;
+	if (!_create_directory(path)) {
+		RString parent = GetParentDirectory(path);
+		if (NOT(CreateDirectory(parent))) {
 			return false;
-		if (!_create_directory(path)) {
-			RString parent = GetParentDirectory(path);
-			if (NOT(CreateFolder(parent))) {
-				return false;
-			}
-			return _create_directory(path);
 		}
-		else return true;
+		return _create_directory(path);
 	}
+	else return true;
+}
 
-	RString GetParentDirectory(const RString& path) {
-		return path.substr(0, path.find_last_of("/\\"));
+
+
+
+
+
+namespace {
+	int archive_initialize_count = 0;
+}
+
+FileManager::FileManager() {
+	if (archive_initialize_count == 0) {
+		// nothing to do?
+	}
+	archive_initialize_count++;
+}
+
+FileManager::~FileManager() {
+	archive_initialize_count--;
+	if (archive_initialize_count == 0) {
+		//
 	}
 }
+
+void FileManager::PushBasePath(const RString& path) {
+	// we support archive file as directory.
+	// CAUTION: it's not auto-mounted, so you should do it by your own.
+	RString newpath = path;
+	if (IsArchiveFileName(newpath))
+		newpath = path + "/";
+	FileManagerBasic::PushBasePath(path);
+}
+
+#define ITER_ARCHIVE(a, aent)\
+	for (int r = archive_read_next_header(a, &aent);\
+		r != ARCHIVE_EOF;\
+		r = archive_read_next_header(a, &aent))
+namespace {
+	int OpenArchive(archive *a, const RString &abspath) {
+		//archive_read_support_format_7zip(a);
+		//archive_read_support_format_rar(a);
+		//archive_read_support_format_zip(a);
+		archive_read_support_format_all(a);
+		archive_read_support_compression_all(a);
+
+#ifdef _WIN32
+		std::wstring wpath = RStringToWstring(abspath);
+		return archive_read_open_filename_w(a, wpath.c_str(), 10240);
+#else
+		return archive_read_open_filename(a, abspath, 10240);
+#endif
+	}
+
+	void CloseArchive(archive *a) {
+		archive_read_close(a);
+		archive_read_finish(a);
+	}
+}
+
+bool FileManager::Mount(const RString& path) {
+	// if archive filename?
+	if (IsArchiveFileName(path)) {
+		RString abspath = GetAbsolutePath(path + "/");
+
+		// opens archive file
+		struct archive *a;
+		a = archive_read_new();
+		if (OpenArchive(a, abspath) == 0)
+		{
+			// create structure
+			MountInfo *minfo = &m_Mount[abspath];
+			minfo->mountpath = abspath;
+			minfo->handle = 0;
+			GetFileInfo(abspath, minfo->mountinfo);
+
+			// scan total archive files
+			// (however, don't read it yet - it costs much.)
+			struct archive_entry *aent;
+			ITER_ARCHIVE(a, aent)
+			{
+				if (r == ARCHIVE_OK) {
+					const char* fn = archive_entry_pathname(aent);
+					if (!fn) continue;	// sometimes null, why ...??
+
+					// cache archived file info
+					FileInfo finfo;
+					finfo.updatetime = archive_entry_atime(aent);
+					finfo.createtime = archive_entry_birthtime(aent);
+					finfo.type = archive_entry_filetype(aent) == AE_IFREG ? FILETYPE::TYPE_FILE : FILETYPE::TYPE_FOLDER;
+					finfo.size = archive_entry_size(aent);
+					finfo.data = 0;
+					finfo.filename = fn;
+					minfo->files.push_back(finfo);
+
+					// skip read data(do it LoadFile() as it costs a lot)
+					// just go to next entry.
+					archive_read_data_skip(a);
+				}
+				else if (r == ARCHIVE_FATAL) {
+					break;
+				}
+			}
+			//archive_entry_free(aent);
+			CloseArchive(a);
+		}
+		// failed to open archive file, return false
+		else
+			return false;
+	}
+	else return FileManagerBasic::Mount(path);
+}
+
+void FileManager::UnMount(const RString& path) {
+	// we do some additional process
+	// like releasing archive/file pointer
+	auto iter = m_Mount.find(path);
+	if (iter != m_Mount.end()) {
+		MountInfo* minfo = &iter->second;
+		if (minfo->handle) archive_read_close((archive*)minfo->handle);
+		for (auto it2 = minfo->files.begin(); it2 != minfo->files.end(); ++it2) {
+			if (it2->data) free(it2->data);
+		}
+		FileManagerBasic::UnMount(path);
+	}
+}
+
+FileBasic* FileManager::LoadFile(const RString& path) {
+	// if dirpath is archive,
+	// then check is archive raw data is loaded
+	RString dirpath = GetDirectory(path);
+	if (IsArchiveFileName(dirpath)) {
+		auto iter = m_Mount.find(dirpath);
+		if (iter != m_Mount.end()) {
+			// pick any file
+			// if it's empty, then load it
+			if (iter->second.files.size() && iter->second.files[0].data == 0) {
+				archive *a = archive_read_new();
+				if (OpenArchive(a, dirpath) == 0) {
+					// CAUTION:
+					// This just caches file without checking filename.
+					// It's a little unsafe if archive iterates file randomly
+					// but that's no possibility of that, so keep going on.
+					// (in case of something going wrong, just put a ASSERT).
+					struct archive_entry *aent;
+					int fi = 0;
+					ITER_ARCHIVE(a, aent)
+					{
+						if (r == ARCHIVE_OK) {
+							FileInfo* finfo = &iter->second.files[fi];
+							ASSERT(stricmp(finfo->filename, archive_entry_pathname(aent)) == 0);
+							// start to read file
+							const void *ptr_;
+							int64_t offset_;
+							size_t size_;
+							void* data_ = malloc(finfo->size);
+							while ((r = archive_read_data_block(a, &ptr_, &size_, &offset_)) == 0) {
+								memcpy((char*)data_ + offset_, ptr_, size_);
+							}
+							if (r == ARCHIVE_FAILED) {
+								LOG->Warn("Archive file(%s) seems like damaged (unzipping error)...", dirpath.c_str());
+								// We'd better to delete dummy `data_`,
+								// but there's no way to distinguish unattempted file from attempted one.
+								// So, just add dummy ptr to data (It'll automatically released, naturally.)
+								LOG->Warn(archive_error_string(a));
+							}
+							finfo->data = data_;
+						}
+						else {
+							LOG->Warn("Archive file(%s) seems like damaged (parse error)...", dirpath.c_str());
+							if (r == ARCHIVE_FATAL) {
+								// stop reading archive file
+								break;
+							}
+						}
+						fi++;
+					}
+					// raw data filling end.
+					CloseArchive(a);
+				}
+			}
+		}
+	}
+
+	// now call basic handler
+	return FileManagerBasic::LoadFile(path);
+}
+
+bool FileManager::ReadAllFile(const RString& path, char **p, int *len) {
+	// just rewrite func to replace FileManagerBasic::LoadFile().
+	FileBasic* f = LoadFile(path);
+	if (!f)
+		return false;
+
+	*len = f->GetSize();
+	f->Reset();
+	*p = (char*)malloc(*len);
+	f->ReadAll(*p);
+	f->Close();
+	return true;
+}
+
+
+
+
+
+
+
+
+/*
+ * helper for file class
+ */
+
+namespace FileHelper {
+	RString ReplacePathEnv(const RString& path) {
+		int p = 0, p2 = 0;
+		RString rpath = path;
+		while (p != RString::npos) {
+			p = rpath.find("$(", p);
+			if (p == RString::npos)
+				break;
+			p2 = rpath.find(")", p);
+			if (p2 != RString::npos) {
+				RString key = rpath.substr(p + 2, p2 - p - 2);
+				RString val = "";
+				if (STRPOOL->IsExists(key))
+					val = *STRPOOL->Get(key);
+				rpath = rpath.substr(0, p) + val + rpath.substr(p2 + 1);
+				p = p2 + 1;
+				if (p >= rpath.size())
+					break;
+			}
+			else {
+				break;
+			}
+		}
+		return rpath;
+	}
+
+	bool GetAnyAvailableFilePath(RString &path) {
+		// first attempt to find file existence ..
+		path = FILEMANAGER->GetAbsolutePath(path);
+		if (FILEMANAGER->IsFile(path) > FILETYPE::TYPE_NULL)
+			return true;
+
+		// if not, then find any file with same extension
+		int p = path.find_last_of('.');
+		RString ext = "";
+		if (p != std::string::npos) {
+			ext = path.substr(p);
+		}
+		FILEMANAGER->SetFileFilter(ext);
+		RString folder = FILEMANAGER->GetDirectory(path);
+
+		std::vector<RString> filelist;
+		FILEMANAGER->GetDirectoryFileList(folder, filelist);
+		if (filelist.size() > 0) {
+			// randomly select any file
+			path = folder + filelist[rand() % filelist.size()];
+			return true;
+		}
+
+		// nothing found
+		return false;
+	}
+
+	bool IsFile(const RString& path) {
+#ifdef _WIN32
+		std::wstring path_w = RStringToWstring(FILEMANAGER->GetAbsolutePath(path));
+		struct _stat64i32 s;
+		if (_wstat(path_w.c_str(), &s) != 0) return false;
+		if (s.st_mode & S_IFREG) return true;
+		else return false;
+#else
+		struct stat s;
+		if (stat(path.c_str(), &s) != 0) return false;
+		if (s.st_mode & S_IFREG) return true;
+		else return false;
+#endif
+	}
+
+	bool IsDirectory(const RString& path) {
+#ifdef _WIN32
+		std::wstring path_w = RStringToWstring(FILEMANAGER->GetAbsolutePath(path));
+		struct _stat64i32 s;
+		if (_wstat(path_w.c_str(), &s) != 0) return false;
+		if (s.st_mode & S_IFDIR) return true;
+		else return false;
+#else
+		struct stat s;
+		if (stat(path.c_str(), &s) != 0) return false;
+		if (s.st_mode & S_IFDIR) return true;
+		else return false;
+#endif
+	}
+
+	bool GetFileInfo(const RString& path, FileInfo& finfo) {
+#ifdef _WIN32
+		std::wstring path_w = RStringToWstring(path);
+		struct _stat64i32 s;
+		if (_wstat(path_w.c_str(), &s) != 0) return false;
+		finfo.type = (s.st_mode & S_IFDIR) ? FILETYPE::TYPE_FOLDER : FILETYPE::TYPE_FILE;
+		finfo.data = 0;
+		finfo.createtime = s.st_ctime;
+		finfo.updatetime = s.st_mtime;
+		finfo.size = s.st_size;
+		finfo.filename = path;
+		return true;
+#else
+		struct stat s;
+		if (stat(path.c_str(), &s) != 0) return false;
+		finfo.type = (s.st_mode & S_IFDIR) ? FILETYPE::TYPE_FOLDER : FILETYPE::TYPE_FILE;
+		finfo.data = 0;
+		finfo.createtime = st->st_ctime;
+		finfo.updatetime = st->st_mtime;
+		finfo.size = st->st_size;
+		finfo.filename = path;
+		return true;
+#endif
+	}
+}
+
+
+
+
+
+FileManager *FILEMANAGER = new FileManager();

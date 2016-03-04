@@ -96,6 +96,7 @@ namespace BmsHelper {
 		info.iRank = 0;
 		info.iTotal = 0;
 		info.iPlayer = 0;
+		// TODO: difficulty sometimes automatically set by filename/subtitle...?
 		bms.GetHeaders().Query("DIFFICULTY", &info.iDifficulty);
 		bms.GetHeaders().Query("PLAYLEVEL", &info.iLevel);
 		bms.GetHeaders().Query("BPM", &info.iLevel);

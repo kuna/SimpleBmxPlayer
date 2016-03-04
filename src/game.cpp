@@ -250,13 +250,8 @@ namespace Game {
 		 */
 		TEXPOOL->Register("_black", SurfaceUtil::CreateColorTexture(0x000000FF));
 		TEXPOOL->Register("_white", SurfaceUtil::CreateColorTexture(0xFFFFFFFF));
-		RString path;
-		path = "../system/resource/fastslow.png";
-		FileHelper::ConvertPathToSystem(path);
-		TEXPOOL->Register("_fastslow", SurfaceUtil::LoadTexture(path));
-		path = "../system/resource/number_float.png";
-		FileHelper::ConvertPathToSystem(path);
-		TEXPOOL->Register("_number_float", SurfaceUtil::LoadTexture(path));
+		TEXPOOL->Register("_fastslow", SurfaceUtil::LoadTexture("../system/resource/fastslow.png"));
+		TEXPOOL->Register("_number_float", SurfaceUtil::LoadTexture("../system/resource/number_float.png"));
 		oninputstart = SWITCH_GET("OnInputStart");
 		onscene = SWITCH_GET("OnScene");
 		font = FONTPOOL->LoadTTFFont("_system", 
