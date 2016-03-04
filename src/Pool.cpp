@@ -24,7 +24,7 @@ HandlerAuto::HandlerAuto() {
 }
 
 HandlerAuto::~HandlerAuto() {
-	HANDLERPOOL->Remove(this);
+	HANDLERPOOL->RemoveHandler(this);
 }
 
 
@@ -53,6 +53,8 @@ RString* StringPool::Get(const RString &key) {
 	}
 	return &_stringpool[key];
 }
+
+void StringPool::Remove(const RString& key) { _stringpool.erase(key); }
 
 void StringPool::Clear() { _stringpool.clear(); }
 
@@ -113,6 +115,8 @@ int* IntPool::Get(const RString &key) {
 	}
 	return &_intpool[key];
 }
+
+void IntPool::Remove(const RString& key) { _intpool.erase(key); }
 
 void IntPool::Clear() { _intpool.clear(); }
 
@@ -186,12 +190,16 @@ Switch* HandlerPool::Stop(const RString &key) {
 	return &_timerpool[key];
 }
 
-void HandlerPool::Remove(Handler* h) {
+void HandlerPool::RemoveHandler(Handler* h) {
 	for (auto it = _handlerpool.begin(); it != _handlerpool.end(); ++it) {
 		if ((*it) == h) {
 			_handlerpool.erase(it);
 		}
 	}
+}
+
+void HandlerPool::Remove(const RString& key) {
+	_timerpool.erase(key);
 }
 
 void HandlerPool::Clear() { _handlerpool.clear(); }
@@ -238,23 +246,9 @@ bool TexturePool::Release(Texture *tex) {
 	}
 }
 
-namespace {
-	// private
-	// if filename == '*', then get any file in that directory
-	void GetAnyProperFile(RString &_path) {
-		if (substitute_extension(get_filename(_path), "") == "*") {
-			RString _directory = get_filedir(_path);
-			std::vector<RString> filelist;
-			FileHelper::GetFileList(_directory, filelist);
-			if (filelist.size() > 0)
-				_path = filelist[rand() % filelist.size()];
-		}
-	}
-}
-
 bool TexturePool::IsExists(const RString &path) {
-	RString _path = path;
-	FileHelper::ConvertPathToAbsolute(_path);
+	RString _path = path; //FILEMANAGER->GetAbsolutePath(path);
+	FileHelper::GetAnyAvailableFilePath(_path);
 	return (_texpool.find(_path) != _texpool.end());
 }
 
@@ -265,26 +259,9 @@ Texture* TexturePool::Load(const RString &path) {
 	RString _path = path;
 	FileHelper::GetAnyAvailableFilePath(_path);
 	if (!IsExists(_path)) {
-		bool ismovie = false;
-		Surface *surf = new Surface();
-		if (!surf->Load(_path)) {
-			delete surf;
-			surf = new SurfaceMovie();
-			if (!surf->Load(_path)) {
-				delete surf;
-				// cannot load texture
-				LOG->Warn("Texture - Attempt to load surface, buf failed(%s).", path);
-				return 0;
-			}
-			ismovie = true;
-		}
-		Texture *tex = DISPLAY->CreateTexture(surf);
-		// if ismovie, then register surface into pool
-		// to update texture later
-		if (ismovie) {
-			_surface[tex] = surf;
-		}
-		else delete surf;
+		Texture* tex = SurfaceUtil::LoadTexture(_path);
+		if (!tex) return 0;
+		else Register(_path, tex);
 		return tex;
 	}
 	else {
@@ -305,16 +282,6 @@ Texture* TexturePool::Register(const RString& key, Texture *tex) {
 		_loadcount[tex]++;
 	}
 	return tex;
-}
-
-void TexturePool::Update(Display::Texture* tex, Uint32 msec) {
-	// ignore if no surface exists
-	if (_surface.find(tex) != _surface.end()) {
-		SurfaceMovie *surf = (SurfaceMovie*)_surface[tex];
-		if (!surf) return;
-		surf->UpdateSurface(msec);
-		DISPLAY->UpdateTexture(tex, surf);
-	}
 }
 
 Texture* TexturePool::Get(const RString &path) {
@@ -401,9 +368,7 @@ Font* FontPool::LoadTTFFont(const char* id, const RString &path,
 
 Font* FontPool::LoadTextureFont(const char* id, const RString &path) {
 	// first convert path in easy way
-	RString _path = path;
-	FileHelper::ConvertPathToAbsolute(_path);
-	GetAnyProperFile(_path);
+	RString _path = FILEMANAGER->GetAbsolutePath(path);
 	RString content;
 	if (GetFileContents(_path, content)) {
 		return LoadTextureFontFromTextData(_path, content);
@@ -476,18 +441,14 @@ bool SoundPool::Release(Audio *audio) {
 }
 
 bool SoundPool::IsExists(const RString &path) {
-	RString _path = path;
-	FileHelper::ConvertPathToAbsolute(_path);
+	RString _path = FILEMANAGER->GetAbsolutePath(path);
 	return (_soundpool.find(_path) != _soundpool.end());
 }
 
 Audio* SoundPool::Load(const RString &path) {
 	// first convert path in easy way
-	RString _path = path;
-	FileHelper::ConvertPathToAbsolute(_path);
+	RString _path = FILEMANAGER->GetAbsolutePath(path);
 	if (!IsExists(_path)) {
-		// if filename == '*', then get any file in that directory
-		GetAnyProperFile(_path);
 		Audio *audio = new Audio(_path);
 		_soundpool.insert(pair<RString, Audio*>(_path, audio));
 		_loadcount.insert(pair<Audio*, int>(audio, 1));
@@ -501,8 +462,7 @@ Audio* SoundPool::Load(const RString &path) {
 }
 
 Audio* SoundPool::Get(const RString &path) {
-	RString _path = path;
-	FileHelper::ConvertPathToAbsolute(_path);
+	RString _path = FILEMANAGER->GetAbsolutePath(path);
 	if (IsExists(_path)) {
 		return _soundpool[_path];
 	}

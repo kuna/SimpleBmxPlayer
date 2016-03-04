@@ -19,26 +19,21 @@ namespace BmsHelper {
 	}
 
 	bool LoadBms(const RString& path, BmsBms& bms) {
-		FileBasic *f = 0;
-		bool succeed = true;
-		if (!FileHelper::LoadFile(path, &f)) {
-			succeed = false;
-		}
-		else {
-			BmsParser::Parser *p = new BmsParser::Parser(bms);
-			RString bmstext;
-			f->ReadAll(bmstext);
-			p->Parse(bmstext);
-			delete p;
+		FileBasic *f = FILEMANAGER->LoadFile(path);
+		if (!f) {
+			LOG->Critical("Failed to open Bms File(%s)..", path.c_str());
+			return false;
 		}
 
-		if (f) {
-			f->Close();
-			delete f;
-		}
+		BmsParser::Parser *p = new BmsParser::Parser(bms);
+		RString bmstext;
+		f->ReadAll(bmstext);
+		bool succeed = p->Parse(bmstext);
+		delete p;
+		delete f;
 
 		if (!succeed) {
-			LOG->Critical("Failed to parse Bms File..");
+			LOG->Critical("Failed to parse Bms File(%s)..", path.c_str());
 			return false;
 		}
 

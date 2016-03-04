@@ -30,6 +30,7 @@ public:
 	bool IsExists(const RString &key);
 	RString* Set(const RString &key, const RString &value = "");
 	RString* Get(const RString &key);
+	void Remove(const RString& key);
 	void Clear();
 };
 
@@ -50,6 +51,7 @@ public:
 	bool IsExists(const RString &key);
 	int* Set(const RString &key, int value = 0);
 	int* Get(const RString &key);
+	void Remove(const RString& key);
 	void Clear();
 };
 
@@ -104,7 +106,8 @@ public:
 	// basic element operation
 	void Clear();
 	void Register(Handler* handler);
-	void Remove(Handler* h);
+	void RemoveHandler(Handler* h);
+	void Remove(const RString& key);
 	bool IsExists(const RString &key);
 	bool IsRegistered(Handler* h);
 	bool IsStarted(const RString& name);

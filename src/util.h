@@ -112,6 +112,8 @@ void md5(const char *in, int in_len, char *out);
 /* IO Related */
 bool GetFileContents(const RString &sPath, RString &sOut, bool bOneLine = false);
 bool GetFileContents(const RString &sFile, vector<RString> &asOut);
+bool WriteFileContents(const RString &sPath, RString &sOut);
+bool WriteFileContents(const RString &sPath, const char *p, size_t len);
 RString GetHash(const RString &sPath);
 
 uint32_t MakeRGBAInt(const RString& s);

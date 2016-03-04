@@ -848,6 +848,11 @@ ActorButton::ActorButton() : ActorSprite(ACTORTYPE::BUTTON) {}
 
 
 
+ActorList::ActorList() : Actor(ACTORTYPE::LIST) {}
+
+
+
+
 
 #pragma region SCRIPTOBJECT
 ActorScript::ActorScript()

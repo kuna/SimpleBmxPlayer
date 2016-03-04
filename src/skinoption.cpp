@@ -87,13 +87,25 @@ std::vector<SkinOption::CustomFile>& SkinOption::GetFiles() {
 #ifdef _USEPOOL
 void SkinOption::SetEnvironmentFromOption() {
 	for (auto it = switches.begin(); it != switches.end(); ++it) {
-		TIMERPOOL->Set(it->switchname.c_str());
+		SWITCH_ON(it->switchname.c_str());
 	}
 	for (auto it = values.begin(); it != values.end(); ++it) {
 		INTPOOL->Set(it->optionname.c_str(), it->value);
 	}
 	for (auto it = files.begin(); it != files.end(); ++it) {
 		STRPOOL->Set(it->optionname.c_str(), it->path.c_str());
+	}
+}
+
+void SkinOption::DeleteEnvironmentFromOption() {
+	for (auto it = switches.begin(); it != switches.end(); ++it) {
+		HANDLERPOOL->Remove(it->switchname.c_str());
+	}
+	for (auto it = values.begin(); it != values.end(); ++it) {
+		INTPOOL->Remove(it->optionname.c_str());
+	}
+	for (auto it = files.begin(); it != files.end(); ++it) {
+		STRPOOL->Remove(it->optionname.c_str());
 	}
 }
 #endif

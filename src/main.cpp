@@ -103,30 +103,32 @@ namespace Parameter {
 			 * if it does, get valid path from player
 			 */
 			RString hash = "";
-			if (FileHelper::IsFolder(courses[i])) {
-				FileHelper::PushBasePath(courses[i]);
+			FILEMANAGER->SetFileFilter(".bml;.bme;.bms;.pms");
+			// if archive, then mount it
+			if (FileHelper::IsArchiveFileName(courses[i]))
+				FILEMANAGER->Mount(courses[i]);
+			if (FILEMANAGER->IsDirectory(courses[i])) {
 				std::vector<RString> filelist;
-				FileHelper::GetFileList(filelist);
-				FileHelper::FilterFileList(".bml;.bme;.bms;.pms", filelist);
-				printf("Select one:\n");
-				for (int i = 0; i < filelist.size(); i++) printf("%d. %s\n", i, filelist[i].c_str());
-				char buf_[256];
-				fflush(stdin);
-				gets(buf_);
-				int r = atoi(buf_);
-				if (r >= filelist.size()) r = filelist.size() - 1;
-				courses[i] = filelist[r];
-				FileHelper::ConvertPathToAbsolute(courses[i]);
-				FileBasic *f;
-				FileHelper::LoadFile(filelist[r], &f);
+				FILEMANAGER->GetDirectoryFileList(courses[i], filelist);
+				{
+					// select
+					printf("Select one:\n");
+					for (int i = 0; i < filelist.size(); i++) printf("%d. %s\n", i, filelist[i].c_str());
+					char buf_[256];
+					fflush(stdin);
+					gets(buf_);
+					int r = atoi(buf_);
+					if (r >= filelist.size()) r = filelist.size() - 1;
+					courses[i] = filelist[r];
+				}
+				FileBasic *f = FILEMANAGER->LoadFile(courses[i]);
 				hash = f->GetMD5Hash();
-				f->Close();
 				delete f;
-				FileHelper::PopBasePath();
 			}
-			else {
-				hash = GetHash(courses[i]);
-			}
+			FILEMANAGER->UnMount(courses[i]);
+
+			hash = GetHash(courses[i]);
+
 			GamePlay::P.bmspath[i] = courses[i];
 			GamePlay::P.bmshash[i] = hash;
 		}

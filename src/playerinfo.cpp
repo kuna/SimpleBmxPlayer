@@ -272,7 +272,6 @@ namespace PlayerReplayHelper {
 		else {
 			path = ssprintf("../replay/%s/%s.rep", playername, songhash);
 		}
-		FileHelper::ConvertPathToSystem(path);
 		RString repdata;
 		if (GetFileContents(path, repdata)) {
 			rep.Parse(repdata);
@@ -296,11 +295,10 @@ namespace PlayerReplayHelper {
 		else {
 			path = ssprintf("../replay/%s/%s.rep", playername, songhash);
 		}
-		FileHelper::ConvertPathToSystem(path);
 		RString dir = get_filedir(path);
 		RString repdata;
 		rep.Serialize(repdata);
-		FileHelper::CreateFolder(dir);
+		FILEMANAGER->CreateDirectory(dir);
 		File f;
 		if (f.Open(path, "w")) {
 			f.Write(repdata);
@@ -469,10 +467,8 @@ namespace PlayerRecordHelper {
 
 	bool LoadPlayerRecord(PlayerSongRecord& record, const char* name, const char* songhash) {
 		// create & convert db path to absolute
-		RString absolute_db_path = ssprintf("../player/%s.db", name);
-		FileHelper::ConvertPathToSystem(absolute_db_path);
-		//RString absolute_db_dir = FileHelper::GetParentDirectory(absolute_db_path);
-		//FileHelper::CreateFolder(absolute_db_dir);
+		RString absolute_db_path = FILEMANAGER->GetAbsolutePath(ssprintf("../player/%s.db", name));
+		FILEMANAGER->CreateDirectory(absolute_db_path);
 		// start to query DB
 		ASSERT(sql == 0);
 		if (!OpenSQL(absolute_db_path))
@@ -485,10 +481,8 @@ namespace PlayerRecordHelper {
 	}
 
 	bool SavePlayerRecord(const PlayerSongRecord& record, const char* name) {
-		RString absolute_db_path = ssprintf("../player/%s.db", name);
-		FileHelper::ConvertPathToSystem(absolute_db_path);
-		RString absolute_db_dir = FileHelper::GetParentDirectory(absolute_db_path);
-		FileHelper::CreateFolder(absolute_db_dir);
+		RString absolute_db_path = FILEMANAGER->GetAbsolutePath(ssprintf("../player/%s.db", name));
+		FILEMANAGER->CreateDirectory(absolute_db_path);
 		// start to query DB
 		ASSERT(sql == 0);
 		if (!OpenSQL(absolute_db_path))
@@ -501,10 +495,7 @@ namespace PlayerRecordHelper {
 	}
 
 	bool DeletePlayerRecord(const char* name, const char* songhash) {
-		RString absolute_db_path = ssprintf("../player/%s.db", name);
-		FileHelper::ConvertPathToSystem(absolute_db_path);
-		//RString absolute_db_dir = FileHelper::GetParentDirectory(absolute_db_path);
-		//FileHelper::CreateFolder(absolute_db_dir);
+		RString absolute_db_path = FILEMANAGER->GetAbsolutePath(ssprintf("../player/%s.db", name));
 		ASSERT(sql == 0);
 		if (!OpenSQL(absolute_db_path))
 			return false;
@@ -582,10 +573,8 @@ namespace PlayerInfoHelper {
 
 	bool LoadPlayerInfo(PlayerInfo& player, const char* name) {
 		// create & convert db path to absolute
-		RString absolute_db_path = ssprintf("../player/%s.xml", name);
-		FileHelper::ConvertPathToSystem(absolute_db_path);
-		RString absolute_db_dir = FileHelper::GetParentDirectory(absolute_db_path);
-		FileHelper::CreateFolder(absolute_db_dir);
+		RString absolute_db_path = FILEMANAGER->GetAbsolutePath(ssprintf("../player/%s.xml", name));
+		FILEMANAGER->CreateDirectory(absolute_db_path);
 		// start to parse XML file
 		XMLDocument *doc = new XMLDocument();
 		if (doc->LoadFile(absolute_db_path) != 0) {
@@ -615,10 +604,8 @@ namespace PlayerInfoHelper {
 
 	bool SavePlayerInfo(PlayerInfo& player) {
 		// create & convert db path to absolute
-		RString absolute_db_path = ssprintf("../player/%s.xml", player.name.c_str());
-		FileHelper::ConvertPathToSystem(absolute_db_path);
-		RString absolute_db_dir = FileHelper::GetParentDirectory(absolute_db_path);
-		FileHelper::CreateFolder(absolute_db_dir);
+		RString absolute_db_path = FILEMANAGER->GetAbsolutePath(ssprintf("../player/%s.xml", player.name.c_str()));
+		FILEMANAGER->CreateDirectory(absolute_db_path);
 		// make new XML file
 		XMLDocument *doc = new XMLDocument();
 		if (!doc) return false;

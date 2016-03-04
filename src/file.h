@@ -29,6 +29,7 @@ public:
 	virtual int Read(char *p, size_t size) = 0;
 	virtual int Write(const RString &in) = 0;
 	virtual int Write(const char* in, int size) = 0;
+	virtual int WriteToFile(const char* path) = 0;
 	virtual void Close() = 0;
 	virtual size_t GetSize() = 0;
 	virtual bool IsEOF() = 0;
@@ -67,6 +68,7 @@ public:
 	virtual int Read(char *p, size_t size);
 	virtual int Write(const RString &in);
 	virtual int Write(const char* in, int size);
+	virtual int WriteToFile(const char* path);
 	virtual size_t GetSize();
 	virtual bool IsEOF();
 	virtual void Reset();
@@ -92,6 +94,7 @@ public:
 	virtual int Read(char *p, size_t size);
 	virtual int Write(const RString &in);
 	virtual int Write(const char* in, int size);
+	virtual int WriteToFile(const char* path);
 	virtual void Close();
 	virtual bool IsEOF();
 	virtual void Reset();
@@ -201,10 +204,12 @@ namespace FileHelper {
 	RString ReplacePathEnv(const RString& path);
 	bool GetAnyAvailableFilePath(RString &path);
 
+	bool IsArchiveFileName(const RString& path);
 	/*
 	 * low-level
 	 */
 	bool GetFileInfo(const RString& path, FileInfo &info);
 	bool IsFile(const RString& path);
 	bool IsDirectory(const RString& path);
+	bool CreateDirectory(const RString& dirpath);
 }

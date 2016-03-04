@@ -55,11 +55,10 @@ bool SongPlayer::SoundPool::Load(BmsWord channel, const RString &path) {
 	//FileHelper::ConvertPathToAbsolute(alter_ogg_path);
 	Audio *audio = new Audio();
 	FileBasic *file = 0;
-	if (!FileHelper::LoadFile(alter_ogg_path, &file))
-		FileHelper::LoadFile(wav_path, &file);
+	if ((file = FILEMANAGER->LoadFile(alter_ogg_path)) == 0)
+		file = FILEMANAGER->LoadFile(wav_path);
 	if (file) {
 		audio->Load(file, channel.ToInteger());
-		file->Close();
 		delete file;
 	}
 
@@ -83,61 +82,35 @@ Display::Texture* SongPlayer::ImagePool::Get(BmsWord channel) {
 
 bool SongPlayer::ImagePool::Load(BmsWord channel, const RString &path) {
 	RString bmp_path = path;
-	// don't use absolute path here
-	//FileHelper::ConvertPathToAbsolute(bmp_path);
 
-	SurfaceMovie *surf = new SurfaceMovie();
-	/*
-	* currently reading from FileBasic doesn't support ffmpeg
-	* so we should check if we're reading from memory or not
-	*/
-	if (FileHelper::CurrentDirectoryIsZipFile()) {
-		FileBasic *file = 0;
-		FileHelper::LoadFile(bmp_path, &file);
-		if (file) {
-			unsigned char *iMem = (unsigned char*)malloc(1024000);
-			int iSize = file->Read((char*)iMem, 1024000);
-			surf->LoadFromMemory(iMem, iSize);
-			file->Close();
-			free(iMem);
-			delete file;
-		}
-	}
-	else {
-		surf->Load(bmp_path);
-	}
-	// colorkey
-	surf->RemoveColor(0x000000FF);
-
-	if (surf->IsLoaded()) {
-		// make texture from surface
-		bmp_table[channel.ToInteger()] = DISPLAY->CreateTexture(surf);
-		// if movie, then store surface
-		if (surf->IsMovie())
-			mov_table[channel.ToInteger()] = surf;
-		else
-			delete surf;
-	}
-	else {
+	Surface *surf = SurfaceUtil::LoadSurface(path);
+	if (!surf) {
 		LOG->Warn("[Warning] %s - cannot load BMP file", bmp_path.c_str());
-		delete surf;
 		return false;
 	}
+
+	// colorkey
+	surf->RemoveColor(0x000000FF);
+	// make texture from surface
+	Display::Texture *tex = DISPLAY->CreateTexture(surf);
+	// if movie, then store surface
+	if (surf->IsMovie())
+		tex->surf = surf;
+	else
+		delete surf;
+	bmp_table[channel.ToInteger()] = tex;
 	return true;
 }
 
 void SongPlayer::ImagePool::Update(uint32_t msec) {
 	for (int i = 0; i < BmsConst::WORD_MAX_COUNT; i++) {
-		if (mov_table[i]) {
-			mov_table[i]->UpdateSurface(msec);
-			DISPLAY->UpdateTexture(bmp_table[i], mov_table[i]);
-		}
+		SurfaceUtil::UpdateTexture(bmp_table[i]);
 	}
 }
 
 void SongPlayer::ImagePool::UnloadAll() {
 	for (int i = 0; i < BmsConst::WORD_MAX_COUNT; i++)
-		SAFE_DELETE(bmp_table[i]);
+		DISPLAY->DeleteTexture(bmp_table[i]);
 }
 
 

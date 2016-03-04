@@ -16,16 +16,13 @@ bool Theme::Load(const char* skinname) {
 	ClearElements();
 
 	// make metric path / skin path from skinname
-	RString metricpath = RString(skinname) + ".skin.xml";
-	RString skinpath = RString(skinname) + ".xml";		// can use xml, but better to use lua
-	FileHelper::ConvertPathToSystem(metricpath);
-	FileHelper::ConvertPathToSystem(skinpath);
+	RString metricpath = FILEMANAGER->GetAbsolutePath(RString(skinname) + ".skin.xml");
+	RString skinpath = FILEMANAGER->GetAbsolutePath(RString(skinname) + ".xml");		// can use xml, but better to use lua
 
 	// load metric / skin from file
 	// if file not exists, then attempt to convert lr2skin.
 	if (!FileHelper::IsFile(metricpath)) {
-		RString lr2skinpath = RString(skinname) + ".lr2skin";
-		FileHelper::ConvertPathToSystem(lr2skinpath);
+		RString lr2skinpath = FILEMANAGER->GetAbsolutePath(RString(skinname) + ".lr2skin");
 		if (!SkinConverter::ConvertLR2SkinToLua(lr2skinpath)) {
 			LOG->Warn("Theme - Cannot convert/find LR2Skin to Lua (%s)", lr2skinpath);
 			return false;
@@ -53,7 +50,7 @@ bool Theme::Load(const char* skinname) {
 void Theme::ClearElements() {
 	// before release rendertree and else, 
 	// reset options from skinoption
-	// (TODO)
+	m_Skinoption.DeleteEnvironmentFromOption();
 
 	// release render trees
 	// (will do automatically recursive)

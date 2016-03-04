@@ -20,7 +20,8 @@ Audio::~Audio() {
 
 bool Audio::Load(const char* filepath, int channel) {
 	Close();
-	File *f = new File(filepath, "rb");
+	FileBasic *f = FILEMANAGER->LoadFile(filepath);
+	if (!f) return false;
 	bool r = Load(f, channel);
 	delete f;
 	return r;

@@ -40,7 +40,6 @@ protected:
 	class ImagePool {
 	private:
 		BmsBmp *bmp_table[BmsConst::WORD_MAX_COUNT];
-		SurfaceMovie *mov_table[BmsConst::WORD_MAX_COUNT];	// only store movie surface
 	public:
 		ImagePool();
 		BmsBmp* Get(BmsWord channel);

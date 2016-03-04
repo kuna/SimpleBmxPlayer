@@ -99,6 +99,7 @@ public:
  * simple util
  */
 namespace SurfaceUtil {
+	Surface* LoadSurface(const char* filepath);
 	Display::Texture* LoadTexture(const char* filepath);
 	void UpdateTexture(Display::Texture* tex);
 	Display::Texture* CreateColorTexture(Uint32 clr);

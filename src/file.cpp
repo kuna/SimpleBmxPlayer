@@ -58,18 +58,19 @@ File::~File() {
 bool File::Open(const char *path, const char* mode) {
 	/* if file is already open then close it */
 	if (fp) Close();
+	RString abspath = FILEMANAGER->GetAbsolutePath(path);
 	int e;
 #if _WIN32
-	fpath_w = RStringToWstring(path);
+	fpath_w = RStringToWstring(abspath);
 	fmode_w = RStringToWstring(mode);
 	e = _wfopen_s(&fp, fpath_w.c_str(), fmode_w.c_str());
 #else
-	e = fopen_s(&fp, path, mode);
+	e = fopen_s(&fp, abspath, mode);
 #endif
 	if (e != 0)
 		return false;
 
-	fpath = path;
+	fpath = abspath;
 	fmode = mode;
 	return true;
 }
@@ -128,6 +129,14 @@ int File::Write(const RString &in) {
 
 int File::Write(const char* in, int len) {
 	return fwrite(in, 1, len, fp);
+}
+
+int File::WriteToFile(const char* path) {
+	RString s;
+	Reset();
+	ReadAll(s);
+	int r = WriteFileContents(path, s);
+	return r;
 }
 
 SDL_RWops* File::GetSDLRW() {
@@ -261,6 +270,14 @@ int FileMemory::Write(const char* in, int len) {
 	return len;
 }
 
+int FileMemory::WriteToFile(const char* path) {
+	RString s;
+	Reset();
+	ReadAll(s);
+	int r = WriteFileContents(path, s);
+	return r;
+}
+
 bool FileMemory::IsEOF() { return GetSize() < m_pos; }
 
 void FileMemory::Reset() {
@@ -278,17 +295,6 @@ SDL_RWops* FileMemory::GetSDLRW() {
 
 
 
-
-namespace {
-	// also checks for archive format file path
-	bool IsArchiveFileName(const RString& path) {
-		RString tmp = path;
-		if (tmp.back() == '/' || tmp.back() == '\\') tmp.pop_back();
-		return EndsWith(tmp, ".zip") ||
-			EndsWith(tmp, ".rar") ||
-			EndsWith(tmp, ".7z");
-	}
-}
 
 void FileManagerBasic::PushBasePath(const RString& path) {
 	// convert path to directory before push
@@ -471,10 +477,20 @@ bool FileManagerBasic::IsDirectory(const RString& path) {
 	if (FileHelper::IsDirectory(path))
 		return FILETYPE::TYPE_FOLDER;
 	else {
-		// search for mounted file
+		// search for mount list
+		RString abspath = GetAbsolutePath(path);
+		RString dirpath = GetDirectory(abspath);
+		for (auto it = m_Mount.begin(); it != m_Mount.end(); ++it) {
+			if (stricmp(it->first, dirpath) == 0) {
+				return true;
+			}
+		}
+
+#if 0
 		FileInfo finfo;
 		if (GetFileInfo(path, finfo))
 			return finfo.type == FILETYPE::TYPE_FOLDER;
+#endif
 
 		return false;
 	}
@@ -641,35 +657,8 @@ bool FileManagerBasic::CreateFile(const RString& path) {
 	return false;
 }
 
-namespace {
-	// private
-	bool _create_directory(const char* filepath) {
-#ifdef _WIN32
-		std::wstring path_w = RStringToWstring(filepath);
-		return (_wmkdir(path_w.c_str()) == 0);
-#else
-		return (mkdir(filepath) == 0);
-#endif
-	}
-}
-
 bool FileManagerBasic::CreateDirectory(const RString& path) {
-	// if current directory is not exist
-	// then get parent directory
-	// and check it recursively
-	// after that, create own.
-	if (IsDirectory(path))
-		return true;
-	if (IsFile(path))
-		return false;
-	if (!_create_directory(path)) {
-		RString parent = GetParentDirectory(path);
-		if (NOT(CreateDirectory(parent))) {
-			return false;
-		}
-		return _create_directory(path);
-	}
-	else return true;
+	return FileHelper::CreateDirectory(GetAbsolutePath(GetDirectory(path)));
 }
 
 
@@ -699,7 +688,7 @@ void FileManager::PushBasePath(const RString& path) {
 	// we support archive file as directory.
 	// CAUTION: it's not auto-mounted, so you should do it by your own.
 	RString newpath = path;
-	if (IsArchiveFileName(newpath))
+	if (FileHelper::IsArchiveFileName(newpath))
 		newpath = path + "/";
 	FileManagerBasic::PushBasePath(path);
 }
@@ -732,7 +721,7 @@ namespace {
 
 bool FileManager::Mount(const RString& path) {
 	// if archive filename?
-	if (IsArchiveFileName(path)) {
+	if (FileHelper::IsArchiveFileName(path)) {
 		RString abspath = GetAbsolutePath(path + "/");
 
 		// opens archive file
@@ -801,7 +790,7 @@ FileBasic* FileManager::LoadFile(const RString& path) {
 	// if dirpath is archive,
 	// then check is archive raw data is loaded
 	RString dirpath = GetDirectory(path);
-	if (IsArchiveFileName(dirpath)) {
+	if (FileHelper::IsArchiveFileName(dirpath)) {
 		auto iter = m_Mount.find(dirpath);
 		if (iter != m_Mount.end()) {
 			// pick any file
@@ -916,6 +905,7 @@ namespace FileHelper {
 			return true;
 
 		// if not, then find any file with same extension
+		// if (substitute_extension(get_filename(_path), "") == "*")
 		int p = path.find_last_of('.');
 		RString ext = "";
 		if (p != std::string::npos) {
@@ -990,8 +980,44 @@ namespace FileHelper {
 		return true;
 #endif
 	}
-}
 
+	// also checks for archive format file path
+	bool IsArchiveFileName(const RString& path) {
+		RString tmp = path;
+		if (tmp.back() == '/' || tmp.back() == '\\') tmp.pop_back();
+		return EndsWith(tmp, ".zip") ||
+			EndsWith(tmp, ".rar") ||
+			EndsWith(tmp, ".7z");
+	}
+
+	// private
+	bool _create_directory(const char* filepath) {
+#ifdef _WIN32
+		std::wstring path_w = RStringToWstring(filepath);
+		return (_wmkdir(path_w.c_str()) == 0);
+#else
+		return (mkdir(filepath) == 0);
+#endif
+	}
+	bool CreateDirectory(const RString& path) {
+		// if current directory is not exist
+		// then get parent directory
+		// and check it recursively
+		// after that, create own.
+		if (IsDirectory(path))
+			return true;
+		if (IsFile(path))
+			return false;
+		if (!_create_directory(path)) {
+			RString parent = FileManager::GetParentDirectory(path);
+			if (NOT(CreateDirectory(parent))) {
+				return false;
+			}
+			return _create_directory(path);
+		}
+		else return true;
+	}
+}
 
 
 

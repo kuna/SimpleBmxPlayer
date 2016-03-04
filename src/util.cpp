@@ -1175,17 +1175,29 @@ bool GetFileContents(const RString &sPath, RString &sOut, bool bOneLine)
 /* read per line */
 bool GetFileContents(const RString &sFile, vector<RString> &asOut)
 {
-	File file;
-	if (!file.Open(sFile))
+	FileBasic *file;
+	if ((file = FILEMANAGER->LoadFile(sFile)) ==0)
 	{
 		LOG->Warn("GetFileContents(%s): Cannot open file.", sFile.c_str());
 		return false;
 	}
 
 	RString sLine;
-	while (file.ReadLine(sLine))
+	while (file->ReadLine(sLine))
 		asOut.push_back(sLine);
 	return true;
+}
+
+bool WriteFileContents(const RString &sPath, const char *p, size_t len) {
+	File f;
+	if (!f.Open(sPath, "wb"))
+		return false;
+	f.Write(p, len);
+	f.Close();
+}
+
+bool WriteFileContents(const RString &sPath, RString &sOut) {
+	return WriteFileContents(sPath, sOut.c_str(), sOut.size());
 }
 
 

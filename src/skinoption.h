@@ -2,6 +2,7 @@
 
 #include <vector>
 //#define _USEPOOL		// you can use SkinOption generally by disabling this definition
+#define _USEPOOL
 #ifdef _USEPOOL
 #include "Pool.h"
 #endif
@@ -54,5 +55,6 @@ public:
 	std::vector<CustomFile>& GetFiles();
 #ifdef _USEPOOL
 	void SetEnvironmentFromOption();
+	void DeleteEnvironmentFromOption();
 #endif
 };

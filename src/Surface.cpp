@@ -303,25 +303,31 @@ bool SurfaceMovie::IsMovie() {
 	return (moviectx != 0);
 }
 
+void SurfaceMovie::Release() {
+	ReleaseMovie();
+	Surface::Release();
+}
+
 
 #include "File.h"
 
 namespace SurfaceUtil {
-	Display::Texture* LoadTexture(const char* filepath) {
+	Surface* LoadSurface(const char* filepath) {
 		Surface *surf = new Surface();
-		if (FILEMANAGER->IsMountedFile(filepath)) {
-			if (!surf->Load(filepath)) {
+		if (!FILEMANAGER->IsMountedFile(filepath)) {
+			RString abspath = FILEMANAGER->GetAbsolutePath(filepath);
+			if (!surf->Load(abspath)) {
 				// attempt to load with surfacemovie
 				delete surf;
 				surf = new SurfaceMovie();
-				surf->Load(filepath));
+				surf->Load(abspath);
 			}
 		}
 		else {
 			char *p;
 			int len;
 			if (FILEMANAGER->ReadAllFile(filepath, &p, &len)) {
-				surf->LoadFromMemory(p, len);
+				surf->LoadFromMemory((unsigned char*)p, len);
 				free(p);
 			}
 		}
@@ -331,6 +337,13 @@ namespace SurfaceUtil {
 			surf = 0;
 			return 0;
 		}
+
+		return surf;
+	}
+
+	Display::Texture* LoadTexture(const char* filepath) {
+		Surface *surf = LoadSurface(filepath);
+		if (!surf) return 0;
 
 		Texture* tex = DISPLAY->CreateTexture(surf);
 		// if movie is surface,
