@@ -10,11 +10,9 @@
 #pragma once
 
 #include "bmsbel/bms_bms.h"
-#include "playrecord.h"
 #include "Pool.h"
 #include "global.h"
 #include "playerinfo.h"
-#include "gameplay.h"
 
 
 /*
@@ -51,7 +49,7 @@ protected:
 	// note/time information
 	uint32_t				m_BmsTime;
 	PlayerScore				score;
-	PlayerReplayRecord		replay_cur;
+	ReplayData				replay_cur;
 	BmsNoteManager*			bmsnote;			// Don't store total bms object, only store note object
 	struct Lane {
 		int idx;
@@ -95,7 +93,7 @@ public:
 	/* used for saving score */
 	PlayerScore*			GetScoreData() { return &score; };
 	/* used for saving replay */
-	PlayerReplayRecord*		GetRecordData() { return &replay_cur; }
+	ReplayData*				GetRecordData() { return &replay_cur; }
 
 
 	/*
@@ -173,14 +171,14 @@ class PlayerReplay : public Player {
 public:
 	PlayerReplay(int playside = 0);
 
-	void SetReplay(const PlayerReplayRecord &rep);
+	void SetReplay(const ReplayData &rep);
 	virtual void Update();
 	virtual void PressKey(int channel);
 	virtual void UpKey(int channel);
 
 private:
-	PlayerReplayRecord::Iterator iter_;
-	PlayerReplayRecord replay;
+	ReplayData::Iterator iter_;
+	ReplayData replay;
 };
 
 /*

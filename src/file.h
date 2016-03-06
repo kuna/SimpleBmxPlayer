@@ -140,6 +140,8 @@ protected:
 	} MountInfo;
 	std::map<RString, MountInfo> m_Mount;
 public:
+	~FileManagerBasic();
+
 	/* Set base path or relative path (must be called at once) */
 	virtual void PushBasePath(const RString& path);
 	virtual void PopBasePath();

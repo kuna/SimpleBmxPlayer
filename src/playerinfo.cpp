@@ -173,142 +173,6 @@ void PlayerScore::AddGrade(const int type) {
 #define GETINT(col, v)\
 	CHECKTYPE(col, SQLITE_INTEGER), v = sqlite3_column_int(stmt, col)
 
-void PlayerReplayRecord::AddPress(int time, int lane, int value) {
-	objects.push_back({ time, lane, value });
-}
-
-void PlayerReplayRecord::AddJudge(int time, int playside, int judge, int fastslow, int silent) {
-	objects.push_back({ 
-		time, 
-		0xA0 + playside, 
-		judge + 16 * fastslow + 256 * silent 
-	});
-}
-
-void PlayerReplayRecord::Clear() {
-	objects.clear();
-}
-
-#define MAX_REPLAY_BUFFER 1024000	// about 1000kb
-void PlayerReplayRecord::Serialize(RString &out) const {
-	char *buf = (char*)malloc(MAX_REPLAY_BUFFER);
-	// 
-	//  0 ~ 32 byte: songhash
-	// 40 ~ 44 byte: op1 code
-	// 44 ~ 48 byte: op2 code
-	// 48 ~ 52 byte: gauge 
-	// 52 ~ 56 byte: rseed
-	// 56 ~ 72 byte: rate (double)
-	// (dummy)
-	// 116 ~ 120 byte: header size
-	// 120 byte: header end, replay body data starts
-	// (1 row per 4 * 3 = 12bytes)
-	//
-	memcpy(buf+40, &op_1p, sizeof(int));
-	memcpy(buf+44, &op_2p, sizeof(int));
-	memcpy(buf+48, &gauge, sizeof(int));
-	memcpy(buf+52, &rseed, sizeof(int));
-	memcpy(buf+56, &rate, sizeof(int));
-
-	int record_cnt = objects.size();
-	memcpy(buf + 116, (void*)&record_cnt, 4);
-	for (int i = 0; i < record_cnt; i++) {
-		memcpy(buf + 120 + i * 12, &objects[i], 12);
-	}
-
-	// zip compress
-	// (TODO)
-
-	// serialize compressed data to base64
-	char *b64;
-	base64encode(buf, 120 + record_cnt * 12, &b64);
-
-	// delete original data
-	out = b64;
-	free(b64);
-	free(buf);
-}
-
-void PlayerReplayRecord::Parse(const RString& in) {
-	// parse base64 data into binary
-	char *repdata = (char*)malloc(in.size());
-	int rep_len = base64decode(in, in.size(), repdata);
-
-	// zip uncompress
-	// (TODO)
-	char *buf = repdata;
-
-	// memcpy datas
-	int isize;
-	memcpy(&isize, buf + 116, 4);
-	for (int i = 0; i < isize; i++) {
-		struct ReplayObject _tmp;
-		memcpy(&_tmp, buf + 120 + i * 12, 12);
-		objects.push_back(_tmp);
-	}
-
-	// cleanup
-	free(repdata);
-}
-
-
-
-
-
-/*
- * Helpers
- */
-
-namespace PlayerReplayHelper {
-	bool LoadReplay(
-		PlayerReplayRecord& rep, 
-		const char* playername, 
-		const char* songhash, 
-		const char* course) {
-		RString path;
-		if (course) {
-			path = ssprintf("../player/replay/%s/%s/%s.rep", playername, course, songhash);
-		}
-		else {
-			path = ssprintf("../player/replay/%s/%s.rep", playername, songhash);
-		}
-		RString repdata;
-		if (GetFileContents(path, repdata)) {
-			rep.Parse(repdata);
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
-
-	bool SaveReplay(
-		const PlayerReplayRecord& rep, 
-		const char* playername, 
-		const char* songhash, 
-		const char* course) {
-
-		RString path;
-		if (course) {
-			path = ssprintf("../player/replay/%s/%s/%s.rep", playername, course, songhash);
-		}
-		else {
-			path = ssprintf("../player/replay/%s/%s.rep", playername, songhash);
-		}
-		RString dir = get_filedir(path);
-		RString repdata;
-		rep.Serialize(repdata);
-		FILEMANAGER->CreateDirectory(dir);
-		File f;
-		if (f.Open(path, "w")) {
-			f.Write(repdata);
-			f.Close();
-			return true;
-		} else {
-			return false;
-		}
-	}
-}
 
 namespace PlayerRecordHelper {
 	/** [private] sqlite3 for querying player record */
@@ -566,8 +430,6 @@ namespace PlayerInfoHelper {
 
 		DefaultScoreInfo(player.score);
 
-		PlayerKeyHelper::DefaultKeyConfig(player.keyconfig);
-
 		PlayOptionHelper::DefaultPlayConfig(player.playconfig);
 	}
 
@@ -591,9 +453,6 @@ namespace PlayerInfoHelper {
 		// parsing (grade)
 		LoadScoreInfo(player.score, doc);
 
-		// parsing (keyconfig)
-		PlayerKeyHelper::LoadKeyConfig(player.keyconfig, doc);
-
 		// parsing (playconfig)
 		PlayOptionHelper::LoadPlayConfig(player.playconfig, doc);
 
@@ -616,9 +475,6 @@ namespace PlayerInfoHelper {
 		// serialize (grade)
 		SaveScoreInfo(player.score, doc);
 
-		// serialize (keyconfig)
-		PlayerKeyHelper::SaveKeyConfig(player.keyconfig, doc);
-
 		// serialize (playconfig)
 		PlayOptionHelper::SavePlayConfig(player.playconfig, doc);
 
@@ -628,87 +484,6 @@ namespace PlayerInfoHelper {
 		// end. clean-up
 		delete doc;
 		return true;
-	}
-}
-
-namespace PlayerKeyHelper {
-	RString GetKeyCodeName(int keycode) {
-		// TODO
-		return "TODO";
-	}
-
-	int GetKeyCodeFunction(const PlayerKeyConfig &config, int keycode) {
-		for (int i = 0; i < 40; i++) {
-			for (int j = 0; j < _MAX_KEYCONFIG_MATCH; j++) {
-				if (config.keycode[i][j] == keycode)
-					return i;
-			}
-		}
-		return -1;
-	}
-
-	void LoadKeyConfig(PlayerKeyConfig &config, XMLNode *base) {
-		// clear'em first
-		memset(config.keycode, 0, sizeof(config.keycode));
-		// load
-		XMLElement *keyconfig = base->FirstChildElement("KeyConfig");
-		if (!base) return;
-		for (int i = 0; i < 40; i++) {
-			XMLElement *e = keyconfig->FirstChildElement(ssprintf("Key%d", i));
-			if (!e) continue;
-			for (int j = 0; j < _MAX_KEYCONFIG_MATCH; j++) {
-				config.keycode[i][j] = GetIntValue(e, ssprintf("Index%d", j));
-			}
-		}
-	}
-
-	void SaveKeyConfig(const PlayerKeyConfig &config, XMLNode *base) {
-		XMLDocument *doc = base->GetDocument();
-		XMLElement *keyconfig = doc->NewElement("KeyConfig");
-		base->LinkEndChild(keyconfig);
-		for (int i = 0; i < 40; i++) {
-			XMLElement *e = doc->NewElement(ssprintf("Key%d", i));
-			if (!e) continue;
-			for (int j = 0; j < _MAX_KEYCONFIG_MATCH; j++) {
-				XMLElement *e2 = doc->NewElement(ssprintf("Index%d", j));
-				e2->SetText(config.keycode[i][j]);
-				e->LinkEndChild(e2);
-			}
-			keyconfig->LinkEndChild(e);
-		}
-	}
-
-	void DefaultKeyConfig(PlayerKeyConfig &config) {
-		config.keycode[PlayerKeyIndex::P1_BUTTON1][0] = SDL_SCANCODE_Z;
-		config.keycode[PlayerKeyIndex::P1_BUTTON2][0] = SDL_SCANCODE_S;
-		config.keycode[PlayerKeyIndex::P1_BUTTON3][0] = SDL_SCANCODE_X;
-		config.keycode[PlayerKeyIndex::P1_BUTTON4][0] = SDL_SCANCODE_D;
-		config.keycode[PlayerKeyIndex::P1_BUTTON5][0] = SDL_SCANCODE_C;
-		config.keycode[PlayerKeyIndex::P1_BUTTON6][0] = SDL_SCANCODE_F;
-		config.keycode[PlayerKeyIndex::P1_BUTTON7][0] = SDL_SCANCODE_V;
-		config.keycode[PlayerKeyIndex::P1_BUTTON1][1] = 1001;
-		config.keycode[PlayerKeyIndex::P1_BUTTON2][1] = 1002;
-		config.keycode[PlayerKeyIndex::P1_BUTTON3][1] = 1003;
-		config.keycode[PlayerKeyIndex::P1_BUTTON4][1] = 1004;
-		config.keycode[PlayerKeyIndex::P1_BUTTON5][1] = 1005;
-		config.keycode[PlayerKeyIndex::P1_BUTTON6][1] = 1006;
-		config.keycode[PlayerKeyIndex::P1_BUTTON7][1] = 1007;
-		config.keycode[PlayerKeyIndex::P1_BUTTONSCUP][0] = SDL_SCANCODE_LSHIFT;
-		config.keycode[PlayerKeyIndex::P1_BUTTONSCDOWN][0] = SDL_SCANCODE_LCTRL;
-		config.keycode[PlayerKeyIndex::P1_BUTTONSCUP][1] = 1100;					// up
-		config.keycode[PlayerKeyIndex::P1_BUTTONSCDOWN][1] = 1101;					// down
-		config.keycode[PlayerKeyIndex::P1_BUTTONSTART][0] = SDL_SCANCODE_1;
-
-		config.keycode[PlayerKeyIndex::P2_BUTTON1][0] = SDL_SCANCODE_M;
-		config.keycode[PlayerKeyIndex::P2_BUTTON2][0] = SDL_SCANCODE_K;
-		config.keycode[PlayerKeyIndex::P2_BUTTON3][0] = SDL_SCANCODE_COMMA;
-		config.keycode[PlayerKeyIndex::P2_BUTTON4][0] = SDL_SCANCODE_L;
-		config.keycode[PlayerKeyIndex::P2_BUTTON5][0] = SDL_SCANCODE_PERIOD;
-		config.keycode[PlayerKeyIndex::P2_BUTTON6][0] = SDL_SCANCODE_SEMICOLON;
-		config.keycode[PlayerKeyIndex::P2_BUTTON7][0] = SDL_SCANCODE_SLASH;
-		config.keycode[PlayerKeyIndex::P2_BUTTONSCUP][0] = SDL_SCANCODE_RSHIFT;
-		config.keycode[PlayerKeyIndex::P2_BUTTONSCDOWN][0] = SDL_SCANCODE_RCTRL;
-		config.keycode[PlayerKeyIndex::P2_BUTTONSTART][0] = SDL_SCANCODE_2;
 	}
 }
 
@@ -794,3 +569,154 @@ namespace PlayOptionHelper {
 // global
 // accessible from everywhere
 PlayerInfo				PLAYERINFO[2];
+
+
+
+
+
+
+
+bool ReplayEvent::IsJudge() {
+	return (lane > 20);
+}
+int ReplayEvent::GetSide() {
+	return lane == 0xAF ? 0 : 1;
+}
+int ReplayEvent::GetJudge() {
+	return value % 10;
+}
+int ReplayEvent::GetFastSlow() {
+	return (value & 0x11) / 0x10;
+}
+int ReplayEvent::GetSilent() {
+	return value & 0x100;
+}
+void ReplayData::AddPress(int time, int lane, int value) {
+	objects.push_back({ time, lane, value });
+}
+
+void ReplayData::AddJudge(int time, int playside, int judge, int fastslow, int silent) {
+	objects.push_back({
+		time,
+		0xA0 + playside,
+		judge + 16 * fastslow + 256 * silent
+	});
+}
+
+void ReplayData::Clear() {
+	objects.clear();
+}
+
+#define MAX_REPLAY_BUFFER 1024000	// about 1000kb
+void ReplayData::Serialize(RString &out) const {
+	char *buf = (char*)malloc(MAX_REPLAY_BUFFER);
+	// 
+	//  0 ~ 32 byte: songhash
+	// 40 ~ 44 byte: op1 code
+	// 44 ~ 48 byte: op2 code
+	// 48 ~ 52 byte: gauge 
+	// 52 ~ 56 byte: rseed
+	// 56 ~ 72 byte: rate (double)
+	// (dummy)
+	// 116 ~ 120 byte: header size
+	// 120 byte: header end, replay body data starts
+	// (1 row per 4 * 3 = 12bytes)
+	//
+	memcpy(buf + 40, &op_1p, sizeof(int));
+	memcpy(buf + 44, &op_2p, sizeof(int));
+	memcpy(buf + 48, &gauge, sizeof(int));
+	memcpy(buf + 52, &rseed, sizeof(int));
+	memcpy(buf + 56, &rate, sizeof(int));
+
+	int record_cnt = objects.size();
+	memcpy(buf + 116, (void*)&record_cnt, 4);
+	for (int i = 0; i < record_cnt; i++) {
+		memcpy(buf + 120 + i * 12, &objects[i], 12);
+	}
+
+	// zip compress
+	// (TODO)
+
+	// serialize compressed data to base64
+	char *b64;
+	base64encode(buf, 120 + record_cnt * 12, &b64);
+
+	// delete original data
+	out = b64;
+	free(b64);
+	free(buf);
+}
+
+void ReplayData::Parse(const RString& in) {
+	// parse base64 data into binary
+	char *repdata = (char*)malloc(in.size());
+	int rep_len = base64decode(in, in.size(), repdata);
+
+	// zip uncompress
+	// (TODO)
+	char *buf = repdata;
+
+	// memcpy datas
+	int isize;
+	memcpy(&isize, buf + 116, 4);
+	for (int i = 0; i < isize; i++) {
+		struct ReplayEvent _tmp;
+		memcpy(&_tmp, buf + 120 + i * 12, 12);
+		objects.push_back(_tmp);
+	}
+
+	// cleanup
+	free(repdata);
+}
+
+namespace PlayerReplayHelper {
+	bool LoadReplay(
+		ReplayData& rep,
+		const char* playername,
+		const char* songhash,
+		const char* course) {
+		RString path;
+		if (course) {
+			path = ssprintf("../player/replay/%s/%s/%s.rep", playername, course, songhash);
+		}
+		else {
+			path = ssprintf("../player/replay/%s/%s.rep", playername, songhash);
+		}
+		RString repdata;
+		if (GetFileContents(path, repdata)) {
+			rep.Parse(repdata);
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	bool SaveReplay(
+		const ReplayData& rep,
+		const char* playername,
+		const char* songhash,
+		const char* course) {
+
+		RString path;
+		if (course) {
+			path = ssprintf("../player/replay/%s/%s/%s.rep", playername, course, songhash);
+		}
+		else {
+			path = ssprintf("../player/replay/%s/%s.rep", playername, songhash);
+		}
+		RString dir = get_filedir(path);
+		RString repdata;
+		rep.Serialize(repdata);
+		FILEMANAGER->CreateDirectory(dir);
+		File f;
+		if (f.Open(path, "w")) {
+			f.Write(repdata);
+			f.Close();
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+}

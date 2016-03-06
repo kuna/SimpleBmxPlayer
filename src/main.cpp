@@ -209,9 +209,7 @@ namespace Parameter {
 	}
 }
 
-// testing
-#include <sys/stat.h>
-#include <io.h>
+
 
 #ifdef _WIN32
 int _tmain(int argc, _TCHAR **argv) {
@@ -240,7 +238,7 @@ int main(int argc, char **argv) {
 	/*
 	 * Start main scene
 	 */
-	Game::ChangeScene(&GamePlay::SCENE);
+	SCENE->ChangeScene("Play");
 	
 	/* 
 	 * Game main loop started

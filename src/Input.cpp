@@ -234,9 +234,13 @@ void InputManager::OnMouseWheel(uint32_t d) {
 
 
 
-InputReceiver::InputReceiver() { INPUT->Register(this); }
+InputReceiver::InputReceiver() { 
+//	INPUT->Register(this); 
+}
 
-InputReceiver::~InputReceiver() { INPUT->UnRegister(this); }
+InputReceiver::~InputReceiver() { 
+//	INPUT->UnRegister(this); 
+}
 
 
 

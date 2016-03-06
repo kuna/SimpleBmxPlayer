@@ -661,6 +661,15 @@ bool FileManagerBasic::CreateDirectory(const RString& path) {
 	return FileHelper::CreateDirectory(GetAbsolutePath(GetDirectory(path)));
 }
 
+FileManagerBasic::~FileManagerBasic() {
+	// if mounted file exists, then release them all automatically.
+	// COMMENT: you should overwrite this function if you changed UnMount() behaviour.
+	for (auto it = m_Mount.begin(); it != m_Mount.end(); ++it) {
+		UnMount(it->first);
+	}
+	m_Mount.clear();
+}
+
 
 
 

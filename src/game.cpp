@@ -18,43 +18,39 @@
 
 using namespace tinyxml2;
 
-SceneBasic*		SCENE = NULL;
+SceneManager*	SCENE = NULL;
 SDL_Window*		WINDOW = NULL;
 IDisplay*		DISPLAY = NULL;
 
 namespace Game {
-	/*
-	 * variables
-	 */
-	// game status
 	bool			bRunning = false;	// is game running?
 
-	// FPS
-	Timer			fpstimer;
-	int				fps = 0;
-	Font			*font;				// system font
-	bool			showfps = true;
+	// for sys input receiver
+	class SysInputReceiver : public InputReceiver {
+		virtual void OnSys(int code) {
+			if (code = INPUTSYS::EXIT)
+				End();
+		}
 
-	// basic
-	Timer			*oninputstart;
-	Timer			*onscene;
+		virtual void OnPress(int code) {
+			switch (code) {
+			case SDL_SCANCODE_ESCAPE:
+				End();
+				break;
+			case SDL_SCANCODE_F7:
+				SCENE->ShowFPSToggle();
+				break;
+			default:
+			}
+		}
+	};
+	SysInputReceiver	m_BasicInput;
+
 
 
 	bool Initialize() {
-		GameTimer::Tick();
 		/*
-		 * Lua basic instances initalization
-		 */
-		LUA = new LuaManager();
-		Lua *L = LUA->Get();
-		LuaBinding<StringPool>::Register(L, 0, 0);
-		LuaBinding<IntPool>::Register(L, 0, 0);
-		LuaBinding<DoublePool>::Register(L, 0, 0);
-		LuaBinding<HandlerPool>::Register(L, 0, 0);
-		LUA->Release(L);
-
-		/*
-		 * Game engine initalize
+		 * Create window
 		 */
 		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) != 0) {
 			LOG->Critical("Failed to SDL_Init() ...");
@@ -84,6 +80,9 @@ namespace Game {
 			return -1;
 		}
 		
+		/*
+		 * Create Display
+		 */
 		DISPLAY = new DisplaySDLGlew(WINDOW);
 		if (!DISPLAY->Initialize(SETTING.width, SETTING.height)) {
 			LOG->Critical("Failed to create Renderer");
@@ -92,35 +91,41 @@ namespace Game {
 		}
 		LOG->Info("OpenGL Version %s\n", DISPLAY->GetInfo());
 
-
 		/*
 		 * prepare game basic resource
+		 * (do it before SceneManager created - scenemanager requires this resource)
 		 */
 		TEXPOOL->Register("_black", SurfaceUtil::CreateColorTexture(0x000000FF));
 		TEXPOOL->Register("_white", SurfaceUtil::CreateColorTexture(0xFFFFFFFF));
 		TEXPOOL->Register("_fastslow", SurfaceUtil::LoadTexture("../system/resource/fastslow.png"));
 		TEXPOOL->Register("_number_float", SurfaceUtil::LoadTexture("../system/resource/number_float.png"));
-		oninputstart = SWITCH_GET("OnInputStart");
-		onscene = SWITCH_GET("OnScene");
 		font = FONTPOOL->LoadTTFFont("_system", 
 			"../system/resource/NanumGothicExtraBold.ttf", 28, 0x909090FF, 0,
 			0x000000FF, 1, 0,
 			"../system/resource/fontbackground_small.png");
 
-		/*
-		* Scene instance initalization
-		* (MUST after graphic initalization finished)
-		*/
-		InitalizeScene(&GamePlay::SCENE);
-		InitalizeScene(&GameResult::SCENE);
 
 		/*
-		 * FPS timer start
+		 * Initalize Instances
+		 * (Pool/FileManager is automatically initalized, so we don't need to take care of it)
 		 */
-		fpstimer.Start();
-		fps = 0;
+		LUA = new LuaManager();
+		Lua *L = LUA->Get();
+		LuaBinding<StringPool>::Register(L, 0, 0);
+		LuaBinding<IntPool>::Register(L, 0, 0);
+		LuaBinding<DoublePool>::Register(L, 0, 0);
+		LuaBinding<HandlerPool>::Register(L, 0, 0);
+		LUA->Release(L);
 
-		bRunning = true;
+		SCENE = new SceneManager();
+		INPUT = new InputManager();
+
+		/*
+		 * some etc initialization
+		 */
+		INPUT->Register(&m_BasicInput);
+		SCENEVALUE.Uptime->Start();
+
 		return true;
 	}
 
@@ -131,86 +136,22 @@ namespace Game {
 		// save game settings ...
 		GameSettingHelper::SaveSetting(SETTING);
 
-		// other scenes
-		ReleaseScene(&GamePlay::SCENE);
-		ReleaseScene(&GameResult::SCENE);
-
 		// release basic instances
-		delete LUA;
+		// COMMENT: Font/Surface pool should be destroyed first before DISPLAY destroyed
+		delete SCENE;
 		delete INPUT;
 		delete DISPLAY;
+		delete LUA;
 		Mix_CloseAudio();
 		SDL_DestroyWindow(WINDOW);
 	}
 
-	// ---------------------------------------
-
-	/*
-	 * basic input handler
-	 */
-	class SceneManagerInput : public InputReceiver {
-	public:
-		virtual void OnSys(int code) {
-			if (code = INPUTSYS::EXIT)
-				End();
-		}
-
-		virtual void OnPress(int code) {
-			switch (code) {
-			case SDL_SCANCODE_ESCAPE:
-				End();
-				break;
-			case SDL_SCANCODE_F7:
-				showfps = !showfps;
-				break;
-			default:
-			}
-		}
-	};
-	SceneManagerInput GAMEINPUT;
-
-	// some macros about scene
-	void InitalizeScene(SceneBasic* s) { s->Initialize(); }
-	void ReleaseScene(SceneBasic* s) { s->Release(); }
-	void EndScene(SceneBasic *s) { s->End(); }
-
-	void StartScene(SceneBasic *s) {
-		/*
-		* inputstart/scene timer is a little different;
-		* sometimes input blocking is necessary during scene rendering.
-		* COMMENT: after initization finished, reset scene timer.
-		*/
-		s->Start();
-		oninputstart->Start();
-		onscene->Start();
-	}
-
-	void ChangeScene(SceneBasic *s) {
-		if (SCENE != s) {
-			if (SCENE) EndScene(SCENE);
-			StartScene(s);
-		}
-		SCENE = s;
-	}
-
-	// private?
-	void Render_FPS() {
-		// calculate FPS per 1 sec
-		float avgfps = fps / (fpstimer.GetTick() / 1000.0f);
-		fps++;
-		// print FPS
-		font->Render(ssprintf("%.2f Frame", avgfps), 10, 10);
-		if (fpstimer.GetTick() > 1000) {
-			wprintf(L"%.2f\n", avgfps);
-			fpstimer.Stop();
-			fpstimer.Start();
-			fps = 0;
-		}
-	}
-
 	void MainLoop() {
 		while (bRunning) {
-			if (!SCENE) continue;
+			/*
+			 * Sound is processed on other thread (polling system),
+			 * So we don't take care of it now.
+			 */
 
 			/*
 			* Ticking
@@ -221,7 +162,6 @@ namespace Game {
 			* process input
 			*/
 			INPUT->Update();
-
 
 			/*
 			* Graphic rendering
@@ -240,15 +180,184 @@ namespace Game {
 
 			SCENE->Update();
 			SCENE->Render();
-			if (showfps) Render_FPS();
 
 			DISPLAY->EndRender();
 		}
 	}
 
 	void End() {
-		/* simple :D */
-		EndScene(SCENE);
 		bRunning = false;
 	}
+}
+
+
+
+
+
+
+void SceneManager::Initalize() {
+	m_bShowFPS = false;
+
+	// Initalize & add basic scenes
+	InitalizeScene(&GamePlay::SCENE);
+	InitalizeScene(&GameResult::SCENE);
+
+	// initalize input
+	INPUT->Register(&m_Input);
+
+	// getcha font
+	m_Basefnt = FONTPOOL->GetByID("_system");
+}
+
+void SceneManager::Release() {
+	// unregister current scene
+	if (m_FocusedScene)
+		INPUT->UnRegister(m_FocusedScene);
+
+	// delete all scenes
+	for (auto it = m_Scenes.begin(); it != m_Scenes.end(); ++it)
+		delete it->second;
+	m_Scenes.clear();
+
+	// unregister input
+	INPUT->UnRegister(&m_Input);
+}
+
+void SceneManager::Update() {
+	// if next scene waiting?
+	// if then, change scene now.
+	if (m_NextScene) {
+		if (m_FocusedScene) INPUT->UnRegister(m_FocusedScene);
+		if (m_NextScene) {
+			m_FocusedScene->End();
+			INPUT->Register(m_NextScene);
+			m_NextScene->Start();
+			SCENEVALUE.Scenetime->Start();
+		}
+		m_FocusedScene = m_NextScene;
+		m_NextScene = 0;
+	}
+
+	// update current/fg/bg scene
+	if (m_FocusedScene) {
+		m_FocusedScene->Update();
+	}
+	for (auto it = m_SceneBackground.begin(); it != m_SceneBackground.end(); ++it)
+		(*it)->Update();
+	for (auto it = m_SceneForeground.begin(); it != m_SceneForeground.end(); ++it)
+		(*it)->Update();
+
+	// just call trigger that we're updating scene
+	SCENEVALUE.Rendertime->Start();
+}
+
+void SceneManager::Render() {
+	// Render background scene (TODO)
+	DISPLAY->PushState();
+	DISPLAY->SetOffset(0, 0);
+	DISPLAY->SetZoom(0.5, 0.5);
+	for (auto it = m_SceneBackground.begin(); it != m_SceneBackground.end(); ++it)
+		(*it)->Render();
+	DISPLAY->PopState();
+
+	// Render current scene
+	if (m_FocusedScene) {
+		m_FocusedScene->Render();
+	}
+
+	// Render foreground scene (TODO)
+	DISPLAY->PushState();
+	DISPLAY->SetOffset(0, 0);
+	DISPLAY->SetZoom(0.5, 0.5);
+	for (auto it = m_SceneForeground.begin(); it != m_SceneForeground.end(); ++it)
+		(*it)->Render();
+	DISPLAY->PopState();
+
+	// Render FPS
+	int curtime = SCENEVALUE.Uptime->GetTick();
+	int deltatime = curtime - m_prevtime;
+	if (deltatime > 0) {
+		m_Basefnt->Render(ssprintf("%.0f Frame", 1000.0f / deltatime), 10, 20);
+	}
+	m_prevtime = curtime;
+
+	// Render System message
+	if (m_MessageTimer.GetTick() > 5000) {
+		m_Basefnt->Render(m_Message, 10, 50);
+	}
+}
+
+/* static */
+SceneBasic* SceneManager::GetScene(const RString& name) {
+	auto it = m_Scenes.find(name);
+	if (it == m_Scenes.end())
+		return 0;
+	else
+		return it->second;
+}
+
+/* static */
+void SceneManager::RegisterScene(const RString& name, SceneBasic* scene) {
+	if (GetScene(name)) {
+		LOG->Warn("Scene `%s` Already exists, Cannot add.", name.c_str());
+		return;
+	}
+	m_Scenes[name] = scene;
+}
+
+void SceneManager::ChangeScene(const RString& name) {
+	SceneBasic* scene = GetScene(name);
+	if (!scene) {
+		LOG->Warn("Cannot find scene(%s). Nothing will be drawn!", name);
+	}
+
+	/*
+	* COMMENT: scene translating might be called during rendering or updating or somewhat ...
+	* but scene MUST not be changed during Updating, because that scene should be rendered, not new scene.
+	* So, store it m_NextScene (not m_FocusedScene) and render it next time.
+	*/
+	m_NextScene = scene;
+
+	/*
+	* bg / fg are automatically cleared
+	*/
+	m_SceneBackground.clear();
+	m_SceneForeground.clear();
+}
+
+void SceneManager::AddBackgroundScene(const RString& name) {
+	SceneBasic* scene = GetScene(name);
+	if (!scene) {
+		LOG->Warn("Attempt to push empty scene as background - why?");
+		return;
+	}
+	m_SceneBackground.push_back(scene);
+}
+
+void SceneManager::AddForegroundScene(const RString& name) {
+	SceneBasic* scene = GetScene(name);
+	if (!scene) {
+		LOG->Warn("Attempt to push empty scene as foreground - why?");
+		return;
+	}
+	m_SceneForeground.push_back(scene);
+}
+
+void SceneManager::SetBackgroundSceneDST(const Display::Rect& r) {
+	m_SceneBgDST = r;
+}
+
+void SceneManager::SetForegroundSceneDST(const Display::Rect& r) {
+	m_SceneFgDST = r;
+}
+
+void SceneManager::ShowFPSToggle() { m_bShowFPS = !m_bShowFPS; }
+
+void SceneManager::SetScreenMessage(const RString& msg) {
+	m_Message = msg;
+	m_MessageTimer.Start();
+}
+
+void SceneManager::Reload() {
+	// TODO
 }
