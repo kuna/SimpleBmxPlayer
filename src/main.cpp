@@ -8,6 +8,7 @@
 #include "game.h"
 #include "gameplay.h"
 #include "logger.h"
+#include "Setting.h"
 
 
 namespace Parameter {
@@ -65,11 +66,6 @@ namespace Parameter {
 		*/
 		RString basepath = get_filedir(argv[0]);
 		FILEMANAGER->PushBasePath(basepath.c_str());
-
-		/*
-		 * set default values (from option)
-		 */
-		Game::LoadOption();
 		
 		/*
 		 * first figure out what player currently is
@@ -224,12 +220,6 @@ int main(int argc, char **argv) {
 #endif
 
 	/*
-	 * pool is an part of game system
-	 * MUST be initalized very first
-	 */
-	PoolHelper::InitalizeAll();
-
-	/*
 	 * Parse parameter for specific option
 	 * if failed, exit.
 	 * (sets player / program settings in here)
@@ -237,7 +227,6 @@ int main(int argc, char **argv) {
 	if (!Parameter::parse(argc, argv)) {
 		LOG->Critical("Failed to parse parameter properly.");
 		Parameter::help();
-		PoolHelper::ReleaseAll();
 		return -1;
 	}
 
@@ -262,7 +251,6 @@ int main(int argc, char **argv) {
 	 * Okay, game end, release everything
 	 */
 	Game::Release();
-	PoolHelper::ReleaseAll();
 	SDL_Quit();
 	return 0;
 }

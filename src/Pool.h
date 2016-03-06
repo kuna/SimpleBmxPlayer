@@ -185,10 +185,6 @@ extern SoundPool* SOUNDPOOL;
 
 
 
-namespace PoolHelper {
-	void InitalizeAll();
-	void ReleaseAll();
-}
 
 /*
  * I suggest to use macro in switch -
@@ -297,8 +293,8 @@ typedef struct {
 
 } SongValue;
 
+extern SongValue SONGVALUE;
+
 typedef struct {
 	// TODO
 } SelectValue;
-
-extern SongValue SONGVALUE;

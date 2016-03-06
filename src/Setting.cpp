@@ -1,6 +1,7 @@
-#include "gamesetting.h"
+#include "Setting.h"
 #include "tinyxml2.h"
 #include "file.h"
+#include "Logger.h"
 
 #define SETTINGFILEPATH	"../system/settings.xml"
 #define INT(s) (atoi(s))
@@ -176,3 +177,30 @@ namespace GameSettingHelper {
 		setting.deltaspeed = 50;
 	}
 }
+
+void GameSetting::LoadSetting() {
+	if (!GameSettingHelper::LoadSetting(*this)) {
+		LOG->Warn("Cannot found setting file, Set with default value.");
+		GameSettingHelper::DefaultSetting(*this);
+	}
+	LOG->Info("Loaded Game setting.");
+}
+
+void GameSetting::SaveSetting() {
+	GameSettingHelper::SaveSetting(*this);
+}
+
+
+
+
+GameSetting		SETTING;
+
+struct GameSetting_Init {
+	GameSetting_Init() {
+		/*
+		 * set default values (from option)
+		 * (this should be always successful)
+		 */
+		SETTING.LoadSetting();
+	}
+} _GAMESTETTINGINIT;

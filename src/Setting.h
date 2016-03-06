@@ -42,6 +42,9 @@ struct GameSetting {
 
 	// result screen
 	// - NOPE
+
+	void LoadSetting();
+	void SaveSetting();
 };
 
 namespace GameSettingHelper {
@@ -49,3 +52,5 @@ namespace GameSettingHelper {
 	bool SaveSetting(const GameSetting&);
 	void DefaultSetting(GameSetting&);
 }
+
+extern GameSetting		SETTING;

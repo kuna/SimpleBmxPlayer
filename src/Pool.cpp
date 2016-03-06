@@ -659,12 +659,13 @@ void Initalize_P2_RenderValue() {
 
 /* private; automatically when PoolHelper::InitalizeAll() called */
 void InitalizeValues() {
+	GameTimer::Tick();		// do base tick
 	Initalize_BmsValue();
 	Initalize_P1_RenderValue();
 	Initalize_P2_RenderValue();
 }
 
-void PoolHelper::InitalizeAll() {
+void InitalizeAll() {
 	STRPOOL = new StringPool();
 	DOUBLEPOOL = new DoublePool();
 	INTPOOL = new IntPool();
@@ -677,7 +678,7 @@ void PoolHelper::InitalizeAll() {
 	InitalizeValues();
 }
 
-void PoolHelper::ReleaseAll() {
+void ReleaseAll() {
 	SAFE_DELETE(STRPOOL);
 	SAFE_DELETE(DOUBLEPOOL);
 	SAFE_DELETE(INTPOOL);
@@ -685,4 +686,135 @@ void PoolHelper::ReleaseAll() {
 	SAFE_DELETE(TEXPOOL);
 	SAFE_DELETE(FONTPOOL);
 	SAFE_DELETE(SOUNDPOOL);
+}
+
+// automatically PoolHelper is initalized & removed
+struct PoolInitalizer {
+	PoolInitalizer() { InitalizeAll(); }
+	~PoolInitalizer() { ReleaseAll(); }
+} _PoolInitalizer;
+
+
+
+
+// lua part
+#include "Luamanager.h"
+
+/*
+ * registering basic lua function start
+ * TODO: generating rendering object (after we're done enough)
+ */
+namespace {
+	int SetTimer(Lua* l) {
+		RString key = (const char*)lua_tostring(l, -1);
+		lua_pop(l, 1);
+		SWITCH_OFF(key);
+		//lua_pushinteger(l, a + 1);
+		// no return value
+		return 0;
+	}
+
+	int SetInt(Lua* l) {
+		int val = (int)lua_tointeger(l, -1);
+		lua_pop(l, 1);
+		RString key = (const char*)lua_tostring(l, -1);
+		lua_pop(l, 1);
+		INTPOOL->Set(key, val);
+		return 0;	// no return value
+	}
+
+	int SetFloat(Lua* l) {
+		int val = (int)lua_tointeger(l, -1);
+		lua_pop(l, 1);
+		RString key = (const char*)lua_tostring(l, -1);
+		lua_pop(l, 1);
+		INTPOOL->Set(key, val);
+		return 0;	// no return value
+	}
+
+	int SetString(Lua* l) {
+		int val = (int)lua_tointeger(l, -1);
+		lua_pop(l, 1);
+		RString key = (const char*)lua_tostring(l, -1);
+		lua_pop(l, 1);
+		INTPOOL->Set(key, val);
+		return 0;	// no return value
+	}
+
+	int IsTimer(Lua *l) {
+		RString key = (const char*)lua_tostring(l, -1);
+		lua_pop(l, 1);
+		Timer* t = SWITCH_GET(key);
+		if (t && t->IsStarted())
+			lua_pushboolean(l, 1);
+		else
+			lua_pushboolean(l, 0);
+		return 1;
+	}
+
+	int GetTime(Lua *l) {
+		RString key = (const char*)lua_tostring(l, -1);
+		lua_pop(l, 1);
+		Timer *t = SWITCH_GET(key);
+		if (t)
+			lua_pushinteger(l, t->GetTick());
+		else
+			lua_pushinteger(l, 0);
+		return 1;
+	}
+
+	int GetInt(Lua *l) {
+		RString key = (const char*)lua_tostring(l, -1);
+		lua_pop(l, 1);
+		int *v = INTPOOL->Get(key);
+		if (v)
+			lua_pushinteger(l, *v);
+		else
+			lua_pushinteger(l, 0);
+		return 1;
+	}
+
+	int GetFloat(Lua *l) {
+		RString key = (const char*)lua_tostring(l, -1);
+		lua_pop(l, 1);
+		double *d = DOUBLEPOOL->Get(key);
+		if (d)
+			lua_pushnumber(l, *d);
+		else
+			lua_pushnumber(l, 0);
+		return 1;
+	}
+
+	int GetString(Lua *l) {
+		RString key = (const char*)lua_tostring(l, -1);
+		lua_pop(l, 1);
+		RString *s = STRPOOL->Get(key);
+		if (s)
+			lua_pushstring(l, *s);
+		else
+			lua_pushstring(l, "");
+		return 1;
+	}
+}
+
+void LuaBinding<StringPool>::Register(Lua *L, int iMethods, int iMetatable) {
+	lua_register(L, "SetString", SetString);
+	lua_register(L, "GetString", GetString);
+}
+
+void LuaBinding<HandlerPool>::Register(Lua *L, int iMethods, int iMetatable) {
+	lua_register(L, "SetHandler", SetTimer);
+	lua_register(L, "SetSwitch", SetTimer);
+	lua_register(L, "IsSwitch", IsTimer);
+	lua_register(L, "GetTime", GetTime);
+}
+
+void LuaBinding<IntPool>::Register(Lua *L, int iMethods, int iMetatable) {
+	lua_register(L, "SetInt", SetInt);
+	lua_register(L, "GetInt", GetInt);
+}
+
+void LuaBinding<DoublePool>::Register(Lua *L, int iMethods, int iMetatable) {
+	lua_register(L, "SetFloat", SetFloat);
+	lua_register(L, "GetFloat", GetFloat);
 }

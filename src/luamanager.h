@@ -39,7 +39,7 @@ extern LuaManager* LUA;
 template <class T>
 class LuaBinding {
 public:
-	void Register(Lua *L, int iMethods, int iMetatable);
+	static void Register(Lua *L, int iMethods, int iMetatable);
 };
 
 

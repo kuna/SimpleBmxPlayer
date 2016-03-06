@@ -267,10 +267,10 @@ namespace PlayerReplayHelper {
 		const char* course) {
 		RString path;
 		if (course) {
-			path = ssprintf("../replay/%s/%s/%s.rep", playername, course, songhash);
+			path = ssprintf("../player/replay/%s/%s/%s.rep", playername, course, songhash);
 		}
 		else {
-			path = ssprintf("../replay/%s/%s.rep", playername, songhash);
+			path = ssprintf("../player/replay/%s/%s.rep", playername, songhash);
 		}
 		RString repdata;
 		if (GetFileContents(path, repdata)) {
@@ -290,10 +290,10 @@ namespace PlayerReplayHelper {
 
 		RString path;
 		if (course) {
-			path = ssprintf("../replay/%s/%s/%s.rep", playername, course, songhash);
+			path = ssprintf("../player/replay/%s/%s/%s.rep", playername, course, songhash);
 		}
 		else {
-			path = ssprintf("../replay/%s/%s.rep", playername, songhash);
+			path = ssprintf("../player/replay/%s/%s.rep", playername, songhash);
 		}
 		RString dir = get_filedir(path);
 		RString repdata;
