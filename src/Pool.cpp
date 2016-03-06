@@ -661,20 +661,6 @@ void Initalize_SceneValue() {
 	SCENEVALUE.Uptime = SWITCH_GET("Game");
 	SCENEVALUE.Scenetime = SWITCH_GET("Scene");
 	SCENEVALUE.Rendertime = SWITCH_GET("Render");
-
-	PLAYVALUE.P1RivalDiff = INTPOOL->Get("P1RivalDiff");
-	PLAYVALUE.P2ExScore= DOUBLEPOOL->Get("P2ExScore");
-	PLAYVALUE.P2ExScoreEsti = DOUBLEPOOL->Get("P2ExScoreEstI");
-
-	PLAYVALUE.OnSongStart = SWITCH_OFF("OnGameStart");
-	PLAYVALUE.OnSongLoading = SWITCH_OFF("OnSongLoading");
-	PLAYVALUE.OnSongLoadingEnd = SWITCH_OFF("OnSongLoadingEnd");
-	PLAYVALUE.OnReady = SWITCH_OFF("OnReady");
-	PLAYVALUE.OnClose = SWITCH_OFF("OnClose");
-	PLAYVALUE.OnFadeIn = SWITCH_OFF("OnFadeIn");
-	PLAYVALUE.OnFadeOut = SWITCH_OFF("OnFadeOut");
-	PLAYVALUE.On1PMiss = SWITCH_OFF("On1PMiss");
-	PLAYVALUE.On2PMiss = SWITCH_OFF("On2PMiss");
 }
 
 /* private; automatically when PoolHelper::InitalizeAll() called */
@@ -685,36 +671,30 @@ void InitalizeValues() {
 	Initalize_P2_RenderValue();
 }
 
-void InitalizeAll() {
-	STRPOOL = new StringPool();
-	DOUBLEPOOL = new DoublePool();
-	INTPOOL = new IntPool();
-	HANDLERPOOL = new HandlerPool();
-	TEXPOOL = new TexturePool();
-	FONTPOOL = new FontPool();
-	SOUNDPOOL = new SoundPool();
+namespace PoolHelper {
+	void InitalizeAll() {
+		STRPOOL = new StringPool();
+		DOUBLEPOOL = new DoublePool();
+		INTPOOL = new IntPool();
+		HANDLERPOOL = new HandlerPool();
+		TEXPOOL = new TexturePool();
+		FONTPOOL = new FontPool();
+		SOUNDPOOL = new SoundPool();
 
-	// fill all basic values
-	InitalizeValues();
+		// fill all basic values
+		InitalizeValues();
+	}
+
+	void ReleaseAll() {
+		SAFE_DELETE(STRPOOL);
+		SAFE_DELETE(DOUBLEPOOL);
+		SAFE_DELETE(INTPOOL);
+		SAFE_DELETE(HANDLERPOOL);
+		SAFE_DELETE(TEXPOOL);
+		SAFE_DELETE(FONTPOOL);
+		SAFE_DELETE(SOUNDPOOL);
+	}
 }
-
-void ReleaseAll() {
-	SAFE_DELETE(STRPOOL);
-	SAFE_DELETE(DOUBLEPOOL);
-	SAFE_DELETE(INTPOOL);
-	SAFE_DELETE(HANDLERPOOL);
-	SAFE_DELETE(TEXPOOL);
-	SAFE_DELETE(FONTPOOL);
-	SAFE_DELETE(SOUNDPOOL);
-}
-
-// automatically PoolHelper is initalized & removed
-struct PoolInitalizer {
-	PoolInitalizer() { InitalizeAll(); }
-	~PoolInitalizer() { ReleaseAll(); }
-} _PoolInitalizer;
-
-
 
 
 // lua part

@@ -1031,4 +1031,12 @@ namespace FileHelper {
 
 
 
-FileManager *FILEMANAGER = new FileManager();
+FileManager *FILEMANAGER = 0;
+
+// just for auto-initalization and delete
+struct FileManagerInit {
+	FileManagerInit() { FILEMANAGER = new FileManager(); }
+	~FileManagerInit() {
+		delete FILEMANAGER;
+	}
+} FILEMANAGERINIT;

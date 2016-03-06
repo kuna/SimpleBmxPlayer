@@ -1,6 +1,4 @@
 #include "game.h"
-#include "gameplay.h"
-#include "gameresult.h"
 #include "Setting.h"
 
 #include "Luamanager.h"
@@ -50,6 +48,23 @@ namespace Game {
 
 	bool Initialize() {
 		/*
+		* Initalize at very first
+		* (Pool/FileManager is automatically initalized, so we don't need to take care of it)
+		*/
+		LUA = new LuaManager();
+		Lua *L = LUA->Get();
+		LuaBinding<StringPool>::Register(L, 0, 0);
+		LuaBinding<IntPool>::Register(L, 0, 0);
+		LuaBinding<DoublePool>::Register(L, 0, 0);
+		LuaBinding<HandlerPool>::Register(L, 0, 0);
+		LUA->Release(L);
+
+		/*
+		* Pool need to be initialized before resource(display) registration
+		*/
+		PoolHelper::InitializeAll();
+
+		/*
 		 * Create window
 		 */
 		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) != 0) {
@@ -92,31 +107,9 @@ namespace Game {
 		LOG->Info("OpenGL Version %s\n", DISPLAY->GetInfo());
 
 		/*
-		 * prepare game basic resource
-		 * (do it before SceneManager created - scenemanager requires this resource)
+		 * Scene must be initalized after all elements are initialized
+		 * (uses pool, lua, display[font])
 		 */
-		TEXPOOL->Register("_black", SurfaceUtil::CreateColorTexture(0x000000FF));
-		TEXPOOL->Register("_white", SurfaceUtil::CreateColorTexture(0xFFFFFFFF));
-		TEXPOOL->Register("_fastslow", SurfaceUtil::LoadTexture("../system/resource/fastslow.png"));
-		TEXPOOL->Register("_number_float", SurfaceUtil::LoadTexture("../system/resource/number_float.png"));
-		font = FONTPOOL->LoadTTFFont("_system", 
-			"../system/resource/NanumGothicExtraBold.ttf", 28, 0x909090FF, 0,
-			0x000000FF, 1, 0,
-			"../system/resource/fontbackground_small.png");
-
-
-		/*
-		 * Initalize Instances
-		 * (Pool/FileManager is automatically initalized, so we don't need to take care of it)
-		 */
-		LUA = new LuaManager();
-		Lua *L = LUA->Get();
-		LuaBinding<StringPool>::Register(L, 0, 0);
-		LuaBinding<IntPool>::Register(L, 0, 0);
-		LuaBinding<DoublePool>::Register(L, 0, 0);
-		LuaBinding<HandlerPool>::Register(L, 0, 0);
-		LUA->Release(L);
-
 		SCENE = new SceneManager();
 		INPUT = new InputManager();
 
@@ -138,8 +131,10 @@ namespace Game {
 
 		// release basic instances
 		// COMMENT: Font/Surface pool should be destroyed first before DISPLAY destroyed
+		// So order is important.
 		delete SCENE;
 		delete INPUT;
+		PoolHelper::ReleaseAll();
 		delete DISPLAY;
 		delete LUA;
 		Mix_CloseAudio();
@@ -195,12 +190,18 @@ namespace Game {
 
 
 
+#include "sceneplay.h"
+#include "sceneresult.h"
+
 void SceneManager::Initalize() {
 	m_bShowFPS = false;
 
-	// Initalize & add basic scenes
-	InitalizeScene(&GamePlay::SCENE);
-	InitalizeScene(&GameResult::SCENE);
+	// basic resource setting
+	Reload();
+
+	// register scene
+	RegisterScene("Play", new ScenePlay());
+	RegisterScene("Result", new SceneResult());
 
 	// initalize input
 	INPUT->Register(&m_Input);
@@ -359,5 +360,25 @@ void SceneManager::SetScreenMessage(const RString& msg) {
 }
 
 void SceneManager::Reload() {
-	// TODO
+	// Clear all resources
+	Theme::ClearAllResource();
+	TEXPOOL->ReleaseAll();
+	FONTPOOL->ReleaseAll();
+
+	// Register basic resources
+	TEXPOOL->Register("_black", SurfaceUtil::CreateColorTexture(0x000000FF));
+	TEXPOOL->Register("_white", SurfaceUtil::CreateColorTexture(0xFFFFFFFF));
+	//TEXPOOL->Register("_fastslow", SurfaceUtil::LoadTexture("../system/resource/fastslow.png"));
+	//TEXPOOL->Register("_number_float", SurfaceUtil::LoadTexture("../system/resource/number_float.png"));
+	FONTPOOL->LoadTTFFont("_system",
+		"../system/resource/NanumGothicExtraBold.ttf", 28, 0x909090FF, 0,
+		0x000000FF, 1, 0,
+		"../system/resource/fontbackground_small.png");
+
+	// Reload currently activated scene's resource
+	if (m_FocusedScene) m_FocusedScene->Reload();
+	for (auto it = m_SceneBackground.begin(); it != m_SceneBackground.end(); ++it)
+		(*it)->Reload();
+	for (auto it = m_SceneForeground.begin(); it != m_SceneForeground.end(); ++it)
+		(*it)->Reload();
 }

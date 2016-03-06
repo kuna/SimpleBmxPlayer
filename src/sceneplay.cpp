@@ -15,70 +15,78 @@
 #include "game.h"
 #include "Sceneresult.h"
 
-// scene
-ScenePlay*			SCENEPLAY;
 
-namespace {
-	int *pRivalDiff;
-	double *pRivalDiff_d;
-	double *pRivalDiff_d_total;
 
-	void InitalizePlayer() {
-		/*
-			* delete player if previously existed
-			*/
-		if (PLAYER[0]) SAFE_DELETE(PLAYER[0]);	// player
-		if (PLAYER[1]) SAFE_DELETE(PLAYER[1]);	// 2p(battlemode) or auto-player(pacemaker)
-		if (PLAYER[2]) SAFE_DELETE(PLAYER[2]);	// replay(mybest)
+void ScenePlay::Initialize() {
+	//
+	// initalize theme metrics
+	//
+	P1RivalDiff = INTPOOL->Get("P1RivalDiff");
+	P2ExScore = DOUBLEPOOL->Get("P2ExScore");
+	P2ExScoreEsti = DOUBLEPOOL->Get("P2ExScoreEstI");
 
-		/*
-			* Create player object for playing
-			* MUST create before load skin
-			* MUST create after Bms loaded (rate configured)
-			*/
-		// gauge rseed op1 op2 setting (in player)
-		// in courseplay, player object shouldn't be created many times
-		// so, before scene start, check round, and decide to create player.
-		if (m_Autoplay) {
-			PLAYER[0] = new PlayerAuto(0);
-		}
-		else if (P.replay) {
-			/*
-			* in case of course mode,
-			* replay will be stored in course folder
-			* (TODO)
-			*/
-			PlayerReplayRecord rep;
-			if (!PlayerReplayHelper::LoadReplay(rep, PLAYERINFO[0].name, P.bmshash[0])) {
-				LOG->Critical("Failed to load replay file.");
-				return;		// ??
-			}
-			PlayerReplay *pRep = new PlayerReplay(0);
-			PLAYER[0] = pRep;
-			pRep->SetReplay(rep);
-		}
-		else {
-			PLAYER[0] = new Player(0);
-		}
-		// other side is pacemaker
-		PLAYER[1] = new PlayerAuto(1);	// MUST always single?
-		PLAYER[1]->SetPlaySound(false);	// Pacemaker -> Silent!
-		((PlayerAuto*)PLAYER[1])->SetGoal(P.pacemaker);
+	OnSongStart = SWITCH_OFF("OnGameStart");
+	OnSongLoading = SWITCH_OFF("OnSongLoading");
+	OnSongLoadingEnd = SWITCH_OFF("OnSongLoadingEnd");
+	OnReady = SWITCH_OFF("OnReady");
+	OnClose = SWITCH_OFF("OnClose");
+	OnFadeIn = SWITCH_OFF("OnFadeIn");
+	OnFadeOut = SWITCH_OFF("OnFadeOut");
+	On1PMiss = SWITCH_OFF("On1PMiss");
+	On2PMiss = SWITCH_OFF("On2PMiss");
 
-		// generate replay object
-		PLAYER[2] = new PlayerReplay(2);
+	//
+	// initalize player
+	//
+	if (m_Autoplay) {
+		PLAYER[0] = new PlayerAuto(0);
 	}
+	else if (P.replay) {
+		/*
+		* in case of course mode,
+		* replay will be stored in course folder
+		* (TODO)
+		*/
+		PlayerReplayRecord rep;
+		if (!PlayerReplayHelper::LoadReplay(rep, PLAYERINFO[0].name, P.bmshash[0])) {
+			LOG->Critical("Failed to load replay file.");
+			return;		// ??
+		}
+		PlayerReplay *pRep = new PlayerReplay(0);
+		PLAYER[0] = pRep;
+		pRep->SetReplay(rep);
+	}
+	else {
+		PLAYER[0] = new Player(0);
+	}
+	// other side is pacemaker
+	PLAYER[1] = new PlayerAuto(1);	// MUST always single?
+	PLAYER[1]->SetPlaySound(false);	// Pacemaker -> Silent!
+	((PlayerAuto*)PLAYER[1])->SetGoal(P.pacemaker);
+
+	// generate replay object
+	PLAYER[2] = new PlayerReplay(2);
 }
 
 void ScenePlay::Start() {
-	/* ---------------------------------------------------------------------------
-		* Load settings from parameter
-		* Load bms first
-		* (bms resource is loaded with thread)
-		* (load bms first to find out what key skin is proper)
-		* COMMENT: if bms load failed, then continue with empty bms file.
-		*          Make SongInfo structure, and load detailed information to there.
-		*/
+	//
+	// set scene state from game state
+	//
+	// - if autoplay | replay | rate < 1 | startmeasure != 0 | endmeasure < 1000
+	// then don't allow save play record.
+	if (GAMESTATE.m_Autoplay || GAMESTATE.m_Replay || GAMESTATE.m_PlayRate < 1.0
+		|| GAMESTATE.m_Startmeasure != 0 || GAMESTATE.m_Endmeasure < 1000 || GAMESTATE.m_SongRepeatCount > 1)
+	{
+		m_IsRecordable = false;
+	}
+	else {
+		m_IsRecordable = true;
+	}
+
+	//
+	// load bms first
+	// (with parameter settings)
+	//
 	BmsHelper::SetLoadOption(
 		P.startmeasure,
 		P.endmeasure,
@@ -99,8 +107,8 @@ void ScenePlay::Start() {
 
 
 	/* ---------------------------------------------------------------------------
-		* Set Players after Bms is loaded
-		*/
+	* Set Players after Bms is loaded
+	*/
 
 	/* if round 1, then create(reset) player object */
 	if (P.round == 1)
@@ -276,25 +284,25 @@ void ScenePlay::Update() {
 	/* *******************************************************
 	* check timers (game flow related)
 	* *******************************************************/
-	if (PLAYVALUE.OnReady->Trigger(PLAYVALUE.OnSongLoadingEnd->IsStarted() && PLAYVALUE.OnSongLoading->GetTick() >= 3000))
-		PLAYVALUE.OnSongLoading->Stop();
-	if (PLAYVALUE.OnSongStart->Trigger(PLAYVALUE.OnReady->GetTick() >= 1000))
-		PLAYVALUE.OnSongLoadingEnd->Stop();
+	if (OnReady->Trigger(OnSongLoadingEnd->IsStarted() && OnSongLoading->GetTick() >= 3000))
+		OnSongLoading->Stop();
+	if (OnSongStart->Trigger(OnReady->GetTick() >= 1000))
+		OnSongLoadingEnd->Stop();
 	// OnClose is called when all player is dead
 	bool close = true;
 	if (close && PLAYER[0] && PLAYER[0]->GetPlayerType() == PLAYERTYPE::HUMAN)
 		close = close && PLAYER[0]->IsDead();
 	if (close && PLAYER[1] && PLAYER[1]->GetPlayerType() == PLAYERTYPE::HUMAN)
 		close = close && PLAYER[1]->IsDead();
-	if (PLAYVALUE.OnClose->Trigger(close)) {
+	if (OnClose->Trigger(close)) {
 		// stop all sound
 		SONGPLAYER->StopAllSound();
 	}
 	// OnFadeout is called when endtime is over
 	// COMMENT: EndTime == lastnote + 2 sec.
-	PLAYVALUE.OnFadeOut->Trigger(SONGPLAYER->GetEndTime() + 2000 < PLAYVALUE.OnGameStart->GetTick());
+	OnFadeOut->Trigger(SONGPLAYER->GetEndTime() + 2000 < OnSongStart->GetTick());
 	// If OnClose/OnFadeout has enough time, then go to next scene
-	if (PLAYVALUE.OnClose->GetTick() > 3000 || PLAYVALUE.OnFadeOut->GetTick() > 3000) {
+	if (OnClose->GetTick() > 3000 || OnFadeOut->GetTick() > 3000) {
 		roundcnt = courseplay;
 		round = round + 1;
 		SCENE->ChangeScene("Result");
@@ -304,14 +312,14 @@ void ScenePlay::Update() {
 	/* *********************************************************
 	* under are part of playing
 	* if dead, no need to update.
-		* *********************************************************/
-	if (PLAYVALUE.OnClose->IsStarted()) return;
+	* *********************************************************/
+	if (OnClose->IsStarted()) return;
 
 	/*
-		* BMS update
-		*/
-	if (PLAYVALUE.OnSongStart->IsStarted())
-		SONGPLAYER->Update(PLAYVALUE.OnSongStart->GetTick());
+	* BMS update
+	*/
+	if (OnSongStart->IsStarted())
+		SONGPLAYER->Update(OnSongStart->GetTick());
 
 	/*
 		* Player update
@@ -330,8 +338,8 @@ void ScenePlay::Update() {
 
 void ScenePlay::Render() {
 	/*
-		* draw skin tree
-		*/
+	* draw skin tree
+	*/
 	theme.Update();
 	theme.Render();
 }
@@ -349,18 +357,29 @@ void ScenePlay::End() {
 	if (isrecordable && PLAYER[0]) {
 		PLAYER[0]->Save();
 	}
-}
 
-void ScenePlay::Release() {
-	// remove player
-	SAFE_DELETE(PLAYER[0]);
-	SAFE_DELETE(PLAYER[1]);
+	/*
+	* Store all player information to game state
+	*/
+
+	/*
+	* done, release all players.
+	*/
+	if (PLAYER[0]) SAFE_DELETE(PLAYER[0]);	// player
+	if (PLAYER[1]) SAFE_DELETE(PLAYER[1]);	// 2p(battlemode) or auto-player(pacemaker)
+	if (PLAYER[2]) SAFE_DELETE(PLAYER[2]);	// replay(mybest)
+
 
 	// skin clear (COMMENT: we don't need to release skin in real. just in beta version.)
 	// we don't need to clear BMS data until next BMS is loaded
 	theme.ClearElements();
 	//bmsresource.Clear();
 	//bms.Clear();
+}
+
+void ScenePlay::Release() {
+	// Nothing to do, maybe.
+	// Theme/Pool will automaticall release all texture resources.
 }
 
 /** private */
@@ -434,7 +453,7 @@ int GetChannelFromFunction(int func) {
 // lane is changed instead of sudden if you press CTRL key
 bool pressedCtrl = false;
 bool pressedStart = false;
-void ScenePlay::KeyDown(int code, bool repeating) {
+void ScenePlay::OnDown(int code) {
 	/*
 		* -- some presets --
 		*
@@ -502,7 +521,7 @@ void ScenePlay::KeyDown(int code, bool repeating) {
 	}
 }
 
-void ScenePlay::KeyUp(int code) {
+void ScenePlay::OnUp(int code) {
 	int func = -1;
 	switch (code) {
 	case SDLK_LCTRL:

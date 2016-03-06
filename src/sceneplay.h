@@ -22,40 +22,44 @@
 
 class ScenePlay : public SceneBasic {
 public:
-	/* well.. bms related part will be changed into SongInfo struct, later. */
-	RString bmspath[10];
-	// requires in case of replay
-	RString bmshash[10];
-	// if course play, then play as much as that count.
-	// if not, just count 1.
-	int courseplay;
-	// round of courseplay (start from 1)
-	int round;
-	int op1;	// 0x0000ABCD; RANDOM / SC / LEGACY(MORENOTE/ALL-LN) / JUDGE
-	int op2;
-	double rate;
-	int rseed;
-
-	// program option (not included in replay)
-	int startmeasure;
-	int endmeasure;
-	int repeat;
-	bool bga;
-	bool replay;
-	bool m_Autoplay;
-	double pacemaker;
+	// currently playing songpath / hash.
+	// (1P / 2P)?
+	RString m_SongPath;
+	RString m_SongHash;
 
 	// record disabled
 	// in case of training mode / replay
-	bool isrecordable;
+	bool m_IsRecordable;
 
-	// game skin
-	Theme				theme;
+	int op1;			// 0x0000ABCD; RANDOM / SC / LEGACY(MORENOTE/ALL-LN) / JUDGE
+	int op2;
+	double rate;
+	int rseed;
 
 	// play related
 	int					playmode;			// PLAYTYPE..?
 	PlayerSongRecord	record;
 
+
+	// game skin
+	Theme				theme;
+
+	//
+	// theme metrics (internally used)
+	//
+	Timer*			OnSongStart;
+	Timer*			OnSongLoading;
+	Timer*			OnSongLoadingEnd;
+	Timer*			OnReady;
+	Timer*			OnClose;			// when 1p & 2p dead
+	Timer*			OnFadeIn;			// when game start
+	Timer*			OnFadeOut;			// when game end
+	Timer*			On1PMiss;			// just for missing image
+	Timer*			On2PMiss;			// just for missing image
+
+	int*			P1RivalDiff;
+	double*			P2ExScore;
+	double*			P2ExScoreEsti;
 public:
 	// basics
 	virtual void Initialize();
@@ -66,14 +70,6 @@ public:
 	virtual void Release();
 
 	// event handler
-	virtual void KeyUp(int code);
-	virtual void KeyDown(int code, bool repeating);
-	//virtual void MouseUp(int x, int y);
-	//virtual void MouseDown(int x, int y);
-	//virtual void MouseMove(int x, int y);
-	//virtual void MouseStartDrag(int x, int y);
-	//virtual void MouseDrag(int x, int y);
-	//virtual void MouseEndDrag(int x, int y);
+	virtual void OnUp(int code);
+	virtual void OnDown(int code);
 };
-
-extern ScenePlay*	SCENEPLAY;

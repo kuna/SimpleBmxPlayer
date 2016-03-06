@@ -293,38 +293,18 @@ typedef struct {
 
 } SongValue;
 
-extern SongValue SONGVALUE;
-
-typedef struct {
-	// TODO
-} SelectValue;
-
-extern SelectValue SELECTVALUE;
+extern SongValue	SONGVALUE;
 
 typedef struct {
 	Switch*			Uptime;
 	Switch*			Scenetime;
 	Switch*			Rendertime;	// different from scenetime; this is called every time when scene is rendered
-
-	// result related
 } SceneValue;
 
-typedef struct {
-	// gameplay related
-	Timer*			OnSongStart;
-	Timer*			OnSongLoading;
-	Timer*			OnSongLoadingEnd;
-	Timer*			OnReady;
-	Timer*			OnClose;			// when 1p & 2p dead
-	Timer*			OnFadeIn;			// when game start
-	Timer*			OnFadeOut;			// when game end
-	Timer*			On1PMiss;			// just for missing image
-	Timer*			On2PMiss;			// just for missing image
-
-	int*			P1RivalDiff;
-	double*			P2ExScore;
-	double*			P2ExScoreEsti;
-} PlayValue;
-
 extern SceneValue	SCENEVALUE;
-extern PlayValue	PLAYVALUE;
+
+
+namespace PoolHelper {
+	void InitializeAll();
+	void ReleaseAll();
+}

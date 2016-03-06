@@ -6,7 +6,6 @@
 #include "file.h"
 #include "Pool.h"
 #include "game.h"
-#include "gameplay.h"
 #include "logger.h"
 #include "Setting.h"
 
@@ -70,10 +69,10 @@ namespace Parameter {
 		/*
 		 * first figure out what player currently is
 		 */
-		Game::P.username = SETTING.username;//"NONAME";
+		GAMESTATE.m_username = SETTING.username;//"NONAME";
 		for (int i = 2; i < argc; i++) {
 			if (BeginsWith(argv[i], "-n")) {
-				Game::P.username = argv[i];
+				GAMESTATE.m_username = argv[i];
 			}
 		}
 
@@ -81,8 +80,8 @@ namespace Parameter {
 		 * Load player information
 		 * This process should be made in SCENE::PLAYER originally.
 		 */
-		if (!PlayerInfoHelper::LoadPlayerInfo(PLAYERINFO[0], Game::P.username.c_str())) {
-			LOG->Warn("Cannot find userdata %s. Set default.", Game::P.username.c_str());
+		if (!PlayerInfoHelper::LoadPlayerInfo(PLAYERINFO[0], GAMESTATE.m_username.c_str())) {
+			LOG->Warn("Cannot find userdata %s. Set default.", GAMESTATE.m_username.c_str());
 			PLAYERINFO[0].name = SETTING.username;
 			PlayerInfoHelper::DefaultPlayerInfo(PLAYERINFO[0]);
 		}
@@ -121,28 +120,31 @@ namespace Parameter {
 				hash = f->GetMD5Hash();
 				delete f;
 			}
-			FILEMANAGER->UnMount(courses[i]);
+			//
+			// Don't unmount it, on purpose
+			// as It'll be loaded in ScenePlay soon.
+			//
+			//FILEMANAGER->UnMount(courses[i]);
 
 			hash = GetHash(courses[i]);
 
-			GamePlay::P.bmspath[i] = courses[i];
-			GamePlay::P.bmshash[i] = hash;
+			GAMESTATE.m_CoursePath[i] = courses[i];
+			GAMESTATE.m_CourseHash[i] = hash;
 		}
-		GamePlay::P.courseplay = courses.size();
-		GamePlay::P.round = 1;
+		GAMESTATE.m_CourseCount = courses.size();
+		GAMESTATE.m_CourseRound = 0;
 		//GamePlay::P.gauge = PLAYERINFO[0].playconfig.gaugetype;
 		//GamePlay::P.op1 = PLAYERINFO[0].playconfig.op_1p;
 		//GamePlay::P.op2 = PLAYERINFO[0].playconfig.op_2p;
-		GamePlay::P.rate = 1;
+		GAMESTATE.m_PlayRate = 1;
 		
-		GamePlay::P.bga = SETTING.bga;
-		GamePlay::P.startmeasure = 0;
-		GamePlay::P.endmeasure = 1000;
-		GamePlay::P.repeat = 1;
-		GamePlay::P.replay = false;
-		GamePlay::P.rseed = time(0) % 65536;
-		GamePlay::P.pacemaker = 6.0 / 9.0;	// A rank
-		GamePlay::P.isrecordable = true;
+		GAMESTATE.m_ShowBga = SETTING.bga;
+		GAMESTATE.m_Startmeasure = 0;
+		GAMESTATE.m_Endmeasure= 1000;
+		GAMESTATE.m_SongRepeatCount = 1;
+		GAMESTATE.m_Replay = false;
+		GAMESTATE.m_rseed = time(0) % 65536;
+		GAMESTATE.m_PacemakerGoal = 6.0 / 9.0;	// A rank
 
 		// overwrite default options
 		for (int i = 2; i < argc; i++) {
@@ -152,37 +154,31 @@ namespace Parameter {
 				PLAYERINFO[0].playconfig.op_2p = op / 10;
 			}
 			else if (BeginsWith(argv[i], "-replay")) {
-				GamePlay::P.replay = true;
-				GamePlay::P.isrecordable = false;
+				GAMESTATE.m_Replay = true;
 			}
 			else if (BeginsWith(argv[i], "-auto")) {
-				GamePlay::P.autoplay = true;
-				GamePlay::P.isrecordable = false;
+				GAMESTATE.m_Autoplay = true;
 			}
 			else if (BeginsWith(argv[i], "-bgaoff")) {
-				GamePlay::P.bga = false;
+				GAMESTATE.m_ShowBga = false;
 			}
 			else if (BeginsWith(argv[i], "-rate")) {
-				GamePlay::P.rate = atof(argv[i] + 5);
-				GamePlay::P.isrecordable = false;
+				GAMESTATE.m_PlayRate = atof(argv[i] + 5);
 			}
 			else if (BeginsWith(argv[i], "-pace")) {
-				GamePlay::P.pacemaker = atof(argv[i] + 5);
+				GAMESTATE.m_PacemakerGoal = atof(argv[i] + 5);
 			}
 			else if (BeginsWith(argv[i], "-g")) {
 				PLAYERINFO[0].playconfig.gaugetype = atoi(argv[i] + 2);
 			}
 			else if (BeginsWith(argv[i], "-s")) {
-				GamePlay::P.startmeasure = atoi(argv[i] + 2);
-				GamePlay::P.isrecordable = false;
+				GAMESTATE.m_Startmeasure = atoi(argv[i] + 2);
 			}
 			else if (BeginsWith(argv[i], "-e")) {
-				GamePlay::P.endmeasure = atoi(argv[i] + 2);
-				GamePlay::P.isrecordable = false;
+				GAMESTATE.m_Endmeasure = atoi(argv[i] + 2);
 			}
 			else if (BeginsWith(argv[i], "-r")) {
-				GamePlay::P.repeat = atoi(argv[i] + 2);
-				GamePlay::P.isrecordable = false;
+				GAMESTATE.m_SongRepeatCount = atoi(argv[i] + 2);
 			}
 		}
 		return true;

@@ -15,8 +15,42 @@ namespace Game {
 	void End();
 }
 
+// globally used variables related to game
+// (Used as Scene's Initalization Parameter)
+class GameState {
+public:
+	GameState();
+
+	// basic related
+	RString m_username;
+
+	// select related
+
+	// playing related
+	RString m_CoursePath[10];
+	RString m_CourseHash[10];
+	int m_CourseRound;
+	int m_CourseCount;
+	RString m_2PSongPath;	// not generally used
+	RString m_2PSongHash;	// not generally used
+
+	int m_Startmeasure;
+	int m_Endmeasure;
+	int m_SongRepeatCount;
+	bool m_ShowBga;
+	bool m_Replay;
+	bool m_Autoplay;
+	int m_rseed;
+	int m_op1;	// 0x0000ABCD; RANDOM / SC / LEGACY(MORENOTE/ALL-LN) / JUDGE
+	int m_op2;
+	double m_PlayRate;
+
+	double m_PacemakerGoal;
+};
+
 extern IDisplay*		DISPLAY;
 extern SDL_Window*		WINDOW;
+extern GameState		GAMESTATE;
 
 
 
@@ -32,6 +66,7 @@ public:
 	virtual void Render() {};
 	virtual void End() {};
 	virtual void Release() {};
+	virtual void Reload() {};
 };
 
 class SceneManager {
