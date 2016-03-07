@@ -41,8 +41,9 @@ public:
 	bool m_Replay;
 	bool m_Autoplay;
 	int m_rseed;
-	int m_op1;	// 0x0000ABCD; RANDOM / SC / LEGACY(MORENOTE/ALL-LN) / JUDGE
+	int m_op1;				// 0x0000ABCD; RANDOM / SC / LEGACY(MORENOTE/ALL-LN) / JUDGE
 	int m_op2;
+	int m_Battle;			// set battle mode (OFF, BATTLE, G-BATTLE, ...)
 	double m_PlayRate;
 
 	double m_PacemakerGoal;
@@ -79,6 +80,7 @@ class SceneManager {
 	Display::Rect m_SceneFgDST;
 	SceneBasic* m_FocusedScene = 0;					// Currently running scene (input event only triggers here)
 	SceneBasic* m_NextScene = 0;
+	int m_NextSceneTime = 0;
 
 	// wanna some additional information?
 	bool m_bShowFPS;
@@ -92,6 +94,13 @@ class SceneManager {
 	void Initalize();
 	void Release();
 public:
+	// theme metrics
+	SwitchValue m_Uptime;
+	SwitchValue m_Scenetime;
+	SwitchValue m_Rendertime;
+	SwitchValue m_Fadeout;
+
+public:
 	SceneManager() { Initalize(); };
 	~SceneManager() { Release(); };
 
@@ -101,6 +110,8 @@ public:
 	static void RegisterScene(const RString& name, SceneBasic* scene);
 	static SceneBasic* GetScene(const RString& name);
 	void ChangeScene(const RString& name);
+	void ChangeSceneAfterTime(const RString& name, int timeout);
+	bool IsChangingScene();
 	void AddBackgroundScene(const RString& name);
 	void AddForegroundScene(const RString& name);
 	void SetBackgroundSceneDST(const Display::Rect& r);

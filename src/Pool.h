@@ -19,40 +19,20 @@ using namespace std;
 
 
 
-
-
-// pools
-
-class StringPool {
-private:
-	std::map<RString, RString> _stringpool;
+template <class T>
+class BasicPool {
+protected:
+	std::map<RString, T> m_Pool;
 public:
-	bool IsExists(const RString &key);
-	RString* Set(const RString &key, const RString &value = "");
-	RString* Get(const RString &key);
-	void Remove(const RString& key);
-	void Clear();
-};
+	BasicPool<T>() {  };
+	~BasicPool<T>() { ReleaseAll(); };
+	void ReleaseAll() { m_Pool.clear(); }
 
-class DoublePool {
-private:
-	std::map<RString, double> _doublepool;
-public:
-	bool IsExists(const RString &key);
-	double* Set(const RString &key, double value = 0);
-	double* Get(const RString &key);
-	void Clear();
-};
-
-class IntPool {
-private:
-	std::map<RString, int> _intpool;
-public:
-	bool IsExists(const RString &key);
-	int* Set(const RString &key, int value = 0);
-	int* Get(const RString &key);
-	void Remove(const RString& key);
-	void Clear();
+	bool IsExists(const RString &key) { return (m_Pool.find(key) != m_Pool.end()); };
+	T* Set(const RString &key, T v) { m_Pool[key] = v; };
+	T* Get(const RString &key) { auto it = m_Pool.find(key); if (it == m_Pool.end()) return 0; else return *it; };
+	void Remove(const RString& key) { m_Pool.erase(key); };
+	void Clear() { m_Pool.clear(); };
 };
 
 /* DEPRECIATED */
@@ -171,15 +151,56 @@ public:
 	Audio* Get(const RString &path);
 };
 
-extern StringPool* STRPOOL;
-extern DoublePool* DOUBLEPOOL;
-extern IntPool* INTPOOL;
-extern HandlerPool* HANDLERPOOL;
+extern BasicPool<RString>* STRPOOL;
+extern BasicPool<double>* DOUBLEPOOL;
+extern BasicPool<int>* INTPOOL;
+extern SwitchValue* HANDLERPOOL;
 
 extern TexturePool* TEXPOOL;
 extern FontPool* FONTPOOL;
 extern SoundPool* SOUNDPOOL;
 
+
+
+template <class T>
+class Value {
+protected:
+	T *m_Ptr = 0;
+public:
+	T* SetPtr(T* p) { m_Ptr = p; return p; }
+	T* GetPtr() { return m_Ptr; }
+	Value<T>& Set(T v) { *m_Ptr = v; return this; }
+	T Get() const { if (m_Ptr) return *m_Ptr; else return T(); }
+	T operator=(T v) { return (*m_Ptr = v); }
+	T operator=(T *v) { return (m_Ptr = v); }
+	operator const T() const { return Get(); }
+
+	Value<T>& SetFromPool(const RString& name);// { m_Ptr = BasicPool<T>.Get(name); return *this; }
+};
+
+template <class T>
+class ISwitchValue: public T {
+public:
+	void Start();
+	void Stop();
+	bool Trigger(bool condition = true);
+	//bool OffTrigger(bool condition = true);
+
+	uint32_t GetTick();
+	bool IsStarted();
+};
+
+typedef ISwitchValue<Value<Switch>> SwitchValue;
+
+/* used for player object */
+
+template <class T>
+class PlayerValue: public Value<T> {
+public:
+	PlayerValue<T>& SetFromPool(int player, const RString& name);
+};
+
+typedef ISwitchValue<PlayerValue<Switch>> PlayerSwitchValue;
 
 
 
@@ -198,71 +219,6 @@ extern SoundPool* SOUNDPOOL;
 
 
 
-
-/*
- * ValueSets used in various structures
- */
-
-typedef struct {
-	Switch*				pOnMiss;			// Switch used when miss occured (DP)
-	Switch*				pOnCombo;
-	Switch*				pOnJudge[6];		// pf/gr/gd/bd/pr
-	Switch*				pOnSlow;
-	Switch*				pOnFast;
-	Switch*				pOnfullcombo;		// needless to say?
-	Switch*				pOnlastnote;		// when last note ends
-	Switch*				pOnGameover;		// game is over! (different from OnClose)
-	Switch*				pOnGaugeMax;		// guage max?
-	Switch*				pOnGaugeUp;
-	Switch*				pLanepress[10];
-	Switch*				pLanehold[10];
-	Switch*				pLaneup[10];
-	Switch*				pLanejudgeokay[10];
-	int*				pNotePerfect;
-	int*				pNoteGreat;
-	int*				pNoteGood;
-	int*				pNoteBad;
-	int*				pNotePoor;
-	Switch*				pOnAAA;
-	Switch*				pOnAA;
-	Switch*				pOnA;
-	Switch*				pOnB;
-	Switch*				pOnC;
-	Switch*				pOnD;
-	Switch*				pOnE;
-	Switch*				pOnF;
-	Switch*				pOnReachAAA;
-	Switch*				pOnReachAA;
-	Switch*				pOnReachA;
-	Switch*				pOnReachB;
-	Switch*				pOnReachC;
-	Switch*				pOnReachD;
-	Switch*				pOnReachE;
-	Switch*				pOnReachF;
-	double*				pExscore_d;
-	double*				pHighscore_d;
-	int*				pScore;
-	int*				pExscore;
-	int*				pCombo;
-	int*				pMaxCombo;
-	int*				pTotalnotes;
-	int*				pRivaldiff;		// TODO where to process it?
-	double*				pGauge_d;
-	int*				pGaugeType;
-	int*				pGauge;
-	double*				pRate_d;
-	int*				pRate;
-	double*				pTotalRate_d;
-	int*				pTotalRate;
-	int*				pNoteSpeed;
-	int*				pFloatSpeed;
-	int*				pSudden;
-	int*				pLift;
-	double*				pSudden_d;
-	double*				pLift_d;
-} PlayerRenderValue;
-
-extern PlayerRenderValue PLAYERVALUE[4];
 
 typedef struct {
 	double*			songloadprogress;

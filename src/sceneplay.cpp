@@ -18,54 +18,17 @@
 
 
 void ScenePlay::Initialize() {
-	//
-	// initalize theme metrics
-	//
-	P1RivalDiff = INTPOOL->Get("P1RivalDiff");
-	P2ExScore = DOUBLEPOOL->Get("P2ExScore");
-	P2ExScoreEsti = DOUBLEPOOL->Get("P2ExScoreEstI");
-
-	OnSongStart = SWITCH_OFF("OnGameStart");
-	OnSongLoading = SWITCH_OFF("OnSongLoading");
-	OnSongLoadingEnd = SWITCH_OFF("OnSongLoadingEnd");
 	OnReady = SWITCH_OFF("OnReady");
 	OnClose = SWITCH_OFF("OnClose");
 	OnFadeIn = SWITCH_OFF("OnFadeIn");
 	OnFadeOut = SWITCH_OFF("OnFadeOut");
-	On1PMiss = SWITCH_OFF("On1PMiss");
-	On2PMiss = SWITCH_OFF("On2PMiss");
 
-	//
-	// initalize player
-	//
-	if (m_Autoplay) {
-		PLAYER[0] = new PlayerAuto(0);
-	}
-	else if (P.replay) {
-		/*
-		* in case of course mode,
-		* replay will be stored in course folder
-		* (TODO)
-		*/
-		PlayerReplayRecord rep;
-		if (!PlayerReplayHelper::LoadReplay(rep, PLAYERINFO[0].name, P.bmshash[0])) {
-			LOG->Critical("Failed to load replay file.");
-			return;		// ??
-		}
-		PlayerReplay *pRep = new PlayerReplay(0);
-		PLAYER[0] = pRep;
-		pRep->SetReplay(rep);
-	}
-	else {
-		PLAYER[0] = new Player(0);
-	}
-	// other side is pacemaker
-	PLAYER[1] = new PlayerAuto(1);	// MUST always single?
-	PLAYER[1]->SetPlaySound(false);	// Pacemaker -> Silent!
-	((PlayerAuto*)PLAYER[1])->SetGoal(P.pacemaker);
-
-	// generate replay object
-	PLAYER[2] = new PlayerReplay(2);
+	m_DiffSwitch[0].SetFromPool("DiffUnknown");
+	m_DiffSwitch[1].SetFromPool("DiffBeginner");
+	m_DiffSwitch[2].SetFromPool("DiffNormal");
+	m_DiffSwitch[3].SetFromPool("DiffHyper");
+	m_DiffSwitch[4].SetFromPool("DiffAnother");
+	m_DiffSwitch[5].SetFromPool("DiffInsane");
 }
 
 void ScenePlay::Start() {
@@ -84,7 +47,7 @@ void ScenePlay::Start() {
 	}
 
 	//
-	// load bms first
+	// load bms
 	// (with parameter settings)
 	//
 	BmsHelper::SetLoadOption(
@@ -104,22 +67,12 @@ void ScenePlay::Start() {
 	}
 	SONGPLAYER->SetRate(P.rate);
 
+	// COMMENT: set player gauge if it's coursemode ?
 
 
-	/* ---------------------------------------------------------------------------
-	* Set Players after Bms is loaded
-	*/
-
-	/* if round 1, then create(reset) player object */
-	if (P.round == 1)
-		InitalizePlayer();
 
 	//
-	// bms note should be created, 
-	// when creating note data, cautions:
-	// - MUST Bms file is loaded
-	// - ONLY rseed is argument. op is setted in player information.
-	// - each player has its own note data.
+	// bms note should be created (bms & status requires..?)
 	//
 	if (PLAYER[0]) PLAYER[0]->InitalizeNote(&bms);
 	if (PLAYER[1]) PLAYER[1]->InitalizeNote(&bms);	// COMMENT: player 2 may use different bms file if is battle mode ...
@@ -156,7 +109,6 @@ void ScenePlay::Start() {
 	/* ---------------------------------------------------------------------------
 	* Set rendervalue/switches before skin is loaded
 	*/
-	GameTimer::Tick();
 	PLAYVALUE.OnSongLoadingEnd->Stop();
 	PLAYVALUE.OnReady->Stop();
 	PLAYVALUE.OnSongStart->Stop();
@@ -172,33 +124,13 @@ void ScenePlay::Start() {
 	SONGVALUE.sArtist->assign(songinfo.sArtist);
 	SONGVALUE.sSubArtist->assign(songinfo.sSubArtist);
 
-	SWITCH_OFF("OnDiffBeginner");
-	SWITCH_OFF("OnDiffNormal");
-	SWITCH_OFF("OnDiffHyper");
-	SWITCH_OFF("OnDiffAnother");
-	SWITCH_OFF("OnDiffInsane");
-	switch (songinfo.iDifficulty) {
-	case 0:
-		SWITCH_ON("OnDiffNone");
-		break;
-	case 1:
-		SWITCH_ON("OnDiffBeginner");
-		break;
-	case 2:
-		SWITCH_ON("OnDiffNormal");
-		break;
-	case 3:
-		SWITCH_ON("OnDiffHyper");
-		break;
-	case 4:
-		SWITCH_ON("OnDiffAnother");
-		break;
-	case 5:
-	default:
-		SWITCH_ON("OnDiffInsane");
-		break;
+	for (int i = 0; i < 6; i++) {
+		if (songinfo.iDifficulty == i)
+			m_DiffSwitch[i].Start();
+		else
+			m_DiffSwitch[i].Stop();
 	}
-	INTPOOL->Set("PlayLevel", songinfo.iLevel);
+	m_PlayLevel = songinfo.iLevel;
 
 	if (songinfo.sBackBmp.size()) {
 		// TODO: load backbmp
@@ -210,60 +142,10 @@ void ScenePlay::Start() {
 
 
 
-	SWITCH_OFF("IsGhostOff");
-	SWITCH_OFF("IsGhostA");
-	SWITCH_OFF("IsGhostB");
-	SWITCH_OFF("IsGhostC");
-	switch (PLAYERINFO[0].playconfig.ghost_type) {
-	case GHOSTTYPE::OFF:
-		SWITCH_ON("IsGhostOff");
-		break;
-	case GHOSTTYPE::TYPEA:
-		SWITCH_ON("IsGhostA");
-		break;
-	case GHOSTTYPE::TYPEB:
-		SWITCH_ON("IsGhostB");
-		break;
-	case GHOSTTYPE::TYPEC:
-		SWITCH_ON("IsGhostC");
-		break;
-	}
-	SWITCH_OFF("IsJudgeOff");
-	SWITCH_OFF("IsJudgeA");
-	SWITCH_OFF("IsJudgeB");
-	SWITCH_OFF("IsJudgeC");
-	switch (PLAYERINFO[0].playconfig.judge_type) {
-	case JUDGETYPE::OFF:
-		SWITCH_ON("IsJudgeOff");
-		break;
-	case JUDGETYPE::TYPEA:
-		SWITCH_ON("IsJudgeA");
-		break;
-	case JUDGETYPE::TYPEB:
-		SWITCH_ON("IsJudgeB");
-		break;
-	case JUDGETYPE::TYPEC:
-		SWITCH_ON("IsJudgeC");
-		break;
-	}
-	switch (PLAYERINFO[0].playconfig.pacemaker_type) {
-	case PACEMAKERTYPE::PACE0:
-		break;
-	}
-	SWITCH_ON("IsScoreGraph");
-	SWITCH_OFF("IsAutoPlay");
-	SWITCH_ON("IsBGA");
-	SWITCH_ON("IsExtraMode");
-	DOUBLEPOOL->Set("TargetExScore", 0.5);
-	DOUBLEPOOL->Set("TargetExScore", 0.5);
-	INTPOOL->Set("MyBest", 12);		// TODO
-
-
-
 	/* ---------------------------------------------------------------------------
-		* Load skin
-		* - from here, something will show up in the screen.
-		*/
+	* Load skin
+	* - from here, something will show up in the screen.
+	*/
 	RString PlayskinPath = "";
 	if (playmode < 10)
 		PlayskinPath = SETTING.skin_play_7key;
@@ -275,8 +157,8 @@ void ScenePlay::Start() {
 
 
 	/* ---------------------------------------------------------------------------
-		* Load bms resource
-		*/
+	* Load bms resource
+	*/
 	BmsHelper::LoadBmsOnThread(bms);
 }
 
@@ -284,11 +166,17 @@ void ScenePlay::Update() {
 	/* *******************************************************
 	* check timers (game flow related)
 	* *******************************************************/
-	if (OnReady->Trigger(OnSongLoadingEnd->IsStarted() && OnSongLoading->GetTick() >= 3000))
+	// loading -> ready -> play
+	if (OnSongLoadingEnd->IsStarted() && OnSongLoading->GetTick() >= m_MinLoadingTime) {
 		OnSongLoading->Stop();
-	if (OnSongStart->Trigger(OnReady->GetTick() >= 1000))
-		OnSongLoadingEnd->Stop();
-	// OnClose is called when all player is dead
+		OnReady->Start();
+	}
+	if (OnReady->GetTick() >= m_ReadyTime) {
+		OnReady->Stop();
+		SONGPLAYER->Play();
+	}
+
+	// all human player is dead -> OnClose
 	bool close = true;
 	if (close && PLAYER[0] && PLAYER[0]->GetPlayerType() == PLAYERTYPE::HUMAN)
 		close = close && PLAYER[0]->IsDead();
@@ -298,6 +186,7 @@ void ScenePlay::Update() {
 		// stop all sound
 		SONGPLAYER->StopAllSound();
 	}
+
 	// OnFadeout is called when endtime is over
 	// COMMENT: EndTime == lastnote + 2 sec.
 	OnFadeOut->Trigger(SONGPLAYER->GetEndTime() + 2000 < OnSongStart->GetTick());
@@ -315,6 +204,7 @@ void ScenePlay::Update() {
 	* *********************************************************/
 	if (OnClose->IsStarted()) return;
 
+
 	/*
 	* BMS update
 	*/
@@ -322,18 +212,16 @@ void ScenePlay::Update() {
 		SONGPLAYER->Update(OnSongStart->GetTick());
 
 	/*
-		* Player update
-		*/
+	* Player update
+	*/
 	if (PLAYER[0]) PLAYER[0]->Update();
-	if (PLAYER[1]) {
-		PLAYER[1]->Update();
-		// update rival score if P2 exists
-		*pRivalDiff = 
-			PLAYER[0]->GetScoreData()->CalculateEXScore() - 
-			PLAYER[1]->GetScoreData()->CalculateEXScore();
-		*pRivalDiff_d = PLAYER[1]->GetScoreData()->CurrentRate();
-		*pRivalDiff_d_total = PLAYER[1]->GetScoreData()->CalculateRate();
-	}
+	if (PLAYER[1]) PLAYER[1]->Update();
+	// update rival score
+	*pRivalDiff = 
+		PLAYER[0]->GetScoreData()->CalculateEXScore() - 
+		PLAYER[1]->GetScoreData()->CalculateEXScore();
+	*pRivalDiff_d = PLAYER[1]->GetScoreData()->CurrentRate();
+	*pRivalDiff_d_total = PLAYER[1]->GetScoreData()->CalculateRate();
 }
 
 void ScenePlay::Render() {
@@ -346,20 +234,15 @@ void ScenePlay::Render() {
 
 void ScenePlay::End() {
 	/*
-	* save player properties when game goes end
+	* if you hit note (not gave up) and recordable, then save record/replay
 	*/
-	PlayerInfoHelper::SavePlayerInfo(PLAYERINFO[0]);
-
-	/*
-	* if you hit note (not gave up) and recordable, then save record
-	* (TODO)
-	*/
-	if (isrecordable && PLAYER[0]) {
-		PLAYER[0]->Save();
-	}
+	if (PLAYER[0]->IsSaveable()) PLAYER[0]->Save();
+	if (PLAYER[1]->IsSaveable()) PLAYER[1]->Save();
+	//if (isrecordable && !m_Giveup)
 
 	/*
 	* Store all player information to game state
+	* (TODO)
 	*/
 
 	/*
@@ -368,7 +251,6 @@ void ScenePlay::End() {
 	if (PLAYER[0]) SAFE_DELETE(PLAYER[0]);	// player
 	if (PLAYER[1]) SAFE_DELETE(PLAYER[1]);	// 2p(battlemode) or auto-player(pacemaker)
 	if (PLAYER[2]) SAFE_DELETE(PLAYER[2]);	// replay(mybest)
-
 
 	// skin clear (COMMENT: we don't need to release skin in real. just in beta version.)
 	// we don't need to clear BMS data until next BMS is loaded

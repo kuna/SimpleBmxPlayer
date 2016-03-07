@@ -77,16 +77,21 @@ protected:
 	double currentbar;
 	int bmsbar_index;
 	uint32_t bmsduration;
+
+	// theme metrics
+	SwitchValue			OnSongStart = SWITCH_OFF("Song");
+	SwitchValue			OnSongLoading = SWITCH_OFF("SongLoading");
+	SwitchValue			OnSongLoadingEnd = SWITCH_OFF("SongLoadingEnd");
 public:
 	SongPlayer();
 	~SongPlayer();
-
-	void LoadBmsResource(BmsBms& bms);
 	void Cleanup();
 	bool IsBmsLoading() { return m_BmsLoading; }
 	void SetRate(double v) { m_Rate = v; }
 	double GetRate() { return m_Rate; }
 
+	void LoadBmsResource(BmsBms& bms);
+	void Play();
 	/** @brief update time, so it triggers timers & sounds & background changes. */
 	void Update(uint32_t msec);
 	/** @brief reset iterator - MUST be called if you don't start game from 0 msec */

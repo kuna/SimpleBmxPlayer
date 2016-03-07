@@ -23,10 +23,13 @@
  */
 class Player {
 protected:
-	// player's basic information
+	// player's basic information (OP / RSEED ...)
 	PlayerPlayConfig*		playconfig;
-	PlayerRenderValue*		pv;					// general current player
-	PlayerRenderValue*		pv_dp;				// in case of DP
+	/*
+	int op1;			// 0x0000ABCD; RANDOM / SC / LEGACY(MORENOTE/ALL-LN) / JUDGE
+	int op2;
+	int rseed;
+	*/
 
 	// playing settings
 	int						playside;
@@ -46,6 +49,10 @@ protected:
 	double					health;				// player's health
 	bool					m_PlaySound;		// decide to play key sound (if pacemaker, then make this false)
 
+	// record disabled in case of training mode / replay
+	bool m_IsRecordable;
+	bool m_Giveup = false;
+
 	// note/time information
 	uint32_t				m_BmsTime;
 	PlayerScore				score;
@@ -56,10 +63,10 @@ protected:
 		BmsNoteLane::Iterator iter_judge;
 		BmsNoteLane::Iterator iter_end;
 		BmsNoteLane::Iterator iter_begin;		// used when find pressing keysound (iter >= 0)
-		Switch* pLanePress;
-		Switch* pLaneHold;
-		Switch* pLaneUp;
-		Switch* pLaneOkay;
+		PlayerSwitchValue pLanePress;
+		PlayerSwitchValue pLaneHold;
+		PlayerSwitchValue pLaneUp;
+		PlayerSwitchValue pLaneOkay;
 
 		bool IsPressing();
 		bool IsLongNote();
@@ -78,6 +85,60 @@ protected:
 	
 	/* internal function */
 	void					PlaySound(BmsWord& value);
+
+	/* Theme metrics */
+	PlayerSwitchValue		pOnMiss;			// Switch used when miss occured (DP)
+	PlayerSwitchValue		pOnCombo;
+	PlayerSwitchValue		pOnJudge[6];		// pf/gr/gd/bd/pr
+	PlayerSwitchValue		pOnSlow;
+	PlayerSwitchValue		pOnFast;
+	PlayerSwitchValue		pOnfullcombo;		// needless to say?
+	PlayerSwitchValue		pOnlastnote;		// when last note ends
+	PlayerSwitchValue		pOnGameover;		// game is over! (different from OnClose)
+	PlayerSwitchValue		pOnGaugeMax;		// guage max?
+	PlayerSwitchValue		pOnGaugeUp;
+	PlayerValue<int>		pNotePerfect;
+	PlayerValue<int>		pNoteGreat;
+	PlayerValue<int>		pNoteGood;
+	PlayerValue<int>		pNoteBad;
+	PlayerValue<int>		pNotePoor;
+	PlayerSwitchValue		pOnAAA;
+	PlayerSwitchValue		pOnAA;
+	PlayerSwitchValue		pOnA;
+	PlayerSwitchValue		pOnB;
+	PlayerSwitchValue		pOnC;
+	PlayerSwitchValue		pOnD;
+	PlayerSwitchValue		pOnE;
+	PlayerSwitchValue		pOnF;
+	PlayerSwitchValue		pOnReachAAA;
+	PlayerSwitchValue		pOnReachAA;
+	PlayerSwitchValue		pOnReachA;
+	PlayerSwitchValue		pOnReachB;
+	PlayerSwitchValue		pOnReachC;
+	PlayerSwitchValue		pOnReachD;
+	PlayerSwitchValue		pOnReachE;
+	PlayerSwitchValue		pOnReachF;
+	PlayerValue<double>		pExscore_d;
+	PlayerValue<double>		pHighscore_d;
+	PlayerValue<int>		pScore;
+	PlayerValue<int>		pExscore;
+	PlayerValue<int>		pCombo;
+	PlayerValue<int>		pMaxCombo;
+	PlayerValue<int>		pTotalnotes;
+	PlayerValue<int>		pRivaldiff;		// TODO where to process it?
+	PlayerValue<double>		pGauge_d;
+	PlayerValue<int>		pGaugeType;
+	PlayerValue<int>		pGauge;
+	PlayerValue<double>		pRate_d;
+	PlayerValue<int>		pRate;
+	PlayerValue<double>		pTotalRate_d;
+	PlayerValue<int>		pTotalRate;
+	PlayerValue<int>		pNoteSpeed;
+	PlayerValue<int>		pFloatSpeed;
+	PlayerValue<int>		pSudden;
+	PlayerValue<int>		pLift;
+	PlayerValue<double>		pSudden_d;
+	PlayerValue<double>		pLift_d;
 public:
 	Player(int playside = 0, int playertype = PLAYERTYPE::HUMAN);
 	~Player();
@@ -197,6 +258,8 @@ namespace PlayHelper {
 }
 
 
+//
 // global-accessible
-// real object used during playing game
+// As this object is used in Themes / ScenePlay.
+//
 extern Player*				PLAYER[4];

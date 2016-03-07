@@ -1,3 +1,4 @@
+#include "game.h"
 #include "player.h"
 #include "global.h"
 #include "SongPlayer.h"
@@ -21,29 +22,176 @@ Player::Player(int playside, int playertype) {
 	this->playertype = playertype;
 	this->m_PlaySound = true;
 
-	// initalize basic variables/timers
-	pv = &PLAYERVALUE[playside];
-	// DP is only allowed for playside 0
-	if (playmode >= 10 && playside == 0) pv_dp = &PLAYERVALUE[playside + 1];
-	else pv_dp = 0;
-
-	for (int i = 0; i < 10; i++) {
-		m_Lane[i].pLanePress = pv->pLanepress[i];
-		m_Lane[i].pLaneUp = pv->pLaneup[i];
-		m_Lane[i].pLaneHold = pv->pLanehold[i];
-		m_Lane[i].pLaneOkay = pv->pLanejudgeokay[i];
-		if (pv_dp) {
-			m_Lane[i + 10].pLanePress = pv_dp->pLanepress[i];
-			m_Lane[i + 10].pLaneUp = pv_dp->pLaneup[i];
-			m_Lane[i + 10].pLaneHold = pv_dp->pLanehold[i];
-			m_Lane[i + 10].pLaneOkay = pv_dp->pLanejudgeokay[i];
-		}
-		else {
-			m_Lane[i + 10].pLaneHold = 0;
-		}
-	}
 	judgeoffset = playconfig->judgeoffset;
 	judgecalibration = playconfig->judgecalibration;
+
+	//
+	// set metrics
+	//
+
+	pNoteSpeed.SetFromPool(playside, "Speed");
+	pFloatSpeed.SetFromPool(playside, "FloatSpeed");
+	pSudden.SetFromPool(playside, "Sudden");
+	pLift.SetFromPool(playside, "Lift");
+	pSudden_d.SetFromPool(playside, "Sudden");
+	pLift_d.SetFromPool(playside, "Lift");
+
+	pGauge_d.SetFromPool(playside, "Gauge");
+	pGaugeType.SetFromPool(playside, "GaugeType");
+	pGauge.SetFromPool(playside, "Gauge");
+	pExscore.SetFromPool(playside, "ExScore");
+	pScore.SetFromPool(playside, "Score");
+	pExscore_d.SetFromPool(playside, "ExScore");
+	pHighscore_d.SetFromPool(playside, "HighScore");
+	pScore.SetFromPool(playside, "Score");
+	pCombo.SetFromPool(playside, "Combo");
+	pMaxCombo.SetFromPool(playside, "MaxCombo");
+	pTotalnotes.SetFromPool(playside, "TotalNotes");
+	pRivaldiff.SetFromPool(playside, "RivalDiff");
+	pRate.SetFromPool(playside, "Rate");
+	pTotalRate.SetFromPool(playside, "TotalRate");
+	pRate_d.SetFromPool(playside, "Rate");
+	pTotalRate_d.SetFromPool(playside, "TotalRate");
+
+	pOnJudge[5].SetFromPool(playside, "JudgePerfect");
+	pOnJudge[4].SetFromPool(playside, "JudgeGreat");
+	pOnJudge[3].SetFromPool(playside, "JudgeGood");
+	pOnJudge[2].SetFromPool(playside, "JudgeBad");
+	pOnJudge[1].SetFromPool(playside, "JudgePoor");
+	pOnJudge[0].SetFromPool(playside, "JudgePoor");
+	pNotePerfect.SetFromPool(playside, "PerfectCount");
+	pNoteGreat.SetFromPool(playside, "GreatCount");
+	pNoteGood.SetFromPool(playside, "GoodCount");
+	pNoteBad.SetFromPool(playside, "BadCount");
+	pNotePoor.SetFromPool(playside, "PoorCount");
+	pOnSlow.SetFromPool(playside, "Slow");
+	pOnFast.SetFromPool(playside, "Fast");
+
+	pOnAAA.SetFromPool(playside, "IsP1AAA");
+	pOnAA.SetFromPool(playside, "IsP1AA");
+	pOnA.SetFromPool(playside, "IsP1A");
+	pOnB.SetFromPool(playside, "IsP1B");
+	pOnC.SetFromPool(playside, "IsP1C");
+	pOnD.SetFromPool(playside, "IsP1D");
+	pOnE.SetFromPool(playside, "IsP1E");
+	pOnF.SetFromPool(playside, "IsP1F");
+	pOnReachAAA.SetFromPool(playside, "IsP1ReachAAA");
+	pOnReachAA.SetFromPool(playside, "IsP1ReachAA");
+	pOnReachA.SetFromPool(playside, "IsP1ReachA");
+	pOnReachB.SetFromPool(playside, "IsP1ReachB");
+	pOnReachC.SetFromPool(playside, "IsP1ReachC");
+	pOnReachD.SetFromPool(playside, "IsP1ReachD");
+	pOnReachE.SetFromPool(playside, "IsP1ReachE");
+	pOnReachF.SetFromPool(playside, "IsP1ReachF");
+
+	pOnMiss.SetFromPool(playside, "Miss");
+	pOnCombo.SetFromPool(playside, "Combo");
+	pOnfullcombo.SetFromPool(playside, "FullCombo");
+	pOnlastnote.SetFromPool(playside, "LastNote");
+	pOnGameover.SetFromPool(playside, "GameOver");
+	pOnGaugeMax.SetFromPool(playside, "GaugeMax");
+	pOnGaugeUp.SetFromPool(playside, "GaugeUp");
+
+	/*
+	* SC : note-index 0
+	*/
+	for (int i = 0; i < 20; i++) {
+		m_Lane[i].pLanePress.SetFromPool(playside, ssprintf("Key%dPress", i));
+		m_Lane[i].pLaneUp.SetFromPool(playside, ssprintf("Key%dUp", i));
+		m_Lane[i].pLaneHold.SetFromPool(playside, ssprintf("Judge%dHold", i));
+		m_Lane[i].pLaneOkay.SetFromPool(playside, ssprintf("Judge%dOkay", i));
+	}
+
+	SWITCH_OFF("IsGhostOff");
+	SWITCH_OFF("IsGhostA");
+	SWITCH_OFF("IsGhostB");
+	SWITCH_OFF("IsGhostC");
+	switch (PLAYERINFO[0].playconfig.ghost_type) {
+	case GHOSTTYPE::OFF:
+		SWITCH_ON("IsGhostOff");
+		break;
+	case GHOSTTYPE::TYPEA:
+		SWITCH_ON("IsGhostA");
+		break;
+	case GHOSTTYPE::TYPEB:
+		SWITCH_ON("IsGhostB");
+		break;
+	case GHOSTTYPE::TYPEC:
+		SWITCH_ON("IsGhostC");
+		break;
+	}
+	SWITCH_OFF("IsJudgeOff");
+	SWITCH_OFF("IsJudgeA");
+	SWITCH_OFF("IsJudgeB");
+	SWITCH_OFF("IsJudgeC");
+	switch (PLAYERINFO[0].playconfig.judge_type) {
+	case JUDGETYPE::OFF:
+		SWITCH_ON("IsJudgeOff");
+		break;
+	case JUDGETYPE::TYPEA:
+		SWITCH_ON("IsJudgeA");
+		break;
+	case JUDGETYPE::TYPEB:
+		SWITCH_ON("IsJudgeB");
+		break;
+	case JUDGETYPE::TYPEC:
+		SWITCH_ON("IsJudgeC");
+		break;
+	}
+	switch (PLAYERINFO[0].playconfig.pacemaker_type) {
+	case PACEMAKERTYPE::PACE0:
+		break;
+	}
+	SWITCH_ON("IsScoreGraph");
+	SWITCH_ON("IsBGA");
+	SWITCH_ON("IsExtraMode");
+	DOUBLEPOOL->Set("TargetExScore", 0.5);
+	DOUBLEPOOL->Set("TargetExScore", 0.5);
+	INTPOOL->Set("MyBest", 12);		// TODO
+
+
+	On1PMiss = SWITCH_OFF("On1PMiss");
+
+
+
+
+	//
+	// Set is Autoplay or Replay or Human
+	// TODO
+	PlayerSwitchValue IsAutoPlay = SWITCH_OFF("IsAutoPlay");
+	//
+	// initalize player
+	// When scene starts every time.
+	//
+	if (m_Autoplay) {
+		PLAYER[0] = new PlayerAuto(0);
+	}
+	else if (P.replay) {
+		/*
+		* in case of course mode,
+		* replay will be stored in course folder
+		* (TODO)
+		*/
+		PlayerReplayRecord rep;
+		if (!PlayerReplayHelper::LoadReplay(rep, PLAYERINFO[0].name, P.bmshash[0])) {
+			LOG->Critical("Failed to load replay file.");
+			return;		// ??
+		}
+		PlayerReplay *pRep = new PlayerReplay(0);
+		PLAYER[0] = pRep;
+		pRep->SetReplay(rep);
+	}
+	else {
+		PLAYER[0] = new Player(0);
+	}
+	// other side is pacemaker
+	PLAYER[1] = new PlayerAuto(1);	// MUST always single?
+	PLAYER[1]->SetPlaySound(false);	// Pacemaker -> Silent!
+	((PlayerAuto*)PLAYER[1])->SetGoal(P.pacemaker);
+	// generate replay object
+	PLAYER[2] = new PlayerReplay(2);
+
+
 
 	//
 	// initalize note iterator (dummy)
@@ -180,7 +328,7 @@ void Player::InitalizeNote(BmsBms* bms) {
 	//
 	// before resetting iterator, modify note data
 	//
-	int seed = GamePlay::P.rseed;		// use gameplay's seed
+	int seed = GAMESTATE.m_rseed;
 	switch (PLAYERINFO[playside].playconfig.op_1p) {
 	case OPTYPE::NONE:
 		break;

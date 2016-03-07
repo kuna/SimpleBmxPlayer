@@ -52,12 +52,6 @@ namespace Game {
 		* (Pool/FileManager is automatically initalized, so we don't need to take care of it)
 		*/
 		LUA = new LuaManager();
-		Lua *L = LUA->Get();
-		LuaBinding<StringPool>::Register(L, 0, 0);
-		LuaBinding<IntPool>::Register(L, 0, 0);
-		LuaBinding<DoublePool>::Register(L, 0, 0);
-		LuaBinding<HandlerPool>::Register(L, 0, 0);
-		LUA->Release(L);
 
 		/*
 		* Pool need to be initialized before resource(display) registration
@@ -196,6 +190,13 @@ namespace Game {
 void SceneManager::Initalize() {
 	m_bShowFPS = false;
 
+	// theme metrics
+	m_Uptime.SetFromPool("Runtime");
+	m_Rendertime.SetFromPool("Render");
+	m_Scenetime.SetFromPool("Scene");
+	m_Fadeout.SetFromPool("FadeOut");
+	m_Uptime.Start();
+
 	// basic resource setting
 	Reload();
 
@@ -227,7 +228,8 @@ void SceneManager::Release() {
 void SceneManager::Update() {
 	// if next scene waiting?
 	// if then, change scene now.
-	if (m_NextScene) {
+	if (m_NextScene && m_Fadeout.GetTick() >= m_NextSceneTime) {
+		m_Fadeout.Stop();
 		if (m_FocusedScene) INPUT->UnRegister(m_FocusedScene);
 		if (m_NextScene) {
 			m_FocusedScene->End();
@@ -307,6 +309,11 @@ void SceneManager::RegisterScene(const RString& name, SceneBasic* scene) {
 }
 
 void SceneManager::ChangeScene(const RString& name) {
+	// an shortcut
+	ChangeSceneAfterTime(name, 0);
+}
+
+void SceneManager::ChangeSceneAfterTime(const RString& name, int timeout) {
 	SceneBasic* scene = GetScene(name);
 	if (!scene) {
 		LOG->Warn("Cannot find scene(%s). Nothing will be drawn!", name);
@@ -324,6 +331,14 @@ void SceneManager::ChangeScene(const RString& name) {
 	*/
 	m_SceneBackground.clear();
 	m_SceneForeground.clear();
+
+	/* Activate fadeout timer */
+	m_NextSceneTime = timeout;
+	m_Fadeout.Start();
+}
+
+bool SceneManager::IsChangingScene() {
+	return m_Fadeout.IsStarted();
 }
 
 void SceneManager::AddBackgroundScene(const RString& name) {
