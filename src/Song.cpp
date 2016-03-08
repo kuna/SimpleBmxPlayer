@@ -133,3 +133,5 @@ namespace BmsHelper {
 		bms.GetHeaders().Query("BANNER", info.sBanner);
 	}
 }
+
+SongManager*		SONGMANAGER;

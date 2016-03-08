@@ -22,16 +22,14 @@
 
 class ScenePlay : public SceneBasic {
 public:
-	// currently playing songpath / hash.
-	// (1P / 2P)?
-	RString m_SongPath;
-	RString m_SongHash;
-
 	// play related
 	int					m_MinLoadingTime = 3000;
 	int					m_ReadyTime = 1000;
 	int					playmode;			// PLAYTYPE..?
-	PlayerSongRecord	record;
+
+	// 1P / 2P ...??
+	RString				m_Songpath;
+	RString				m_Songhash;
 
 
 	// game skin
@@ -45,8 +43,6 @@ public:
 
 	SwitchValue			OnReady;
 	SwitchValue			OnClose;			// when 1p & 2p dead
-	SwitchValue			OnFadeIn;			// when game start
-	SwitchValue			OnFadeOut;			// when game end
 
 	Value<int>			P1RivalDiff;
 	Value<double>		P2ExScore;

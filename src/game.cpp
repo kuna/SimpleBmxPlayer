@@ -1,4 +1,5 @@
 #include "game.h"
+#include "version.h"
 #include "Setting.h"
 
 #include "Luamanager.h"
@@ -7,7 +8,7 @@
 #include "Pool.h"
 #include "font.h"
 #include "file.h"
-#include "version.h"
+#include "Song.h"
 #include "SongPlayer.h"
 #include "tinyxml2.h"
 #include "playerinfo.h"
@@ -106,12 +107,13 @@ namespace Game {
 		 */
 		SCENE = new SceneManager();
 		INPUT = new InputManager();
+		SONGPLAYER = new SongPlayer();
+		SONGMANAGER = new SongManager();
 
 		/*
 		 * some etc initialization
 		 */
 		INPUT->Register(&m_BasicInput);
-		SCENEVALUE.Uptime->Start();
 
 		return true;
 	}
@@ -126,6 +128,8 @@ namespace Game {
 		// release basic instances
 		// COMMENT: Font/Surface pool should be destroyed first before DISPLAY destroyed
 		// So order is important.
+		delete SONGMANAGER;
+		delete SONGPLAYER;
 		delete SCENE;
 		delete INPUT;
 		PoolHelper::ReleaseAll();
@@ -191,10 +195,11 @@ void SceneManager::Initalize() {
 	m_bShowFPS = false;
 
 	// theme metrics
-	m_Uptime.SetFromPool("Runtime");
+	m_Uptime.SetFromPool("Game");
 	m_Rendertime.SetFromPool("Render");
 	m_Scenetime.SetFromPool("Scene");
 	m_Fadeout.SetFromPool("FadeOut");
+	m_Fadein.SetFromPool("FadeIn");
 	m_Uptime.Start();
 
 	// basic resource setting
@@ -235,7 +240,7 @@ void SceneManager::Update() {
 			m_FocusedScene->End();
 			INPUT->Register(m_NextScene);
 			m_NextScene->Start();
-			SCENEVALUE.Scenetime->Start();
+			m_Scenetime.Start();
 		}
 		m_FocusedScene = m_NextScene;
 		m_NextScene = 0;
@@ -251,7 +256,7 @@ void SceneManager::Update() {
 		(*it)->Update();
 
 	// just call trigger that we're updating scene
-	SCENEVALUE.Rendertime->Start();
+	m_Rendertime.Start();
 }
 
 void SceneManager::Render() {
@@ -277,7 +282,7 @@ void SceneManager::Render() {
 	DISPLAY->PopState();
 
 	// Render FPS
-	int curtime = SCENEVALUE.Uptime->GetTick();
+	int curtime = m_Uptime.GetTick();
 	int deltatime = curtime - m_prevtime;
 	if (deltatime > 0) {
 		m_Basefnt->Render(ssprintf("%.0f Frame", 1000.0f / deltatime), 10, 20);

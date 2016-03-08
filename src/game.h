@@ -31,21 +31,22 @@ public:
 	RString m_CourseHash[10];
 	int m_CourseRound;
 	int m_CourseCount;
-	RString m_2PSongPath;	// not generally used
-	RString m_2PSongHash;	// not generally used
+	RString m_2PSongPath[10];	// not generally used
+	RString m_2PSongHash[10];	// not generally used
 
 	int m_Startmeasure;
 	int m_Endmeasure;
 	int m_SongRepeatCount;
 	bool m_ShowBga;
-	bool m_Replay;
-	bool m_Autoplay;
 	int m_rseed;
-	int m_op1;				// 0x0000ABCD; RANDOM / SC / LEGACY(MORENOTE/ALL-LN) / JUDGE
-	int m_op2;
 	int m_Battle;			// set battle mode (OFF, BATTLE, G-BATTLE, ...)
+	int m_Keymode;
 	double m_PlayRate;
-
+	struct PlayerState {
+		int playertype;
+		int op;				// 0x0000ABCD; RANDOM / SC / LEGACY(MORENOTE/ALL-LN) / JUDGE
+		double gauge;		// Store gauge state in here (Use for taken of that ...?)
+	} m_Player[2];
 	double m_PacemakerGoal;
 };
 
@@ -99,6 +100,7 @@ public:
 	SwitchValue m_Scenetime;
 	SwitchValue m_Rendertime;
 	SwitchValue m_Fadeout;
+	SwitchValue m_Fadein;
 
 public:
 	SceneManager() { Initalize(); };

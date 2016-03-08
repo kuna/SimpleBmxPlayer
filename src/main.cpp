@@ -130,7 +130,12 @@ namespace Parameter {
 
 			GAMESTATE.m_CoursePath[i] = courses[i];
 			GAMESTATE.m_CourseHash[i] = hash;
+
 		}
+		// automatically decide keymode
+		// TODO
+		GAMESTATE.m_Keymode = 7;
+
 		GAMESTATE.m_CourseCount = courses.size();
 		GAMESTATE.m_CourseRound = 0;
 		//GamePlay::P.gauge = PLAYERINFO[0].playconfig.gaugetype;

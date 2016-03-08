@@ -10,6 +10,7 @@
 #include "audio.h"
 #include "timer.h"
 #include "Surface.h"
+#include "Pool.h"
 
 #include "bmsbel\bms_bms.h"
 #include "bmsbel\bms_define.h"
@@ -78,22 +79,52 @@ protected:
 	int bmsbar_index;
 	uint32_t bmsduration;
 
+	int m_MinLoadingTime;		// Only for ScenePlay
+
+	//
 	// theme metrics
-	SwitchValue			OnSongStart = SWITCH_OFF("Song");
-	SwitchValue			OnSongLoading = SWITCH_OFF("SongLoading");
-	SwitchValue			OnSongLoadingEnd = SWITCH_OFF("SongLoadingEnd");
+	//
+	SwitchValue			OnSongStart;
+	SwitchValue			OnSongLoading;
+	SwitchValue			OnSongLoadingEnd;
+	Value<double>		dSongLoadprogress;
+
+	double*				PlayProgress;
+	int*				PlayBPM;
+	int*				PlayMin;
+	int*				PlaySec;
+	int*				PlayRemainMin;
+	int*				PlayRemainSec;
+
+	Switch*				SongTime;
+	Switch*				OnBeat;
+	Switch*				OnBgaMain;
+	Switch*				OnBgaLayer1;
+	Switch*				OnBgaLayer2;
+
+	RString*			sMainTitle;
+	RString*			sTitle;
+	RString*			sSubTitle;
+	RString*			sGenre;
+	RString*			sArtist;
+	RString*			sSubArtist;
+	int*				iPlayLevel;
+	int*				iPlayDifficulty;
 public:
 	SongPlayer();
 	~SongPlayer();
 	void Cleanup();
-	bool IsBmsLoading() { return m_BmsLoading; }
 	void SetRate(double v) { m_Rate = v; }
 	double GetRate() { return m_Rate; }
 
 	void LoadBmsResource(BmsBms& bms);
+	bool IsBmsLoading();
+	bool IsBmsLoaded();
+	bool IsPlaying();
 	void Play();
-	/** @brief update time, so it triggers timers & sounds & background changes. */
-	void Update(uint32_t msec);
+	void Pause();
+	void Stop();	// same as Cleanup()
+	void Update();
 	/** @brief reset iterator - MUST be called if you don't start game from 0 msec */
 	void Reset(uint32_t msec);
 
@@ -109,6 +140,7 @@ public:
 	double GetMediumBPM();
 	double GetMaxBPM();
 	double GetMinBPM();
+	uint32_t GetTick();
 
 	Display::Texture* GetMissBGA();
 	Display::Texture* GetMainBGA();
@@ -127,5 +159,4 @@ namespace BmsHelper {
 	void LoadBmsOnThread(BmsBms& bms);
 	void StopBmsLoadingOnThread();
 	void ReleaseAll();
-	void Update();
 }

@@ -154,7 +154,7 @@ public:
 extern BasicPool<RString>* STRPOOL;
 extern BasicPool<double>* DOUBLEPOOL;
 extern BasicPool<int>* INTPOOL;
-extern SwitchValue* HANDLERPOOL;
+extern HandlerPool* HANDLERPOOL;
 
 extern TexturePool* TEXPOOL;
 extern FontPool* FONTPOOL;
@@ -175,33 +175,21 @@ public:
 	T operator=(T *v) { return (m_Ptr = v); }
 	operator const T() const { return Get(); }
 
-	Value<T>& SetFromPool(const RString& name);// { m_Ptr = BasicPool<T>.Get(name); return *this; }
+	Value<T>& SetFromPool(const RString& name);
+	Value<T>& SetFromPool(int player, const RString& name);		// only for player
 };
 
-template <class T>
-class ISwitchValue: public T {
+class SwitchValue: public Value<Switch> {
 public:
 	void Start();
 	void Stop();
+	void Pause();
 	bool Trigger(bool condition = true);
 	//bool OffTrigger(bool condition = true);
 
 	uint32_t GetTick();
 	bool IsStarted();
 };
-
-typedef ISwitchValue<Value<Switch>> SwitchValue;
-
-/* used for player object */
-
-template <class T>
-class PlayerValue: public Value<T> {
-public:
-	PlayerValue<T>& SetFromPool(int player, const RString& name);
-};
-
-typedef ISwitchValue<PlayerValue<Switch>> PlayerSwitchValue;
-
 
 
 
@@ -216,48 +204,6 @@ typedef ISwitchValue<PlayerValue<Switch>> PlayerSwitchValue;
 #define SWITCH_TRIGGER(s, cond) (HANDERPOOL->Trigger(s, cond))
 #define SWITCH_GET(s) (HANDLERPOOL->Get(s))
 
-
-
-
-
-typedef struct {
-	double*			songloadprogress;
-	Switch*			OnSongLoading;
-	Switch*			OnSongLoadingEnd;
-
-	double*			PlayProgress;
-	int*			PlayBPM;
-	int*			PlayMin;
-	int*			PlaySec;
-	int*			PlayRemainMin;
-	int*			PlayRemainSec;
-
-	Switch*			SongTime;
-	Switch*			OnBeat;
-	Switch*			OnBgaMain;
-	Switch*			OnBgaLayer1;
-	Switch*			OnBgaLayer2;
-
-	RString*		sMainTitle;
-	RString*		sTitle;
-	RString*		sSubTitle;
-	RString*		sGenre;
-	RString*		sArtist;
-	RString*		sSubArtist;
-	int*			iPlayLevel;
-	int*			iPlayDifficulty;
-
-} SongValue;
-
-extern SongValue	SONGVALUE;
-
-typedef struct {
-	Switch*			Uptime;
-	Switch*			Scenetime;
-	Switch*			Rendertime;	// different from scenetime; this is called every time when scene is rendered
-} SceneValue;
-
-extern SceneValue	SCENEVALUE;
 
 
 namespace PoolHelper {

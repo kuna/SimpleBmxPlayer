@@ -8,7 +8,7 @@ using namespace Display;
 BasicPool<RString>* STRPOOL = 0;
 BasicPool<double>* DOUBLEPOOL = 0;
 BasicPool<int>* INTPOOL = 0;
-SwitchValue* HANDLERPOOL = 0;
+HandlerPool* HANDLERPOOL = 0;
 
 TexturePool* TEXPOOL = 0;
 FontPool* FONTPOOL = 0;
@@ -36,45 +36,44 @@ Value<double>& Value<double>::SetFromPool(const RString& name) {
 	return *this;
 }
 
-PlayerValue<RString>& PlayerValue<RString>::SetFromPool(int player, const RString& name) {
-	m_Ptr = STRPOOL->Get(name);
-	return *this;
+Value<RString>& Value<RString>::SetFromPool(int player, const RString& name) {
+	return SetFromPool(ssprintf("P%d", player) + name);
 }
 
-PlayerValue<int>& PlayerValue<int>::SetFromPool(int player, const RString& name) {
-	m_Ptr = INTPOOL->Get(ssprintf("P%d", player) + name);
-	return *this;
+Value<int>& Value<int>::SetFromPool(int player, const RString& name) {
+	return SetFromPool(ssprintf("P%d", player) + name);
 }
 
-PlayerValue<double>& PlayerValue<double>::SetFromPool(int player, const RString& name) {
-	m_Ptr = DOUBLEPOOL->Get(name);
-	return *this;
+Value<int>& Value<int>::SetFromPool(int player, const RString& name) {
+	return SetFromPool(ssprintf("P%d", player) + name);
 }
 
 void SwitchValue::Start() {
-	m_Ptr->Start();
+	if (m_Ptr) m_Ptr->Start();
 }
 
 void SwitchValue::Stop() {
-	m_Ptr->Stop();
+	if (m_Ptr) m_Ptr->Stop();
+}
+
+void SwitchValue::Pause() {
+	if (m_Ptr) m_Ptr->Pause();
 }
 
 bool SwitchValue::Trigger(bool c) {
+	if (!m_Ptr) return false;
 	return m_Ptr->Trigger(c);
 }
 
-void PlayerSwitchValue::Start() {
-	m_Ptr->Start();
+uint32_t SwitchValue::GetTick() {
+	if (!m_Ptr) return 0;
+	return m_Ptr->GetTick();
 }
 
-void PlayerSwitchValue::Stop() {
-	m_Ptr->Stop();
+bool SwitchValue::IsStarted() {
+	if (!m_Ptr) return false;
+	return m_Ptr->IsStarted();
 }
-
-bool PlayerSwitchValue::Trigger(bool c) {
-	return m_Ptr->Trigger(c);
-}
-
 
 
 
@@ -440,51 +439,17 @@ Audio* SoundPool::Get(const RString &path) {
 
 
 
-SongValue			SONGVALUE;
-
-void Initalize_BmsValue() {
-	SONGVALUE.songloadprogress = DOUBLEPOOL->Get("SongLoadProgress");
-	SONGVALUE.OnSongLoading = SWITCH_GET("SongLoading");
-	SONGVALUE.OnSongLoadingEnd = SWITCH_GET("SongLoadingEnd");
-
-	SONGVALUE.PlayProgress = DOUBLEPOOL->Get("PlayProgress");
-	SONGVALUE.PlayBPM = INTPOOL->Get("PlayBPM");
-	SONGVALUE.PlayMin = INTPOOL->Get("PlayMinute");
-	SONGVALUE.PlaySec = INTPOOL->Get("PlaySecond");
-	SONGVALUE.PlayRemainSec = INTPOOL->Get("PlayRemainSecond");
-	SONGVALUE.PlayRemainMin = INTPOOL->Get("PlayRemainMinute");
-
-	SONGVALUE.OnBeat = SWITCH_GET("Beat");
-	SONGVALUE.OnBgaMain = SWITCH_GET("BgaMain");
-	SONGVALUE.OnBgaLayer1 = SWITCH_GET("BgaLayer1");
-	SONGVALUE.OnBgaLayer2 = SWITCH_GET("BgaLayer2");
-	SONGVALUE.SongTime = SWITCH_GET("GameStart");
-
-	SONGVALUE.sMainTitle = STRPOOL->Get("MainTitle");
-	SONGVALUE.sTitle = STRPOOL->Get("Title");
-	SONGVALUE.sSubTitle = STRPOOL->Get("SubTitle");
-	SONGVALUE.sGenre = STRPOOL->Get("Genre");
-	SONGVALUE.sArtist = STRPOOL->Get("Artist");
-	SONGVALUE.sSubArtist = STRPOOL->Get("SubArtist");
-}
-
-void Initalize_SceneValue() {
-	SCENEVALUE.Uptime = SWITCH_GET("Game");
-	SCENEVALUE.Scenetime = SWITCH_GET("Scene");
-	SCENEVALUE.Rendertime = SWITCH_GET("Render");
-}
-
 /* private; automatically when PoolHelper::InitalizeAll() called */
+void InitalizeLua();
 void InitalizeValues() {
 	GameTimer::Tick();		// do base tick
-	Initalize_BmsValue();
-}
 
+}
 namespace PoolHelper {
 	void InitalizeAll() {
-		STRPOOL = new StringPool();
-		DOUBLEPOOL = new DoublePool();
-		INTPOOL = new IntPool();
+		STRPOOL = new BasicPool<RString>();
+		DOUBLEPOOL = new BasicPool<double>();
+		INTPOOL = new BasicPool<int>();
 		HANDLERPOOL = new HandlerPool();
 		TEXPOOL = new TexturePool();
 		FONTPOOL = new FontPool();
@@ -492,6 +457,7 @@ namespace PoolHelper {
 
 		// fill all basic values
 		InitalizeValues();
+		InitalizeLua();
 	}
 
 	void ReleaseAll() {
@@ -606,24 +572,23 @@ namespace {
 	}
 }
 
-void LuaBinding<StringPool>::Register(Lua *L, int iMethods, int iMetatable) {
+void InitalizeLua() {
+	Lua *L = LUA->Get();
+
+	// register to lua
 	lua_register(L, "SetString", SetString);
 	lua_register(L, "GetString", GetString);
-}
 
-void LuaBinding<HandlerPool>::Register(Lua *L, int iMethods, int iMetatable) {
 	lua_register(L, "SetHandler", SetTimer);
 	lua_register(L, "SetSwitch", SetTimer);
 	lua_register(L, "IsSwitch", IsTimer);
 	lua_register(L, "GetTime", GetTime);
-}
 
-void LuaBinding<IntPool>::Register(Lua *L, int iMethods, int iMetatable) {
 	lua_register(L, "SetInt", SetInt);
 	lua_register(L, "GetInt", GetInt);
-}
 
-void LuaBinding<DoublePool>::Register(Lua *L, int iMethods, int iMetatable) {
 	lua_register(L, "SetFloat", SetFloat);
 	lua_register(L, "GetFloat", GetFloat);
+
+	LUA->Release(L);
 }

@@ -18,10 +18,8 @@
 
 
 void ScenePlay::Initialize() {
-	OnReady = SWITCH_OFF("OnReady");
-	OnClose = SWITCH_OFF("OnClose");
-	OnFadeIn = SWITCH_OFF("OnFadeIn");
-	OnFadeOut = SWITCH_OFF("OnFadeOut");
+	OnReady.SetFromPool("Ready");
+	OnClose.SetFromPool("Close");
 
 	m_DiffSwitch[0].SetFromPool("DiffUnknown");
 	m_DiffSwitch[1].SetFromPool("DiffBeginner");
@@ -33,41 +31,92 @@ void ScenePlay::Initialize() {
 
 void ScenePlay::Start() {
 	//
-	// set scene state from game state
+	// get current song path
 	//
-	// - if autoplay | replay | rate < 1 | startmeasure != 0 | endmeasure < 1000
-	// then don't allow save play record.
-	if (GAMESTATE.m_Autoplay || GAMESTATE.m_Replay || GAMESTATE.m_PlayRate < 1.0
-		|| GAMESTATE.m_Startmeasure != 0 || GAMESTATE.m_Endmeasure < 1000 || GAMESTATE.m_SongRepeatCount > 1)
-	{
-		m_IsRecordable = false;
-	}
-	else {
-		m_IsRecordable = true;
-	}
+	m_Songpath = GAMESTATE.m_CoursePath[GAMESTATE.m_CourseRound];
+	m_Songhash = GAMESTATE.m_CourseHash[GAMESTATE.m_CourseRound];
+
 
 	//
 	// load bms
 	// (with parameter settings)
 	//
 	BmsHelper::SetLoadOption(
-		P.startmeasure,
-		P.endmeasure,
-		P.repeat,
-		P.bga
-	);
-
+		GAMESTATE.m_Startmeasure,
+		GAMESTATE.m_Endmeasure,
+		GAMESTATE.m_SongRepeatCount,
+		GAMESTATE.m_ShowBga
+		);
 	BmsBms bms;
-	RString bmspath = P.bmspath[P.round - 1];
-	if (BmsHelper::LoadBms(bmspath, bms)) {
-		LOG->Info("BMS loading finished successfully (%s)\n", bmspath.c_str());
+	if (BmsHelper::LoadBms(m_Songpath, bms)) {
+		LOG->Info("BMS loading finished successfully (%s)\n", m_Songpath.c_str());
 	}
 	else {
-		LOG->Critical("BMS loading failed (%s)\n", bmspath.c_str());
+		LOG->Critical("BMS loading failed (%s)\n", m_Songpath.c_str());
 	}
-	SONGPLAYER->SetRate(P.rate);
 
-	// COMMENT: set player gauge if it's coursemode ?
+
+	//
+	// create / initalize players
+	//
+	for (int i = 0; i < 2; i++) {
+		switch (GAMESTATE.m_Player[i].playertype) {
+		case PLAYERTYPE::HUMAN:
+			PLAYER[i] = new Player(i);
+			break;
+		case PLAYERTYPE::AUTO:
+		case PLAYERTYPE::NETWORK:
+			// set pacemaker, and make silent
+			PlayerAuto* p = new PlayerAuto(i);
+			p->SetGoal(GAMESTATE.m_PacemakerGoal);
+			p->SetPlaySound(false);
+			PLAYER[i] = p;
+			break;
+		case PLAYERTYPE::REPLAY:
+			// set replay if necessary
+			ReplayData rep;
+			if (!ReplayHelper::LoadReplay(rep, PLAYERINFO[i].name, m_Songhash)) {
+				LOG->Critical("Failed to load replay file.");
+				return;		// ??
+			}
+			PlayerReplay *pRep = new PlayerReplay(i);
+			pRep->SetReplay(rep);
+			PLAYER[i] = pRep;
+			break;
+		}
+
+		// set basic gauge state
+		// TODO
+	}
+
+	// generate replay object (MYBEST)
+	PlayerReplay *p_mybest = new PlayerReplay(2);
+	// load player record
+	PlayerSongRecord record;
+	if (PlayerRecordHelper::LoadPlayerRecord(
+		record, PLAYERINFO[0].name, m_Songhash))
+	{
+		// set is previously cleared? state.
+		INTPOOL->Set("SongClear", record.status);
+
+		// set replay
+		ReplayData rep;
+		ReplayHelper::LoadReplay(
+			rep, PLAYERINFO[0].name, m_Songhash);
+		p_mybest->SetReplay(rep);
+	}
+	PLAYER[2] = p_mybest;
+
+	//
+	// Initialize gauge only at first stage of course round
+	// in courseplay, gauge shouldn't be cleared after sequential round
+	//
+	if (GAMESTATE.m_CourseRound == 0) {
+		PLAYER[0]->InitalizeGauge();
+		PLAYER[1]->InitalizeGauge();
+		PLAYER[2]->InitalizeGauge();
+	}
+
 
 
 
@@ -79,67 +128,12 @@ void ScenePlay::Start() {
 	if (PLAYER[2]) PLAYER[2]->InitalizeNote(&bms);
 
 
-	// load player record
-	if (PlayerRecordHelper::LoadPlayerRecord(
-		record, PLAYERINFO[0].name, P.bmshash[P.round - 1]
-		)) {
-		//
-		// TODO
-		// set switch (hd cleared? mybest? etc ...)
-		//
-		INTPOOL->Set("SongClear", record.status);
-
-		//
-		// create mybest object
-		//
-		PLAYER[1] = new PlayerAuto(1);	// MUST always single?
-		PLAYER[1]->SetPlaySound(false);
-		((PlayerAuto*)PLAYER[1])->SetGoal(record.score.CalculateRate());
-
-		//
-		// in courseplay, gauge shouldn't be cleared
-		// after sequential round
-		//
-		if (PLAYER[0]) PLAYER[0]->InitalizeGauge();
-		if (PLAYER[1]) PLAYER[1]->InitalizeGauge();
-	}
-
-
 
 	/* ---------------------------------------------------------------------------
 	* Set rendervalue/switches before skin is loaded
 	*/
-	PLAYVALUE.OnSongLoadingEnd->Stop();
-	PLAYVALUE.OnReady->Stop();
-	PLAYVALUE.OnSongStart->Stop();
-	PLAYVALUE.OnSongLoading->Stop();
-
-	SongInfo songinfo;
-	BmsHelper::GetBmsMetadata(bms, songinfo);
-
-	SONGVALUE.sMainTitle->assign(songinfo.sMainTitle);
-	SONGVALUE.sTitle->assign(songinfo.sTitle);
-	SONGVALUE.sSubTitle->assign(songinfo.sSubTitle);
-	SONGVALUE.sGenre->assign(songinfo.sGenre);
-	SONGVALUE.sArtist->assign(songinfo.sArtist);
-	SONGVALUE.sSubArtist->assign(songinfo.sSubArtist);
-
-	for (int i = 0; i < 6; i++) {
-		if (songinfo.iDifficulty == i)
-			m_DiffSwitch[i].Start();
-		else
-			m_DiffSwitch[i].Stop();
-	}
-	m_PlayLevel = songinfo.iLevel;
-
-	if (songinfo.sBackBmp.size()) {
-		// TODO: load backbmp
-		SWITCH_ON("IsBACKBMP");
-	}
-	else {
-		SWITCH_OFF("IsBACKBMP");
-	}
-
+	OnReady.Stop();
+	OnClose.Stop();
 
 
 	/* ---------------------------------------------------------------------------
@@ -147,7 +141,7 @@ void ScenePlay::Start() {
 	* - from here, something will show up in the screen.
 	*/
 	RString PlayskinPath = "";
-	if (playmode < 10)
+	if (GAMESTATE.m_Keymode < 10)
 		PlayskinPath = SETTING.skin_play_7key;
 	else
 		PlayskinPath = SETTING.skin_play_14key;
@@ -157,8 +151,10 @@ void ScenePlay::Start() {
 
 
 	/* ---------------------------------------------------------------------------
-	* Load bms resource
-	*/
+	 * Load bms resource
+	 */
+	SONGPLAYER->SetRate(GAMESTATE.m_PlayRate);
+	FILEMANAGER->PushBasePath(m_Songpath);		// COMMENT: is it safe???
 	BmsHelper::LoadBmsOnThread(bms);
 }
 
@@ -167,61 +163,49 @@ void ScenePlay::Update() {
 	* check timers (game flow related)
 	* *******************************************************/
 	// loading -> ready -> play
-	if (OnSongLoadingEnd->IsStarted() && OnSongLoading->GetTick() >= m_MinLoadingTime) {
-		OnSongLoading->Stop();
-		OnReady->Start();
-	}
-	if (OnReady->GetTick() >= m_ReadyTime) {
-		OnReady->Stop();
+	OnReady.Trigger(SONGPLAYER->IsBmsLoaded());
+	if (OnReady.GetTick() >= m_ReadyTime) {
+		OnReady.Stop();
 		SONGPLAYER->Play();
 	}
 
 	// all human player is dead -> OnClose
-	bool close = true;
-	if (close && PLAYER[0] && PLAYER[0]->GetPlayerType() == PLAYERTYPE::HUMAN)
-		close = close && PLAYER[0]->IsDead();
-	if (close && PLAYER[1] && PLAYER[1]->GetPlayerType() == PLAYERTYPE::HUMAN)
-		close = close && PLAYER[1]->IsDead();
-	if (OnClose->Trigger(close)) {
+	bool close = (PLAYER[0]->IsHuman() && PLAYER[0]->IsDead())
+		&& (PLAYER[1]->IsHuman() && PLAYER[1]->IsDead());
+	if (OnClose.Trigger(close)) {
 		// stop all sound
 		SONGPLAYER->StopAllSound();
 	}
 
-	// OnFadeout is called when endtime is over
-	// COMMENT: EndTime == lastnote + 2 sec.
-	OnFadeOut->Trigger(SONGPLAYER->GetEndTime() + 2000 < OnSongStart->GetTick());
-	// If OnClose/OnFadeout has enough time, then go to next scene
-	if (OnClose->GetTick() > 3000 || OnFadeOut->GetTick() > 3000) {
-		roundcnt = courseplay;
-		round = round + 1;
+	// If dead / song end, then goto next scene.
+	if (OnClose.GetTick() > 3000 || SONGPLAYER->GetTick() > SONGPLAYER->GetEndTime() + 2000) {
+		GAMESTATE.m_CourseRound += 1;
 		SCENE->ChangeScene("Result");
 		return;
 	}
 
-	/* *********************************************************
-	* under are part of playing
-	* if dead, no need to update.
-	* *********************************************************/
-	if (OnClose->IsStarted()) return;
+	/* don't update player or Bms If dead. */
+	if (OnClose.IsStarted()) return;
 
 
 	/*
-	* BMS update
-	*/
-	if (OnSongStart->IsStarted())
-		SONGPLAYER->Update(OnSongStart->GetTick());
+	 * BMS update
+	 */
+	if (SONGPLAYER->IsPlaying())
+		SONGPLAYER->Update();
 
 	/*
-	* Player update
-	*/
-	if (PLAYER[0]) PLAYER[0]->Update();
-	if (PLAYER[1]) PLAYER[1]->Update();
+	 * Player update
+	 */
+	for (int i = 0; i < 2; i++) {
+		PLAYER[i]->Update();
+	}
 	// update rival score
-	*pRivalDiff = 
-		PLAYER[0]->GetScoreData()->CalculateEXScore() - 
+	pRivalDiff =
+		PLAYER[0]->GetScoreData()->CalculateEXScore() -
 		PLAYER[1]->GetScoreData()->CalculateEXScore();
-	*pRivalDiff_d = PLAYER[1]->GetScoreData()->CurrentRate();
-	*pRivalDiff_d_total = PLAYER[1]->GetScoreData()->CalculateRate();
+	pRivalDiff_d = PLAYER[1]->GetScoreData()->CurrentRate();
+	pRivalDiff_d_total = PLAYER[1]->GetScoreData()->CalculateRate();
 }
 
 void ScenePlay::Render() {

@@ -9,7 +9,7 @@
 #include "pthread\pthread.h"
 #include "bmsbel\bms_parser.h"
 
-SongPlayer*		SONGPLAYER = new SongPlayer();
+SongPlayer*		SONGPLAYER = 0;
 
 // used to interrupt Bms Resource loading
 bool m_AllowBmsResourceLoad = 1;
@@ -125,6 +125,36 @@ SongPlayer::SongPlayer() {
 	m_BmsEnd = 1000;
 	m_BmsRepeat = 1;
 
+	OnSongStart.SetFromPool("Song");
+	OnSongLoading.SetFromPool("SongLoading");
+	OnSongLoadingEnd.SetFromPool("SongLoadingEnd");
+
+	SONGVALUE.songloadprogress = DOUBLEPOOL->Get("SongLoadProgress");
+	SONGVALUE.OnSongLoading = SWITCH_GET("SongLoading");
+	SONGVALUE.OnSongLoadingEnd = SWITCH_GET("SongLoadingEnd");
+
+	SONGVALUE.PlayProgress = DOUBLEPOOL->Get("PlayProgress");
+	SONGVALUE.PlayBPM = INTPOOL->Get("PlayBPM");
+	SONGVALUE.PlayMin = INTPOOL->Get("PlayMinute");
+	SONGVALUE.PlaySec = INTPOOL->Get("PlaySecond");
+	SONGVALUE.PlayRemainSec = INTPOOL->Get("PlayRemainSecond");
+	SONGVALUE.PlayRemainMin = INTPOOL->Get("PlayRemainMinute");
+
+	SONGVALUE.OnBeat = SWITCH_GET("Beat");
+	SONGVALUE.OnBgaMain = SWITCH_GET("BgaMain");
+	SONGVALUE.OnBgaLayer1 = SWITCH_GET("BgaLayer1");
+	SONGVALUE.OnBgaLayer2 = SWITCH_GET("BgaLayer2");
+	SONGVALUE.SongTime = SWITCH_GET("GameStart");
+
+	SONGVALUE.sMainTitle = STRPOOL->Get("MainTitle");
+	SONGVALUE.sTitle = STRPOOL->Get("Title");
+	SONGVALUE.sSubTitle = STRPOOL->Get("SubTitle");
+	SONGVALUE.sGenre = STRPOOL->Get("Genre");
+	SONGVALUE.sArtist = STRPOOL->Get("Artist");
+	SONGVALUE.sSubArtist = STRPOOL->Get("SubArtist");
+
+
+
 	// clear iter & variables
 	Reset(0);
 }
@@ -136,6 +166,40 @@ void SongPlayer::LoadBmsResource(BmsBms& bms) {
 	// copy
 	bms.Copy(m_Bms);
 
+	// set theme metrics
+	// COMMENT: select menu should also able to use this function ... fix... uu
+	// (course mode too)
+	SongInfo songinfo;
+	BmsHelper::GetBmsMetadata(bms, songinfo);
+
+	SONGVALUE.sMainTitle->assign(songinfo.sMainTitle);
+	SONGVALUE.sTitle->assign(songinfo.sTitle);
+	SONGVALUE.sSubTitle->assign(songinfo.sSubTitle);
+	SONGVALUE.sGenre->assign(songinfo.sGenre);
+	SONGVALUE.sArtist->assign(songinfo.sArtist);
+	SONGVALUE.sSubArtist->assign(songinfo.sSubArtist);
+
+	SWITCH_ON("IsScoreGraph");
+	SWITCH_ON("IsBGA");
+	SWITCH_ON("IsExtraMode");
+
+	for (int i = 0; i < 6; i++) {
+		if (songinfo.iDifficulty == i)
+			m_DiffSwitch[i].Start();
+		else
+			m_DiffSwitch[i].Stop();
+	}
+	m_PlayLevel = songinfo.iLevel;
+
+	if (songinfo.sBackBmp.size()) {
+		// TODO: load backbmp
+		SWITCH_ON("IsBACKBMP");
+	}
+	else {
+		SWITCH_OFF("IsBACKBMP");
+	}
+
+
 	// reset iterators
 	BmsChannel& bgmchannel = m_Bms.GetChannelManager()[BmsWord(1)];
 	bgm_channel_cnt_ = bgmchannel.GetBufferCount();
@@ -143,7 +207,8 @@ void SongPlayer::LoadBmsResource(BmsBms& bms) {
 	
 	// load bms resource from metadata
 	m_BmsLoading = true;
-	SWITCH_ON("SongLoading");
+	OnSongLoading.Start();
+	OnSongLoadingEnd.Stop();
 	for (int i = 0; i < BmsConst::WORD_MAX_COUNT && m_AllowBmsResourceLoad; i++) {
 		if (m_Bms.GetRegistArraySet()["WAV"].IsExists(i)) {
 			const RString path = m_Bms.GetRegistArraySet()["WAV"][i];
@@ -163,48 +228,46 @@ void SongPlayer::LoadBmsResource(BmsBms& bms) {
 		// update loading percentage
 	}
 	m_BmsLoading = false;
-	SWITCH_OFF("SongLoading");
-	SWITCH_ON("SongLoadingEnd");
+	OnSongLoading.Stop();
+	OnSongLoadingEnd.Start();
+}
+
+bool SongPlayer::IsBmsLoading() {
+	return m_BmsLoading;
+}
+
+bool SongPlayer::IsBmsLoaded() {
+	return !m_BmsLoading;
+}
+
+bool SongPlayer::IsPlaying() {
+	return OnSongStart.IsStarted();
 }
 
 void SongPlayer::Cleanup() {
+	// must bms loading finished
+	ASSERT(!m_BmsLoading);
+	OnSongStart.Stop();
 	m_Bms.Clear();
 	m_Sound.UnloadAll();
 	m_Image.UnloadAll();
 }
 
-void SongPlayer::Reset(uint32_t msec) {
-	barindex bar = m_Bms.GetTimeManager().GetBarFromTime(msec / 1000.0);
-
-	// clear variables
-	currenttime = msec;
-	currentbar = bar;
-	memset(&currentbga, 0, sizeof(currentbga));
-	bmsbar_index = 0;
-
-	// set current bpm
-	// (TODO)
-
-	// calculate bms duration, as it's static value
-	bmsduration = m_Bms.GetEndTime();
-
-	// reset iterator
-	BmsChannel& bgmchannel = m_Bms.GetChannelManager()[BmsWord(1)];
-	BmsBuffer& missbgachannel = m_Bms.GetChannelManager()[BmsWord(6)].GetBuffer();
-	BmsBuffer& bgachannel = m_Bms.GetChannelManager()[BmsWord(4)].GetBuffer();
-	BmsBuffer& bgachannel2 = m_Bms.GetChannelManager()[BmsWord(7)].GetBuffer();
-	BmsBuffer& bgachannel3 = m_Bms.GetChannelManager()[BmsWord(10)].GetBuffer();
-
-	for (int i = 0; i < bgm_channel_cnt_; i++) {
-		bgm_iter_[i] = bgmchannel[i].Begin(bar);
-	}
-	bga_iter_ = bgachannel.Begin(bar);
-	bga1_iter_ = bgachannel2.Begin(bar);
-	bga2_iter_ = bgachannel3.Begin(bar);
-	bga_miss_iter_ = missbgachannel.Begin(bar);
+void SongPlayer::Pause() {
+	OnSongStart.Pause();
 }
 
-void SongPlayer::Update(uint32_t msec) {
+void SongPlayer::Stop() {
+	ASSERT(!m_BmsLoading);
+	Cleanup();
+}
+
+void SongPlayer::Play() {
+	OnSongStart.Start();
+}
+
+void SongPlayer::Update() {
+	uint32_t msec = OnSongStart.GetTick();
 	barindex bar = m_Bms.GetTimeManager().GetBarFromTime(msec * m_Rate / 1000.0);
 
 	/*
@@ -274,6 +337,37 @@ void SongPlayer::Update(uint32_t msec) {
 			currentbga.layer2bga = current_word;
 		}
 	}
+}
+
+void SongPlayer::Reset(uint32_t msec) {
+	barindex bar = m_Bms.GetTimeManager().GetBarFromTime(msec / 1000.0);
+
+	// clear variables
+	currenttime = msec;
+	currentbar = bar;
+	memset(&currentbga, 0, sizeof(currentbga));
+	bmsbar_index = 0;
+
+	// set current bpm
+	// (TODO)
+
+	// calculate bms duration, as it's static value
+	bmsduration = m_Bms.GetEndTime();
+
+	// reset iterator
+	BmsChannel& bgmchannel = m_Bms.GetChannelManager()[BmsWord(1)];
+	BmsBuffer& missbgachannel = m_Bms.GetChannelManager()[BmsWord(6)].GetBuffer();
+	BmsBuffer& bgachannel = m_Bms.GetChannelManager()[BmsWord(4)].GetBuffer();
+	BmsBuffer& bgachannel2 = m_Bms.GetChannelManager()[BmsWord(7)].GetBuffer();
+	BmsBuffer& bgachannel3 = m_Bms.GetChannelManager()[BmsWord(10)].GetBuffer();
+
+	for (int i = 0; i < bgm_channel_cnt_; i++) {
+		bgm_iter_[i] = bgmchannel[i].Begin(bar);
+	}
+	bga_iter_ = bgachannel.Begin(bar);
+	bga1_iter_ = bgachannel2.Begin(bar);
+	bga2_iter_ = bgachannel3.Begin(bar);
+	bga_miss_iter_ = missbgachannel.Begin(bar);
 }
 
 
@@ -390,10 +484,6 @@ namespace BmsHelper {
 		StopBmsLoadingOnThread();
 		// and release all resources
 		SONGPLAYER->Cleanup();
-	}
-
-	void Update() {
-		SONGPLAYER->Update(SONGVALUE.SongTime->GetTick());
 	}
 }
 

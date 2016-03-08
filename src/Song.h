@@ -26,7 +26,27 @@ struct SongInfo {
 	int iBpm;
 	int iTotal;
 	int iPlayer;
+
+	int iType;		// 0: Song, 1: Course
 };
+
+/*
+ * @description caches, loads song information from db.
+ * But this is just a light-weight(?) player, so there's no caching function in here!
+ * (Only exists for singleton theme metrics)
+ */
+class SongManager {
+protected:
+	//
+
+public:
+	//
+	bool LoadInfoFromCache(SongInfo& info, const RString& bmshash);
+	void SetCurrentSong(SongInfo& info);
+};
+
+extern SongManager*		SONGMANAGER;
+
 
 namespace BmsHelper {
 	bool LoadBms(const RString& path, BmsBms& bms);
