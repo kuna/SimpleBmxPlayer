@@ -475,6 +475,7 @@ void TexturePool::ReleaseAll() {
 }
 
 bool TexturePool::Release(Texture *tex) {
+	if (!tex) return;
 	// reduce loadcount
 	// if loadcount <= 0, then release object from memory
 	if (_loadcount.find(tex) != _loadcount.end()) {

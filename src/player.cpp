@@ -2,7 +2,6 @@
 #include "player.h"
 #include "global.h"
 #include "SongPlayer.h"
-#include "Pool.h"
 #include "util.h"
 #include <time.h>
 
@@ -412,7 +411,7 @@ void Player::SetGauge(double v) {
 }
 
 void Player::PlaySound(BmsWord& value) {
-	if (!SONGVALUE.SongTime->IsStarted() || !m_PlaySound) return;
+	if (!SONGPLAYER->IsBmsLoaded() || !m_PlaySound) return;
 	PLAYSOUND(value);
 }
 
@@ -758,7 +757,7 @@ bool Lane::IsEndOfNote() {
 
 void Player::UpdateBasic() {
 	// get time
-	Uint32 m_BmsTime = SONGVALUE.SongTime->GetTick() - judgeoffset;
+	Uint32 m_BmsTime = SONGPLAYER->GetTick() - judgeoffset;
 #if 0
 	// basic timer/value update
 	// (actor has it's own timer, so don't care ...?)

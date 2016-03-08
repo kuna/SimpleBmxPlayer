@@ -44,6 +44,7 @@ public:
 	double m_PlayRate;
 	struct PlayerState {
 		int playertype;
+		double pacemakergoal;	// used if player is AUTO
 		int op;				// 0x0000ABCD; RANDOM / SC / LEGACY(MORENOTE/ALL-LN) / JUDGE
 		double gauge;		// Store gauge state in here (Use for taken of that ...?)
 	} m_Player[2];

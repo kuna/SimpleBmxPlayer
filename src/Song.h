@@ -28,7 +28,8 @@ struct SongInfo {
 	int iTotal;
 	int iPlayer;
 
-	int iType;		// 0: Song, 1: Course
+	RString sHash;
+	uint32_t iLength;
 };
 
 /*
@@ -38,14 +39,44 @@ struct SongInfo {
  */
 class SongManager {
 protected:
-	//
-	Value<int>		m_diff;
-	Value<RString>	m_maintitle;
+	// only prototype
+	void UpdateDirectory(const RString& dirpath);
+	void UpdateSong(const RString& path);
+	// end
 
+
+	// theme metrics - currently selected song
+	Value<RString>		sMainTitle;
+	Value<RString>		sTitle;
+	Value<RString>		sSubTitle;
+	Value<RString>		sGenre;
+	Value<RString>		sArtist;
+	Value<RString>		sSubArtist;
+	Value<int>			iPlayLevel;
+	Value<int>			iPlayDifficulty;
+	SwitchValue			DiffSwitch[6];
+
+	RString				sBackbmp;
+	RString				sBanner;
+	Display::Texture*	tex_Backbmp = 0;
+	Display::Texture*	tex_Banner = 0;
 public:
-	//
+	SongManager();
+	~SongManager();
+
+	// only prototype
+	void LoadSongInfoDB(const SongInfo& info);
+	void CacheSongInfo(const SongInfo& info);
+	void UpdateCache();
+	bool IsCacheUpdating();
+
 	bool LoadInfoFromCache(SongInfo& info, const RString& bmshash);
-	void SetCurrentSong(SongInfo& info);
+	void SetSelectedIndex(int idx);
+	void SetParentDirectory(const RString& dirhash);
+	// end
+
+	void SetMetrics(const SongInfo& info);
+	void SetMetricsIsCourse(bool v);
 };
 
 extern SongManager*		SONGMANAGER;

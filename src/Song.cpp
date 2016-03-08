@@ -1,8 +1,73 @@
 #include "Song.h"
+#include "Theme.h"
 #include "File.h"
 #include "Logger.h"
-#include "Pool.h"
 #include "bmsbel/bms_parser.h"
+
+
+
+SongManager::SongManager() {
+	sMainTitle.SetFromPool("MainTitle");
+	sTitle.SetFromPool("Title");
+	sSubTitle.SetFromPool("SubTitle");
+	sGenre.SetFromPool("Genre");
+	sArtist.SetFromPool("Artist");
+	sSubArtist.SetFromPool("SubArtist");
+	iPlayLevel.SetFromPool("PlayLevel");
+	iPlayDifficulty.SetFromPool("PlayDifficulty");
+
+	DiffSwitch[0].SetFromPool("DiffUnknown");
+	DiffSwitch[1].SetFromPool("DiffBeginner");
+	DiffSwitch[2].SetFromPool("DiffNormal");
+	DiffSwitch[3].SetFromPool("DiffHyper");
+	DiffSwitch[4].SetFromPool("DiffAnother");
+	DiffSwitch[5].SetFromPool("DiffInsane");
+}
+
+SongManager::~SongManager() {
+	TEXPOOL->Release(tex_Backbmp);
+	TEXPOOL->Release(tex_Banner);
+}
+
+void SongManager::SetMetrics(const SongInfo& songinfo) {
+	// set theme metrics
+	// (course mode too) ...?
+	sMainTitle = (songinfo.sMainTitle);
+	sTitle = (songinfo.sTitle);
+	sSubTitle = (songinfo.sSubTitle);
+	sGenre = (songinfo.sGenre);
+	sArtist = (songinfo.sArtist);
+	sSubArtist = (songinfo.sSubArtist);
+
+	for (int i = 0; i < 6; i++) {
+		if (songinfo.iDifficulty == i)
+			DiffSwitch[i].Start();
+		else
+			DiffSwitch[i].Stop();
+	}
+	iPlayDifficulty = songinfo.iDifficulty;
+	iPlayLevel = songinfo.iLevel;
+
+	//
+	// load backbmp to metric
+	if (songinfo.sBackBmp.size()) {
+		TEXPOOL->Release(tex_Backbmp);
+		tex_Backbmp = TEXPOOL->Load(songinfo.sBackBmp);
+		SWITCH_ON("IsBACKBMP");
+	}
+	else {
+		SWITCH_OFF("IsBACKBMP");
+	}
+
+	if (songinfo.sBackBmp.size()) {
+		TEXPOOL->Release(tex_Banner);
+		tex_Banner = TEXPOOL->Load(songinfo.sBanner);
+		SWITCH_ON("IsBANNER");
+	}
+	else {
+		SWITCH_OFF("IsBANNER");
+	}
+}
 
 
 namespace BmsHelper {

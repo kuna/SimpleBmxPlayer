@@ -181,18 +181,20 @@ class ReplayData {
 private:
 	// about chart
 	int op_1p, op_2p;
-	int gauge;
+	int gauge;		// TODO: change it into string
 	int rseed;
 	double rate;
 	// store judge for each note
-	std::vector<ReplayEvent> objects;
+	std::vector<ReplayEvent> objects[10];
+	int round = 0;	// current round status
 public:
 	typedef std::vector<ReplayEvent>::iterator Iterator;
-	Iterator Begin() { return objects.begin(); }
-	Iterator End() { return objects.end(); }
+	Iterator Begin() { return objects[round].begin(); }
+	Iterator End() { return objects[round].end(); }
 	void Clear();
 	void Serialize(RString& out) const;		// Get base64 zipped string
 	void Parse(const RString& in);			// Input base64 zipped string
+	void SetRound(int v);
 
 	void AddPress(int time, int lane, int press);
 	void AddJudge(int time, int playside, int judge, int fastslow, int silent = 0);

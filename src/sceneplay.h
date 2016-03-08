@@ -17,7 +17,7 @@
 
 #include "game.h"
 #include "Theme.h"
-#include "timer.h"
+#include "Timer.h"
 
 
 class ScenePlay : public SceneBasic {
@@ -31,22 +31,13 @@ public:
 	RString				m_Songpath;
 	RString				m_Songhash;
 
-
 	// game skin
 	Theme				theme;
 
-	//
 	// theme metrics (internally used)
-	//
-	SwitchValue			m_DiffSwitch[6];
-	Value<int>			m_PlayLevel;
-
+	Value<int>			vRivalDiff;
 	SwitchValue			OnReady;
 	SwitchValue			OnClose;			// when 1p & 2p dead
-
-	Value<int>			P1RivalDiff;
-	Value<double>		P2ExScore;
-	Value<double>		P2ExScoreEsti;
 public:
 	// basics
 	virtual void Initialize();

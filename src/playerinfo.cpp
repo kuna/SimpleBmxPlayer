@@ -591,12 +591,15 @@ int ReplayEvent::GetFastSlow() {
 int ReplayEvent::GetSilent() {
 	return value & 0x100;
 }
+void ReplayData::SetRound(int v) {
+	round = v;
+}
 void ReplayData::AddPress(int time, int lane, int value) {
-	objects.push_back({ time, lane, value });
+	objects[round].push_back({ time, lane, value });
 }
 
 void ReplayData::AddJudge(int time, int playside, int judge, int fastslow, int silent) {
-	objects.push_back({
+	objects[round].push_back({
 		time,
 		0xA0 + playside,
 		judge + 16 * fastslow + 256 * silent
@@ -604,7 +607,7 @@ void ReplayData::AddJudge(int time, int playside, int judge, int fastslow, int s
 }
 
 void ReplayData::Clear() {
-	objects.clear();
+	objects[round].clear();
 }
 
 #define MAX_REPLAY_BUFFER 1024000	// about 1000kb
@@ -628,10 +631,15 @@ void ReplayData::Serialize(RString &out) const {
 	memcpy(buf + 52, &rseed, sizeof(int));
 	memcpy(buf + 56, &rate, sizeof(int));
 
-	int record_cnt = objects.size();
-	memcpy(buf + 116, (void*)&record_cnt, 4);
-	for (int i = 0; i < record_cnt; i++) {
-		memcpy(buf + 120 + i * 12, &objects[i], 12);
+	*(int*)(buf + 116) = 10;		// 10 of courses
+	int ptr = 120;
+	for (int i = 0; i < 10; i++) {
+		int record_cnt = objects[i].size();
+		memcpy(buf + ptr, (void*)&record_cnt, 4);	ptr += 4;
+		for (int j = 0; j < record_cnt; j++) {
+			memcpy(buf + ptr, &objects[i][j], 12);
+			ptr += 12;
+		}
 	}
 
 	// zip compress
@@ -639,7 +647,7 @@ void ReplayData::Serialize(RString &out) const {
 
 	// serialize compressed data to base64
 	char *b64;
-	base64encode(buf, 120 + record_cnt * 12, &b64);
+	base64encode(buf, ptr, &b64);
 
 	// delete original data
 	out = b64;
@@ -657,12 +665,20 @@ void ReplayData::Parse(const RString& in) {
 	char *buf = repdata;
 
 	// memcpy datas
-	int isize;
-	memcpy(&isize, buf + 116, 4);
-	for (int i = 0; i < isize; i++) {
-		struct ReplayEvent _tmp;
-		memcpy(&_tmp, buf + 120 + i * 12, 12);
-		objects.push_back(_tmp);
+	// TODO: load metadata (like op ...)
+	int coursecnt;
+	memcpy(&coursecnt, buf + 116, 4);
+	int ptr = 120;
+	for (int i = 0; i < coursecnt; i++) {
+		int isize;
+		memcpy(&isize, buf + ptr, 12);
+		ptr += 4;
+		for (int j = 0; j < isize; j++) {
+			struct ReplayEvent _tmp;
+			memcpy(&_tmp, buf + ptr, 12);
+			ptr += 12;
+			objects[i].push_back(_tmp);
+		}
 	}
 
 	// cleanup

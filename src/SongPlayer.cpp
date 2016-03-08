@@ -1,5 +1,5 @@
 #include "SongPlayer.h"
-#include "Pool.h"
+#include "Theme.h"
 #include "util.h"
 #include "file.h"
 #include "logger.h"
@@ -129,31 +129,22 @@ SongPlayer::SongPlayer() {
 	OnSongLoading.SetFromPool("SongLoading");
 	OnSongLoadingEnd.SetFromPool("SongLoadingEnd");
 
-	SONGVALUE.songloadprogress = DOUBLEPOOL->Get("SongLoadProgress");
-	SONGVALUE.OnSongLoading = SWITCH_GET("SongLoading");
-	SONGVALUE.OnSongLoadingEnd = SWITCH_GET("SongLoadingEnd");
+	dSongLoadprogress.SetFromPool("SongLoadProgress");
+	OnSongLoading.SetFromPool("SongLoading");
+	OnSongLoadingEnd.SetFromPool("SongLoadingEnd");
 
-	SONGVALUE.PlayProgress = DOUBLEPOOL->Get("PlayProgress");
-	SONGVALUE.PlayBPM = INTPOOL->Get("PlayBPM");
-	SONGVALUE.PlayMin = INTPOOL->Get("PlayMinute");
-	SONGVALUE.PlaySec = INTPOOL->Get("PlaySecond");
-	SONGVALUE.PlayRemainSec = INTPOOL->Get("PlayRemainSecond");
-	SONGVALUE.PlayRemainMin = INTPOOL->Get("PlayRemainMinute");
+	PlayProgress = DOUBLEPOOL->Get("PlayProgress");
+	PlayBPM = INTPOOL->Get("PlayBPM");
+	PlayMin = INTPOOL->Get("PlayMinute");
+	PlaySec = INTPOOL->Get("PlaySecond");
+	PlayRemainSec = INTPOOL->Get("PlayRemainSecond");
+	PlayRemainMin = INTPOOL->Get("PlayRemainMinute");
 
-	SONGVALUE.OnBeat = SWITCH_GET("Beat");
-	SONGVALUE.OnBgaMain = SWITCH_GET("BgaMain");
-	SONGVALUE.OnBgaLayer1 = SWITCH_GET("BgaLayer1");
-	SONGVALUE.OnBgaLayer2 = SWITCH_GET("BgaLayer2");
-	SONGVALUE.SongTime = SWITCH_GET("GameStart");
-
-	SONGVALUE.sMainTitle = STRPOOL->Get("MainTitle");
-	SONGVALUE.sTitle = STRPOOL->Get("Title");
-	SONGVALUE.sSubTitle = STRPOOL->Get("SubTitle");
-	SONGVALUE.sGenre = STRPOOL->Get("Genre");
-	SONGVALUE.sArtist = STRPOOL->Get("Artist");
-	SONGVALUE.sSubArtist = STRPOOL->Get("SubArtist");
-
-
+	OnBeat.SetFromPool("Beat");
+	OnBgaMain.SetFromPool("BgaMain");
+	OnBgaLayer1.SetFromPool("BgaLayer1");
+	OnBgaLayer2.SetFromPool("BgaLayer2");
+	SongTime.SetFromPool("GameStart");
 
 	// clear iter & variables
 	Reset(0);
@@ -165,40 +156,6 @@ void SongPlayer::LoadBmsResource(BmsBms& bms) {
 
 	// copy
 	bms.Copy(m_Bms);
-
-	// set theme metrics
-	// COMMENT: select menu should also able to use this function ... fix... uu
-	// (course mode too)
-	SongInfo songinfo;
-	BmsHelper::GetBmsMetadata(bms, songinfo);
-
-	SONGVALUE.sMainTitle->assign(songinfo.sMainTitle);
-	SONGVALUE.sTitle->assign(songinfo.sTitle);
-	SONGVALUE.sSubTitle->assign(songinfo.sSubTitle);
-	SONGVALUE.sGenre->assign(songinfo.sGenre);
-	SONGVALUE.sArtist->assign(songinfo.sArtist);
-	SONGVALUE.sSubArtist->assign(songinfo.sSubArtist);
-
-	SWITCH_ON("IsScoreGraph");
-	SWITCH_ON("IsBGA");
-	SWITCH_ON("IsExtraMode");
-
-	for (int i = 0; i < 6; i++) {
-		if (songinfo.iDifficulty == i)
-			m_DiffSwitch[i].Start();
-		else
-			m_DiffSwitch[i].Stop();
-	}
-	m_PlayLevel = songinfo.iLevel;
-
-	if (songinfo.sBackBmp.size()) {
-		// TODO: load backbmp
-		SWITCH_ON("IsBACKBMP");
-	}
-	else {
-		SWITCH_OFF("IsBACKBMP");
-	}
-
 
 	// reset iterators
 	BmsChannel& bgmchannel = m_Bms.GetChannelManager()[BmsWord(1)];
@@ -226,7 +183,13 @@ void SongPlayer::LoadBmsResource(BmsBms& bms) {
 		}
 		
 		// update loading percentage
+		dSongLoadprogress = (double)i / BmsConst::WORD_MAX_COUNT;
 	}
+
+	// if necessary, thread sleep
+	int sleeptime = m_MinLoadingTime - OnSongLoading.GetTick();
+	if (sleeptime > 0) _sleep(sleeptime);
+
 	m_BmsLoading = false;
 	OnSongLoading.Stop();
 	OnSongLoadingEnd.Start();
@@ -275,20 +238,19 @@ void SongPlayer::Update() {
 	 */
 	int remaintime = GetEndTime() - msec;
 	if (remaintime < 0) remaintime = 0;
-	*SONGVALUE.PlayProgress
-		= (double)msec / GetEndTime();
-	*SONGVALUE.PlayBPM = GetCurrentBpm();
-	*SONGVALUE.PlayMin = msec / 1000 / 60;
-	*SONGVALUE.PlaySec = msec / 1000 % 60;
-	*SONGVALUE.PlayRemainMin = remaintime / 1000 / 60;
-	*SONGVALUE.PlayRemainSec = remaintime / 1000 % 60;
+	PlayProgress = (double)msec / GetEndTime();
+	PlayBPM = GetCurrentBpm();
+	PlayMin = msec / 1000 / 60;
+	PlaySec = msec / 1000 % 60;
+	PlayRemainMin = remaintime / 1000 / 60;
+	PlayRemainSec = remaintime / 1000 % 60;
 
 
 	// check iterator difference(BGA / BGM) from previous one
 	for (int i = 0; i < bgm_channel_cnt_; i++) {
 		if (m_Bms.GetBarManager().GetMeasureByBar(bar) * 4 >= bmsbar_index) {
 			bmsbar_index++;
-			SONGVALUE.OnBeat->Start();
+			OnBeat.Start();
 		}
 
 		for (int i = 0; i < bgm_channel_cnt_; i++) {
@@ -315,7 +277,7 @@ void SongPlayer::Update() {
 			BmsWord current_word(bga_iter_->second);
 			if (current_word == BmsWord::MIN)
 				continue;
-			SONGVALUE.OnBgaMain->Start();
+			OnBgaMain.Start();
 			currentbga.mainbga = current_word;
 		}
 		for (; bga1_iter_ != m_Bms.GetChannelManager()[7][0].End(); ++bga1_iter_) {
@@ -324,7 +286,7 @@ void SongPlayer::Update() {
 			BmsWord current_word(bga1_iter_->second);
 			if (current_word == BmsWord::MIN)
 				continue;
-			SONGVALUE.OnBgaLayer1->Start();
+			OnBgaLayer1.Start();
 			currentbga.layer1bga = current_word;
 		}
 		for (; bga2_iter_ != m_Bms.GetChannelManager()[10][0].End(); ++bga2_iter_) {
@@ -333,7 +295,7 @@ void SongPlayer::Update() {
 			BmsWord current_word(bga2_iter_->second);
 			if (current_word == BmsWord::MIN)
 				continue;
-			SONGVALUE.OnBgaLayer2->Start();
+			OnBgaLayer2.Start();
 			currentbga.layer2bga = current_word;
 		}
 	}

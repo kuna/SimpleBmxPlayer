@@ -4,7 +4,6 @@
 
 #include "util.h"
 #include "file.h"
-#include "Pool.h"
 #include "game.h"
 #include "logger.h"
 #include "Setting.h"
@@ -138,18 +137,24 @@ namespace Parameter {
 
 		GAMESTATE.m_CourseCount = courses.size();
 		GAMESTATE.m_CourseRound = 0;
-		//GamePlay::P.gauge = PLAYERINFO[0].playconfig.gaugetype;
-		//GamePlay::P.op1 = PLAYERINFO[0].playconfig.op_1p;
-		//GamePlay::P.op2 = PLAYERINFO[0].playconfig.op_2p;
 		GAMESTATE.m_PlayRate = 1;
 		
 		GAMESTATE.m_ShowBga = SETTING.bga;
 		GAMESTATE.m_Startmeasure = 0;
 		GAMESTATE.m_Endmeasure= 1000;
 		GAMESTATE.m_SongRepeatCount = 1;
-		GAMESTATE.m_Replay = false;
 		GAMESTATE.m_rseed = time(0) % 65536;
-		GAMESTATE.m_PacemakerGoal = 6.0 / 9.0;	// A rank
+
+		GAMESTATE.m_Player[0].gauge
+			= GAMESTATE.m_Player[1].gauge = 0;	// TODO
+		GAMESTATE.m_Player[0].op
+			= GAMESTATE.m_Player[1].op = 0;		// TODO: OP는 1P,2P 랜덤이 가능하게 되어야 함.
+
+
+		GAMESTATE.m_Player[0].playertype = PLAYERTYPE::HUMAN;
+		GAMESTATE.m_Player[0].pacemakergoal = 9.0 / 9.0;
+		GAMESTATE.m_Player[1].playertype = PLAYERTYPE::AUTO;
+		GAMESTATE.m_Player[1].pacemakergoal = 6.0 / 9.0;	// A rank
 
 		// overwrite default options
 		for (int i = 2; i < argc; i++) {
@@ -159,10 +164,10 @@ namespace Parameter {
 				PLAYERINFO[0].playconfig.op_2p = op / 10;
 			}
 			else if (BeginsWith(argv[i], "-replay")) {
-				GAMESTATE.m_Replay = true;
+				GAMESTATE.m_Player[0].playertype = PLAYERTYPE::REPLAY;
 			}
 			else if (BeginsWith(argv[i], "-auto")) {
-				GAMESTATE.m_Autoplay = true;
+				GAMESTATE.m_Player[0].playertype = PLAYERTYPE::AUTO;
 			}
 			else if (BeginsWith(argv[i], "-bgaoff")) {
 				GAMESTATE.m_ShowBga = false;

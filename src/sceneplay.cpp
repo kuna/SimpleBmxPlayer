@@ -21,12 +21,11 @@ void ScenePlay::Initialize() {
 	OnReady.SetFromPool("Ready");
 	OnClose.SetFromPool("Close");
 
-	m_DiffSwitch[0].SetFromPool("DiffUnknown");
-	m_DiffSwitch[1].SetFromPool("DiffBeginner");
-	m_DiffSwitch[2].SetFromPool("DiffNormal");
-	m_DiffSwitch[3].SetFromPool("DiffHyper");
-	m_DiffSwitch[4].SetFromPool("DiffAnother");
-	m_DiffSwitch[5].SetFromPool("DiffInsane");
+	// COMMENT: option related flag ...?
+	SWITCH_ON("IsScoreGraph");
+	SWITCH_ON("IsBGA");
+	SWITCH_ON("IsExtraMode");
+	SWITCH_ON("IsCourseMode");
 }
 
 void ScenePlay::Start() {
@@ -80,6 +79,7 @@ void ScenePlay::Start() {
 				return;		// ??
 			}
 			PlayerReplay *pRep = new PlayerReplay(i);
+			rep.SetRound(0);
 			pRep->SetReplay(rep);
 			PLAYER[i] = pRep;
 			break;
@@ -134,6 +134,9 @@ void ScenePlay::Start() {
 	*/
 	OnReady.Stop();
 	OnClose.Stop();
+	SongInfo sinfo;
+	BmsHelper::GetBmsMetadata(bms, sinfo);
+	SONGMANAGER->SetMetrics(sinfo);			// set theme metrics
 
 
 	/* ---------------------------------------------------------------------------
@@ -141,7 +144,7 @@ void ScenePlay::Start() {
 	* - from here, something will show up in the screen.
 	*/
 	RString PlayskinPath = "";
-	if (GAMESTATE.m_Keymode < 10)
+	if (sinfo.iKeyCount < 10)
 		PlayskinPath = SETTING.skin_play_7key;
 	else
 		PlayskinPath = SETTING.skin_play_14key;
@@ -154,6 +157,7 @@ void ScenePlay::Start() {
 	 * Load bms resource
 	 */
 	SONGPLAYER->SetRate(GAMESTATE.m_PlayRate);
+	SONGPLAYER->SetMinLoadingTime(m_MinLoadingTime);
 	FILEMANAGER->PushBasePath(m_Songpath);		// COMMENT: is it safe???
 	BmsHelper::LoadBmsOnThread(bms);
 }
@@ -201,11 +205,9 @@ void ScenePlay::Update() {
 		PLAYER[i]->Update();
 	}
 	// update rival score
-	pRivalDiff =
+	vRivalDiff =
 		PLAYER[0]->GetScoreData()->CalculateEXScore() -
 		PLAYER[1]->GetScoreData()->CalculateEXScore();
-	pRivalDiff_d = PLAYER[1]->GetScoreData()->CurrentRate();
-	pRivalDiff_d_total = PLAYER[1]->GetScoreData()->CalculateRate();
 }
 
 void ScenePlay::Render() {

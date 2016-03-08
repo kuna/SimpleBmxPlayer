@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include "audio.h"
-#include "timer.h"
+#include "Audio.h"
+#include "Timer.h"
 #include "Surface.h"
-#include "Pool.h"
+#include "Theme.h"
 
 #include "bmsbel\bms_bms.h"
 #include "bmsbel\bms_define.h"
@@ -79,7 +79,7 @@ protected:
 	int bmsbar_index;
 	uint32_t bmsduration;
 
-	int m_MinLoadingTime;		// Only for ScenePlay
+	uint32_t m_MinLoadingTime = 0;		// Only for ScenePlay
 
 	//
 	// theme metrics
@@ -89,27 +89,18 @@ protected:
 	SwitchValue			OnSongLoadingEnd;
 	Value<double>		dSongLoadprogress;
 
-	double*				PlayProgress;
-	int*				PlayBPM;
-	int*				PlayMin;
-	int*				PlaySec;
-	int*				PlayRemainMin;
-	int*				PlayRemainSec;
+	Value<double>		PlayProgress;
+	Value<int>			PlayBPM;
+	Value<int>			PlayMin;
+	Value<int>			PlaySec;
+	Value<int>			PlayRemainMin;
+	Value<int>			PlayRemainSec;
 
-	Switch*				SongTime;
-	Switch*				OnBeat;
-	Switch*				OnBgaMain;
-	Switch*				OnBgaLayer1;
-	Switch*				OnBgaLayer2;
-
-	RString*			sMainTitle;
-	RString*			sTitle;
-	RString*			sSubTitle;
-	RString*			sGenre;
-	RString*			sArtist;
-	RString*			sSubArtist;
-	int*				iPlayLevel;
-	int*				iPlayDifficulty;
+	SwitchValue			SongTime;
+	SwitchValue			OnBeat;
+	SwitchValue			OnBgaMain;
+	SwitchValue			OnBgaLayer1;
+	SwitchValue			OnBgaLayer2;
 public:
 	SongPlayer();
 	~SongPlayer();
@@ -118,6 +109,7 @@ public:
 	double GetRate() { return m_Rate; }
 
 	void LoadBmsResource(BmsBms& bms);
+	void SetMinLoadingTime(uint32_t v) { m_MinLoadingTime = v; }
 	bool IsBmsLoading();
 	bool IsBmsLoaded();
 	bool IsPlaying();
