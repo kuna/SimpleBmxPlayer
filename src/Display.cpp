@@ -3,6 +3,7 @@
 #include <assert.h>
 using namespace Display;
 
+IDisplay*		DISPLAY = NULL;
 
 
 

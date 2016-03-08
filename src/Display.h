@@ -178,7 +178,7 @@ public:
 	virtual void DrawPrimitives();
 };
 
-
+extern IDisplay*		DISPLAY;
 
 
 

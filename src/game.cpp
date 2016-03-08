@@ -5,7 +5,7 @@
 #include "Luamanager.h"
 #include "Input.h"
 #include "util.h"
-#include "Pool.h"
+#include "Theme.h"
 #include "font.h"
 #include "file.h"
 #include "Song.h"
@@ -19,7 +19,6 @@ using namespace tinyxml2;
 
 SceneManager*	SCENE = NULL;
 SDL_Window*		WINDOW = NULL;
-IDisplay*		DISPLAY = NULL;
 
 namespace Game {
 	bool			bRunning = false;	// is game running?

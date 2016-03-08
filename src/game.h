@@ -50,9 +50,8 @@ public:
 	double m_PacemakerGoal;
 };
 
-extern IDisplay*		DISPLAY;
-extern SDL_Window*		WINDOW;
-extern GameState		GAMESTATE;
+extern SDL_Window*		WINDOW;		// main window
+extern GameState		GAMESTATE;	// game's main state
 
 
 

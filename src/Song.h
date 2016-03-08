@@ -7,6 +7,7 @@
 
 #include "global.h"
 #include "bmsbel/bms_bms.h"
+#include "Theme.h"
 
 struct SongInfo {
 	RString sMainTitle;
@@ -38,6 +39,8 @@ struct SongInfo {
 class SongManager {
 protected:
 	//
+	Value<int>		m_diff;
+	Value<RString>	m_maintitle;
 
 public:
 	//
