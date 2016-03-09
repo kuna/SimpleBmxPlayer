@@ -13,29 +13,39 @@
 
 
 
-// pure player related
+
+class PlayOption {
+public:
+	int randomS1, randomS2;	// S2 works for double play
+	double freq;			// needless to say?
+	int longnote;			// off, legacy, 20%, 50%, 100%
+	int morenote;			// off, -50%, -20%, 20%, 50%
+	int judge;				// off, extend, hard, vhard
+	int scratch;			// off, assist, all_sc
+	int rseed;				// random seed (-1: random)
+	int flip;
+
+	PlayOption();
+	void DefaultOption();
+	bool ParseOptionString(const RString& option);
+	RString GetOptionString(const RString& option);
+};
 
 struct PlayConfig {
-	// playing option
-	int op_1p, op_2p;
 	double sudden, lift;
 	int showsudden, showlift;
+
+	int ghost_type;			// 
+	int judge_type;			// fastslow
+	int pacemaker_type;		// 0%, 90%, 100%, rival, mybest, A, AA, AAA, custom
+	int pacemaker_goal;		// custom goal
+
 	double speed;
-	int speedtype;		// off, float, max, min, medium, constant(assist)
-	double floatspeed;	// float speed itself
-	int usefloatspeed;	// should we use float speed?
-	int gaugetype;		// off, assist, ...
-	// pacemaker
-	int ghost_type;		// 
-	int judge_type;		// fastslow
-	int pacemaker_type;	// 0%, 90%, 100%, rival, mybest, A, AA, AAA, custom
-	int pacemaker_goal;	// custom goal
-	// assists/additional option
-	int longnote;		// off, legacy, 20%, 50%, 100%
-	int morenote;		// off, -50%, -20%, 20%, 50%
-	int judge;			// off, extend, hard, vhard
-	int scratch;		// off, assist, all_sc
-	double freq;		// needless to say?
+	int speedtype;			// off, float, max, min, medium, constant(assist)
+	double floatspeed;		// float speed itself
+	int usefloatspeed;		// should we use float speed?
+	int gaugetype;			// off, assist, ...
+
 	// judge offset
 	int judgeoffset;
 	int judgecalibration;
@@ -52,7 +62,7 @@ public:
 	PlayScore(int notecnt);
 	PlayScore();
 
-	// just a utils
+	// utils
 	void Clear();
 	int LastNoteFinished() const;
 	int GetJudgedNote() const;
@@ -62,34 +72,28 @@ public:
 	double CalculateRate() const;
 	int CalculateGrade() const;
 	void AddGrade(const int type);
-	int Slow() { slow++; }
-	int Fast() { fast++; }
-};
-
-struct PlayOption {
-	// TODO
-	int GetOPCode();
-	void SetFromOPCode(int op);
+	void AddSlow() { slow++; }
+	void AddFast() { fast++; }
 };
 
 /*
-* @description record for each song data
-*/
+ * @description record for each song data
+ */
 class PlayRecord {
 public:
 	// used for identifying song
 	RString hash;
 	// game play options
-	int op1, op2;			// decides note chart
-	int rseed;				// decides note chart
-	int type;				// kb? beatcon?
+	RString playoption;		// decides note chart
+	int type;				// kb? beatcon? screen? midi?
 	// game play statics
 	int playcount;
 	int clearcount;
 	int failcount;
-	int status;				// cleared status
+	int clear;				// cleared status
 	// calculated from game play record
 	int minbp;
+	int cbrk;
 	int maxcombo;			// CAUTION: it's different fram grade.
 	// records used for game play
 	PlayScore score;		// we only store high-score
@@ -97,6 +101,8 @@ public:
 	// used for hashing (scorehash)
 	RString Serialize();
 };
+
+
 
 
 
@@ -148,6 +154,8 @@ public:
 
 
 
+#include "Theme.h"
+
 class Profile {
 public:
 	// basic informations
@@ -159,39 +167,47 @@ public:
 	int clearcount;
 	// select option
 	PlayScore score;				// total record
-	PlayConfig playconfig;	// last play option
+	PlayConfig playconfig;			// last play option
 	bool isloaded;
 
+protected:
 	// theme metrics
-	// TODO
+	Value<RString>	sPlayerName;
+	Value<int>		sPlayerLevel;
+	Value<RString>	iPlayerScorePerfect;
+	Value<RString>	iPlayerScoreGreat;
+	Value<RString>	iPlayerScoreGood;
+	Value<RString>	iPlayerScoreBad;
+	Value<RString>	iPlayerScorePoor;
+
+	Value<int>		iRecordClear;
+	Value<int>		iRecordScore;
+	Value<int>		iRecordCombo;
+	Value<int>		iReplayExists;
 public:
+	Profile(int side);
+	~Profile();
+
 	void DefaultProfile(const RString& name);	// initialize profile setting with name.
 	bool LoadProfile(const RString& name);		// returns false if it's new profile.
+	void UnloadProfile();
 	void SaveProfile(const RString& name);
 	bool IsProfileLoaded();						// check if this profile slot is loaded.
 
-	bool LoadSongRecord();						// returns false if it's not existing record
-	void SaveSongRecord();
+	void IsSongRecordExists(const RString& songhash);
+	bool LoadSongRecord(const RString& songhash, PlayRecord &rec);						// returns false if it's not existing record
+	void SaveSongRecord(const RString& songhash, PlayRecord &rec);
+	void DeleteSongRecord(const RString& songhash);
 
-	bool LoadReplayData();						// returns false if it's not existing replay
-	void SaveReplayData();
+	bool IsReplayDataExists(const RString& songhash);
+	bool LoadReplayData(const RString& songhash, ReplayData &rep);						// returns false if it's not existing replay
+	void SaveReplayData(const RString& songhash, ReplayData &rep);
+
+	void SetPlayOptionMetrics();
+	void SetPlayScoreMetrics();
+	void SetReplayExistsMetrics(bool v);
 };
 
 
 // PROFILE SLOT, globally accessible.
 extern Profile*		PROFILE[2];
-
-
-
-
-
-
-
-
-// replay related
-
-
-namespace ReplayHelper {
-	bool LoadReplay(ReplayData& rep, const char* playername, const char* songhash, const char* course = 0);
-	bool SaveReplay(const ReplayData& rep, const char* playername, const char* songhash, const char* course = 0);
-}
