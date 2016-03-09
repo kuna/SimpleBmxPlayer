@@ -1,4 +1,4 @@
-#include "playerinfo.h"
+#include "Profile.h"
 #include "util.h"
 #include "file.h"
 #include "logger.h"

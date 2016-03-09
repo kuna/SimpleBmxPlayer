@@ -13,12 +13,9 @@
 
 
 
-
-
-
 // pure player related
 
-struct PlayerPlayConfig {
+struct PlayConfig {
 	// playing option
 	int op_1p, op_2p;
 	double sudden, lift;
@@ -44,52 +41,7 @@ struct PlayerPlayConfig {
 	int judgecalibration;
 };
 
-class PlayerInfo {
-public:
-	// basic informations
-	RString name;
-	int spgrade;
-	int dpgrade;
-	int playcount;					// total record
-	int failcount;
-	int clearcount;
-	// select option
-	PlayerScore score;				// total record
-	PlayerPlayConfig playconfig;	// last play option
-public:
-	bool LoadPlayerSetting(const RString& name);
-	bool SavePlayerSetting(const RString& name);
-	/** @brief returns SongRecord object from sqlite db. returns false if not found. */
-	/** @brief saves SongRecord object to sqlite db. */
-};
-
-namespace PlayerInfoHelper {
-	/** @brief set playerinfo as default (COMMENT: don't care playername) */
-	void DefaultPlayerInfo(PlayerInfo& player);
-	bool LoadPlayerInfo(PlayerInfo& player, const char* playername);
-	bool SavePlayerInfo(PlayerInfo& player);
-}
-
-namespace PlayOptionHelper {
-	void DefaultPlayConfig(PlayerPlayConfig &config);
-	void LoadPlayConfig(PlayerPlayConfig &config, tinyxml2::XMLNode *base);
-	void SavePlayConfig(const PlayerPlayConfig &config, tinyxml2::XMLNode *base);
-}
-
-// global variables game player
-// Beatmania only could have 2 players, 
-// so we don't need to take care of more players.
-extern PlayerInfo		PLAYERINFO[2];
-
-
-
-
-
-
-
-// song record related
-
-class PlayerScore {
+class PlayScore {
 public:
 	int score[6];
 	int totalnote;
@@ -97,8 +49,8 @@ public:
 	int maxcombo;
 	int slow, fast;
 public:
-	PlayerScore(int notecnt);
-	PlayerScore();
+	PlayScore(int notecnt);
+	PlayScore();
 
 	// just a utils
 	void Clear();
@@ -114,10 +66,16 @@ public:
 	int Fast() { fast++; }
 };
 
+struct PlayOption {
+	// TODO
+	int GetOPCode();
+	void SetFromOPCode(int op);
+};
+
 /*
- * @description record for each song data
- */
-class PlayerSongRecord {
+* @description record for each song data
+*/
+class PlayRecord {
 public:
 	// used for identifying song
 	RString hash;
@@ -134,25 +92,13 @@ public:
 	int minbp;
 	int maxcombo;			// CAUTION: it's different fram grade.
 	// records used for game play
-	PlayerScore score;		// we only store high-score
+	PlayScore score;		// we only store high-score
 public:
 	// used for hashing (scorehash)
 	RString Serialize();
 };
 
-namespace PlayerRecordHelper {
-	bool LoadPlayerRecord(PlayerSongRecord& record, const char* playername, const char* songhash);
-	bool SavePlayerRecord(const PlayerSongRecord& record, const char* playername);
-	bool DeletePlayerRecord(const char* playername, const char* songhash);
-}
 
-
-
-
-
-
-
-// replay related
 
 struct ReplayEvent {
 	unsigned int time;
@@ -199,6 +145,51 @@ public:
 	void AddPress(int time, int lane, int press);
 	void AddJudge(int time, int playside, int judge, int fastslow, int silent = 0);
 };
+
+
+
+class Profile {
+public:
+	// basic informations
+	RString name;
+	int spgrade;
+	int dpgrade;
+	int playcount;					// total record
+	int failcount;
+	int clearcount;
+	// select option
+	PlayScore score;				// total record
+	PlayConfig playconfig;	// last play option
+	bool isloaded;
+
+	// theme metrics
+	// TODO
+public:
+	void DefaultProfile(const RString& name);	// initialize profile setting with name.
+	bool LoadProfile(const RString& name);		// returns false if it's new profile.
+	void SaveProfile(const RString& name);
+	bool IsProfileLoaded();						// check if this profile slot is loaded.
+
+	bool LoadSongRecord();						// returns false if it's not existing record
+	void SaveSongRecord();
+
+	bool LoadReplayData();						// returns false if it's not existing replay
+	void SaveReplayData();
+};
+
+
+// PROFILE SLOT, globally accessible.
+extern Profile*		PROFILE[2];
+
+
+
+
+
+
+
+
+// replay related
+
 
 namespace ReplayHelper {
 	bool LoadReplay(ReplayData& rep, const char* playername, const char* songhash, const char* course = 0);

@@ -55,6 +55,7 @@ void ScenePlay::Start() {
 	}
 
 
+
 	//
 	// create / initalize players
 	//
@@ -97,6 +98,7 @@ void ScenePlay::Start() {
 		record, PLAYERINFO[0].name, m_Songhash))
 	{
 		// set is previously cleared? state.
+		// TODO: that should be in playerinfo status.
 		INTPOOL->Set("SongClear", record.status);
 
 		// set replay
@@ -107,16 +109,17 @@ void ScenePlay::Start() {
 	}
 	PLAYER[2] = p_mybest;
 
-	//
-	// Initialize gauge only at first stage of course round
-	// in courseplay, gauge shouldn't be cleared after sequential round
-	//
+	// if it's first round, then set player gauge as initialized one
+	// otherwise, use previous value of stored in scene.
 	if (GAMESTATE.m_CourseRound == 0) {
-		PLAYER[0]->InitalizeGauge();
-		PLAYER[1]->InitalizeGauge();
-		PLAYER[2]->InitalizeGauge();
+		// set initialized gauge (TODO)
+		m_Playerhealth[0]
+			= m_Playerhealth[1]
+			= m_Playerhealth[2] = 1.0;
 	}
-
+	PLAYER[0]->SetGauge(m_Playerhealth[0]);
+	PLAYER[1]->SetGauge(m_Playerhealth[1]);
+	PLAYER[2]->SetGauge(m_Playerhealth[2]);
 
 
 
