@@ -39,6 +39,9 @@ public:
 	Value<int>			vRivalDiff;
 	SwitchValue			OnReady;
 	SwitchValue			OnClose;			// when 1p & 2p dead
+
+	SwitchValue			OnCourseRound[10];
+	SwitchValue			OnCourse, OnExpert, OnDemo, OnGrade;
 public:
 	// basics
 	virtual void Initialize();

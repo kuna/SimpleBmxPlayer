@@ -14,47 +14,22 @@ namespace Game {
 	void End();
 }
 
-// globally used variables related to game
-// (Used as Scene's Initalization Parameter)
-class GameState {
-public:
-	GameState();
-
-	// basic related
-	RString m_username;
-
-	// select related
-
-	// playing related
-	RString m_CoursePath[10];
-	RString m_CourseHash[10];
-	int m_CourseRound;
-	int m_CourseCount;
-	RString m_2PSongPath[10];	// not generally used
-	RString m_2PSongHash[10];	// not generally used
-
-	int m_Startmeasure;
-	int m_Endmeasure;
-	int m_SongRepeatCount;
-	bool m_ShowBga;
-	int m_rseed;
-	int m_Battle;			// set battle mode (OFF, BATTLE, G-BATTLE, ...)
-	int m_Keymode;
-	double m_PlayRate;
-	struct PlayerState {
-		int playertype;
-	} m_Player[2];
-	double m_PacemakerGoal;
+enum GAMEMODE {
+	GAMEMODE_DEMO = 0,
+	GAMEMODE_EXPERT = 1,
+	GAMEMODE_COURSE = 2,
+	GAMEMODE_GRADE = 3,
 };
 
 class Parameter {
 public:
 	Parameter();
-	std::vector<RString> option_cmds;
+	int isParameterEnabled;		// 0: none, 1: play screen
+	std::vector<RString> args;	// arguments
+	//std::vector<RString> option_cmds;
 };
 
 extern SDL_Window*		WINDOW;		// main window
-extern GameState		GAMESTATE;	// game's main state
 extern Parameter		PARAMETER;	// parameter (initalizer)
 
 

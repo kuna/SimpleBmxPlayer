@@ -19,7 +19,6 @@ using namespace tinyxml2;
 
 SceneManager*	SCENE = NULL;
 SDL_Window*		WINDOW = NULL;
-GameState		GAMESTATE;
 Parameter		PARAMETER;
 
 namespace Game {
@@ -59,6 +58,13 @@ namespace Game {
 		* Pool need to be initialized before resource(display) registration
 		*/
 		PoolHelper::InitializeAll();
+		SETTING = new GameSetting();
+		KEYSETTING = new KeySetting();
+		if (!SETTING->LoadSetting()) {
+			LOG->Warn("Failed to save setting, set as default.");
+			SETTING->DefaultSetting();
+		}
+		KEYSETTING->LoadKeyConfig(SETTING->keypreset_current);
 
 		/*
 		 * Create window
@@ -73,19 +79,19 @@ namespace Game {
 		}
 		Mix_AllocateChannels(1296);
 		int flag = SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL;
-		if (SETTING.fullscreen == 1)
+		if (SETTING->fullscreen == 1)
 			flag |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-		else if (SETTING.fullscreen > 1)
+		else if (SETTING->fullscreen > 1)
 			flag |= SDL_WINDOW_FULLSCREEN;
-		if (SETTING.resizable)
+		if (SETTING->resizable)
 			flag |= SDL_WINDOW_RESIZABLE;
-		if (SETTING.vsync)
+		if (SETTING->vsync)
 			flag |= SDL_RENDERER_PRESENTVSYNC;
 		//SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 		//SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 		WINDOW = SDL_CreateWindow(PROGRAMNAME " - " PROGRAMDATE "(" PROGRAMCOMMIT ")", 
 			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-			SETTING.width, SETTING.height, flag);
+			SETTING->width, SETTING->height, flag);
 		if (!WINDOW) {
 			LOG->Critical("Failed to create window");
 			return -1;
@@ -95,7 +101,7 @@ namespace Game {
 		 * Create Display
 		 */
 		DISPLAY = new DisplaySDLGlew(WINDOW);
-		if (!DISPLAY->Initialize(SETTING.width, SETTING.height)) {
+		if (!DISPLAY->Initialize(SETTING->width, SETTING->height)) {
 			LOG->Critical("Failed to create Renderer");
 			LOG->Critical(SDL_GetError());
 			return -1;
@@ -133,7 +139,8 @@ namespace Game {
 		BmsHelper::ReleaseAll();
 
 		// save game settings ...
-		GameSettingHelper::SaveSetting(SETTING);
+		if (!SETTING->SaveSetting())
+			LOG->Critical("Failed to save setting");
 
 		// release basic instances
 		// COMMENT: Font/Surface pool should be destroyed first before DISPLAY destroyed
@@ -144,6 +151,8 @@ namespace Game {
 		delete SONGPLAYER;
 		delete SCENE;
 		delete INPUT;
+		delete KEYSETTING;
+		delete SETTING;
 		PoolHelper::ReleaseAll();
 		delete DISPLAY;
 		delete LUA;

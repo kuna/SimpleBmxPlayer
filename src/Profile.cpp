@@ -516,73 +516,73 @@ void PlayOption::DefaultOption() {
 	UpdateJudgeVal();
 }
 
-void PlayOption::UpdateGaugeVal() {
-	// TODO: need total value
+void PlayOption::UpdateGaugeVal(double note_total) {
+	// need total value
 	switch (gaugetype) {
 	case GAUGETYPE::GROOVE:
-		notehealth[5] = total / notecnt / 100;
-		notehealth[4] = total / notecnt / 100;
-		notehealth[3] = total / notecnt / 2 / 100;
-		notehealth[2] = -2.0 / 100;
-		notehealth[1] = -6.0 / 100;
-		notehealth[0] = -2.0 / 100;
+		gaugeval[5] = note_total / 100;
+		gaugeval[4] = note_total / 100;
+		gaugeval[3] = note_total / 2 / 100;
+		gaugeval[2] = -2.0 / 100;
+		gaugeval[1] = -6.0 / 100;
+		gaugeval[0] = -2.0 / 100;
 		break;
 	case GAUGETYPE::EASY:
 	case GAUGETYPE::ASSISTEASY:
-		notehealth[5] = total / notecnt / 100;
-		notehealth[4] = total / notecnt / 100;
-		notehealth[3] = total / notecnt / 2 / 100;
-		notehealth[2] = -1.6 / 100;
-		notehealth[1] = -4.8 / 100;
-		notehealth[0] = -1.6 / 100;
+		gaugeval[5] = note_total / 100;
+		gaugeval[4] = note_total / 100;
+		gaugeval[3] = note_total / 2 / 100;
+		gaugeval[2] = -1.6 / 100;
+		gaugeval[1] = -4.8 / 100;
+		gaugeval[0] = -1.6 / 100;
 		break;
 	case GAUGETYPE::HARD:
-		notehealth[5] = 0.16 / 100;
-		notehealth[4] = 0.16 / 100;
-		notehealth[3] = 0;
-		notehealth[2] = -5.0 / 100;
-		notehealth[1] = -9.0 / 100;
-		notehealth[0] = -5.0 / 100;
+		gaugeval[5] = 0.16 / 100;
+		gaugeval[4] = 0.16 / 100;
+		gaugeval[3] = 0;
+		gaugeval[2] = -5.0 / 100;
+		gaugeval[1] = -9.0 / 100;
+		gaugeval[0] = -5.0 / 100;
 		break;
 	case GAUGETYPE::EXHARD:
-		notehealth[5] = 0.16 / 100;
-		notehealth[4] = 0.16 / 100;
-		notehealth[3] = 0;
-		notehealth[2] = -10.0 / 100;
-		notehealth[1] = -18.0 / 100;
-		notehealth[0] = -10.0 / 100;
+		gaugeval[5] = 0.16 / 100;
+		gaugeval[4] = 0.16 / 100;
+		gaugeval[3] = 0;
+		gaugeval[2] = -10.0 / 100;
+		gaugeval[1] = -18.0 / 100;
+		gaugeval[0] = -10.0 / 100;
 		break;
 	case GAUGETYPE::GRADE:
-		notehealth[5] = 0.16 / 100;
-		notehealth[4] = 0.16 / 100;
-		notehealth[3] = 0.04 / 100;
-		notehealth[2] = -1.5 / 100;
-		notehealth[1] = -2.5 / 100;
-		notehealth[0] = -1.5 / 100;
+		gaugeval[5] = 0.16 / 100;
+		gaugeval[4] = 0.16 / 100;
+		gaugeval[3] = 0.04 / 100;
+		gaugeval[2] = -1.5 / 100;
+		gaugeval[1] = -2.5 / 100;
+		gaugeval[0] = -1.5 / 100;
 		break;
 	case GAUGETYPE::EXGRADE:
-		notehealth[5] = 0.16 / 100;
-		notehealth[4] = 0.16 / 100;
-		notehealth[3] = 0.04 / 100;
-		notehealth[2] = -3.0 / 100;
-		notehealth[1] = -5.0 / 100;
-		notehealth[0] = -3.0 / 100;
+		gaugeval[5] = 0.16 / 100;
+		gaugeval[4] = 0.16 / 100;
+		gaugeval[3] = 0.04 / 100;
+		gaugeval[2] = -3.0 / 100;
+		gaugeval[1] = -5.0 / 100;
+		gaugeval[0] = -3.0 / 100;
 		break;
 	case GAUGETYPE::PATTACK:
-		notehealth[5] = 0;
-		notehealth[4] = 0;
-		notehealth[3] = -1;
-		notehealth[2] = -1;
-		notehealth[1] = -1;
-		notehealth[0] = -1;
+		gaugeval[5] = 0;
+		gaugeval[4] = 0;
+		gaugeval[3] = -1;
+		gaugeval[2] = -1;
+		gaugeval[1] = -1;
+		gaugeval[0] = -1;
 		break;
 	case GAUGETYPE::HAZARD:
-		notehealth[5] = 0;
-		notehealth[4] = 0;
-		notehealth[3] = 0;
-		notehealth[2] = -1;
-		notehealth[1] = -1;
-		notehealth[0] = 0;
+		gaugeval[5] = 0;
+		gaugeval[4] = 0;
+		gaugeval[3] = 0;
+		gaugeval[2] = -1;
+		gaugeval[1] = -1;
+		gaugeval[0] = 0;
 		break;
 	}
 }
@@ -740,6 +740,13 @@ void ReplayData::AddJudge(int time, int playside, int judge, int fastslow, int s
 
 void ReplayData::Clear() {
 	objects[round].clear();
+	m_Cmd.clear();
+	m_Songhash.clear();
+}
+
+void ReplayData::SetMetadata(const RString& cmd, const RString& songhash) {
+	m_Cmd = cmd;
+	m_Songhash = songhash;
 }
 
 #define MAX_REPLAY_BUFFER 1024000	// about 1000kb
@@ -747,21 +754,14 @@ void ReplayData::Serialize(RString &out) const {
 	char *buf = (char*)malloc(MAX_REPLAY_BUFFER);
 	// 
 	//  0 ~ 32 byte: songhash
-	// 40 ~ 44 byte: op1 code
-	// 44 ~ 48 byte: op2 code
-	// 48 ~ 52 byte: gauge 
-	// 52 ~ 56 byte: rseed
-	// 56 ~ 72 byte: rate (double)
+	// 40 ~    byte: play command
 	// (dummy)
 	// 116 ~ 120 byte: header size
 	// 120 byte: header end, replay body data starts
 	// (1 row per 4 * 3 = 12bytes)
 	//
-	memcpy(buf + 40, &op_1p, sizeof(int));
-	memcpy(buf + 44, &op_2p, sizeof(int));
-	memcpy(buf + 48, &gauge, sizeof(int));
-	memcpy(buf + 52, &rseed, sizeof(int));
-	memcpy(buf + 56, &rate, sizeof(int));
+	memcpy(buf, m_Songhash.c_str(), m_Songhash.size());
+	memcpy(buf + 40, m_Cmd.c_str(), m_Cmd.size());
 
 	*(int*)(buf + 116) = 10;		// 10 of courses
 	int ptr = 120;
@@ -798,6 +798,10 @@ void ReplayData::Parse(const RString& in) {
 
 	// memcpy datas
 	// TODO: load metadata (like op ...)
+	//
+	m_Songhash = *buf;
+	m_Cmd = *(buf+40);
+
 	int coursecnt;
 	memcpy(&coursecnt, buf + 116, 4);
 	int ptr = 120;

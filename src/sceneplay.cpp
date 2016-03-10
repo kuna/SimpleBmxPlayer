@@ -21,11 +21,12 @@ void ScenePlay::Initialize() {
 	OnReady.SetFromPool("Ready");
 	OnClose.SetFromPool("Close");
 
-	// COMMENT: option related flag ...?
-	SWITCH_ON("IsScoreGraph");
-	SWITCH_ON("IsBGA");
-	SWITCH_ON("IsExtraMode");
-	SWITCH_ON("IsCourseMode");
+	for (int i = 0; i < 10; i++)
+		OnCourseRound[i].SetFromPool("Round" + i);
+	OnDemo.SetFromPool("Demo");
+	OnExpert.SetFromPool("Expert");
+	OnCourse.SetFromPool("Course");
+	OnGrade.SetFromPool("Grade");
 }
 
 void ScenePlay::Start() {
@@ -136,6 +137,31 @@ void ScenePlay::Start() {
 	SongInfo sinfo;
 	BmsHelper::GetBmsMetadata(bms, sinfo);
 	SONGMANAGER->SetMetrics(sinfo);			// set theme metrics
+
+	OnDemo.Stop();
+	OnExpert.Stop();
+	OnCourse.Stop();
+	OnGrade.Stop();
+	switch (GAMESTATE.m_Gamemode) {
+	case GAMEMODE_DEMO:
+		OnDemo.Start();
+		break;
+	case GAMEMODE_EXPERT:
+		OnExpert.Start();
+		break;
+	case GAMEMODE_COURSE:
+		OnCourse.Start();
+		break;
+	case GAMEMODE_GRADE:
+		OnGrade.Start();
+		break;
+	}
+	for (int i = 0; i < 10; i++) {
+		if (i == GAMESTATE.m_CourseRound)
+			OnCourseRound[i].Start();
+		else
+			OnCourseRound[i].Stop();
+	}
 
 
 	/* ---------------------------------------------------------------------------

@@ -218,6 +218,9 @@ public:
 
 	uint32_t GetTick();
 	bool IsStarted();
+
+	bool operator=(bool v) { SetState(v); return v; }
+	void SetState(bool v) { if (v) Start(); else Stop(); }
 };
 
 

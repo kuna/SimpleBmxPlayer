@@ -112,8 +112,6 @@ namespace {
 
 		}
 		// automatically decide keymode
-		// TODO
-		GAMESTATE.m_Keymode = 7;
 
 		GAMESTATE.m_CourseCount = courses.size();
 		GAMESTATE.m_CourseRound = 0;

@@ -10,223 +10,219 @@
 
 using namespace tinyxml2;
 
-namespace GameSettingHelper {
-	namespace {
-		int GetIntSafe(XMLNode *base, const char* name, int default = 0) {
-			if (!base) return default;
-			XMLElement *e = base->FirstChildElement(name);
-			if (!e) return default;
-			if (!e->GetText()) return default;
-			return atoi(e->GetText());
-		}
-
-		bool GetStringSafe(XMLNode *base, const char* name, RString& out) {
-			if (!base) return false;
-			XMLElement *e = base->FirstChildElement(name);
-			if (!e) return false;
-			if (!e->GetText()) return false;
-			out = e->GetText();
-			return true;
-		}
-
-		void AddElement(XMLNode *base, const char *name, int value) {
-			base->LinkEndChild(base->GetDocument()->NewElement(name))
-				->ToElement()->SetText(value);
-		}
-
-		void AddElement(XMLNode *base, const char *name, const char* value) {
-			base->LinkEndChild(base->GetDocument()->NewElement(name))
-				->ToElement()->SetText(value);
-		}
+namespace {
+	int GetIntSafe(XMLNode *base, const char* name, int default = 0) {
+		if (!base) return default;
+		XMLElement *e = base->FirstChildElement(name);
+		if (!e) return default;
+		if (!e->GetText()) return default;
+		return atoi(e->GetText());
 	}
 
-	bool LoadSetting(GameSetting& setting) {
-		RString file = FILEMANAGER->GetAbsolutePath(SETTINGFILEPATH);
-
-		XMLDocument *doc = new XMLDocument();
-		if (doc->LoadFile(file) != 0) {
-			delete doc;
-			return false;
-		}
-		XMLElement *settings = doc->FirstChildElement("setting");
-		if (!settings) {
-			delete doc;
-			return false;
-		}
-
-		setting.width = GetIntSafe(settings, "width", 1280);
-		setting.height = GetIntSafe(settings, "height", 760);
-		setting.vsync = GetIntSafe(settings, "vsync", 0);
-		setting.fullscreen = GetIntSafe(settings, "fullscreen", 1);
-		setting.resizable = GetIntSafe(settings, "resizable", 0);
-		setting.allowaddon = GetIntSafe(settings, "allowaddon", 1);
-		setting.volume = GetIntSafe(settings, "volume", 100);
-		setting.tutorial = GetIntSafe(settings, "tutorial", 1);
-		setting.soundlatency = GetIntSafe(settings, "soundlatency", 1024);
-		setting.useIR = GetIntSafe(settings, "useIR", 0);
-		setting.bga = GetIntSafe(settings, "bga", 1);
-
-		XMLElement *skin = settings->FirstChildElement("skin");
-		if (skin) {
-			GetStringSafe(skin, "main", setting.skin_main);
-			GetStringSafe(skin, "player", setting.skin_player);
-			GetStringSafe(skin, "select", setting.skin_select);
-			GetStringSafe(skin, "decide", setting.skin_decide);
-			GetStringSafe(skin, "play5key", setting.skin_play_5key);
-			GetStringSafe(skin, "play7key", setting.skin_play_7key);
-			GetStringSafe(skin, "play9key", setting.skin_play_9key);
-			GetStringSafe(skin, "play10key", setting.skin_play_10key);
-			GetStringSafe(skin, "play14key", setting.skin_play_14key);
-			GetStringSafe(skin, "keyconfig", setting.skin_keyconfig);
-			GetStringSafe(skin, "skinconfig", setting.skin_skinconfig);
-			GetStringSafe(skin, "common", setting.skin_common);
-		}
-
-		XMLElement *key = settings->FirstChildElement("key");
-		if (key) {
-			GetStringSafe(key, "keypreset", setting.keypreset_current);
-			GetStringSafe(key, "preset4key", setting.keypreset_4key);
-			GetStringSafe(key, "preset5key", setting.keypreset_5key);
-			GetStringSafe(key, "preset7key", setting.keypreset_7key);
-			GetStringSafe(key, "preset8key", setting.keypreset_8key);
-			GetStringSafe(key, "preset9key", setting.keypreset_9key);
-			GetStringSafe(key, "preset10key", setting.keypreset_10key);
-			GetStringSafe(key, "preset14key", setting.keypreset_14key);
-			GetStringSafe(key, "preset18key", setting.keypreset_18key);
-		}
-
-		GetStringSafe(settings, "username", setting.username);
-		setting.keymode = GetIntSafe(settings, "keymode", 7);
-		setting.usepreview = GetIntSafe(settings, "usepreview", 1);
-
-		XMLElement *bmsdirs = settings->FirstChildElement("bmsdirs");
-		for (XMLElement *dir = bmsdirs->FirstChildElement("dir"); dir; dir = dir->NextSiblingElement("dir")) {
-			setting.bmsdirs.push_back(dir->GetText());
-		}
-
-		setting.deltaspeed = GetIntSafe(settings, "deltaspeed", 50);
-
-		delete doc;
+	bool GetStringSafe(XMLNode *base, const char* name, RString& out) {
+		if (!base) return false;
+		XMLElement *e = base->FirstChildElement(name);
+		if (!e) return false;
+		if (!e->GetText()) return false;
+		out = e->GetText();
 		return true;
 	}
 
-	bool SaveSetting(const GameSetting& setting) {
-		RString file = FILEMANAGER->GetAbsolutePath(SETTINGFILEPATH);
-		RString dir = FILEMANAGER->GetDirectory(file);
-		if (!FILEMANAGER->CreateDirectory(dir))
-			return false;
+	void AddElement(XMLNode *base, const char *name, int value) {
+		base->LinkEndChild(base->GetDocument()->NewElement(name))
+			->ToElement()->SetText(value);
+	}
 
-		XMLDocument *doc = new XMLDocument();
-		doc->LinkEndChild(doc->NewDeclaration());
-		XMLElement *settings = doc->NewElement("setting");
-		doc->LinkEndChild(settings);
+	void AddElement(XMLNode *base, const char *name, const char* value) {
+		base->LinkEndChild(base->GetDocument()->NewElement(name))
+			->ToElement()->SetText(value);
+	}
+}
 
-		AddElement(settings, "width", setting.width);
-		AddElement(settings, "height", setting.height);
-		AddElement(settings, "vsync", setting.vsync);
-		AddElement(settings, "fullscreen", setting.fullscreen);
-		AddElement(settings, "resizable", setting.resizable);
-		AddElement(settings, "allowaddon", setting.allowaddon);
-		AddElement(settings, "volume", setting.volume);
-		AddElement(settings, "tutorial", setting.tutorial);
-		AddElement(settings, "soundlatency", setting.soundlatency);
-		AddElement(settings, "useIR", setting.useIR);
-		AddElement(settings, "bga", setting.bga);
+GameSetting::GameSetting() {
+	IsScoreGraph.SetFromPool("ScoreGraph");
+	IsBGA.SetFromPool("Bga");
+}
 
-		XMLElement *skin = doc->NewElement("skin");
-		settings->LinkEndChild(skin);
+void GameSetting::ApplyToMetrics() {
+	IsScoreGraph = showgraph;
+	IsBGA = bga;
+}
 
-		AddElement(skin, "main", setting.skin_main);
-		AddElement(skin, "player", setting.skin_player);
-		AddElement(skin, "select", setting.skin_select);
-		AddElement(skin, "decide", setting.skin_decide);
-		AddElement(skin, "play5key", setting.skin_play_5key);
-		AddElement(skin, "play7key", setting.skin_play_7key);
-		AddElement(skin, "play9key", setting.skin_play_9key);
-		AddElement(skin, "play10key", setting.skin_play_10key);
-		AddElement(skin, "play14key", setting.skin_play_14key);
-		AddElement(skin, "keyconfig", setting.skin_keyconfig);
-		AddElement(skin, "skinconfig", setting.skin_skinconfig);
-		AddElement(skin, "common", setting.skin_common);
+bool GameSetting::LoadSetting() {
+	RString file = FILEMANAGER->GetAbsolutePath(SETTINGFILEPATH);
 
-		XMLElement *key = doc->NewElement("key");
-		settings->LinkEndChild(key);
-
-		AddElement(key, "preset", setting.keypreset_current);
-		AddElement(key, "preset4key", setting.keypreset_4key);
-		AddElement(key, "preset5key", setting.keypreset_5key);
-		AddElement(key, "preset7key", setting.keypreset_7key);
-		AddElement(key, "preset8key", setting.keypreset_8key);
-		AddElement(key, "preset9key", setting.keypreset_9key);
-		AddElement(key, "preset10key", setting.keypreset_10key);
-		AddElement(key, "preset14key", setting.keypreset_14key);
-		AddElement(key, "preset18key", setting.keypreset_18key);
-
-		AddElement(settings, "username", setting.username);
-		AddElement(settings, "keymode", setting.keymode);
-		AddElement(settings, "usepreview", setting.usepreview);
-
-		XMLElement *bmsdirs = doc->NewElement("bmsdirs");
-		settings->LinkEndChild(bmsdirs);
-		for (auto it = setting.bmsdirs.begin(); it != setting.bmsdirs.end(); ++it) {
-			AddElement(bmsdirs, "dir", *it);
-		}
-
-		AddElement(settings, "deltaspeed", setting.deltaspeed);
-
-		bool r = doc->SaveFile(file);
+	XMLDocument *doc = new XMLDocument();
+	if (doc->LoadFile(file) != 0) {
 		delete doc;
-		return r;
+		return false;
+	}
+	XMLElement *settings = doc->FirstChildElement("setting");
+	if (!settings) {
+		delete doc;
+		return false;
 	}
 
-	void DefaultSetting(GameSetting& setting) {
-		setting.width = 1280;
-		setting.height = 720;
-		setting.vsync = 0;
-		setting.fullscreen = 1;
-		setting.resizable = 0;
-		setting.allowaddon = 1;
-		setting.volume = 100;
-		setting.tutorial = 1;
-		setting.soundlatency = 1024;
-		setting.useIR = 0;
-		setting.bga = 1;
+	width = GetIntSafe(settings, "width", 1280);
+	height = GetIntSafe(settings, "height", 760);
+	vsync = GetIntSafe(settings, "vsync", 0);
+	fullscreen = GetIntSafe(settings, "fullscreen", 1);
+	resizable = GetIntSafe(settings, "resizable", 0);
+	allowaddon = GetIntSafe(settings, "allowaddon", 1);
+	volume = GetIntSafe(settings, "volume", 100);
+	tutorial = GetIntSafe(settings, "tutorial", 1);
+	soundlatency = GetIntSafe(settings, "soundlatency", 1024);
+	useIR = GetIntSafe(settings, "useIR", 0);
+	bga = GetIntSafe(settings, "bga", 1);
 
-		// TODO
-		setting.skin_play_7key = "../skin/Wisp_HD/play/HDPLAY_W.lr2skin";
-		setting.skin_play_14key = "../skin/Wisp_HD/play/HDPLAY_WDP.lr2skin";
-
-		setting.keypreset_4key = "4key";
-		setting.keypreset_5key = "5key";
-		setting.keypreset_7key = "7key";
-		setting.keypreset_8key = "8key";
-		setting.keypreset_9key = "9key";
-		setting.keypreset_10key = "10key";
-		setting.keypreset_14key = "14key";
-		setting.keypreset_18key = "18key";
-
-		setting.username = "NONAME";
-		setting.keymode = 7;
-		setting.usepreview = 1;
-		setting.bmsdirs.clear();
-
-		setting.deltaspeed = 50;
+	XMLElement *skin = settings->FirstChildElement("skin");
+	if (skin) {
+		GetStringSafe(skin, "main", skin_main);
+		GetStringSafe(skin, "player", skin_player);
+		GetStringSafe(skin, "select", skin_select);
+		GetStringSafe(skin, "decide", skin_decide);
+		GetStringSafe(skin, "play5key", skin_play_5key);
+		GetStringSafe(skin, "play7key", skin_play_7key);
+		GetStringSafe(skin, "play9key", skin_play_9key);
+		GetStringSafe(skin, "play10key", skin_play_10key);
+		GetStringSafe(skin, "play14key", skin_play_14key);
+		GetStringSafe(skin, "keyconfig", skin_keyconfig);
+		GetStringSafe(skin, "skinconfig", skin_skinconfig);
+		GetStringSafe(skin, "common", skin_common);
 	}
-}
 
-void GameSetting::LoadSetting() {
-	if (!GameSettingHelper::LoadSetting(*this)) {
-		LOG->Warn("Cannot found setting file, Set with default value.");
-		GameSettingHelper::DefaultSetting(*this);
+	XMLElement *key = settings->FirstChildElement("key");
+	if (key) {
+		GetStringSafe(key, "keypreset", keypreset_current);
+		GetStringSafe(key, "preset4key", keypreset_4key);
+		GetStringSafe(key, "preset5key", keypreset_5key);
+		GetStringSafe(key, "preset7key", keypreset_7key);
+		GetStringSafe(key, "preset8key", keypreset_8key);
+		GetStringSafe(key, "preset9key", keypreset_9key);
+		GetStringSafe(key, "preset10key", keypreset_10key);
+		GetStringSafe(key, "preset14key", keypreset_14key);
+		GetStringSafe(key, "preset18key", keypreset_18key);
 	}
-	LOG->Info("Loaded Game setting.");
+
+	GetStringSafe(settings, "username", username);
+	keymode = GetIntSafe(settings, "keymode", 7);
+	usepreview = GetIntSafe(settings, "usepreview", 1);
+
+	XMLElement *e_bmsdirs = settings->FirstChildElement("bmsdirs");
+	for (XMLElement *dir = e_bmsdirs->FirstChildElement("dir"); dir; dir = dir->NextSiblingElement("dir")) {
+		bmsdirs.push_back(dir->GetText());
+	}
+
+	deltaspeed = GetIntSafe(settings, "deltaspeed", 50);
+
+	delete doc;
+	return true;
 }
 
-void GameSetting::SaveSetting() {
-	GameSettingHelper::SaveSetting(*this);
+bool GameSetting::SaveSetting() {
+	RString file = FILEMANAGER->GetAbsolutePath(SETTINGFILEPATH);
+	RString dir = FILEMANAGER->GetDirectory(file);
+	if (!FILEMANAGER->CreateDirectory(dir))
+		return false;
+
+	XMLDocument *doc = new XMLDocument();
+	doc->LinkEndChild(doc->NewDeclaration());
+	XMLElement *settings = doc->NewElement("setting");
+	doc->LinkEndChild(settings);
+
+	AddElement(settings, "width", width);
+	AddElement(settings, "height", height);
+	AddElement(settings, "vsync", vsync);
+	AddElement(settings, "fullscreen", fullscreen);
+	AddElement(settings, "resizable", resizable);
+	AddElement(settings, "allowaddon", allowaddon);
+	AddElement(settings, "volume", volume);
+	AddElement(settings, "tutorial", tutorial);
+	AddElement(settings, "soundlatency", soundlatency);
+	AddElement(settings, "useIR", useIR);
+	AddElement(settings, "bga", bga);
+
+	XMLElement *skin = doc->NewElement("skin");
+	settings->LinkEndChild(skin);
+
+	AddElement(skin, "main", skin_main);
+	AddElement(skin, "player", skin_player);
+	AddElement(skin, "select", skin_select);
+	AddElement(skin, "decide", skin_decide);
+	AddElement(skin, "play5key", skin_play_5key);
+	AddElement(skin, "play7key", skin_play_7key);
+	AddElement(skin, "play9key", skin_play_9key);
+	AddElement(skin, "play10key", skin_play_10key);
+	AddElement(skin, "play14key", skin_play_14key);
+	AddElement(skin, "keyconfig", skin_keyconfig);
+	AddElement(skin, "skinconfig", skin_skinconfig);
+	AddElement(skin, "common", skin_common);
+
+	XMLElement *key = doc->NewElement("key");
+	settings->LinkEndChild(key);
+
+	AddElement(key, "preset", keypreset_current);
+	AddElement(key, "preset4key", keypreset_4key);
+	AddElement(key, "preset5key", keypreset_5key);
+	AddElement(key, "preset7key", keypreset_7key);
+	AddElement(key, "preset8key", keypreset_8key);
+	AddElement(key, "preset9key", keypreset_9key);
+	AddElement(key, "preset10key", keypreset_10key);
+	AddElement(key, "preset14key", keypreset_14key);
+	AddElement(key, "preset18key", keypreset_18key);
+
+	AddElement(settings, "username", username);
+	AddElement(settings, "keymode", keymode);
+	AddElement(settings, "usepreview", usepreview);
+
+	XMLElement *e_bmsdirs = doc->NewElement("bmsdirs");
+	settings->LinkEndChild(e_bmsdirs);
+	for (auto it = bmsdirs.begin(); it != bmsdirs.end(); ++it) {
+		AddElement(e_bmsdirs, "dir", *it);
+	}
+
+	AddElement(settings, "deltaspeed", deltaspeed);
+
+	bool r = doc->SaveFile(file);
+	delete doc;
+	return r;
 }
 
 
+void GameSetting::DefaultSetting() {
+
+	width = 1280;
+	height = 720;
+	vsync = 0;
+	fullscreen = 1;
+	resizable = 0;
+	allowaddon = 1;
+	volume = 100;
+	tutorial = 1;
+	soundlatency = 1024;
+	useIR = 0;
+	bga = 1;
+
+	// TODO
+	skin_play_7key = "../skin/Wisp_HD/play/HDPLAY_W.lr2skin";
+	skin_play_14key = "../skin/Wisp_HD/play/HDPLAY_WDP.lr2skin";
+
+	keypreset_4key = "4key";
+	keypreset_5key = "5key";
+	keypreset_7key = "7key";
+	keypreset_8key = "8key";
+	keypreset_9key = "9key";
+	keypreset_10key = "10key";
+	keypreset_14key = "14key";
+	keypreset_18key = "18key";
+
+	username = "NONAME";
+	keymode = 7;
+	usepreview = 1;
+	bmsdirs.clear();
+
+	deltaspeed = 50;
+}
 
 
 
@@ -316,34 +312,23 @@ void KeySetting::DefaultKeyConfig() {
 	keycode[PlayerKeyIndex::P2_BUTTONSTART][0] = SDL_SCANCODE_2;
 }
 
+int KeySetting::GetKeyCodeFunction(int keycode) {
+	for (int i = 0; i < 40; i++) {
+		for (int j = 0; j < _MAX_KEYCONFIG_MATCH; j++) {
+			if (this->keycode[i][j] == keycode)
+				return i;
+		}
+	}
+	return -1;
+}
+
 namespace PlayerKeyHelper {
 	RString GetKeyCodeName(int keycode) {
 		// TODO
 		return "TODO";
 	}
-
-	int GetKeyCodeFunction(const KeySetting &config, int keycode) {
-		for (int i = 0; i < 40; i++) {
-			for (int j = 0; j < _MAX_KEYCONFIG_MATCH; j++) {
-				if (config.keycode[i][j] == keycode)
-					return i;
-			}
-		}
-		return -1;
-	}
 }
 
-GameSetting		SETTING;
-KeySetting		KEYSETTING;
-
-struct GameSetting_Init {
-	GameSetting_Init() {
-		/*
-		* set default values (from option)
-		* (this should be always successful)
-		*/
-		SETTING.LoadSetting();
-		KEYSETTING.LoadKeyConfig(SETTING.keypreset_current);
-	}
-} _GAMESTETTINGINIT;
+GameSetting*	SETTING;
+KeySetting*		KEYSETTING;
 

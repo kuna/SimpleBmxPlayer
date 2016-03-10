@@ -1,10 +1,14 @@
 #pragma once
 
 #include "global.h"
+#include "Theme.h"
 #include <vector>
 
-struct GameSetting {
-	// basic information
+class GameSetting {
+public:
+	GameSetting();
+
+	// basic setting
 	int width, height;
 	int vsync, fullscreen, resizable;
 	int allowaddon;
@@ -13,6 +17,7 @@ struct GameSetting {
 	int tutorial;
 	int useIR;
 	int bga;
+	int showgraph;
 
 	// skin (not skin option)
 	RString skin_main;
@@ -43,8 +48,8 @@ struct GameSetting {
 	// last select user on selectuser screen
 	RString username;
 
-	// song select
-	int keymode;
+	// play setting
+	int gamemode;		// keymode
 	int usepreview;
 	std::vector<RString> bmsdirs;
 
@@ -54,17 +59,34 @@ struct GameSetting {
 	// result screen
 	// - NOPE
 
-	void LoadSetting();
-	void SaveSetting();
+	void DefaultSetting();
+	bool LoadSetting();
+	bool SaveSetting();
+	void ApplyToMetrics();
+	bool IsAssisted();			// global option is assisted?
+public:
+	// Game state (not saved)
+	// playing related
+	RString m_CoursePath[10];
+	RString m_CourseHash[10];
+	int m_CourseRound;
+	int m_CourseCount;
+	RString m_2PSongPath[10];	// not generally used
+	RString m_2PSongHash[10];	// not generally used
+
+	int m_Startmeasure;
+	int m_Endmeasure;
+	int m_SongRepeatCount;
+	double m_Playrate;
+private:
+	// metrics
+	// TODO
+	// BGA, Keymode, ..
+	SwitchValue		IsScoreGraph;
+	SwitchValue		IsBGA;
 };
 
-namespace GameSettingHelper {
-	bool LoadSetting(GameSetting&);
-	bool SaveSetting(const GameSetting&);
-	void DefaultSetting(GameSetting&);
-}
-
-extern GameSetting		SETTING;
+extern GameSetting*		SETTING;
 
 
 
@@ -76,19 +98,24 @@ extern GameSetting		SETTING;
  */
 #define _MAX_KEYCONFIG_MATCH	8
 
-struct KeySetting {
+class KeySetting {
+public:
 	int keycode[40][_MAX_KEYCONFIG_MATCH];
 
 	bool LoadKeyConfig(const RString& name);
 	void SaveKeyConfig(const RString& name);
 	void DefaultKeyConfig();
+	void ApplyThemeMetrics();
+	/** @brief get function from keycode. return -1 if none found. (check global.h) */
+	int GetKeyCodeFunction(int keycode);
+public:
+	// theme metrics
+	// TODO
 };
 
 namespace PlayerKeyHelper {
 	/** @brief get keycode as string. used for KeyConfig */
 	RString GetKeyCodeName(int keycode);
-	/** @brief get function from keycode. return -1 if none found. (check global.h) */
-	int GetKeyCodeFunction(const KeySetting &config, int keycode);
 }
 
-extern KeySetting		KEYSETTING;
+extern KeySetting*		KEYSETTING;

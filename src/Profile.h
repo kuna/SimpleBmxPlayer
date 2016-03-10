@@ -47,9 +47,9 @@ public:
 	bool ParseOptionString(const RString& option);
 	RString GetOptionString();
 	bool IsAssisted();
+	void UpdateGaugeVal(double note_total = 200 / 1000.0);	// total / notecnt
 
 private:
-	void UpdateGaugeVal();
 	void UpdateJudgeVal();
 };
 
@@ -145,18 +145,18 @@ struct ReplayEvent {
 
 class ReplayData {
 private:
-	// about chart
-	int op_1p, op_2p;
-	int gauge;		// TODO: change it into string
-	int rseed;
-	double rate;
 	// store judge for each note
+	RString m_Cmd;
+	RString m_Songhash;
 	std::vector<ReplayEvent> objects[10];
 	int round = 0;	// current round status
 public:
 	typedef std::vector<ReplayEvent>::iterator Iterator;
 	Iterator Begin() { return objects[round].begin(); }
 	Iterator End() { return objects[round].end(); }
+	void SetMetadata(const RString& cmd, const RString& songhash);
+	RString GetCmd() { return m_Cmd; }
+	RString GetSonghash() { return m_Songhash; }
 	void Clear();
 	void Serialize(RString& out) const;		// Get base64 zipped string
 	void Parse(const RString& in);			// Input base64 zipped string
@@ -176,14 +176,14 @@ public:
 	RString name;
 	int spgrade;
 	int dpgrade;
-	int playcount;					// total record
+	int playcount;				// total record
 	int failcount;
 	int clearcount;
 	// select option
-	PlayScore score;				// total record
+	PlayScore score;			// total record
 	PlayConfig config;			// play setting
 	PlayOption option;			// play option used for game playing
-	bool isloaded;					// is profile available?
+	bool isloaded;				// is profile available?
 
 protected:
 	// theme metrics
@@ -214,6 +214,8 @@ protected:
 	Value<int>		iPlayerJudgeoffset;
 	Value<int>		iPlayerGhostPosition;
 	Value<int>		iPlayerJudgePosition;
+	Value<int>		iPlayerScoreGraph;
+	SwitchValue		isPlayerScoreGraph;
 
 	Value<int>		iReplayExists;
 	Value<int>		iRecordClearcount;
