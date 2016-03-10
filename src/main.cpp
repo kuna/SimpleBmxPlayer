@@ -6,10 +6,11 @@
 #include "file.h"
 #include "game.h"
 #include "logger.h"
+#include "Profile.h"
 #include "Setting.h"
 
 
-namespace Parameter {
+namespace {
 	void help() {
 		printf("SimpleBmxPlayer\n================\n-- How to use -- \n\n"
 			"argument: (bmx file) (options ...)\n"
@@ -51,7 +52,6 @@ namespace Parameter {
 	bool parse(int argc, char **argv) {
 		// bmspath : must required option
 		// if not specified, return false.
-		// (TODO)
 		if (argc <= 1) {
 			help();
 			return false;
@@ -64,26 +64,6 @@ namespace Parameter {
 		*/
 		RString basepath = get_filedir(argv[0]);
 		FILEMANAGER->PushBasePath(basepath.c_str());
-		
-		/*
-		 * first figure out what player currently is
-		 */
-		GAMESTATE.m_username = SETTING.username;//"NONAME";
-		for (int i = 2; i < argc; i++) {
-			if (BeginsWith(argv[i], "-n")) {
-				GAMESTATE.m_username = argv[i];
-			}
-		}
-
-		/*
-		 * Load player information
-		 * This process should be made in SCENE::PLAYER originally.
-		 */
-		if (!PlayerInfoHelper::LoadPlayerInfo(PLAYERINFO[0], GAMESTATE.m_username.c_str())) {
-			LOG->Warn("Cannot find userdata %s. Set default.", GAMESTATE.m_username.c_str());
-			PLAYERINFO[0].name = SETTING.username;
-			PlayerInfoHelper::DefaultPlayerInfo(PLAYERINFO[0]);
-		}
 
 		/*
 		 * set default value from player / program settings
@@ -145,23 +125,11 @@ namespace Parameter {
 		GAMESTATE.m_SongRepeatCount = 1;
 		GAMESTATE.m_rseed = time(0) % 65536;
 
-		GAMESTATE.m_Player[0].gauge
-			= GAMESTATE.m_Player[1].gauge = 0;	// TODO
-		GAMESTATE.m_Player[0].op
-			= GAMESTATE.m_Player[1].op = 0;		// TODO: OP는 1P,2P 랜덤이 가능하게 되어야 함.
-
-
-		GAMESTATE.m_Player[0].playertype = PLAYERTYPE::HUMAN;
-		GAMESTATE.m_Player[0].pacemakergoal = 9.0 / 9.0;
-		GAMESTATE.m_Player[1].playertype = PLAYERTYPE::AUTO;
-		GAMESTATE.m_Player[1].pacemakergoal = 6.0 / 9.0;	// A rank
-
 		// overwrite default options
+		// TODO: make it parameter, and parse it from game.
 		for (int i = 2; i < argc; i++) {
-			if (BeginsWith(argv[i], "-op"))  {
-				int op = atoi(argv[i] + 2);
-				PLAYERINFO[0].playconfig.op_1p = op % 10;
-				PLAYERINFO[0].playconfig.op_2p = op / 10;
+			if (BeginsWith(argv[i], "-c"))  {
+				PARAMETER.option_cmds.push_back(argv[i] + 2);
 			}
 			else if (BeginsWith(argv[i], "-replay")) {
 				GAMESTATE.m_Player[0].playertype = PLAYERTYPE::REPLAY;
@@ -177,9 +145,6 @@ namespace Parameter {
 			}
 			else if (BeginsWith(argv[i], "-pace")) {
 				GAMESTATE.m_PacemakerGoal = atof(argv[i] + 5);
-			}
-			else if (BeginsWith(argv[i], "-g")) {
-				PLAYERINFO[0].playconfig.gaugetype = atoi(argv[i] + 2);
 			}
 			else if (BeginsWith(argv[i], "-s")) {
 				GAMESTATE.m_Startmeasure = atoi(argv[i] + 2);
@@ -228,9 +193,9 @@ int main(int argc, char **argv) {
 	 * if failed, exit.
 	 * (sets player / program settings in here)
 	 */
-	if (!Parameter::parse(argc, argv)) {
+	if (!parse(argc, argv)) {
 		LOG->Critical("Failed to parse parameter properly.");
-		Parameter::help();
+		help();
 		return -1;
 	}
 

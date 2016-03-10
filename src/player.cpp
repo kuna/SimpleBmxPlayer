@@ -90,6 +90,7 @@ Player::Player(int playside, int playertype) {
 	pOnGaugeMax.SetFromPool(playside, "GaugeMax");
 	pOnGaugeUp.SetFromPool(playside, "GaugeUp");
 	pOnMiss.SetFromPool(playside, "Miss");
+	OnOptionChange.SetFromPool(playside, "OptionChange");
 
 	/*
 	* SC : note-index 0
@@ -250,73 +251,7 @@ void Player::InitalizeNote(BmsBms* bms) {
 	int notecnt = score.totalnote;
 	if (notecnt <= 0)
 		notecnt = 1;			// div by 0
-	switch (playergaugetype) {
-	case GAUGETYPE::GROOVE:
-		notehealth[5] = total / notecnt / 100;
-		notehealth[4] = total / notecnt / 100;
-		notehealth[3] = total / notecnt / 2 / 100;
-		notehealth[2] = -2.0 / 100;
-		notehealth[1] = -6.0 / 100;
-		notehealth[0] = -2.0 / 100;
-		break;
-	case GAUGETYPE::EASY:
-	case GAUGETYPE::ASSISTEASY:
-		notehealth[5] = total / notecnt / 100;
-		notehealth[4] = total / notecnt / 100;
-		notehealth[3] = total / notecnt / 2 / 100;
-		notehealth[2] = -1.6 / 100;
-		notehealth[1] = -4.8 / 100;
-		notehealth[0] = -1.6 / 100;
-		break;
-	case GAUGETYPE::HARD:
-		notehealth[5] = 0.16 / 100;
-		notehealth[4] = 0.16 / 100;
-		notehealth[3] = 0;
-		notehealth[2] = -5.0 / 100;
-		notehealth[1] = -9.0 / 100;
-		notehealth[0] = -5.0 / 100;
-		break;
-	case GAUGETYPE::EXHARD:
-		notehealth[5] = 0.16 / 100;
-		notehealth[4] = 0.16 / 100;
-		notehealth[3] = 0;
-		notehealth[2] = -10.0 / 100;
-		notehealth[1] = -18.0 / 100;
-		notehealth[0] = -10.0 / 100;
-		break;
-	case GAUGETYPE::GRADE:
-		notehealth[5] = 0.16 / 100;
-		notehealth[4] = 0.16 / 100;
-		notehealth[3] = 0.04 / 100;
-		notehealth[2] = -1.5 / 100;
-		notehealth[1] = -2.5 / 100;
-		notehealth[0] = -1.5 / 100;
-		break;
-	case GAUGETYPE::EXGRADE:
-		notehealth[5] = 0.16 / 100;
-		notehealth[4] = 0.16 / 100;
-		notehealth[3] = 0.04 / 100;
-		notehealth[2] = -3.0 / 100;
-		notehealth[1] = -5.0 / 100;
-		notehealth[0] = -3.0 / 100;
-		break;
-	case GAUGETYPE::PATTACK:
-		notehealth[5] = 0;
-		notehealth[4] = 0;
-		notehealth[3] = -1;
-		notehealth[2] = -1;
-		notehealth[1] = -1;
-		notehealth[0] = -1;
-		break;
-	case GAUGETYPE::HAZARD:
-		notehealth[5] = 0;
-		notehealth[4] = 0;
-		notehealth[3] = 0;
-		notehealth[2] = -1;
-		notehealth[1] = -1;
-		notehealth[0] = 0;
-		break;
-	}
+	// TODO: set judge with total value.
 
 	//
 	// before resetting iterator, modify note data
@@ -366,6 +301,9 @@ void Player::InitalizeNote(BmsBms* bms) {
 	// clear score
 	//
 	score.Clear();
+
+	// TODO: reset gauge, judgement, lift/sudden information - get from profile.
+	// TODO
 }
 
 /*

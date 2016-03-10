@@ -55,7 +55,47 @@ namespace {
 
 
 Profile::Profile(int side) {
-	// load theme metrics (TODO)
+	// load theme metrics (TODO)sPlayerName;
+	sPlayerName.SetFromPool(side, "Name");
+	iPlayerLevel.SetFromPool(side, "Level");
+	iPlayerSpGrade;
+	iPlayerDpGrade;
+	iPlayerScorePerfect.SetFromPool(side, "ScorePG");
+	iPlayerScoreGreat.SetFromPool(side, "ScoreGR");
+	iPlayerScoreGood.SetFromPool(side, "ScoreGD");
+	iPlayerScoreBad.SetFromPool(side, "ScoreBD");
+	iPlayerScorePoor.SetFromPool(side, "ScorePR");
+
+	iPlayerGauge.SetFromPool(side, "Gauge");
+	iPlayerRandomS1.SetFromPool(side, "RandomS1");
+	iPlayerRandomS2.SetFromPool(side, "RandomS2");
+	iPlayerScratch.SetFromPool(side, "SC");
+	iPlayerFlip.SetFromPool(side, "Flip");
+	iPlayerBattle.SetFromPool(side, "Battle");
+	iPlayerSpeed.SetFromPool(side, "Speed");
+	iPlayerSpeedtype.SetFromPool(side, "Speedtype");
+	iPlayerRange.SetFromPool(side, "Range");
+	iPlayerMode.SetFromPool(side, "Mode");
+
+	iPlayerPacemaker.SetFromPool(side, "Pacemaker");
+	iPlayerPacemakerGoal.SetFromPool(side, "");
+	iPlayerJudgetiming;
+	iPlayerJudgeoffset;
+	iPlayerGhostPosition;
+
+	iReplayExists;
+	iRecordClearcount;
+	iRecordFailcount;
+	iRecordClear;
+	iRecordScore[6];
+	iRecordExScore;
+	iRecordRate;
+	iRecordRate_d;
+	iRecordRank;
+	iRecordCombo;
+	iRecordMinBP;
+	iRecordCBRK;
+	iRecordMaxCombo;
 
 	// not loaded
 	isloaded = false;
@@ -66,37 +106,21 @@ Profile::~Profile() {
 }
 
 void Profile::DefaultProfile(const RString& name) {
-	score = PlayScore();
+	this->name = name;
 
 	// basic config
-	player.spgrade = 0;
-	player.dpgrade = 0;
-	player.playcount = 0;
-	player.failcount = 0;
-	player.clearcount = 0;
+	spgrade = 0;
+	dpgrade = 0;
+	playcount = 0;
+	failcount = 0;
+	clearcount = 0;
 	
 	// score
-	// TODO
+	score = PlayScore();
 
 	// play setting
-	config.speed = 1;					// 1x
-	config.speedtype = SPEEDTYPE::NONE;	//
-	config.floatspeed = 1.0;			// 1 sec ...? well it'll automatically resetted.
-	config.sudden = config.lift = 0;
-	config.op_1p = config.op_2p = 0;
-	config.gaugetype = 0;
-
-	config.ghost_type = 0;
-	config.judge_type = 0;
-	config.pacemaker_type = PACEMAKERTYPE::PACEA;
-	config.pacemaker_goal = 90;
-
-	config.longnote = 0;
-	config.morenote = 0;
-	config.judge = 0;
-	config.scratch = 0;
-	config.freq = 1;
-
+	option = PlayOption();
+	config = PlayConfig();
 
 	isloaded = true;
 }
@@ -112,30 +136,41 @@ bool Profile::LoadProfile(const RString& name) {
 		delete doc;
 		return false;
 	}
+	XMLElement *base = doc->FirstChildElement("Profile");
+	if (!base) {
+		LOG->Critical("Improper player profile xml, cannot load profile `%s`.", name.c_str());
+		delete doc;
+		return false;
+	}
 
-	player.name = name;
+	this->name = name;
 
 	// basic config
-	XMLElement *conf = base->FirstChildElement("BasicConfig");
-	player.name = conf->FirstChildElement("Name")->GetText();
-	player.spgrade = GetIntValue(conf, "SPGrade");
-	player.dpgrade = GetIntValue(conf, "DPGrade");
-	player.playcount = GetIntValue(conf, "Playcount");
-	player.failcount = GetIntValue(conf, "Failcount");
-	player.clearcount = GetIntValue(conf, "Clearcount");
+	XMLElement *conf = base->FirstChildElement("Info");
+	spgrade = GetIntValue(conf, "SPGrade");
+	dpgrade = GetIntValue(conf, "DPGrade");
+	playcount = GetIntValue(conf, "Playcount");
+	failcount = GetIntValue(conf, "Failcount");
+	clearcount = GetIntValue(conf, "Clearcount");
 
 	// score
-	XMLElement *s = base->FirstChildElement("Score");
+	XMLElement *s = conf->FirstChildElement("Score");
 	if (!s) return;
-	score.score[5] = s->IntAttribute("perfect");
-	score.score[4] = s->IntAttribute("great");
-	score.score[3] = s->IntAttribute("good");
-	score.score[2] = s->IntAttribute("bad");
-	score.score[1] = s->IntAttribute("poor");
+	score.score[5] = s->IntAttribute("pg");
+	score.score[4] = s->IntAttribute("gr");
+	score.score[3] = s->IntAttribute("gd");
+	score.score[2] = s->IntAttribute("bd");
+	score.score[1] = s->IntAttribute("pr");
+	score.score[0] = s->IntAttribute("er");
 
 	// play config
 	XMLElement *playconfig = base->FirstChildElement("PlayConfig");
+	config.ghost_type = GetIntValue(playconfig, "ghost_type");
+	config.judge_type = GetIntValue(playconfig, "judge_type");
+	config.pacemaker_type = GetIntValue(playconfig, "pacemaker_type");
+	config.pacemaker_goal = GetIntValue(playconfig, "pacemaker_goal");
 
+#if 0
 	config.speed = GetIntValue(playconfig, "speed") / 100.0;
 	config.speedtype = GetIntValue(playconfig, "speedtype");
 	config.floatspeed = GetIntValue(playconfig, "floatspeed") / 1000.0;
@@ -146,11 +181,6 @@ bool Profile::LoadProfile(const RString& name) {
 	config.op_2p = GetIntValue(playconfig, "op_2p");
 	config.gaugetype = GetIntValue(playconfig, "gaugetype");
 
-	config.ghost_type = GetIntValue(playconfig, "ghost_type");
-	config.judge_type = GetIntValue(playconfig, "judge_type");
-	config.pacemaker_type = GetIntValue(playconfig, "pacemaker_type");
-	config.pacemaker_goal = GetIntValue(playconfig, "pacemaker_goal");
-
 	config.longnote = GetIntValue(playconfig, "longnote");
 	config.morenote = GetIntValue(playconfig, "morenote");
 	config.judge = GetIntValue(playconfig, "judge");
@@ -158,6 +188,12 @@ bool Profile::LoadProfile(const RString& name) {
 	config.judgecalibration = GetIntValue(playconfig, "judgecalibration");
 	config.scratch = GetIntValue(playconfig, "scratch");
 	config.freq = GetIntValue(playconfig, "freq") / 100.0;
+#endif
+
+	XMLElement *e_playoption = base->FirstChildElement("PlayOption");
+	if (e_playoption && e_playoption->GetText())
+		option.ParseOptionString(e_playoption->GetText());
+
 
 	// end. clean-up
 	delete doc;
@@ -169,7 +205,7 @@ void Profile::SaveProfile(const RString& name) {
 	if (!isloaded) return;
 
 	// create & convert db path to absolute
-	RString absolute_db_path = FILEMANAGER->GetAbsolutePath(ssprintf("../player/%s.xml", player.name.c_str()));
+	RString absolute_db_path = FILEMANAGER->GetAbsolutePath(ssprintf("../player/%s.xml", name.c_str()));
 	FILEMANAGER->CreateDirectory(absolute_db_path);
 	// make new XML file
 	XMLDocument *doc = new XMLDocument();
@@ -177,24 +213,26 @@ void Profile::SaveProfile(const RString& name) {
 	XMLElement *base = CreateElement(doc, "Profile");
 
 	// basic config
-	XMLElement *conf = CreateElement(base, "BasicConfig");
-	CreateElement(conf, "Name")->SetText(player.name);
-	CreateElement(conf, "SPGrade")->SetText(player.spgrade);
-	CreateElement(conf, "DPGrade")->SetText(player.dpgrade);
-	CreateElement(conf, "Playcount")->SetText(player.playcount);
-	CreateElement(conf, "Failcount")->SetText(player.failcount);
-	CreateElement(conf, "Clearcount")->SetText(player.clearcount);
+	XMLElement *conf = CreateElement(base, "Info");
+	//CreateElement(conf, "Name")->SetText(player.name);
+	CreateElement(conf, "SPGrade")->SetText(spgrade);
+	CreateElement(conf, "DPGrade")->SetText(dpgrade);
+	CreateElement(conf, "Playcount")->SetText(playcount);
+	CreateElement(conf, "Failcount")->SetText(failcount);
+	CreateElement(conf, "Clearcount")->SetText(clearcount);
 
 	// score
-	XMLElement *s = CreateElement(base, "Score");
-	s->SetAttribute("perfect", score.score[5]);
-	s->SetAttribute("great", score.score[4]);
-	s->SetAttribute("good", score.score[3]);
-	s->SetAttribute("bad", score.score[2]);
-	s->SetAttribute("poor", score.score[1]);
+	XMLElement *s = CreateElement(conf, "Score");
+	s->SetAttribute("pg", score.score[5]);
+	s->SetAttribute("gr", score.score[4]);
+	s->SetAttribute("gd", score.score[3]);
+	s->SetAttribute("bd", score.score[2]);
+	s->SetAttribute("pr", score.score[1]);
+	s->SetAttribute("er", score.score[0]);
+	
+	CreateElement(conf, "hash")->SetText("TODO");
 
 	// play config
-	XMLDocument *doc = base->GetDocument();
 	XMLElement *playconfig = doc->NewElement("PlayConfig");
 	doc->LinkEndChild(playconfig);
 
@@ -207,7 +245,6 @@ void Profile::SaveProfile(const RString& name) {
 	CreateElement(playconfig, "judge")->SetText(config.judge);
 	CreateElement(playconfig, "scratch")->SetText(config.scratch);
 	CreateElement(playconfig, "freq")->SetText(config.freq * 100);
-#endif
 
 	CreateElement(playconfig, "speed")->SetText((int)(config.speed * 100 + 0.5));
 	CreateElement(playconfig, "speedtype")->SetText(config.speedtype);
@@ -218,6 +255,7 @@ void Profile::SaveProfile(const RString& name) {
 	CreateElement(playconfig, "uselift")->SetText(config.uselift);
 	CreateElement(playconfig, "lift")->SetText(config.lift * 1000);
 	CreateElement(playconfig, "gaugetype")->SetText(config.gaugetype);
+#endif
 
 	CreateElement(playconfig, "ghost_type")->SetText(config.ghost_type);
 	CreateElement(playconfig, "judge_type")->SetText(config.judge_type);
@@ -227,8 +265,16 @@ void Profile::SaveProfile(const RString& name) {
 	CreateElement(playconfig, "judgeoffset")->SetText(config.judgeoffset);
 	CreateElement(playconfig, "judgecalibration")->SetText(config.judgecalibration);
 
+	XMLElement *e_playoption = CreateElement(doc, "PlayOption");
+	e_playoption->SetText(option.GetOptionString());
+
 	// save
 	doc->SaveFile(absolute_db_path);
+
+	// apply to metrics
+	UpdateInfoMetrics();
+	UpdateConfigMetrics();
+	UpdateOptionMetrics();
 
 	// end. clean-up
 	delete doc;
@@ -254,7 +300,7 @@ bool Profile::IsProfileLoaded() {
 * int - minbp
 * int - cbrk
 * int - maxcombo
-* int[5] - grade [pg, gr, gd, bd, pr]
+* int[6] - grade [pg, gr, gd, bd, pr, er]
 */
 #define REC_TABLE_GENERATE(rec_table)\
 rec_table.InsertColumn("songhash", DBCOLUMN::DB_COL_STRING);\
@@ -363,6 +409,34 @@ void Profile::DeleteSongRecord(const RString& songhash) {
 	db.CloseSQL();
 }
 
+bool Profile::IsSongRecordExists(const RString& songhash) {
+	RString absolute_db_path = FILEMANAGER->GetAbsolutePath(ssprintf("../player/%s.db", name));
+	// start to query DB
+	DBManager db;
+	if (!db.OpenSQL(absolute_db_path)) {
+		LOG->Warn("Failed to Open Song Record DB.");
+		return false;
+	}
+	bool r = true;
+	DBTable rec_table("record");
+	REC_TABLE_GENERATE(rec_table);
+	rec_table.SetColumn(0, songhash);
+	if (!db.IsRowExists(rec_table)) {
+		r = false;
+	}
+	db.CloseSQL();
+	return r;
+}
+
+
+
+
+
+bool Profile::IsReplayDataExists(const RString& songhash) {
+	RString path = ssprintf("../player/replay/%s/%s.rep", name, songhash);
+	return FILEMANAGER->IsFile(path);
+}
+
 bool Profile::LoadReplayData(const RString& songhash, ReplayData &rep) {
 	RString path = ssprintf("../player/replay/%s/%s.rep", name, songhash);
 	RString repdata;
@@ -395,6 +469,18 @@ void Profile::SaveReplayData(const RString& songhash, ReplayData &rep) {
 
 
 
+PlayConfig::PlayConfig() {
+	ghost_type = 0;
+	judge_type = 0;
+	pacemaker_type = PACEMAKERTYPE::PACEA;
+	pacemaker_goal = 90;
+	judgeoffset = 0;
+	judgecalibration = 0;
+}
+
+
+
+
 PlayOption::PlayOption() {
 	DefaultOption();
 }
@@ -408,6 +494,110 @@ void PlayOption::DefaultOption() {
 	scratch = 0;			// off, assist, all_sc
 	rseed = -1;
 	flip = 0;
+
+	speed = 1;					// 1x
+	speedtype = SPEEDTYPE::NONE;	//
+	floatspeed = 1.0;			// 1 sec ...? well it'll automatically resetted.
+	usefloatspeed = 0;			// false
+
+	gaugetype = 0;				// negative: custom gaugetype
+	judgetype = 0;
+
+	showsudden = showlift = 0;
+	sudden = lift = 0;
+
+	longnote = 0;
+	morenote = 0;
+	judge = 0;
+	scratch = 0;
+	freq = 1;
+
+	UpdateGaugeVal();
+	UpdateJudgeVal();
+}
+
+void PlayOption::UpdateGaugeVal() {
+	// TODO: need total value
+	switch (gaugetype) {
+	case GAUGETYPE::GROOVE:
+		notehealth[5] = total / notecnt / 100;
+		notehealth[4] = total / notecnt / 100;
+		notehealth[3] = total / notecnt / 2 / 100;
+		notehealth[2] = -2.0 / 100;
+		notehealth[1] = -6.0 / 100;
+		notehealth[0] = -2.0 / 100;
+		break;
+	case GAUGETYPE::EASY:
+	case GAUGETYPE::ASSISTEASY:
+		notehealth[5] = total / notecnt / 100;
+		notehealth[4] = total / notecnt / 100;
+		notehealth[3] = total / notecnt / 2 / 100;
+		notehealth[2] = -1.6 / 100;
+		notehealth[1] = -4.8 / 100;
+		notehealth[0] = -1.6 / 100;
+		break;
+	case GAUGETYPE::HARD:
+		notehealth[5] = 0.16 / 100;
+		notehealth[4] = 0.16 / 100;
+		notehealth[3] = 0;
+		notehealth[2] = -5.0 / 100;
+		notehealth[1] = -9.0 / 100;
+		notehealth[0] = -5.0 / 100;
+		break;
+	case GAUGETYPE::EXHARD:
+		notehealth[5] = 0.16 / 100;
+		notehealth[4] = 0.16 / 100;
+		notehealth[3] = 0;
+		notehealth[2] = -10.0 / 100;
+		notehealth[1] = -18.0 / 100;
+		notehealth[0] = -10.0 / 100;
+		break;
+	case GAUGETYPE::GRADE:
+		notehealth[5] = 0.16 / 100;
+		notehealth[4] = 0.16 / 100;
+		notehealth[3] = 0.04 / 100;
+		notehealth[2] = -1.5 / 100;
+		notehealth[1] = -2.5 / 100;
+		notehealth[0] = -1.5 / 100;
+		break;
+	case GAUGETYPE::EXGRADE:
+		notehealth[5] = 0.16 / 100;
+		notehealth[4] = 0.16 / 100;
+		notehealth[3] = 0.04 / 100;
+		notehealth[2] = -3.0 / 100;
+		notehealth[1] = -5.0 / 100;
+		notehealth[0] = -3.0 / 100;
+		break;
+	case GAUGETYPE::PATTACK:
+		notehealth[5] = 0;
+		notehealth[4] = 0;
+		notehealth[3] = -1;
+		notehealth[2] = -1;
+		notehealth[1] = -1;
+		notehealth[0] = -1;
+		break;
+	case GAUGETYPE::HAZARD:
+		notehealth[5] = 0;
+		notehealth[4] = 0;
+		notehealth[3] = 0;
+		notehealth[2] = -1;
+		notehealth[1] = -1;
+		notehealth[0] = 0;
+		break;
+	}
+}
+
+// http://www.powa-asso.fr/forum/viewtopic.php?f=26&t=824
+void PlayOption::UpdateJudgeVal() {
+	// TODO: hard / extended? currently, only basic setting.
+	if (judgetype = 0) {
+		judgeval[5] = 20;
+		judgeval[4] = 41;
+		judgeval[3] = 125;
+		judgeval[2] = 173;
+		judgeval[1] = 350;
+		judgeval[0] = 350;
+	}
 }
 
 bool PlayOption::ParseOptionString(const RString& option) {
@@ -428,9 +618,12 @@ bool PlayOption::ParseOptionString(const RString& option) {
 		else if (cmd == "RSEED") rseed = atoi(val);
 		else if (cmd == "FREQ") freq = atof(val);
 	}
+
+	UpdateGaugeVal();
+	UpdateJudgeVal();
 }
 
-RString PlayOption::GetOptionString(const RString& option) {
+RString PlayOption::GetOptionString() {
 	RString r;
 	if (randomS1) r.append(ssprintf("RAN1:%d "), randomS1);
 	if (randomS2) r.append(ssprintf("RAN2:%d "), randomS2);
@@ -442,6 +635,10 @@ RString PlayOption::GetOptionString(const RString& option) {
 	if (rseed >= 0) r.append(ssprintf("RSEED:%d "), judge);
 	if (freq != 1.0) r.append(ssprintf("FREQ:.2%f "), judge);
 	return r;
+}
+
+bool PlayOption::IsAssisted() {
+	// TODO
 }
 
 

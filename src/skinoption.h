@@ -4,7 +4,7 @@
 //#define _USEPOOL		// you can use SkinOption generally by disabling this definition
 #define _USEPOOL
 #ifdef _USEPOOL
-#include "Pool.h"
+#include "Theme.h"
 #endif
 
 /*

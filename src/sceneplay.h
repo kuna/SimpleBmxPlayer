@@ -26,7 +26,7 @@ public:
 	int					m_MinLoadingTime = 3000;
 	int					m_ReadyTime = 1000;
 	int					playmode;			// PLAYTYPE..?
-	double				m_Playerhealth[3];	// stored gauge
+	double				m_Playerhealth[3];	// Stored gauge
 
 	// 1P / 2P ...??
 	RString				m_Songpath;

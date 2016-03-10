@@ -75,7 +75,7 @@ void ScenePlay::Start() {
 		case PLAYERTYPE::REPLAY:
 			// set replay if necessary
 			ReplayData rep;
-			if (!ReplayHelper::LoadReplay(rep, PLAYERINFO[i].name, m_Songhash)) {
+			if (!PROFILE[i]->LoadReplayData(m_Songhash, rep)) {
 				LOG->Critical("Failed to load replay file.");
 				return;		// ??
 			}
@@ -93,19 +93,15 @@ void ScenePlay::Start() {
 	// generate replay object (MYBEST)
 	PlayerReplay *p_mybest = new PlayerReplay(2);
 	// load player record
-	PlayerSongRecord record;
-	if (PlayerRecordHelper::LoadPlayerRecord(
-		record, PLAYERINFO[0].name, m_Songhash))
+	PlayRecord record;
+	if (PROFILE[0]->LoadSongRecord(m_Songhash, record))
 	{
-		// set is previously cleared? state.
-		// TODO: that should be in playerinfo status.
-		INTPOOL->Set("SongClear", record.status);
+		// theme metrics is automatically set, so we don't need to care.
 
-		// set replay
+		// set replay data for P2(MYBEST)
 		ReplayData rep;
-		ReplayHelper::LoadReplay(
-			rep, PLAYERINFO[0].name, m_Songhash);
-		p_mybest->SetReplay(rep);
+		if (PROFILE[0]->LoadReplayData(m_Songhash, rep))
+			p_mybest->SetReplay(rep);
 	}
 	PLAYER[2] = p_mybest;
 
@@ -250,7 +246,7 @@ void ScenePlay::End() {
 
 void ScenePlay::Release() {
 	// Nothing to do, maybe.
-	// Theme/Pool will automaticall release all texture resources.
+	// Theme/Pool will automatically release all texture resources.
 }
 
 /** private */

@@ -11,7 +11,7 @@
 #include "Song.h"
 #include "SongPlayer.h"
 #include "tinyxml2.h"
-#include "playerinfo.h"
+#include "Profile.h"
 #include "player.h"
 #include "logger.h"
 
@@ -19,6 +19,8 @@ using namespace tinyxml2;
 
 SceneManager*	SCENE = NULL;
 SDL_Window*		WINDOW = NULL;
+GameState		GAMESTATE;
+Parameter		PARAMETER;
 
 namespace Game {
 	bool			bRunning = false;	// is game running?
@@ -108,11 +110,20 @@ namespace Game {
 		INPUT = new InputManager();
 		SONGPLAYER = new SongPlayer();
 		SONGMANAGER = new SongManager();
+		PROFILE[0] = new Profile(0);
+		PROFILE[1] = new Profile(1);
 
 		/*
 		 * some etc initialization
 		 */
 		INPUT->Register(&m_BasicInput);
+
+		/*
+		 * Process parameter before scene start
+		 */
+		for (auto it = PARAMETER.option_cmds.begin(); it != PARAMETER.option_cmds.end(); ++it) {
+			PROFILE[0]->GetPlayOption()->ParseOptionString(*it);
+		}
 
 		return true;
 	}
@@ -127,6 +138,8 @@ namespace Game {
 		// release basic instances
 		// COMMENT: Font/Surface pool should be destroyed first before DISPLAY destroyed
 		// So order is important.
+		delete PROFILE[0];
+		delete PROFILE[1];
 		delete SONGMANAGER;
 		delete SONGPLAYER;
 		delete SCENE;

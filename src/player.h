@@ -10,9 +10,9 @@
 #pragma once
 
 #include "bmsbel/bms_bms.h"
-#include "Pool.h"
+#include "Profile.h"
+#include "Theme.h"
 #include "global.h"
-#include "playerinfo.h"
 
 
 
@@ -54,7 +54,7 @@ struct Judge {
 class Player {
 protected:
 	// player's basic information (OP / RSEED ...)
-	PlayerPlayConfig*		playconfig;
+	Profile*			m_Profile;
 	/*
 	int op1;			// 0x0000ABCD; RANDOM / SC / LEGACY(MORENOTE/ALL-LN) / JUDGE
 	int op2;
@@ -85,8 +85,8 @@ protected:
 
 	// note/time information
 	uint32_t			m_BmsTime;
-	PlayerScore			score;
-	ReplayData			replay_cur;
+	PlayScore			m_Score;
+	ReplayData			m_ReplayRec;
 	BmsNoteManager*		bmsnote;			// Don't store total bms object, only store note object
 	Lane				m_Lane[20];
 
@@ -113,6 +113,7 @@ protected:
 	SwitchValue			pOnGameover;		// game is over! (different from OnClose)
 	SwitchValue			pOnGaugeMax;		// guage max?
 	SwitchValue			pOnGaugeUp;
+	SwitchValue			OnOptionChange;
 	Value<int>			pNotePerfect;
 	Value<int>			pNoteGreat;
 	Value<int>			pNoteGood;
@@ -181,9 +182,9 @@ public:
 	/* used for rendering notes */
 	BmsNoteManager*		GetNoteData() { return bmsnote; };
 	/* used for saving score */
-	PlayerScore*		GetScoreData() { return &score; };
+	PlayScore*			GetScoreData() { return &m_Score; };
 	/* used for saving replay */
-	ReplayData*			GetRecordData() { return &replay_cur; }
+	ReplayData*			GetRecordData() { return &m_ReplayRec; }
 
 
 	/*

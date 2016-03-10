@@ -2,7 +2,6 @@
 
 #include "Input.h"
 #include "Display.h"
-#include "playerinfo.h"
 
 namespace Game {
 	/** @brief Initalize routine for game. */
@@ -44,15 +43,19 @@ public:
 	double m_PlayRate;
 	struct PlayerState {
 		int playertype;
-		double pacemakergoal;	// used if player is AUTO
-		int op;				// 0x0000ABCD; RANDOM / SC / LEGACY(MORENOTE/ALL-LN) / JUDGE
-		double gauge;		// Store gauge state in here (Use for taken of that ...?)
 	} m_Player[2];
 	double m_PacemakerGoal;
 };
 
+class Parameter {
+public:
+	Parameter();
+	std::vector<RString> option_cmds;
+};
+
 extern SDL_Window*		WINDOW;		// main window
 extern GameState		GAMESTATE;	// game's main state
+extern Parameter		PARAMETER;	// parameter (initalizer)
 
 
 

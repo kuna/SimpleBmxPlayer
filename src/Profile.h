@@ -14,6 +14,10 @@
 
 
 
+/*
+ * playing option, which has close relation with game playing (command enabled) 
+ * different from MOD command (that's only used for playing, and not saved to original option)
+ */
 class PlayOption {
 public:
 	int randomS1, randomS2;	// S2 works for double play
@@ -25,27 +29,37 @@ public:
 	int rseed;				// random seed (-1: random)
 	int flip;
 
-	PlayOption();
-	void DefaultOption();
-	bool ParseOptionString(const RString& option);
-	RString GetOptionString(const RString& option);
-};
+	int gaugetype;			// off, assist, ...
+	int gaugeval[6];
 
-struct PlayConfig {
+	int judgetype;			// off, extend, hard, vhard
+	int judgeval[6];
+
 	double sudden, lift;
 	int showsudden, showlift;
-
-	int ghost_type;			// 
-	int judge_type;			// fastslow
-	int pacemaker_type;		// 0%, 90%, 100%, rival, mybest, A, AA, AAA, custom
-	int pacemaker_goal;		// custom goal
-
 	double speed;
 	int speedtype;			// off, float, max, min, medium, constant(assist)
 	double floatspeed;		// float speed itself
 	int usefloatspeed;		// should we use float speed?
-	int gaugetype;			// off, assist, ...
 
+	PlayOption();
+	void DefaultOption();
+	bool ParseOptionString(const RString& option);
+	RString GetOptionString();
+	bool IsAssisted();
+
+private:
+	void UpdateGaugeVal();
+	void UpdateJudgeVal();
+};
+
+/* customized setting for player (static during play) */
+struct PlayConfig {
+	PlayConfig();
+	int ghost_type;			// 
+	int judge_type;			// fastslow
+	int pacemaker_type;		// 0%, 90%, 100%, rival, mybest, A, AA, AAA, custom
+	int pacemaker_goal;		// custom goal
 	// judge offset
 	int judgeoffset;
 	int judgecalibration;
@@ -167,23 +181,57 @@ public:
 	int clearcount;
 	// select option
 	PlayScore score;				// total record
-	PlayConfig playconfig;			// last play option
-	bool isloaded;
+	PlayConfig config;			// play setting
+	PlayOption option;			// play option used for game playing
+	bool isloaded;					// is profile available?
 
 protected:
 	// theme metrics
 	Value<RString>	sPlayerName;
-	Value<int>		sPlayerLevel;
-	Value<RString>	iPlayerScorePerfect;
-	Value<RString>	iPlayerScoreGreat;
-	Value<RString>	iPlayerScoreGood;
-	Value<RString>	iPlayerScoreBad;
-	Value<RString>	iPlayerScorePoor;
+	Value<int>		iPlayerLevel;
+	Value<int>		iPlayerSpGrade;
+	Value<int>		iPlayerDpGrade;
+	Value<int>		iPlayerScorePerfect;
+	Value<int>		iPlayerScoreGreat;
+	Value<int>		iPlayerScoreGood;
+	Value<int>		iPlayerScoreBad;
+	Value<int>		iPlayerScorePoor;
 
-	Value<int>		iRecordClear;
-	Value<int>		iRecordScore;
-	Value<int>		iRecordCombo;
+	Value<int>		iPlayerGauge;
+	Value<int>		iPlayerRandomS1;
+	Value<int>		iPlayerRandomS2;
+	Value<int>		iPlayerScratch;
+	Value<int>		iPlayerFlip;
+	Value<int>		iPlayerBattle;
+	Value<int>		iPlayerSpeed;
+	Value<int>		iPlayerSpeedtype;
+	Value<int>		iPlayerRange;		// sudden, lift, ...
+	Value<int>		iPlayerMode;
+
+	Value<int>		iPlayerPacemaker;
+	Value<int>		iPlayerPacemakerGoal;
+	Value<int>		iPlayerJudgetiming;
+	Value<int>		iPlayerJudgeoffset;
+	Value<int>		iPlayerGhostPosition;
+	Value<int>		iPlayerJudgePosition;
+
 	Value<int>		iReplayExists;
+	Value<int>		iRecordClearcount;
+	Value<int>		iRecordFailcount;
+	Value<int>		iRecordClear;
+	Value<int>		iRecordScore[6];
+	Value<int>		iRecordExScore;
+	Value<int>		iRecordRate;
+	Value<double>	iRecordRate_d;
+	Value<int>		iRecordRank;
+	Value<int>		iRecordCombo;
+	Value<int>		iRecordMinBP;
+	Value<int>		iRecordCBRK;
+	Value<int>		iRecordMaxCombo;
+
+	void UpdateInfoMetrics();
+	void UpdateConfigMetrics();
+	void UpdateOptionMetrics();
 public:
 	Profile(int side);
 	~Profile();
@@ -194,7 +242,7 @@ public:
 	void SaveProfile(const RString& name);
 	bool IsProfileLoaded();						// check if this profile slot is loaded.
 
-	void IsSongRecordExists(const RString& songhash);
+	bool IsSongRecordExists(const RString& songhash);
 	bool LoadSongRecord(const RString& songhash, PlayRecord &rec);						// returns false if it's not existing record
 	void SaveSongRecord(const RString& songhash, PlayRecord &rec);
 	void DeleteSongRecord(const RString& songhash);
@@ -203,9 +251,11 @@ public:
 	bool LoadReplayData(const RString& songhash, ReplayData &rep);						// returns false if it's not existing replay
 	void SaveReplayData(const RString& songhash, ReplayData &rep);
 
-	void SetPlayOptionMetrics();
-	void SetPlayScoreMetrics();
-	void SetReplayExistsMetrics(bool v);
+	// set from external settings
+	void SetPlayConfig(const PlayConfig& config);
+	void SetPlayOption(const RString& cmd);
+	PlayOption* GetPlayOption() { return &option; }
+	PlayConfig* GetPlayConfig() { return &config; }
 };
 
 
