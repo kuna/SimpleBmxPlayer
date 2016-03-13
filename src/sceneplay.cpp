@@ -20,6 +20,7 @@
 void ScenePlay::Initialize() {
 	OnReady.SetFromPool("Ready");
 	OnClose.SetFromPool("Close");
+	vTargetDiff.SetFromPool("RivalDiff");	// TargetDiff
 
 	for (int i = 0; i < 10; i++)
 		OnCourseRound[i].SetFromPool("Round" + i);
@@ -31,22 +32,35 @@ void ScenePlay::Initialize() {
 
 void ScenePlay::Start() {
 	//
+	// Initalize global objects from SETTING
+	//
+	/* (rseed, repeat/start/end, rate, etc ...) */
+	int rseed = SETTING->m_seed;	// TODO: save it as global to use it as replay data ...?
+	if (rseed < 0) rseed = time(0) % 65536;
+
+	if (SETTING->trainingmode) {
+		BmsHelper::SetBeginMeasure(SETTING->startmeasure);
+		BmsHelper::SetEndMeasure(SETTING->endmeasure);
+		BmsHelper::SetRepeat(SETTING->repeat);
+		BmsHelper::SetTrainingmode(true);
+	}
+	else {
+		BmsHelper::SetTrainingmode(false);
+	}
+
+	BmsHelper::SetBgaChannel(SETTING->bga);
+
+	//
 	// get current song path
 	//
-	m_Songpath = GAMESTATE.m_CoursePath[GAMESTATE.m_CourseRound];
-	m_Songhash = GAMESTATE.m_CourseHash[GAMESTATE.m_CourseRound];
+	m_Songpath = SETTING->m_CoursePath[SETTING->m_CourseRound];
+	m_Songhash = SETTING->m_CourseHash[SETTING->m_CourseRound];
 
 
 	//
 	// load bms
 	// (with parameter settings)
 	//
-	BmsHelper::SetLoadOption(
-		GAMESTATE.m_Startmeasure,
-		GAMESTATE.m_Endmeasure,
-		GAMESTATE.m_SongRepeatCount,
-		GAMESTATE.m_ShowBga
-		);
 	BmsBms bms;
 	if (BmsHelper::LoadBms(m_Songpath, bms)) {
 		LOG->Info("BMS loading finished successfully (%s)\n", m_Songpath.c_str());
@@ -60,38 +74,57 @@ void ScenePlay::Start() {
 	//
 	// create / initalize players
 	//
-	for (int i = 0; i < 2; i++) {
-		switch (GAMESTATE.m_Player[i].playertype) {
-		case PLAYERTYPE::HUMAN:
+	/* initalize gauge */
+	// if it's first round, then set player gauge as initialized one
+	// otherwise, use previous value of stored in scene.
+	if (SETTING->m_CourseRound == 0) {
+		// set initialized gauge (TODO)
+		m_Playerhealth[0]
+			= m_Playerhealth[1]
+			= m_Playerhealth[2] = 1.0;
+	}
+
+	/* parse pacemaker/main player information */
+	int playerside = 0;		// main playerside (decide main scoregraph)
+	if (!PROFILE[0]->IsProfileLoaded()) playerside = 1;
+	int pacemaker_type = PROFILE[playerside]->config.pacemaker_type;
+	int pacemaker_goal = PROFILE[playerside]->config.pacemaker_goal;
+
+	for (int i = 0; i < 1; i++) {
+		if (PROFILE[i]->IsProfileLoaded()) {
+			// make human player
 			PLAYER[i] = new Player(i);
-			break;
-		case PLAYERTYPE::AUTO:
-		case PLAYERTYPE::NETWORK:
-			// set pacemaker, and make silent
-			PlayerAuto* p = new PlayerAuto(i);
-			p->SetGoal(GAMESTATE.m_PacemakerGoal);
-			p->SetPlaySound(false);
-			PLAYER[i] = p;
-			break;
-		case PLAYERTYPE::REPLAY:
-			// set replay if necessary
-			ReplayData rep;
-			if (!PROFILE[i]->LoadReplayData(m_Songhash, rep)) {
-				LOG->Critical("Failed to load replay file.");
-				return;		// ??
+		}
+		else {
+			// make this as pacemaker
+			if (pacemaker_type == PACEMAKERTYPE::PACEMYBEST) {
+				// make pacemaker as replay
+				ReplayData rep;
+				if (!PROFILE[i]->LoadReplayData(m_Songhash, rep)) {
+					LOG->Critical("Failed to load replay file.");
+					return;		// ??
+				}
+				PlayerReplay *pRep = new PlayerReplay(i);
+				rep.SetRound(SETTING->m_CourseRound);
+				pRep->SetReplay(rep);
+				PLAYER[i] = pRep;
+				break;
 			}
-			PlayerReplay *pRep = new PlayerReplay(i);
-			rep.SetRound(0);
-			pRep->SetReplay(rep);
-			PLAYER[i] = pRep;
-			break;
+			else {
+				// autoplay (pacemaker)
+				PlayerAuto* p = new PlayerAuto(i);
+				p->SetGoal(pacemaker_goal / 100.0f);
+				p->SetPlaySound(false);
+				PLAYER[i] = p;
+				break;
+			}
 		}
 
 		// set basic gauge state
-		// TODO
+		PLAYER[i]->SetGauge(m_Playerhealth[i]);
 	}
 
-	// generate replay object (MYBEST)
+	/* generate MYBEST player */
 	PlayerReplay *p_mybest = new PlayerReplay(2);
 	// load player record
 	PlayRecord record;
@@ -105,17 +138,6 @@ void ScenePlay::Start() {
 			p_mybest->SetReplay(rep);
 	}
 	PLAYER[2] = p_mybest;
-
-	// if it's first round, then set player gauge as initialized one
-	// otherwise, use previous value of stored in scene.
-	if (GAMESTATE.m_CourseRound == 0) {
-		// set initialized gauge (TODO)
-		m_Playerhealth[0]
-			= m_Playerhealth[1]
-			= m_Playerhealth[2] = 1.0;
-	}
-	PLAYER[0]->SetGauge(m_Playerhealth[0]);
-	PLAYER[1]->SetGauge(m_Playerhealth[1]);
 	PLAYER[2]->SetGauge(m_Playerhealth[2]);
 
 
@@ -142,7 +164,7 @@ void ScenePlay::Start() {
 	OnExpert.Stop();
 	OnCourse.Stop();
 	OnGrade.Stop();
-	switch (GAMESTATE.m_Gamemode) {
+	switch (SETTING->gamemode) {
 	case GAMEMODE_DEMO:
 		OnDemo.Start();
 		break;
@@ -157,7 +179,7 @@ void ScenePlay::Start() {
 		break;
 	}
 	for (int i = 0; i < 10; i++) {
-		if (i == GAMESTATE.m_CourseRound)
+		if (i == SETTING->m_CourseRound)
 			OnCourseRound[i].Start();
 		else
 			OnCourseRound[i].Stop();
@@ -170,9 +192,9 @@ void ScenePlay::Start() {
 	*/
 	RString PlayskinPath = "";
 	if (sinfo.iKeyCount < 10)
-		PlayskinPath = SETTING.skin_play_7key;
+		PlayskinPath = SETTING->skin_play_7key;
 	else
-		PlayskinPath = SETTING.skin_play_14key;
+		PlayskinPath = SETTING->skin_play_14key;
 	if (!theme.Load(PlayskinPath))
 		LOG->Critical("Failed to load play skin: %s", PlayskinPath.c_str());
 
@@ -181,8 +203,6 @@ void ScenePlay::Start() {
 	/* ---------------------------------------------------------------------------
 	 * Load bms resource
 	 */
-	SONGPLAYER->SetRate(GAMESTATE.m_PlayRate);
-	SONGPLAYER->SetMinLoadingTime(m_MinLoadingTime);
 	FILEMANAGER->PushBasePath(m_Songpath);		// COMMENT: is it safe???
 	BmsHelper::LoadBmsOnThread(bms);
 }
@@ -208,7 +228,7 @@ void ScenePlay::Update() {
 
 	// If dead / song end, then goto next scene.
 	if (OnClose.GetTick() > 3000 || SONGPLAYER->GetTick() > SONGPLAYER->GetEndTime() + 2000) {
-		GAMESTATE.m_CourseRound += 1;
+		SETTING->m_CourseRound += 1;
 		SCENE->ChangeScene("Result");
 		return;
 	}
@@ -230,7 +250,7 @@ void ScenePlay::Update() {
 		PLAYER[i]->Update();
 	}
 	// update rival score
-	vRivalDiff =
+	vTargetDiff =
 		PLAYER[0]->GetScoreData()->CalculateEXScore() -
 		PLAYER[1]->GetScoreData()->CalculateEXScore();
 }
@@ -365,20 +385,18 @@ void ScenePlay::OnDown(int code) {
 	switch (code) {
 	case SDL_SCANCODE_F12:
 		// refresh float speed and toggle floating mode
-		PLAYER[0]->DeltaSpeed(0);
-		PLAYERINFO[0].playconfig.usefloatspeed
-			= !PLAYERINFO[0].playconfig.usefloatspeed;
+		PLAYER[0]->RefreshFloatSpeed();
 		break;
 	case SDL_SCANCODE_UP:
 		// ONLY 1P. may need to PRS+WKEY if you need to control 2P.
-		if (PLAYERINFO[0].playconfig.usefloatspeed)
+		if (PROFILE[0]->option.usefloatspeed)
 			PLAYER[0]->DeltaFloatSpeed(0.001);
 		else
 			PLAYER[0]->DeltaSpeed(0.05);
 		break;
 	case SDL_SCANCODE_DOWN:
 		// if pressed start button, float speed will change.
-		if (PLAYERINFO[0].playconfig.usefloatspeed)
+		if (PROFILE[0]->option.usefloatspeed)
 			PLAYER[0]->DeltaFloatSpeed(-0.001);
 		else
 			PLAYER[0]->DeltaSpeed(-0.05);
@@ -395,7 +413,7 @@ void ScenePlay::OnDown(int code) {
 		pressedCtrl = true;
 		break;
 	default:
-		func = PlayerKeyHelper::GetKeyCodeFunction(KEYSETTING, code);
+		func = KEYSETTING->GetKeyCodeFunction(code);
 		switch (func) {
 		case PlayerKeyIndex::P1_BUTTONSTART:
 			SWITCH_ON("OnP1SuddenChange");
@@ -421,7 +439,7 @@ void ScenePlay::OnUp(int code) {
 		pressedCtrl = false;
 		break;
 	default:
-		func = PlayerKeyHelper::GetKeyCodeFunction(KEYSETTING, code);
+		func = KEYSETTING->GetKeyCodeFunction(code);
 		switch (func) {
 		case PlayerKeyIndex::P1_BUTTONSTART:
 			SWITCH_OFF("OnP1SuddenChange");

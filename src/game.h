@@ -25,8 +25,11 @@ class Parameter {
 public:
 	Parameter();
 	int isParameterEnabled;		// 0: none, 1: play screen
-	std::vector<RString> args;	// arguments
+	RString targetpath;
+	std::vector<RString> argv;	// arguments
 	//std::vector<RString> option_cmds;
+
+	void ProcessParameter();
 };
 
 extern SDL_Window*		WINDOW;		// main window

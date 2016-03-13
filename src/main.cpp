@@ -65,94 +65,10 @@ namespace {
 		RString basepath = get_filedir(argv[0]);
 		FILEMANAGER->PushBasePath(basepath.c_str());
 
-		/*
-		 * set default value from player / program settings
-		 * TODO: depart bmspath / get bmshash here??
-		 */
-		std::vector<RString> courses;
-		split(argv[1], ";", courses);
-		for (int i = 0; i < courses.size(); i++) {
-			/*
-			 * before loading Bms file, check argument is folder
-			 * if it does, get valid path from player
-			 */
-			RString hash = "";
-			FILEMANAGER->SetFileFilter(".bml;.bme;.bms;.pms");
-			// if archive, then mount it
-			if (FileHelper::IsArchiveFileName(courses[i]))
-				FILEMANAGER->Mount(courses[i]);
-			if (FILEMANAGER->IsDirectory(courses[i])) {
-				std::vector<RString> filelist;
-				FILEMANAGER->GetDirectoryFileList(courses[i], filelist);
-				{
-					// select
-					printf("Select one:\n");
-					for (int i = 0; i < filelist.size(); i++) printf("%d. %s\n", i, filelist[i].c_str());
-					char buf_[256];
-					fflush(stdin);
-					gets(buf_);
-					int r = atoi(buf_);
-					if (r >= filelist.size()) r = filelist.size() - 1;
-					courses[i] = filelist[r];
-				}
-				FileBasic *f = FILEMANAGER->LoadFile(courses[i]);
-				hash = f->GetMD5Hash();
-				delete f;
-			}
-			//
-			// Don't unmount it, on purpose
-			// as It'll be loaded in ScenePlay soon.
-			//
-			//FILEMANAGER->UnMount(courses[i]);
-
-			hash = GetHash(courses[i]);
-
-			GAMESTATE.m_CoursePath[i] = courses[i];
-			GAMESTATE.m_CourseHash[i] = hash;
-
-		}
-		// automatically decide keymode
-
-		GAMESTATE.m_CourseCount = courses.size();
-		GAMESTATE.m_CourseRound = 0;
-		GAMESTATE.m_PlayRate = 1;
-		
-		GAMESTATE.m_ShowBga = SETTING.bga;
-		GAMESTATE.m_Startmeasure = 0;
-		GAMESTATE.m_Endmeasure= 1000;
-		GAMESTATE.m_SongRepeatCount = 1;
-		GAMESTATE.m_rseed = time(0) % 65536;
-
-		// overwrite default options
-		// TODO: make it parameter, and parse it from game.
+		/* Fill parameter */
+		PARAMETER.targetpath = argv[1];
 		for (int i = 2; i < argc; i++) {
-			if (BeginsWith(argv[i], "-c"))  {
-				PARAMETER.option_cmds.push_back(argv[i] + 2);
-			}
-			else if (BeginsWith(argv[i], "-replay")) {
-				GAMESTATE.m_Player[0].playertype = PLAYERTYPE::REPLAY;
-			}
-			else if (BeginsWith(argv[i], "-auto")) {
-				GAMESTATE.m_Player[0].playertype = PLAYERTYPE::AUTO;
-			}
-			else if (BeginsWith(argv[i], "-bgaoff")) {
-				GAMESTATE.m_ShowBga = false;
-			}
-			else if (BeginsWith(argv[i], "-rate")) {
-				GAMESTATE.m_PlayRate = atof(argv[i] + 5);
-			}
-			else if (BeginsWith(argv[i], "-pace")) {
-				GAMESTATE.m_PacemakerGoal = atof(argv[i] + 5);
-			}
-			else if (BeginsWith(argv[i], "-s")) {
-				GAMESTATE.m_Startmeasure = atoi(argv[i] + 2);
-			}
-			else if (BeginsWith(argv[i], "-e")) {
-				GAMESTATE.m_Endmeasure = atoi(argv[i] + 2);
-			}
-			else if (BeginsWith(argv[i], "-r")) {
-				GAMESTATE.m_SongRepeatCount = atoi(argv[i] + 2);
-			}
+			PARAMETER.argv.push_back(argv[i]);
 		}
 		return true;
 	}

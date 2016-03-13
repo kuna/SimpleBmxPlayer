@@ -40,8 +40,13 @@ namespace {
 }
 
 GameSetting::GameSetting() {
+	// set metrics
 	IsScoreGraph.SetFromPool("ScoreGraph");
 	IsBGA.SetFromPool("Bga");
+
+	// initalize game state
+	m_seed = -1;
+	m_PlayerCount = 0;
 }
 
 void GameSetting::ApplyToMetrics() {
@@ -73,7 +78,16 @@ bool GameSetting::LoadSetting() {
 	tutorial = GetIntSafe(settings, "tutorial", 1);
 	soundlatency = GetIntSafe(settings, "soundlatency", 1024);
 	useIR = GetIntSafe(settings, "useIR", 0);
+
+	// TODO play part
 	bga = GetIntSafe(settings, "bga", 1);
+	showgraph = true;
+	rate = 1.0;
+	trainingmode = false;
+	startmeasure = 0;
+	endmeasure = 1000;
+	repeat = 1;
+	deltaspeed = GetIntSafe(settings, "deltaspeed", 50);
 
 	XMLElement *skin = settings->FirstChildElement("skin");
 	if (skin) {
@@ -113,8 +127,6 @@ bool GameSetting::LoadSetting() {
 		bmsdirs.push_back(dir->GetText());
 	}
 
-	deltaspeed = GetIntSafe(settings, "deltaspeed", 50);
-
 	delete doc;
 	return true;
 }
@@ -140,6 +152,8 @@ bool GameSetting::SaveSetting() {
 	AddElement(settings, "tutorial", tutorial);
 	AddElement(settings, "soundlatency", soundlatency);
 	AddElement(settings, "useIR", useIR);
+
+	// TODO play part
 	AddElement(settings, "bga", bga);
 
 	XMLElement *skin = doc->NewElement("skin");

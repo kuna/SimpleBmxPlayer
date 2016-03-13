@@ -16,8 +16,14 @@ public:
 	int soundlatency;
 	int tutorial;
 	int useIR;
+
+	// play setting (common)
 	int bga;
 	int showgraph;
+	double rate;
+	bool trainingmode;
+	int startmeasure, endmeasure, repeat;
+	int deltaspeed;
 
 	// skin (not skin option)
 	RString skin_main;
@@ -49,12 +55,14 @@ public:
 	RString username;
 
 	// play setting
-	int gamemode;		// keymode
+	int keymode;				// keymode
+	int gamemode;				// gamemode (course, normal ...)
+	int battlemode;				// 
+	int playside;
+	int autoplay;
+	int networkplay;
 	int usepreview;
 	std::vector<RString> bmsdirs;
-
-	// game play
-	int deltaspeed;
 
 	// result screen
 	// - NOPE
@@ -67,17 +75,14 @@ public:
 public:
 	// Game state (not saved)
 	// playing related
+	int m_seed;
+	int m_PlayerCount;			// ?? currently playing player count
 	RString m_CoursePath[10];
 	RString m_CourseHash[10];
 	int m_CourseRound;
 	int m_CourseCount;
 	RString m_2PSongPath[10];	// not generally used
 	RString m_2PSongHash[10];	// not generally used
-
-	int m_Startmeasure;
-	int m_Endmeasure;
-	int m_SongRepeatCount;
-	double m_Playrate;
 private:
 	// metrics
 	// TODO

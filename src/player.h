@@ -75,7 +75,8 @@ protected:
 	double				playergauge;
 	int					playergaugetype;
 	bool				dieonnohealth;		// should I die when there's no health?
-	double				notehealth[6];		// health up/down per note (good, great, pgreat)
+	double				gaugevalue[6];		// health up/down per note (good, great, pgreat)
+	int					judgevalue[6];		// judgement delta time
 	double				health;				// player's health
 	bool				m_PlaySound;		// decide to play key sound (if pacemaker, then make this false)
 
@@ -103,22 +104,12 @@ protected:
 	Judge				m_curJudge;
 
 	/* Theme metrics (only needed during playing) */
-	SwitchValue			pOnMiss;			// Switch used when miss occured (DP)
-	SwitchValue			pOnCombo;
-	SwitchValue			pOnJudge[6];		// pf/gr/gd/bd/pr
-	SwitchValue			pOnSlow;
-	SwitchValue			pOnFast;
 	SwitchValue			pOnfullcombo;		// needless to say?
 	SwitchValue			pOnlastnote;		// when last note ends
 	SwitchValue			pOnGameover;		// game is over! (different from OnClose)
 	SwitchValue			pOnGaugeMax;		// guage max?
 	SwitchValue			pOnGaugeUp;
-	SwitchValue			OnOptionChange;
-	Value<int>			pNotePerfect;
-	Value<int>			pNoteGreat;
-	Value<int>			pNoteGood;
-	Value<int>			pNoteBad;
-	Value<int>			pNotePoor;
+	SwitchValue			OnOptionChange;		// pressing start button during play
 	SwitchValue			pOnAAA;
 	SwitchValue			pOnAA;
 	SwitchValue			pOnA;
@@ -136,21 +127,32 @@ protected:
 	SwitchValue			pOnReachE;
 	SwitchValue			pOnReachF;
 	SwitchValue			pOnMiss;
-	Value<double>		pExscore_d;
-	Value<double>		pHighscore_d;
-	Value<int>			pScore;
-	Value<int>			pExscore;
-	Value<int>			pCombo;
-	Value<int>			pMaxCombo;
-	Value<int>			pTotalnotes;
-	Value<int>			pRivaldiff;		// TODO where to process it?
-	Value<double>		pGauge_d;
-	Value<int>			pGaugeType;
-	Value<int>			pGauge;
 	Value<double>		pRate_d;
 	Value<int>			pRate;
 	Value<double>		pTotalRate_d;
 	Value<int>			pTotalRate;
+
+	Value<int>			pNotePerfect;
+	Value<int>			pNoteGreat;
+	Value<int>			pNoteGood;
+	Value<int>			pNoteBad;
+	Value<int>			pNotePoor;
+	SwitchValue			pOnJudge[6];		// pf/gr/gd/bd/pr
+	SwitchValue			pOnSlow;
+	SwitchValue			pOnFast;
+	SwitchValue			pOnMiss;			// Switch used when miss occured (DP)
+	SwitchValue			pOnCombo;
+	Value<int>			pTotalnotes;
+	Value<int>			pCombo;
+	Value<int>			pMaxCombo;
+	Value<int>			pScore;
+	Value<int>			pExscore;
+	Value<double>		pExscore_d;
+	Value<double>		pHighscore_d;
+
+	Value<int>			pGaugeType;
+	Value<double>		pGauge_d;
+	Value<int>			pGauge;
 	Value<int>			pNoteSpeed;
 	Value<int>			pFloatSpeed;
 	Value<int>			pSudden;
@@ -208,10 +210,10 @@ public:
 
 	/** @Get/Set */
 	void SetGauge(double gauge);
-	/** @brief Set note speed as normal speed */
+
+	void RefreshFloatSpeed();
 	void SetSpeed(double speed);
 	void DeltaSpeed(double speed);
-	/** @brief Set note speed as float speed */
 	void SetFloatSpeed(double speed);
 	void DeltaFloatSpeed(double speed);
 	/** @brief Set sudden (0 ~ 1) */
@@ -292,4 +294,15 @@ namespace PlayHelper {
 // global-accessible
 // As this object is used in Themes / ScenePlay.
 //
+// - PLAYER[0/1] : main player
+// - PLAYER[2]   : MYBEST (replay object)
 extern Player*				PLAYER[4];
+
+
+// or, 
+//
+// PLAYER[2]
+// PLAYER_PACEMAKER[2]
+// PLAYER_MYBEST
+// - like this?
+//

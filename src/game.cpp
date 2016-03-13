@@ -127,9 +127,7 @@ namespace Game {
 		/*
 		 * Process parameter before scene start
 		 */
-		for (auto it = PARAMETER.option_cmds.begin(); it != PARAMETER.option_cmds.end(); ++it) {
-			PROFILE[0]->GetPlayOption()->ParseOptionString(*it);
-		}
+		PARAMETER.ProcessParameter();
 
 		return true;
 	}
@@ -203,6 +201,103 @@ namespace Game {
 		bRunning = false;
 	}
 }
+
+
+
+
+
+Parameter::Parameter() {
+	isParameterEnabled = 0;
+}
+
+void Parameter::ProcessParameter() {
+	/*
+	* set default value from player / program settings
+	* TODO: depart bmspath / get bmshash here??
+	*/
+	std::vector<RString> courses;
+	split(argv[0], ";", courses);
+	for (int i = 0; i < courses.size(); i++) {
+		/*
+		* before loading Bms file, check argument is folder
+		* if it does, get valid path from player
+		*/
+		RString hash = "";
+		FILEMANAGER->SetFileFilter(".bml;.bme;.bms;.pms");
+		// if archive, then mount it
+		if (FileHelper::IsArchiveFileName(courses[i]))
+			FILEMANAGER->Mount(courses[i]);
+		if (FILEMANAGER->IsDirectory(courses[i])) {
+			std::vector<RString> filelist;
+			FILEMANAGER->GetDirectoryFileList(courses[i], filelist);
+			{
+				// select
+				printf("Select one:\n");
+				for (int i = 0; i < filelist.size(); i++) printf("%d. %s\n", i, filelist[i].c_str());
+				char buf_[256];
+				fflush(stdin);
+				gets(buf_);
+				int r = atoi(buf_);
+				if (r >= filelist.size()) r = filelist.size() - 1;
+				courses[i] = filelist[r];
+			}
+			FileBasic *f = FILEMANAGER->LoadFile(courses[i]);
+			hash = f->GetMD5Hash();
+			delete f;
+		}
+		//
+		// Don't unmount it, on purpose
+		// as It'll be loaded in ScenePlay soon.
+		//
+		//FILEMANAGER->UnMount(courses[i]);
+
+		hash = GetHash(courses[i]);
+
+		SETTING->m_CoursePath[i] = courses[i];
+		SETTING->m_CourseHash[i] = hash;
+
+	}
+	// automatically decide keymode
+
+	SETTING->m_CourseCount = courses.size();
+	SETTING->m_CourseRound = 0;
+
+	// parse and set default options
+	for (int i = 1; i < argv.size(); i++) {
+		if (BeginsWith(argv[i], "-c"))  {
+			PROFILE[0]->GetPlayOption()->ParseOptionString(argv[i] + 2);
+		}
+		else if (BeginsWith(argv[i], "-replay")) {
+			PROFILE[0]->playertype = PLAYERTYPE::REPLAY;
+		}
+		else if (BeginsWith(argv[i], "-auto")) {
+			PROFILE[0]->playertype = PLAYERTYPE::AUTO;
+		}
+		else if (BeginsWith(argv[i], "-bgaoff")) {
+			SETTING->bga = false;
+		}
+		else if (BeginsWith(argv[i], "-rate")) {
+			double rate = atof(argv[i] + 5);
+			SONGPLAYER->SetRate(rate);
+		}
+		else if (BeginsWith(argv[i], "-pace")) {
+			PROFILE[0]->config.pacemaker_goal = atof(argv[i] + 5);
+		}
+		else if (BeginsWith(argv[i], "-s")) {
+			SETTING->trainingmode = true;
+			SETTING->startmeasure = atoi(argv[i] + 2);
+		}
+		else if (BeginsWith(argv[i], "-e")) {
+			SETTING->trainingmode = true;
+			SETTING->endmeasure = atoi(argv[i] + 2);
+		}
+		else if (BeginsWith(argv[i], "-r")) {
+			SETTING->trainingmode = true;
+			SETTING->repeat = atoi(argv[i] + 2);
+		}
+	}
+}
+
 
 
 

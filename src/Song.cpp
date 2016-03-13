@@ -71,17 +71,19 @@ void SongManager::SetMetrics(const SongInfo& songinfo) {
 
 
 namespace BmsHelper {
+	bool m_Trainingmode = false;
 	int m_BmsStart = 0;
 	int m_BmsEnd = 1000;
 	int m_BmsRepeat = 1;
 	bool m_BmsShowBga = true;
 
-	void SetLoadOption(int start, int end, int repeat, bool bga) {
-		m_BmsStart = start;
-		m_BmsEnd = end;
-		m_BmsRepeat = repeat;
-		m_BmsShowBga = bga;
-	}
+	void SetTrainingmode(bool v) { m_Trainingmode = v; }
+	void SetEndMeasure(int v) { m_BmsEnd = v; }
+	void SetBeginMeasure(int v) { m_BmsStart = v; }
+	void SetRepeat(int v) { m_BmsRepeat = v; }
+	void SetBgaChannel(bool v) { m_BmsShowBga = v; }
+	bool IsTrainingmode() { return m_Trainingmode; }
+
 
 	bool LoadBms(const RString& path, BmsBms& bms) {
 		FileBasic *f = FILEMANAGER->LoadFile(path);
@@ -110,10 +112,8 @@ namespace BmsHelper {
 		//
 		// modify bms if necessary
 		//
-		if (m_BmsStart != 0 || m_BmsEnd != 1000) {
+		if (m_Trainingmode) {
 			bms.Cut(m_BmsStart, m_BmsEnd);
-		}
-		if (m_BmsRepeat > 1) {
 			bms.Repeat(m_BmsRepeat);
 		}
 		if (bms.GetObjectExistsFirstMeasure() == 0) {	// <- TODO: bug fix

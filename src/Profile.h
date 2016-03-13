@@ -17,6 +17,9 @@
 /*
  * playing option, which has close relation with game playing (command enabled) 
  * different from MOD command (that's only used for playing, and not saved to original option)
+ *
+ * Training mode (repeat, start, end), BGA: BmsHelper (loader)
+ * Playrate: SongPlayer
  */
 class PlayOption {
 public:
@@ -24,9 +27,7 @@ public:
 	double freq;			// needless to say?
 	int longnote;			// off, legacy, 20%, 50%, 100%
 	int morenote;			// off, -50%, -20%, 20%, 50%
-	int judge;				// off, extend, hard, vhard
 	int scratch;			// off, assist, all_sc
-	int rseed;				// random seed (-1: random)
 	int flip;
 
 	int gaugetype;			// off, assist, ...
@@ -41,6 +42,11 @@ public:
 	int speedtype;			// off, float, max, min, medium, constant(assist)
 	double floatspeed;		// float speed itself
 	int usefloatspeed;		// should we use float speed?
+	/*
+	 * COMMENT:
+	 * float speed isn't main speed - that is, used only for reference.
+	 * float speed is only refreshed when `speed change started`.
+	 */
 
 	PlayOption();
 	void DefaultOption();
@@ -183,7 +189,7 @@ public:
 	PlayScore score;			// total record
 	PlayConfig config;			// play setting
 	PlayOption option;			// play option used for game playing
-	bool isloaded;				// is profile available?
+	int playertype;				// off, human, network
 
 protected:
 	// theme metrics

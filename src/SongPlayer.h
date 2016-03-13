@@ -57,9 +57,6 @@ protected:
 	// loading related variables
 	double m_Rate;
 	bool m_BmsLoading;
-	int m_BmsEnd;
-	int m_BmsStart;
-	int m_BmsRepeat;
 
 	// playing related variables
 	// current iter
@@ -133,6 +130,7 @@ public:
 	double GetMaxBPM();
 	double GetMinBPM();
 	uint32_t GetTick();
+	void SetRate(double v) { m_Rate = v; }
 
 	Display::Texture* GetMissBGA();
 	Display::Texture* GetMainBGA();

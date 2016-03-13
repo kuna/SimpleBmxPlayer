@@ -121,9 +121,6 @@ void SongPlayer::ImagePool::UnloadAll() {
 
 SongPlayer::SongPlayer() {
 	m_BmsLoading = false;
-	m_BmsStart = 0;
-	m_BmsEnd = 1000;
-	m_BmsRepeat = 1;
 
 	OnSongStart.SetFromPool("Song");
 	OnSongLoading.SetFromPool("SongLoading");

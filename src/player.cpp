@@ -13,21 +13,12 @@ Player*					PLAYER[4];			// player object
 
 // ------- Player ----------------------------------------
 
+/* player should be able to work without profile information ...? */
+
 Player::Player(int playside, int playertype) {
-	//
-	// basic player object setting
-	// 
-	this->playconfig = &PLAYERINFO[playside].playconfig;
-	this->playertype = playertype;
-	this->m_PlaySound = true;
-
-	judgeoffset = playconfig->judgeoffset;
-	judgecalibration = playconfig->judgecalibration;
-
 	//
 	// set metrics
 	//
-
 	pNoteSpeed.SetFromPool(playside, "Speed");
 	pFloatSpeed.SetFromPool(playside, "FloatSpeed");
 	pSudden.SetFromPool(playside, "Sudden");
@@ -45,7 +36,6 @@ Player::Player(int playside, int playertype) {
 	pCombo.SetFromPool(playside, "Combo");
 	pMaxCombo.SetFromPool(playside, "MaxCombo");
 	pTotalnotes.SetFromPool(playside, "TotalNotes");
-	pRivaldiff.SetFromPool(playside, "RivalDiff");
 	pRate.SetFromPool(playside, "Rate");
 	pRate_d.SetFromPool(playside, "Rate");
 	pTotalRate.SetFromPool(playside, "TotalRate");
@@ -108,7 +98,7 @@ Player::Player(int playside, int playertype) {
 	SWITCH_OFF("IsGhostA");
 	SWITCH_OFF("IsGhostB");
 	SWITCH_OFF("IsGhostC");
-	switch (PLAYERINFO[0].playconfig.ghost_type) {
+	switch (PROFILE[0]->config.ghost_type) {
 	case GHOSTTYPE::OFF:
 		SWITCH_ON("IsGhostOff");
 		break;
@@ -144,13 +134,6 @@ Player::Player(int playside, int playertype) {
 		break;
 	}
 
-	// Pacemaker
-	// TODO: change this into lua code
-	switch (PLAYERINFO[0].playconfig.pacemaker_type) {
-	case PACEMAKERTYPE::PACE0:
-		break;
-	}
-
 	// set mybest / target ex score
 	DOUBLEPOOL->Set("TargetExScore", 0.5);
 	INTPOOL->Set("MyBest", 12);		// TODO
@@ -174,6 +157,21 @@ Player::Player(int playside, int playertype) {
 	}
 
 	// --------------- metric setting end ------------------
+
+	//
+	// basic player object setting
+	// 
+	this->playconfig = &PLAYERINFO[playside].playconfig;
+	this->playertype = playertype;
+	this->m_PlaySound = true;
+
+	judgeoffset = playconfig->judgeoffset;
+	judgecalibration = playconfig->judgecalibration;
+
+	//
+	// set judge/gauge option from profile
+	// TODO
+	//
 
 	// - if autoplay | replay | network | rate < 1 | startmeasure != 0 | endmeasure < 1000
 	// then don't allow save play record.
@@ -375,6 +373,10 @@ namespace {
 		 */
 		return 1.0 / speed / bpm * 60 * 2;
 	}
+}
+
+void Player::RefreshFloatSpeed() {
+	//
 }
 
 void Player::SetSpeed(double speed) {

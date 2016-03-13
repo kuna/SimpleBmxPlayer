@@ -84,7 +84,13 @@ extern SongManager*		SONGMANAGER;
 
 namespace BmsHelper {
 	bool LoadBms(const RString& path, BmsBms& bms);
-	void SetLoadOption(int start, int end, int repeat, bool bga);
 	void GetBmsMetadata(BmsBms& bms, SongInfo &info);
 	int GetInsaneDiffFromHash(const RString& hash);
+
+	void SetTrainingmode(bool v);
+	void SetEndMeasure(int v);
+	void SetBeginMeasure(int v);
+	void SetRepeat(int v);
+	void SetBgaChannel(bool v);
+	bool IsTrainingmode();
 }

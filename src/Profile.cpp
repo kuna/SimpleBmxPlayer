@@ -5,6 +5,11 @@
 #include "DB.h"
 #include "SDL\SDL.h"
 
+/*
+ * Profile may effect to SongPlayer option,
+ * So MUST initialize that object first.
+ */
+
 using namespace tinyxml2;
 
 Profile*		PROFILE[2];
@@ -98,7 +103,7 @@ Profile::Profile(int side) {
 	iRecordMaxCombo;
 
 	// not loaded
-	isloaded = false;
+	playertype = PLAYERTYPE::NONE;
 }
 
 Profile::~Profile() {
@@ -122,7 +127,7 @@ void Profile::DefaultProfile(const RString& name) {
 	option = PlayOption();
 	config = PlayConfig();
 
-	isloaded = true;
+	playertype = PLAYERTYPE::HUMAN;
 }
 
 bool Profile::LoadProfile(const RString& name) {
@@ -194,15 +199,14 @@ bool Profile::LoadProfile(const RString& name) {
 	if (e_playoption && e_playoption->GetText())
 		option.ParseOptionString(e_playoption->GetText());
 
-
 	// end. clean-up
 	delete doc;
-	isloaded = true;
+	playertype = PLAYERTYPE::HUMAN;
 	return true;
 }
 
 void Profile::SaveProfile(const RString& name) {
-	if (!isloaded) return;
+	if (!IsProfileLoaded()) return;
 
 	// create & convert db path to absolute
 	RString absolute_db_path = FILEMANAGER->GetAbsolutePath(ssprintf("../player/%s.xml", name.c_str()));
@@ -268,6 +272,8 @@ void Profile::SaveProfile(const RString& name) {
 	XMLElement *e_playoption = CreateElement(doc, "PlayOption");
 	e_playoption->SetText(option.GetOptionString());
 
+	// songplayer config
+
 	// save
 	doc->SaveFile(absolute_db_path);
 
@@ -281,11 +287,11 @@ void Profile::SaveProfile(const RString& name) {
 }
 
 void Profile::UnloadProfile() {
-	isloaded = false;
+	playertype = PLAYERTYPE::NONE;
 }
 
 bool Profile::IsProfileLoaded() {
-	return isloaded;
+	return playertype != PLAYERTYPE::NONE;
 }
 
 
@@ -490,9 +496,7 @@ void PlayOption::DefaultOption() {
 	freq = 1.0;
 	longnote = 0;			// off, legacy, 20%, 50%, 100%
 	morenote = 0;			// off, -50%, -20%, 20%, 50%
-	judge = 0;				// off, extend, hard, vhard
 	scratch = 0;			// off, assist, all_sc
-	rseed = -1;
 	flip = 0;
 
 	speed = 1;					// 1x
@@ -508,7 +512,6 @@ void PlayOption::DefaultOption() {
 
 	longnote = 0;
 	morenote = 0;
-	judge = 0;
 	scratch = 0;
 	freq = 1;
 
@@ -613,9 +616,8 @@ bool PlayOption::ParseOptionString(const RString& option) {
 		else if (cmd == "FLIP") flip = atoi(val);
 		else if (cmd == "LONGNOTE") longnote = atoi(val);
 		else if (cmd == "MORENOTE") morenote = atoi(val);
-		else if (cmd == "JUDGE") judge = atoi(val);
+		else if (cmd == "JUDGE") judgetype = atoi(val);
 		else if (cmd == "SCRATCH") scratch = atoi(val);
-		else if (cmd == "RSEED") rseed = atoi(val);
 		else if (cmd == "FREQ") freq = atof(val);
 	}
 
@@ -630,15 +632,22 @@ RString PlayOption::GetOptionString() {
 	if (flip) r.append(ssprintf("FLIP:%d "), flip);
 	if (longnote) r.append(ssprintf("LONGNOTE:%d "), longnote);
 	if (morenote) r.append(ssprintf("MORENOTE:%d "), morenote);
-	if (judge) r.append(ssprintf("JUDGE:%d "), judge);
-	if (scratch) r.append(ssprintf("SCRATCH:%d "), judge);
-	if (rseed >= 0) r.append(ssprintf("RSEED:%d "), judge);
-	if (freq != 1.0) r.append(ssprintf("FREQ:.2%f "), judge);
+	if (judgetype) r.append(ssprintf("JUDGE:%d "), judgetype);
+	if (scratch) r.append(ssprintf("SCRATCH:%d "), scratch);
+	if (freq != 1.0) r.append(ssprintf("FREQ:.2%f "), freq);
 	return r;
 }
 
+#include "Setting.h"
 bool PlayOption::IsAssisted() {
-	// TODO
+	// check SETTING (global setting)
+	if (SETTING->trainingmode || SETTING->rate < 1.0 || SETTING->m_seed != -1) return true;
+
+	// check player's own preference
+	if (gaugetype == -1 || judgetype == -1)
+		return true;
+
+	return false;
 }
 
 
