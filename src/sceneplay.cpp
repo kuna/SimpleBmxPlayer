@@ -74,15 +74,6 @@ void ScenePlay::Start() {
 	//
 	// create / initalize players
 	//
-	/* initalize gauge */
-	// if it's first round, then set player gauge as initialized one
-	// otherwise, use previous value of stored in scene.
-	if (SETTING->m_CourseRound == 0) {
-		// set initialized gauge (TODO)
-		m_Playerhealth[0]
-			= m_Playerhealth[1]
-			= m_Playerhealth[2] = 1.0;
-	}
 
 	/* parse pacemaker/main player information */
 	int playerside = 0;		// main playerside (decide main scoregraph)
@@ -141,14 +132,25 @@ void ScenePlay::Start() {
 	PLAYER[2]->SetGauge(m_Playerhealth[2]);
 
 
+	/* initalize gauge */
+	// if it's first round, then set player gauge as initialized one
+	// otherwise, use previous value of stored in scene.
+	if (SETTING->m_CourseRound == 0) {
+		// set initialized gauge (TODO)
+		m_Playerhealth[0]
+			= m_Playerhealth[1]
+			= m_Playerhealth[2] = 1.0;
+	}
+
 
 	//
 	// bms note should be created (bms & status requires..?)
 	//
-	if (PLAYER[0]) PLAYER[0]->InitalizeNote(&bms);
-	if (PLAYER[1]) PLAYER[1]->InitalizeNote(&bms);	// COMMENT: player 2 may use different bms file if is battle mode ...
-	if (PLAYER[2]) PLAYER[2]->InitalizeNote(&bms);
-
+	for (int i = 0; i < 2; i++) {
+		// COMMENT: player 2 may use different bms file if it's 2 player mode ...
+		PLAYER[i]->SetProfile(PROFILE[0]);
+		PLAYER[i]->SetNote(&bms);
+	}
 
 
 	/* ---------------------------------------------------------------------------

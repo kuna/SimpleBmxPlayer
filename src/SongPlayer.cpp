@@ -132,6 +132,8 @@ SongPlayer::SongPlayer() {
 
 	PlayProgress = DOUBLEPOOL->Get("PlayProgress");
 	PlayBPM = INTPOOL->Get("PlayBPM");
+	PlayMaxBPM = INTPOOL->Get("PlayMaxBPM");
+	PlayMinBPM = INTPOOL->Get("PlayMinBPM");
 	PlayMin = INTPOOL->Get("PlayMinute");
 	PlaySec = INTPOOL->Get("PlaySecond");
 	PlayRemainSec = INTPOOL->Get("PlayRemainSecond");
@@ -151,8 +153,11 @@ void SongPlayer::LoadBmsResource(BmsBms& bms) {
 	// automatically cleanup
 	Cleanup();
 
-	// copy
+	// copy & set basic information (TODO)
 	bms.Copy(m_Bms);
+	PlayBPM = m_Bms.GetBaseBPM();
+	PlayMaxBPM = m_Bms.GetTimeManager().GetMaxBPM();
+	PlayMinBPM = m_Bms.GetTimeManager().GetMinBPM();
 
 	// reset iterators
 	BmsChannel& bgmchannel = m_Bms.GetChannelManager()[BmsWord(1)];

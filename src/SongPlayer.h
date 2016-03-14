@@ -87,6 +87,8 @@ protected:
 	Value<double>		dSongLoadprogress;
 
 	Value<double>		PlayProgress;
+	Value<int>			PlayMaxBPM;
+	Value<int>			PlayMinBPM;
 	Value<int>			PlayBPM;
 	Value<int>			PlayMin;
 	Value<int>			PlaySec;

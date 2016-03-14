@@ -57,14 +57,14 @@ namespace JUDGETYPE {
 }
 
 namespace GRADETYPE {
-	const int GRADE_AAA = 8;
-	const int GRADE_AA = 7;
-	const int GRADE_A = 6;
-	const int GRADE_B = 5;
-	const int GRADE_C = 4;
-	const int GRADE_D = 3;
-	const int GRADE_E = 2;
-	const int GRADE_F = 1;
+	const int GRADE_AAA = 7;
+	const int GRADE_AA = 6;
+	const int GRADE_A = 5;
+	const int GRADE_B = 4;
+	const int GRADE_C = 3;
+	const int GRADE_D = 2;
+	const int GRADE_E = 1;
+	const int GRADE_F = 0;
 }
 
 namespace PLAYERTYPE {

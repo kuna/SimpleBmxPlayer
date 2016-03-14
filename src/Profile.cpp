@@ -86,7 +86,14 @@ Profile::Profile(int side) {
 	iPlayerPacemakerGoal.SetFromPool(side, "");
 	iPlayerJudgetiming;
 	iPlayerJudgeoffset;
-	iPlayerGhostPosition;
+	isPlayerJudgePosition[0].SetFromPool("JudgeOff");
+	isPlayerJudgePosition[1].SetFromPool("JudgeA");
+	isPlayerJudgePosition[2].SetFromPool("JudgeB");
+	isPlayerJudgePosition[3].SetFromPool("JudgeC");
+	isPlayerGhostPosition[0].SetFromPool("GhostOff");
+	isPlayerGhostPosition[1].SetFromPool("GhostA");
+	isPlayerGhostPosition[2].SetFromPool("GhostB");
+	isPlayerGhostPosition[3].SetFromPool("GhostC");
 
 	iReplayExists;
 	iRecordClearcount;
@@ -104,6 +111,30 @@ Profile::Profile(int side) {
 
 	// not loaded
 	playertype = PLAYERTYPE::NONE;
+}
+
+void Profile::UpdateInfoMetrics() {
+	// TODO
+	for (int i = 0; i < 4; i++) {
+		if (i == config.ghost_type)
+			isPlayerGhostPosition[i].Start();
+		else
+			isPlayerGhostPosition[i].Stop();
+	}
+	for (int i = 0; i < 4; i++) {
+		if (i == config.judge_type)
+			isPlayerJudgePosition[i].Start();
+		else
+			isPlayerJudgePosition[i].Stop();
+	}
+}
+
+void Profile::UpdateConfigMetrics() {
+
+}
+
+void Profile::UpdateOptionMetrics() {
+
 }
 
 Profile::~Profile() {
@@ -493,7 +524,6 @@ PlayOption::PlayOption() {
 
 void PlayOption::DefaultOption() {
 	randomS1 = randomS2 = 0;
-	freq = 1.0;
 	longnote = 0;			// off, legacy, 20%, 50%, 100%
 	morenote = 0;			// off, -50%, -20%, 20%, 50%
 	scratch = 0;			// off, assist, all_sc
@@ -513,94 +543,6 @@ void PlayOption::DefaultOption() {
 	longnote = 0;
 	morenote = 0;
 	scratch = 0;
-	freq = 1;
-
-	UpdateGaugeVal();
-	UpdateJudgeVal();
-}
-
-void PlayOption::UpdateGaugeVal(double note_total) {
-	// need total value
-	switch (gaugetype) {
-	case GAUGETYPE::GROOVE:
-		gaugeval[5] = note_total / 100;
-		gaugeval[4] = note_total / 100;
-		gaugeval[3] = note_total / 2 / 100;
-		gaugeval[2] = -2.0 / 100;
-		gaugeval[1] = -6.0 / 100;
-		gaugeval[0] = -2.0 / 100;
-		break;
-	case GAUGETYPE::EASY:
-	case GAUGETYPE::ASSISTEASY:
-		gaugeval[5] = note_total / 100;
-		gaugeval[4] = note_total / 100;
-		gaugeval[3] = note_total / 2 / 100;
-		gaugeval[2] = -1.6 / 100;
-		gaugeval[1] = -4.8 / 100;
-		gaugeval[0] = -1.6 / 100;
-		break;
-	case GAUGETYPE::HARD:
-		gaugeval[5] = 0.16 / 100;
-		gaugeval[4] = 0.16 / 100;
-		gaugeval[3] = 0;
-		gaugeval[2] = -5.0 / 100;
-		gaugeval[1] = -9.0 / 100;
-		gaugeval[0] = -5.0 / 100;
-		break;
-	case GAUGETYPE::EXHARD:
-		gaugeval[5] = 0.16 / 100;
-		gaugeval[4] = 0.16 / 100;
-		gaugeval[3] = 0;
-		gaugeval[2] = -10.0 / 100;
-		gaugeval[1] = -18.0 / 100;
-		gaugeval[0] = -10.0 / 100;
-		break;
-	case GAUGETYPE::GRADE:
-		gaugeval[5] = 0.16 / 100;
-		gaugeval[4] = 0.16 / 100;
-		gaugeval[3] = 0.04 / 100;
-		gaugeval[2] = -1.5 / 100;
-		gaugeval[1] = -2.5 / 100;
-		gaugeval[0] = -1.5 / 100;
-		break;
-	case GAUGETYPE::EXGRADE:
-		gaugeval[5] = 0.16 / 100;
-		gaugeval[4] = 0.16 / 100;
-		gaugeval[3] = 0.04 / 100;
-		gaugeval[2] = -3.0 / 100;
-		gaugeval[1] = -5.0 / 100;
-		gaugeval[0] = -3.0 / 100;
-		break;
-	case GAUGETYPE::PATTACK:
-		gaugeval[5] = 0;
-		gaugeval[4] = 0;
-		gaugeval[3] = -1;
-		gaugeval[2] = -1;
-		gaugeval[1] = -1;
-		gaugeval[0] = -1;
-		break;
-	case GAUGETYPE::HAZARD:
-		gaugeval[5] = 0;
-		gaugeval[4] = 0;
-		gaugeval[3] = 0;
-		gaugeval[2] = -1;
-		gaugeval[1] = -1;
-		gaugeval[0] = 0;
-		break;
-	}
-}
-
-// http://www.powa-asso.fr/forum/viewtopic.php?f=26&t=824
-void PlayOption::UpdateJudgeVal() {
-	// TODO: hard / extended? currently, only basic setting.
-	if (judgetype = 0) {
-		judgeval[5] = 20;
-		judgeval[4] = 41;
-		judgeval[3] = 125;
-		judgeval[2] = 173;
-		judgeval[1] = 350;
-		judgeval[0] = 350;
-	}
 }
 
 bool PlayOption::ParseOptionString(const RString& option) {
@@ -618,11 +560,7 @@ bool PlayOption::ParseOptionString(const RString& option) {
 		else if (cmd == "MORENOTE") morenote = atoi(val);
 		else if (cmd == "JUDGE") judgetype = atoi(val);
 		else if (cmd == "SCRATCH") scratch = atoi(val);
-		else if (cmd == "FREQ") freq = atof(val);
 	}
-
-	UpdateGaugeVal();
-	UpdateJudgeVal();
 }
 
 RString PlayOption::GetOptionString() {
@@ -634,7 +572,6 @@ RString PlayOption::GetOptionString() {
 	if (morenote) r.append(ssprintf("MORENOTE:%d "), morenote);
 	if (judgetype) r.append(ssprintf("JUDGE:%d "), judgetype);
 	if (scratch) r.append(ssprintf("SCRATCH:%d "), scratch);
-	if (freq != 1.0) r.append(ssprintf("FREQ:.2%f "), freq);
 	return r;
 }
 
@@ -661,6 +598,7 @@ PlayScore::PlayScore(int notecnt) : totalnote(notecnt) {
 void PlayScore::Clear() {
 	memset(score, 0, sizeof(score));
 	combo = 0;
+	cbrk = 0;
 	maxcombo = 0;
 	fast = slow = 0;
 }
@@ -705,7 +643,10 @@ void PlayScore::AddGrade(const int type) {
 		combo++;
 		if (maxcombo < combo) maxcombo = combo;
 	}
-	else {
+	else if (type == JUDGETYPE::JUDGE_NPOOR) {
+		// ignore
+	} else {
+		if (combo > 0) cbrk++;
 		combo = 0;
 	}
 }

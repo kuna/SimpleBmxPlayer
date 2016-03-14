@@ -30,13 +30,13 @@ struct Lane {
 	bool IsPressing();
 	bool IsLongNote();
 	BmsNote* GetCurrentNote();
+	BmsNote* Seek();						// seek next note object
 	BmsNote* GetSoundNote();				// returns 0 if no soundable note
 	void Next();
 	bool IsEndOfNote();
 };
 
 struct Judge {
-	int delta;
 	int lane;
 	int fastslow;
 	bool silent;
@@ -55,52 +55,44 @@ class Player {
 protected:
 	// player's basic information (OP / RSEED ...)
 	Profile*			m_Profile;
-	/*
-	int op1;			// 0x0000ABCD; RANDOM / SC / LEGACY(MORENOTE/ALL-LN) / JUDGE
-	int op2;
-	int rseed;
-	*/
+	PlayOption			m_Option;
 
 	// playing settings
 	int					playside;
 	int					playmode;			// used for DP keyinput supporting
 	int					playertype;
+	int					seed;
 
-	double				notespeed;			// current note speed
-	double				notefloat;			// current note float speed (note visible time; dropping time from lane, strictly.)
+	double				note_total;			// gauge per note
 	double				speed_mul;			// speed multiplicator (for MAX/MINBPM)
-	double				suddenheight;		// 0 ~ 1
-	double				liftheight;			// 0 ~ 1
 
-	double				playergauge;
-	int					playergaugetype;
-	bool				dieonnohealth;		// should I die when there's no health?
-	double				gaugevalue[6];		// health up/down per note (good, great, pgreat)
-	int					judgevalue[6];		// judgement delta time
-	double				health;				// player's health
-	bool				m_PlaySound;		// decide to play key sound (if pacemaker, then make this false)
+	double				health;
+	double				gaugeval[6];		// health up/down per note (good, great, pgreat)
+	int					judgeval[6];		// judgement delta time
 
 	// record disabled in case of training mode / replay
 	bool m_IsRecordable;
 	bool m_Giveup = false;
+	bool m_PlaySound;			// decide to play key sound (if pacemaker, then make this false)
+	bool m_Dieonnohealth;		// should I die when there's no health?
 
 	// note/time information
+	BmsNoteManager*		bmsnote;			// Don't store total bms object, only store note object
+	Lane				m_Lane[20];
 	uint32_t			m_BmsTime;
 	PlayScore			m_Score;
 	ReplayData			m_ReplayRec;
-	BmsNoteManager*		bmsnote;			// Don't store total bms object, only store note object
-	Lane				m_Lane[20];
 
 	/* check, make judge */
 	int					judgeoffset;
 	int					judgecalibration;
-	int					CheckJudgeByTiming(int delta);
 	/*
 	 * Each note should have it's own judge.
 	 * That is, you should make UpdateJudge() to iterate over notes
 	 */
-	bool				UpdateJudge(int objtime, int channel, bool silent = false);
-	void				AddJudge(int judge, int channel, int fastslow, bool silent = false);
+	int					GetJudgement(int delta);
+	bool				AddJudgeDelta(int channel, int delta, bool silent = false);
+	bool				AddJudge(int channel, int judge, int fastslow, bool silent = false);
 	Judge				m_curJudge;
 
 	/* Theme metrics (only needed during playing) */
@@ -110,22 +102,8 @@ protected:
 	SwitchValue			pOnGaugeMax;		// guage max?
 	SwitchValue			pOnGaugeUp;
 	SwitchValue			OnOptionChange;		// pressing start button during play
-	SwitchValue			pOnAAA;
-	SwitchValue			pOnAA;
-	SwitchValue			pOnA;
-	SwitchValue			pOnB;
-	SwitchValue			pOnC;
-	SwitchValue			pOnD;
-	SwitchValue			pOnE;
-	SwitchValue			pOnF;
-	SwitchValue			pOnReachAAA;
-	SwitchValue			pOnReachAA;
-	SwitchValue			pOnReachA;
-	SwitchValue			pOnReachB;
-	SwitchValue			pOnReachC;
-	SwitchValue			pOnReachD;
-	SwitchValue			pOnReachE;
-	SwitchValue			pOnReachF;
+	SwitchValue			pOnRank[8];			// F ~ AAA
+	SwitchValue			pOnReachRank[8];	// F ~ AAA
 	SwitchValue			pOnMiss;
 	Value<double>		pRate_d;
 	Value<int>			pRate;
@@ -164,6 +142,8 @@ protected:
 	SwitchValue			pHuman;
 	SwitchValue			pNetwork;
 
+	void UpdateSpeedMetric();
+
 	/* 
 	 * @brief update basics, like combo / miss / rendering note iterator / etc.
 	 * (internal function)
@@ -175,9 +155,11 @@ public:
 	Player(int playside = 0, int playertype = PLAYERTYPE::HUMAN);
 	~Player();
 
+	void				Clear();						// MUST call this function after profile/note is set.
+	void				SetProfile(Profile* p);
+	void				SetNote(BmsBms* bms);			// create note data (must called after bms loaded)
 	void				SetKey(int keycount);			// Must set to play properly in DP
-	void				InitalizeNote(BmsBms* bms);		// create note data (must called after bms loaded)
-	void				InitalizeGauge();				// initalize gauge - not called in course mode stage.
+
 	void				SetPlaySound(bool v) { m_PlaySound = v; }
 	int					GetPlayerType() { return playertype; }
 
@@ -209,8 +191,7 @@ public:
 	virtual void PressKey(int keychannel);
 
 	/** @Get/Set */
-	void SetGauge(double gauge);
-
+	void SetGauge(double gauge);	// TODO ...?
 	void RefreshFloatSpeed();
 	void SetSpeed(double speed);
 	void DeltaSpeed(double speed);

@@ -24,17 +24,15 @@
 class PlayOption {
 public:
 	int randomS1, randomS2;	// S2 works for double play
-	double freq;			// needless to say?
 	int longnote;			// off, legacy, 20%, 50%, 100%
 	int morenote;			// off, -50%, -20%, 20%, 50%
 	int scratch;			// off, assist, all_sc
 	int flip;
 
 	int gaugetype;			// off, assist, ...
-	int gaugeval[6];
-
+	int gaugeval[6];		// (not saved, custom gauge)
 	int judgetype;			// off, extend, hard, vhard
-	int judgeval[6];
+	int judgeval[6];		// (not saved, custom gauge)
 
 	double sudden, lift;
 	int showsudden, showlift;
@@ -53,10 +51,6 @@ public:
 	bool ParseOptionString(const RString& option);
 	RString GetOptionString();
 	bool IsAssisted();
-	void UpdateGaugeVal(double note_total = 200 / 1000.0);	// total / notecnt
-
-private:
-	void UpdateJudgeVal();
 };
 
 /* customized setting for player (static during play) */
@@ -75,8 +69,7 @@ class PlayScore {
 public:
 	int score[6];
 	int totalnote;
-	int combo;
-	int maxcombo;
+	int combo, cbrk, maxcombo;
 	int slow, fast;
 public:
 	PlayScore(int notecnt);
@@ -218,8 +211,8 @@ protected:
 	Value<int>		iPlayerPacemakerGoal;
 	Value<int>		iPlayerJudgetiming;
 	Value<int>		iPlayerJudgeoffset;
-	Value<int>		iPlayerGhostPosition;
-	Value<int>		iPlayerJudgePosition;
+	SwitchValue		isPlayerGhostPosition[4];
+	SwitchValue		isPlayerJudgePosition[4];
 	Value<int>		iPlayerScoreGraph;
 	SwitchValue		isPlayerScoreGraph;
 
