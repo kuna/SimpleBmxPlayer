@@ -230,6 +230,11 @@ void InputManager::OnMouseWheel(uint32_t d) {
 		(*it)->OnMouseWheel(d);
 	}
 }
+void InputManager::OnMouseRDown(int x, int y) {
+	ITER(it, m_Receivers) {
+		(*it)->OnMouseRDown(x, y);
+	}
+}
 
 
 

@@ -22,7 +22,7 @@ protected:
 	Timer m_InputTimer;
 
 	// receivers
-	static std::vector<InputReceiver*> m_Receivers;
+	std::vector<InputReceiver*> m_Receivers;
 
 	void OnSys(int code);
 	void OnPress(int code);
@@ -44,8 +44,8 @@ public:
 	void Update();
 	void BlockInput(uint32_t msec);		// blocks input for a while
 
-	static void Register(InputReceiver* recv);
-	static void UnRegister(InputReceiver* recv);
+	void Register(InputReceiver* recv);
+	void UnRegister(InputReceiver* recv);
 };
 
 class InputReceiver {
@@ -61,8 +61,8 @@ public:
 	virtual void OnMouseMove(int x, int y) {};
 	virtual void OnMouseUp(int x, int y) {};
 	virtual void OnMouseDrag(int dx, int dy) {};
-	virtual void OnMouseWheel(uint32_t delta);
-	virtual void OnMouseRDown(int x, int y);
+	virtual void OnMouseWheel(uint32_t delta) {};
+	virtual void OnMouseRDown(int x, int y) {};
 };
 
 extern InputManager* INPUT;

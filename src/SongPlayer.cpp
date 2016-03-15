@@ -149,6 +149,10 @@ SongPlayer::SongPlayer() {
 	Reset(0);
 }
 
+SongPlayer::~SongPlayer() {
+	Cleanup();
+}
+
 void SongPlayer::LoadBmsResource(BmsBms& bms) {
 	// automatically cleanup
 	Cleanup();
@@ -229,6 +233,10 @@ void SongPlayer::Stop() {
 
 void SongPlayer::Play() {
 	OnSongStart.Start();
+}
+
+uint32_t SongPlayer::GetTick() {
+	return OnSongStart.GetTick();
 }
 
 void SongPlayer::Update() {

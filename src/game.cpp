@@ -58,7 +58,7 @@ namespace Game {
 		/*
 		* Pool need to be initialized before resource(display) registration
 		*/
-		PoolHelper::InitializeAll();
+		ThemeHelper::InitializeAll();
 		SETTING = new GameSetting();
 		KEYSETTING = new KeySetting();
 		if (!SETTING->LoadSetting()) {
@@ -152,7 +152,7 @@ namespace Game {
 		delete INPUT;
 		delete KEYSETTING;
 		delete SETTING;
-		PoolHelper::ReleaseAll();
+		ThemeHelper::ReleaseAll();
 		delete DISPLAY;
 		delete LUA;
 		Mix_CloseAudio();

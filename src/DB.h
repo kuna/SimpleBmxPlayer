@@ -34,8 +34,8 @@ public:
 	void SetPrimaryColumn(int colidx);
 
 	typedef std::vector<DBColumn>::iterator Iterator;
-	Iterator ColBegin();
-	Iterator ColEnd();
+	Iterator ColBegin() { return cols.begin(); };
+	Iterator ColEnd() { return cols.end(); };
 
 	RString GetTableExistsSQL() const;
 	RString GetTableCreateSQL() const;

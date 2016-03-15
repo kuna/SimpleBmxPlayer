@@ -743,8 +743,8 @@ void InitalizeValues() {
 	GameTimer::Tick();		// do base tick
 
 }
-namespace PoolHelper {
-	void InitalizeAll() {
+namespace ThemeHelper {
+	void InitializeAll() {
 		STRPOOL = new BasicPool<RString>();
 		DOUBLEPOOL = new BasicPool<double>();
 		INTPOOL = new BasicPool<int>();

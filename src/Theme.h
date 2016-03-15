@@ -227,7 +227,7 @@ public:
 
 
 
-namespace PoolHelper {
+namespace ThemeHelper {
 	void InitializeAll();
 	void ReleaseAll();
 }

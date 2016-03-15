@@ -55,7 +55,7 @@ public:
 
 class SceneManager {
 	// all cached scenes
-	static std::map<RString, SceneBasic*> m_Scenes;
+	std::map<RString, SceneBasic*> m_Scenes;
 	// scene backgrounds / foregrounds (mostly not used)
 	std::vector<SceneBasic*> m_SceneBackground;		// e.g. - Theme change preview
 	std::vector<SceneBasic*> m_SceneForeground;		// e.g. - like stepmania #FGCHANGE
@@ -91,8 +91,8 @@ public:
 	void Update();
 	void Render();
 
-	static void RegisterScene(const RString& name, SceneBasic* scene);
-	static SceneBasic* GetScene(const RString& name);
+	void RegisterScene(const RString& name, SceneBasic* scene);
+	SceneBasic* GetScene(const RString& name);
 	void ChangeScene(const RString& name);
 	void ChangeSceneAfterTime(const RString& name, int timeout);
 	bool IsChangingScene();
