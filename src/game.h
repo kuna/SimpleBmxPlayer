@@ -2,6 +2,7 @@
 
 #include "Input.h"
 #include "Display.h"
+#include "Theme.h"
 
 namespace Game {
 	/** @brief Initalize routine for game. */

@@ -324,6 +324,11 @@ Value<double>& Value<double>::SetFromPool(const RString& name) {
 	return *this;
 }
 
+Value<Switch>& Value<Switch>::SetFromPool(const RString& name) {
+	m_Ptr = HANDLERPOOL->Get(name);
+	return *this;
+}
+
 Value<RString>& Value<RString>::SetFromPool(int player, const RString& name) {
 	return SetFromPool(ssprintf("P%d", player) + name);
 }
@@ -332,7 +337,11 @@ Value<int>& Value<int>::SetFromPool(int player, const RString& name) {
 	return SetFromPool(ssprintf("P%d", player) + name);
 }
 
-Value<int>& Value<int>::SetFromPool(int player, const RString& name) {
+Value<double>& Value<double>::SetFromPool(int player, const RString& name) {
+	return SetFromPool(ssprintf("P%d", player) + name);
+}
+
+Value<Switch>& Value<Switch>::SetFromPool(int player, const RString& name) {
 	return SetFromPool(ssprintf("P%d", player) + name);
 }
 
@@ -475,7 +484,7 @@ void TexturePool::ReleaseAll() {
 }
 
 bool TexturePool::Release(Texture *tex) {
-	if (!tex) return;
+	if (!tex) return true;
 	// reduce loadcount
 	// if loadcount <= 0, then release object from memory
 	if (_loadcount.find(tex) != _loadcount.end()) {

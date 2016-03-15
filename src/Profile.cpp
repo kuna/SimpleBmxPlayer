@@ -191,13 +191,14 @@ bool Profile::LoadProfile(const RString& name) {
 
 	// score
 	XMLElement *s = conf->FirstChildElement("Score");
-	if (!s) return;
-	score.score[5] = s->IntAttribute("pg");
-	score.score[4] = s->IntAttribute("gr");
-	score.score[3] = s->IntAttribute("gd");
-	score.score[2] = s->IntAttribute("bd");
-	score.score[1] = s->IntAttribute("pr");
-	score.score[0] = s->IntAttribute("er");
+	if (s) {
+		score.score[5] = s->IntAttribute("pg");
+		score.score[4] = s->IntAttribute("gr");
+		score.score[3] = s->IntAttribute("gd");
+		score.score[2] = s->IntAttribute("bd");
+		score.score[1] = s->IntAttribute("pr");
+		score.score[0] = s->IntAttribute("er");
+	}
 
 	// play config
 	XMLElement *playconfig = base->FirstChildElement("PlayConfig");
@@ -545,7 +546,7 @@ void PlayOption::DefaultOption() {
 	scratch = 0;
 }
 
-bool PlayOption::ParseOptionString(const RString& option) {
+void PlayOption::ParseOptionString(const RString& option) {
 	std::vector<RString> cmds;
 	split(option, " ", cmds);
 	for (auto it = cmds.begin(); it != cmds.end(); ++it) {

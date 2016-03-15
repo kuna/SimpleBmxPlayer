@@ -1,11 +1,7 @@
 #pragma once
 
 #include <vector>
-//#define _USEPOOL		// you can use SkinOption generally by disabling this definition
-#define _USEPOOL
-#ifdef _USEPOOL
-#include "Theme.h"
-#endif
+#define _USEPOOL		// you can use SkinOption generally by disabling this definition
 
 /*
  * Manages state of Skin

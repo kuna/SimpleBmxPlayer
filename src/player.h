@@ -104,7 +104,6 @@ protected:
 	SwitchValue			OnOptionChange;		// pressing start button during play
 	SwitchValue			pOnRank[8];			// F ~ AAA
 	SwitchValue			pOnReachRank[8];	// F ~ AAA
-	SwitchValue			pOnMiss;
 	Value<double>		pRate_d;
 	Value<int>			pRate;
 	Value<double>		pTotalRate_d;

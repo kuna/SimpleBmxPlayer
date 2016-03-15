@@ -132,7 +132,6 @@ public:
 	double GetMaxBPM();
 	double GetMinBPM();
 	uint32_t GetTick();
-	void SetRate(double v) { m_Rate = v; }
 
 	Display::Texture* GetMissBGA();
 	Display::Texture* GetMainBGA();

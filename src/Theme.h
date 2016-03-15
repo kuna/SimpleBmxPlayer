@@ -1,7 +1,11 @@
 #pragma once
 
 #define _USEPOOL				// to use SetEnvironmentFromOption()
-#include "skin.h"
+#include "Skin.h"
+#include "Display.h"			// DISPLAY dependent
+#include "Font.h"				// FONT dependent
+#include "Audio.h"
+#include "Timer.h"
 
 class Actor;
 typedef Actor* (*CreateActorFn)();
@@ -43,10 +47,7 @@ public:
 };
 
 
-// ------------------------------------------------
-#include "Audio.h"
-#include "Timer.h"
-#include "Font.h"
+// ----------------------- Pool -------------------------
 
 template <class T>
 class BasicPool {
@@ -58,8 +59,8 @@ public:
 	void ReleaseAll() { m_Pool.clear(); }
 
 	bool IsExists(const RString &key) { return (m_Pool.find(key) != m_Pool.end()); };
-	T* Set(const RString &key, T v) { m_Pool[key] = v; };
-	T* Get(const RString &key) { auto it = m_Pool.find(key); if (it == m_Pool.end()) return 0; else return *it; };
+	T* Set(const RString &key, T v) { m_Pool[key] = v; return &m_Pool[key]; };
+	T* Get(const RString &key) { auto it = m_Pool.find(key); if (it == m_Pool.end()) return 0; else return &it->second; };
 	void Remove(const RString& key) { m_Pool.erase(key); };
 	void Clear() { m_Pool.clear(); };
 };
@@ -201,7 +202,7 @@ public:
 	Value<T>& Set(T v) { *m_Ptr = v; return this; }
 	T Get() const { if (m_Ptr) return *m_Ptr; else return T(); }
 	T operator=(T v) { return (*m_Ptr = v); }
-	T operator=(T *v) { return (m_Ptr = v); }
+	T* operator=(T *v) { return (m_Ptr = v); }
 	operator const T() const { return Get(); }
 
 	Value<T>& SetFromPool(const RString& name);

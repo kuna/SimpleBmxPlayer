@@ -211,7 +211,7 @@ bool DBManager::OpenSQL(const RString& path) {
 }
 
 bool DBManager::CloseSQL() {
-	if (sql == 0) return;
+	if (sql == 0) return true;
 	bool r = (sqlite3_close(sql) == SQLITE_OK);
 	sql = 0;
 	return r;

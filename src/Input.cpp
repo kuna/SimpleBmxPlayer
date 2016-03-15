@@ -153,14 +153,14 @@ void InputManager::Update() {
 			OnMouseWheel(e.wheel.y);
 		}
 		else if (e.type == SDL_FINGERDOWN) {
-			OnMouseDown(e.tfinger.x * SETTING.width, e.tfinger.y * SETTING.height);
+			OnMouseDown(e.tfinger.x * SETTING->width, e.tfinger.y * SETTING->height);
 		}
 		else if (e.type == SDL_FINGERMOTION) {
-			OnMouseMove(e.tfinger.x * SETTING.width, e.tfinger.y * SETTING.height);
-			OnMouseDrag(e.tfinger.dx * SETTING.width, e.tfinger.dy * SETTING.height);
+			OnMouseMove(e.tfinger.x * SETTING->width, e.tfinger.y * SETTING->height);
+			OnMouseDrag(e.tfinger.dx * SETTING->width, e.tfinger.dy * SETTING->height);
 		}
 		else if (e.type == SDL_FINGERUP) {
-			OnMouseDown(e.tfinger.x * SETTING.width, e.tfinger.y * SETTING.height);
+			OnMouseDown(e.tfinger.x * SETTING->width, e.tfinger.y * SETTING->height);
 		}
 	}
 }

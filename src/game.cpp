@@ -40,6 +40,7 @@ namespace Game {
 				SCENE->ShowFPSToggle();
 				break;
 			default:
+				break;
 			}
 		}
 	};

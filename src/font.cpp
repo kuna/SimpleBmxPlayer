@@ -2,7 +2,6 @@
 #include "font.h"
 #include "util.h"
 #include "file.h"
-#include "Pool.h"
 #include "skintexturefont.h"
 #include "logger.h"
 #include <assert.h>

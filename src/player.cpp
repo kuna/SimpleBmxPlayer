@@ -605,18 +605,15 @@ bool Player::AddJudge(int channel, int judgetype, int fastslow, bool silent) {
 				pOnJudge[i].Start();
 			else
 				pOnJudge[i].Stop();
-		}
-		pOnCombo.Start();
+			}
+		// cache current judge before trigger handler
+		m_curJudge.fastslow = fastslow;
+		m_curJudge.lane = channel;
+		m_curJudge.silent = silent;
+		// trigger handler
 		pCombo = m_Score.combo;
+		pOnCombo.Start();
 	}
-
-	// cache current judge before trigger handler
-	m_curJudge.fastslow = fastslow;
-	m_curJudge.lane = channel;
-	m_curJudge.silent = silent;
-
-	// call update function (different from side)
-	pOnCombo.Start();
 
 	// automatically go to next iterator, as judgement and note is 1:1 corresponds
 	// COMMENT: in back-spin scratch, we need to stop iterator (just seek)...?

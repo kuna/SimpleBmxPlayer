@@ -1,4 +1,6 @@
+#pragma once
 #include "sqlite3.h"
+#include "global.h"
 #include <vector>
 
 /*

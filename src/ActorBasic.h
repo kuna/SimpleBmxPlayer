@@ -5,7 +5,6 @@
 #include <vector>
 #include "tinyxml2.h"
 using namespace tinyxml2;
-#include "Pool.h"
 #include "Theme.h"
 
 

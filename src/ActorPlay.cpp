@@ -2,9 +2,10 @@
 #include "logger.h"
 #include "songplayer.h"
 #include "player.h"
+#include "util.h"
 
 ActorJudge::ActorJudge()
-	: ActorSprite(), combo(0) {}
+	: ActorSprite(), combo(0), handler_combo(this) {}
 
 void ActorJudge::Update() {
 	ActorSprite::Update();
@@ -33,9 +34,25 @@ void ActorJudge::SetFromXml(const XMLElement *e) {
 	const XMLElement *e_combo = e->FirstChildElement("number");
 	if (e_combo) {
 		combo = (ActorNumber*)Theme::MakeActor(e_combo, this);
+		combo->SetValue(&handler_combo.combo);
+		// Add SetVisible attribute?
 	}
+	side = e->IntAttribute("side");
+	player = PLAYER[side];
+	handlername = ssprintf("P%dCombo", side);
 }
 
+ActorJudge::JudgeHandler::JudgeHandler(ActorJudge *p) {
+	pActor = p;
+	combo = 0;
+}
+
+void ActorJudge::JudgeHandler::Receive(const Message &msg) {
+	if (msg.name == pActor->handlername) {
+		// copy combo data
+		combo = pActor->player->GetScoreData()->combo;
+	}
+}
 
 
 
@@ -382,7 +399,7 @@ ActorBga::ActorBga() : Actor(ACTORTYPE::BGA) {
 void ActorBga::SetFromXml(const XMLElement *e) {
 	Actor::SetFromXml(e);
 	side = e->IntAttribute("side");
-	miss = PLAYERVALUE[side].pOnMiss;
+	m_MissTimer.SetFromPool(side, "Miss");
 }
 
 void ActorBga::RenderBGA(Display::Texture *tex, bool transparent) {
@@ -412,7 +429,7 @@ void ActorBga::Render() {
 	RenderBGA(SONGPLAYER->GetMainBGA(), false);
 	RenderBGA(SONGPLAYER->GetLayer1BGA());
 	RenderBGA(SONGPLAYER->GetLayer2BGA());
-	if (miss->IsStarted() && miss->GetTick() < 1000)
+	if (m_MissTimer.IsStarted() && m_MissTimer.GetTick() < 1000)
 		RenderBGA(SONGPLAYER->GetMissBGA(), false);
 }
 #pragma endregion BGAOBJECT

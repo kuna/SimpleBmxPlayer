@@ -1,5 +1,4 @@
 #include "file.h"
-#include "Pool.h"
 #include "logger.h"
 #include "libarchive/archive.h"
 #include "libarchive/archive_entry.h"
@@ -880,7 +879,7 @@ bool FileManager::ReadAllFile(const RString& path, char **p, int *len) {
 /*
  * helper for file class
  */
-
+#include "Theme.h"
 namespace FileHelper {
 	RString ReplacePathEnv(const RString& path) {
 		int p = 0, p2 = 0;

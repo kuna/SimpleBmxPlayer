@@ -48,7 +48,7 @@ public:
 
 	PlayOption();
 	void DefaultOption();
-	bool ParseOptionString(const RString& option);
+	void ParseOptionString(const RString& option);
 	RString GetOptionString();
 	bool IsAssisted();
 };

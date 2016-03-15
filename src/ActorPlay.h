@@ -10,7 +10,19 @@ class Player;
  * special object for playing
  */
 class ActorJudge : public ActorSprite {
+	class JudgeHandler : public HandlerAuto {
+	public:
+		int combo;
+		ActorJudge* pActor;
+		RString msgname;
+		JudgeHandler(ActorJudge* p);
+		virtual void Receive(const Message& msg);
+	};
 	ActorNumber *combo;
+	Player *player;
+	int side;
+	RString handlername;
+	JudgeHandler handler_combo;
 public:
 	ActorJudge();
 	/** @brief should we need to move judge image object left, or not? */
@@ -110,7 +122,7 @@ public:
 class ActorBga : public Actor {
 private:
 	int side;		// which player?
-	Timer *miss;	// the player's miss timer
+	SwitchValue m_MissTimer;
 	Display::Texture* m_TexBlack;
 public:
 	ActorBga();

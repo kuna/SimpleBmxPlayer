@@ -85,6 +85,7 @@ std::vector<SkinOption::CustomFile>& SkinOption::GetFiles() {
 }
 
 #ifdef _USEPOOL
+#include "Theme.h"
 void SkinOption::SetEnvironmentFromOption() {
 	for (auto it = switches.begin(); it != switches.end(); ++it) {
 		SWITCH_ON(it->switchname.c_str());
