@@ -10,21 +10,23 @@ class Player;
  * special object for playing
  */
 class ActorJudge : public ActorSprite {
-	class JudgeHandler : public HandlerAuto {
+	class JudgeHandler : public Handler {
 	public:
 		int combo;
+		int side;
 		ActorJudge* pActor;
 		RString msgname;
 		JudgeHandler(ActorJudge* p);
-		virtual void Receive(const Message& msg);
+		virtual void Trigger(const RString& id);
 	};
 	ActorNumber *combo;
 	Player *player;
-	int side;
+	int playeridx;
 	RString handlername;
 	JudgeHandler handler_combo;
 public:
 	ActorJudge();
+	~ActorJudge();
 	/** @brief should we need to move judge image object left, or not? */
 	virtual void SetFromXml(const XMLElement *e);
 	virtual void Update();

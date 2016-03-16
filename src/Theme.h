@@ -65,68 +65,59 @@ public:
 	void Clear() { m_Pool.clear(); };
 };
 
-/* DEPRECIATED */
-#if 0
-class TimerPool {
+class Event {
 private:
-public:
-	bool IsExists(const RString &key);
-	/** @brief just set timer if not exists. different from Get (this always creates and tick if not exists) */
-	Timer* Set(const RString &key, bool activate = true);
-	void Reset(const RString &key);
-	void Stop(const RString &key);
-	/** @brief return 0 if timer not exists. */
-	Timer* Get(const RString &key);
-	/** @brief refer to Timer::Trigger(bool) */
-	bool Trigger(const RString &key, bool condition);
-	void Clear();
-};
-#endif
+	RString eventname;
+	std::vector<Handler*> handlers;
+	Timer timer;
 
-/*
-* Switch is an extended class from timer:
-*/
-class Switch : public Timer {
-protected:
-	RString m_Switchname;
 public:
-	/* Although non-type switch is bad choice, but std::map requies default constructor,
-	so There's only way to filter it with assert() */
-	Switch(const RString& name = "", int state = TIMERSTATUS::UNKNOWN);
-	virtual void Start();
-	virtual void Stop();
-	virtual bool Trigger(bool condition = true);
+	Event(const RString& name);
+	void Start();					// always trigger, regardless of current status
+	void Call() { Start(); };		// alias for Start()
+	void Stop();
+	bool Trigger(bool c = true);	// only start when timer isn't started
+	void Pause();
+	bool IsStarted();
+
+	void Register(Handler* h);
+	void UnRegister(Handler *h);
+	Timer* GetTimer() { return &timer; };
+	typedef std::vector<Handler*>::iterator Iterator;
+	Iterator Handler_Begin() { return handlers.begin(); }
+	Iterator Handler_End() { return handlers.end(); }
+
+	uint32_t GetTick();
+
+	void SetArgument(int idx, const RString& arg);
+	RString GetArgument(int idx);
 };
 
 /*
-* When handler called, not only all registered classes are called
-* but also inner timer starts.
-* - If timer off, then only timer goes off (don't effect to timerpool)
-* - If timer(switch) already on, then calling Trigger() method won't take effect.
-*   Instead, use Reset() instead.
-*/
-class HandlerPool {
+ * WARN
+ * Propagating Event may be thread-unsafe (because of Argument),
+ * So may be better to make global mutex in Event::Start().
+ * */
+class EventPool {
 private:
-	std::vector<Handler*> _handlerpool;
-	std::map<RString, Switch> _timerpool;
-
-	friend class Switch;
-	void CallHandler(const RString &name);
+	std::map<RString, Event> _eventpool;
+	RString argv[10];
+	//int argc;
 public:
 	// basic element operation
 	void Clear();
-	void Register(Handler* handler);
-	void RemoveHandler(Handler* h);
-	void Remove(const RString& key);
-	bool IsExists(const RString &key);
-	bool IsRegistered(Handler* h);
-	bool IsStarted(const RString& name);
 
 	// handler related
-	Switch* Start(const RString &name);
-	Switch* Stop(const RString &name);
+	void Register(const RString& key, Handler* h);
+	void UnRegister(const RString& key, Handler* h);
+	void UnRegisterAll(Handler* h);
+	bool IsExists(const RString &key);
+	void Remove(const RString& key);
+	Event* Get(const RString &name);
 
-	Switch* Get(const RString &name);
+	// argument
+	void SetArgument(int idx, const RString& arg);
+	RString GetArgument(int idx);
 };
 
 class TexturePool {
@@ -184,7 +175,7 @@ public:
 extern BasicPool<RString>* STRPOOL;
 extern BasicPool<double>* DOUBLEPOOL;
 extern BasicPool<int>* INTPOOL;
-extern HandlerPool* HANDLERPOOL;
+extern EventPool* EVENTPOOL;
 
 extern TexturePool* TEXPOOL;
 extern FontPool* FONTPOOL;
@@ -209,22 +200,18 @@ public:
 	Value<T>& SetFromPool(int player, const RString& name);		// only for player
 };
 
-class SwitchValue : public Value<Switch> {
+// just for convenience
+class EventTrigger : public Value<Event> {
 public:
-	void Start();
-	void Stop();
-	void Pause();
-	bool Trigger(bool condition = true);
-	//bool OffTrigger(bool condition = true);
-
-	uint32_t GetTick();
-	bool IsStarted();
-
+	void Start() { m_Ptr->Start(); }
+	void Stop() { m_Ptr->Stop(); }
+	bool IsStarted() { return m_Ptr->IsStarted(); }
+	uint32_t GetTick() { return m_Ptr->GetTick(); }
+	bool Trigger(bool c = true) { return m_Ptr->Trigger(c); }
 	bool operator=(bool v) { SetState(v); return v; }
 	void SetState(bool v) { if (v) Start(); else Stop(); }
 };
-
-
+typedef EventTrigger SwitchValue;
 
 
 namespace ThemeHelper {
@@ -238,8 +225,8 @@ namespace ThemeHelper {
 * I suggest to use macro in switch -
 * as internal structure can be changed in any case.
 */
-#define SWITCH_ON(s) (HANDLERPOOL->Start(s))
-#define SWITCH_OFF(s) (HANDLERPOOL->Stop(s))
-#define SWITCH_TRIGGER(s, cond) (HANDERPOOL->Trigger(s, cond))
-#define SWITCH_GET(s) (HANDLERPOOL->Get(s))
+#define SWITCH_ON(s) (EVENTPOOL->Get(s)->Start())
+#define SWITCH_OFF(s) (EVENTPOOL->Get(s)->Stop())
+#define SWITCH_TRIGGER(s, cond) (EVENTPOOL->Trigger(s, cond))
+#define SWITCH_GET(s) (EVENTPOOL->Get(s))
 

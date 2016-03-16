@@ -265,7 +265,7 @@ void RenderCondition::Set(const RString &condition) {
 		* - and stop them all if they're activated.
 		* This will be better then using Get() method.
 		*/
-		cond[condcnt] = HANDLERPOOL->Get(key[condcnt]);
+		cond[condcnt] = EVENTPOOL->Get(key[condcnt])->GetTimer();
 		if (atoi(key[condcnt]) >= 900 && cond[condcnt]->IsUnknown())
 			cond[condcnt]->Stop();
 		condcnt++;
@@ -314,6 +314,11 @@ bool RenderCondition::Evaluate() {
 
 #pragma region ACTOR
 Actor::Actor(int type) : objtype(type), handler(this) { Clear(); }
+
+Actor::~Actor() {
+	// remove from event handler
+	EVENTPOOL->UnRegisterAll(&handler);
+}
 
 int Actor::GetType() { return objtype; }
 
@@ -435,6 +440,7 @@ void Actor::SetFromXml(const XMLElement *e) {
 	// load Commands
 	for (auto c = e->FirstChildElement(); c; c = c->NextSiblingElement()) {
 		if (strnicmp(c->Name(), "On", 2) == 0) {
+			// make event
 			std::string eventname = c->Name() + 2;
 			RString cmdstr = "";
 			for (auto cmd = c->FirstChildElement(); cmd; cmd = cmd->NextSiblingElement()) {
@@ -446,13 +452,13 @@ void Actor::SetFromXml(const XMLElement *e) {
 				cmdstr.append(";");
 			}
 			m_Cmds[eventname] = cmdstr;
+			// register handler
+			EVENTPOOL->Register(eventname, &handler);
 		}
 	}
 
 	// Initalize DST
-	Message msg;
-	msg.name = "Init";
-	handler.Receive(msg);
+	handler.Trigger("Init");
 }
 
 void Actor::SetParent(Actor *pActor) { m_pParent = pActor; }
@@ -505,8 +511,8 @@ int Actor::GetY() {
 
 void Actor::SetCondition(const RString &str) { m_Condition.Set(str); }
 
-void Actor::ActorHandler::Receive(const Message& msg) {
-	auto iter = pActor->m_Cmds.find(msg.name);
+void Actor::ActorHandler::Trigger(const RString& msg) {
+	auto iter = pActor->m_Cmds.find(msg);
 	if (iter != pActor->m_Cmds.end()) {
 		pActor->m_Dst.SetFromCmd(iter->second);
 	}

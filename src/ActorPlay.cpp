@@ -7,6 +7,10 @@
 ActorJudge::ActorJudge()
 	: ActorSprite(), combo(0), handler_combo(this) {}
 
+ActorJudge::~ActorJudge() {
+	EVENTPOOL->UnRegister(handlername, &handler_combo);
+}
+
 void ActorJudge::Update() {
 	ActorSprite::Update();
 	if (!drawable) return;
@@ -37,9 +41,12 @@ void ActorJudge::SetFromXml(const XMLElement *e) {
 		combo->SetValue(&handler_combo.combo);
 		// Add SetVisible attribute?
 	}
-	side = e->IntAttribute("side");
-	player = PLAYER[side];
-	handlername = ssprintf("P%dCombo", side);
+	playeridx = e->IntAttribute("player");
+	player = PLAYER[playeridx];
+	// register to handler
+	handler_combo.side = e->IntAttribute("side");
+	handlername = ssprintf("P%dCombo", handler_combo.side);
+	EVENTPOOL->Register(handlername, &handler_combo);
 }
 
 ActorJudge::JudgeHandler::JudgeHandler(ActorJudge *p) {
@@ -47,11 +54,11 @@ ActorJudge::JudgeHandler::JudgeHandler(ActorJudge *p) {
 	combo = 0;
 }
 
-void ActorJudge::JudgeHandler::Receive(const Message &msg) {
-	if (msg.name == pActor->handlername) {
-		// copy combo data
+void ActorJudge::JudgeHandler::Trigger(const RString& id) {
+	// only copy combo data when in same side (1P / 2P)
+	Judge* score = pActor->player->GetJudge();
+	if (score->lane / 10 == side)
 		combo = pActor->player->GetScoreData()->combo;
-	}
 }
 
 

@@ -10,24 +10,18 @@
 class SkinOption {
 public:
 	/*
-	 * value to Global Timers
-	 */
-	typedef struct {
-		/*
-		 * we don't need to know total selection
-		 * as we're only wants to know current selection.
-		 * To get total selectable value, refer `Skin.h` structure.
-		 */
-		std::string optionname;
-		std::string switchname;
-	} CustomTimer;
-
-	/*
 	 * value to Global Ints
 	 */
 	typedef struct {
+		int value;				// value of <optionname> metrics.
+		std::string desc;		// general desc for displaying
+		std::string eventname;	// triggers event if it's necessary.
+	} Option;
+	typedef struct {
 		std::string optionname;
-		int value;
+		std::string desc;
+		int optionidx;
+		std::vector<Option> options;
 	} CustomValue;
 
 	/*
@@ -35,22 +29,22 @@ public:
 	 */
 	typedef struct {
 		std::string optionname;
+		std::string desc;
 		std::string path;
 	} CustomFile;
 
 private:
-	std::vector<CustomTimer> switches;
 	std::vector<CustomValue> values;
 	std::vector<CustomFile> files;
 public:
 	bool LoadSkinOption(const char *filepath);
 	bool SaveSkinOption(const char *filepath);
 	void Clear();
-	std::vector<CustomTimer>& GetSwitches();
 	std::vector<CustomValue>& GetValues();
 	std::vector<CustomFile>& GetFiles();
 #ifdef _USEPOOL
 	void SetEnvironmentFromOption();
+	void GetEnvironmentFromOption();
 	void DeleteEnvironmentFromOption();
 #endif
 };

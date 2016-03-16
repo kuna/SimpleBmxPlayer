@@ -10,12 +10,6 @@ bool SkinOption::LoadSkinOption(const char *filepath) {
 	}
 	XMLElement *options = doc->FirstChildElement("Options");
 
-	XMLElement *ele_switch = options->FirstChildElement("Switch");
-	while (ele_switch) {
-		switches.push_back({ ele_switch->Attribute("name"), ele_switch->Attribute("value") });
-		ele_switch = ele_switch->NextSiblingElement("Switch");
-	}
-
 	XMLElement *ele_value = options->FirstChildElement("Value");
 	while (ele_switch) {
 		values.push_back({ ele_switch->Attribute("name"), ele_switch->IntAttribute("value") });
@@ -67,13 +61,8 @@ bool SkinOption::SaveSkinOption(const char *filepath) {
 }
 
 void SkinOption::Clear() {
-	switches.clear();
 	values.clear();
 	files.clear();
-}
-
-std::vector<SkinOption::CustomTimer>& SkinOption::GetSwitches() {
-	return switches;
 }
 
 std::vector<SkinOption::CustomValue>& SkinOption::GetValues() {
@@ -87,21 +76,38 @@ std::vector<SkinOption::CustomFile>& SkinOption::GetFiles() {
 #ifdef _USEPOOL
 #include "Theme.h"
 void SkinOption::SetEnvironmentFromOption() {
-	for (auto it = switches.begin(); it != switches.end(); ++it) {
-		SWITCH_ON(it->switchname.c_str());
-	}
 	for (auto it = values.begin(); it != values.end(); ++it) {
-		INTPOOL->Set(it->optionname.c_str(), it->value);
+		int i = 0;
+		for (auto it2 = it->options.begin(); it2 != it->options.end(); ++it2) {
+			bool trigger = false;
+			if (i == it->optionidx) {
+				INTPOOL->Set(it->optionname.c_str(), it->value);
+				trigger = true;
+			}
+			if (!i->eventname.empty()) {
+				Event* e = EVENTPOOL->Get(i->eventname.c_str());
+				if (trigger)
+					e->Start();
+				else
+					e->Stop();
+			}
+		}
 	}
 	for (auto it = files.begin(); it != files.end(); ++it) {
 		STRPOOL->Set(it->optionname.c_str(), it->path.c_str());
 	}
 }
 
-void SkinOption::DeleteEnvironmentFromOption() {
-	for (auto it = switches.begin(); it != switches.end(); ++it) {
-		HANDLERPOOL->Remove(it->switchname.c_str());
+void SkinOption::GetEnvironmentFromOption() {
+	for (auto it = values.begin(); it != values.end(); ++it) {
+		it->optionidx = *INTPOOL->Get(it->optionname.c_str());
 	}
+	for (auto it = files.begin(); it != files.end(); ++it) {
+		it->path = *STRPOOL->Get(it->optionname.c_str());
+	}
+}
+
+void SkinOption::DeleteEnvironmentFromOption() {
 	for (auto it = values.begin(); it != values.end(); ++it) {
 		INTPOOL->Remove(it->optionname.c_str());
 	}

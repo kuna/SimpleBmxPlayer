@@ -162,12 +162,10 @@ public:
 	void				SetPlaySound(bool v) { m_PlaySound = v; }
 	int					GetPlayerType() { return playertype; }
 
-	/* used for rendering notes */
 	BmsNoteManager*		GetNoteData() { return bmsnote; };
-	/* used for saving score */
 	PlayScore*			GetScoreData() { return &m_Score; };
-	/* used for saving replay */
 	ReplayData*			GetRecordData() { return &m_ReplayRec; }
+	Judge*				GetJudge() { return &m_curJudge; }
 
 
 	/*

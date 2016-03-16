@@ -296,7 +296,7 @@ using namespace Display;
 BasicPool<RString>* STRPOOL = 0;
 BasicPool<double>* DOUBLEPOOL = 0;
 BasicPool<int>* INTPOOL = 0;
-HandlerPool* HANDLERPOOL = 0;
+EventPool* EVENTPOOL = 0;
 
 TexturePool* TEXPOOL = 0;
 FontPool* FONTPOOL = 0;
@@ -324,8 +324,8 @@ Value<double>& Value<double>::SetFromPool(const RString& name) {
 	return *this;
 }
 
-Value<Switch>& Value<Switch>::SetFromPool(const RString& name) {
-	m_Ptr = HANDLERPOOL->Get(name);
+Value<Event>& Value<Event>::SetFromPool(const RString& name) {
+	m_Ptr = EVENTPOOL->Get(name);
 	return *this;
 }
 
@@ -341,71 +341,41 @@ Value<double>& Value<double>::SetFromPool(int player, const RString& name) {
 	return SetFromPool(ssprintf("P%d", player) + name);
 }
 
-Value<Switch>& Value<Switch>::SetFromPool(int player, const RString& name) {
+Value<Event>& Value<Event>::SetFromPool(int player, const RString& name) {
 	return SetFromPool(ssprintf("P%d", player) + name);
 }
 
-void SwitchValue::Start() {
-	if (m_Ptr) m_Ptr->Start();
-}
 
-void SwitchValue::Stop() {
-	if (m_Ptr) m_Ptr->Stop();
-}
 
-void SwitchValue::Pause() {
-	if (m_Ptr) m_Ptr->Pause();
-}
+void Start();			// always trigger, regardless of current status
+void Stop();
+bool Trigger();			// only start when timer isn't started
+void Pause();
+bool IsStarted(const RString& name);
 
-bool SwitchValue::Trigger(bool c) {
-	if (!m_Ptr) return false;
-	return m_Ptr->Trigger(c);
-}
+void Register(Handler* h);
+void UnRegister(Handler *h);
 
-uint32_t SwitchValue::GetTick() {
-	if (!m_Ptr) return 0;
-	return m_Ptr->GetTick();
-}
-
-bool SwitchValue::IsStarted() {
-	if (!m_Ptr) return false;
-	return m_Ptr->IsStarted();
-}
+uint32_t GetTick();
 
 
 
 
-HandlerAuto::HandlerAuto() {
-	ASSERT(HANDLERPOOL != 0);
-	HANDLERPOOL->Register(this);
-}
+Event::Event(const RString& name) : eventname(name) {}
 
-HandlerAuto::~HandlerAuto() {
-	HANDLERPOOL->RemoveHandler(this);
-}
-
-
-
-
-
-Switch::Switch(const RString& name, int state) : m_Switchname(name), Timer(state) {
-	// noname isn't accepted
-	ASSERT(!m_Switchname.empty());
-}
-
-void Switch::Start() {
+void Event::Start() {
 	// active handlers first, then timer.
-	HANDLERPOOL->CallHandler(m_Switchname);
-	Timer::Start();
+	for (auto it = Handler_Begin(); it != Handler_End(); ++it) {
+		(*it)->Trigger(eventname);
+	}
+	timer.Start();
 }
 
-void Switch::Stop() {
-	// nothing special ...
-	Timer::Stop();
+void Event::Stop() {
+	timer.Stop();
 }
 
-// redeclaration for rewriting Timer::Start() function 
-bool Switch::Trigger(bool condition) {
+bool Event::Trigger(bool condition) {
 	if (!IsStarted() && condition) {
 		Start();
 		return true;
@@ -415,59 +385,85 @@ bool Switch::Trigger(bool condition) {
 	}
 }
 
-bool HandlerPool::IsExists(const RString &key) {
-	return _timerpool.find(key) != _timerpool.end();
+void Event::Pause() {
+	timer.Pause();
 }
 
-void HandlerPool::Register(Handler* h) {
-	if (!h) return;
-	_handlerpool.push_back(h);
+bool Event::IsStarted() {
+	return timer.IsStarted();
 }
 
-void HandlerPool::CallHandler(const RString &key) {
-	Message msg;
-	msg.name = key;
-	for (auto it = _handlerpool.begin(); it != _handlerpool.end(); ++it)
-		(*it)->Receive(msg);
+void Event::Register(Handler *h) {
+	// COMMENT: better to check duplication to prevent any exception
+	handlers.push_back(h);
 }
 
-Switch* HandlerPool::Get(const RString &key) {
+void Event::UnRegister(Handler *h) {
+	for (auto it = Handler_Begin(); it != Handler_End(); ++it) {
+		if ((*it) == h) {
+			handlers.erase(it);
+			break;
+		}
+	}
+}
+
+uint32_t Event::GetTick() { return timer.GetTick(); }
+
+void Event::SetArgument(int idx, const RString& arg) { EVENTPOOL->SetArgument(idx, arg); }
+
+RString Event::GetArgument(int idx) { return EVENTPOOL->GetArgument(idx); }
+
+
+Event* EventPool::Get(const RString &key) {
 	// don't make null string timer
 	if (!key.size())
 		return 0;
 	// if no timer exists, then create on as unknown State
 	if (!IsExists(key)) {
-		_timerpool.insert(std::pair<RString, Switch>(key, Switch(key)));
+		_eventpool.insert(std::pair<RString, Event>(key, Event(key)));
 	}
-	return &_timerpool[key];
+	return &_eventpool[key];
 }
 
-Switch* HandlerPool::Start(const RString &key) {
-	_timerpool[key].Start();
-	return &_timerpool[key];
+bool EventPool::IsExists(const RString &key) {
+	return _eventpool.find(key) != _eventpool.end();
 }
 
-Switch* HandlerPool::Stop(const RString &key) {
-	//if (!IsExists(key)) return;
-	_timerpool[key].Stop();
-	return &_timerpool[key];
+void EventPool::Register(const RString& key, Handler* h) {
+	if (!h) return;
+	_eventpool[key].Register(h);
 }
 
-void HandlerPool::RemoveHandler(Handler* h) {
-	for (auto it = _handlerpool.begin(); it != _handlerpool.end(); ++it) {
-		if ((*it) == h) {
-			_handlerpool.erase(it);
-		}
+void EventPool::UnRegister(const RString& key, Handler* h) {
+	auto it = _eventpool.find(key);
+	if (it == _eventpool.end()) {
+		LOG->Warn("Undefined handler %s", key.c_str());
+		return;
+	}
+	it->second.UnRegister(h);
+}
+
+void EventPool::UnRegisterAll(Handler* h) {
+	for (auto it = _eventpool.begin(); it != _eventpool.end(); ++it) {
+		it->second.UnRegister(h);
 	}
 }
 
-void HandlerPool::Remove(const RString& key) {
-	_timerpool.erase(key);
+void EventPool::Remove(const RString& key) {
+	_eventpool.erase(key);
 }
 
-void HandlerPool::Clear() { _handlerpool.clear(); }
+void EventPool::Clear() {
+	_eventpool.clear();
+}
 
+void EventPool::SetArgument(int idx, const RString& arg) {
+	argv[idx] = arg;
+}
 
+RString EventPool::GetArgument(int idx) {
+	return argv[idx];
+}
 
 
 
@@ -748,7 +744,7 @@ namespace ThemeHelper {
 		STRPOOL = new BasicPool<RString>();
 		DOUBLEPOOL = new BasicPool<double>();
 		INTPOOL = new BasicPool<int>();
-		HANDLERPOOL = new HandlerPool();
+		EVENTPOOL = new EventPool();
 		TEXPOOL = new TexturePool();
 		FONTPOOL = new FontPool();
 		SOUNDPOOL = new SoundPool();
@@ -762,7 +758,7 @@ namespace ThemeHelper {
 		SAFE_DELETE(STRPOOL);
 		SAFE_DELETE(DOUBLEPOOL);
 		SAFE_DELETE(INTPOOL);
-		SAFE_DELETE(HANDLERPOOL);
+		SAFE_DELETE(EVENTPOOL);
 		SAFE_DELETE(TEXPOOL);
 		SAFE_DELETE(FONTPOOL);
 		SAFE_DELETE(SOUNDPOOL);
@@ -781,7 +777,7 @@ namespace {
 	int SetTimer(Lua* l) {
 		RString key = (const char*)lua_tostring(l, -1);
 		lua_pop(l, 1);
-		SWITCH_OFF(key);
+		SWITCH_GET(key)->Stop();
 		//lua_pushinteger(l, a + 1);
 		// no return value
 		return 0;
@@ -817,7 +813,7 @@ namespace {
 	int IsTimer(Lua *l) {
 		RString key = (const char*)lua_tostring(l, -1);
 		lua_pop(l, 1);
-		Timer* t = SWITCH_GET(key);
+		Timer* t = SWITCH_GET(key)->GetTimer();
 		if (t && t->IsStarted())
 			lua_pushboolean(l, 1);
 		else
@@ -828,7 +824,7 @@ namespace {
 	int GetTime(Lua *l) {
 		RString key = (const char*)lua_tostring(l, -1);
 		lua_pop(l, 1);
-		Timer *t = SWITCH_GET(key);
+		Timer *t = SWITCH_GET(key)->GetTimer();
 		if (t)
 			lua_pushinteger(l, t->GetTick());
 		else

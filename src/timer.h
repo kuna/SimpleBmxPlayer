@@ -54,18 +54,7 @@ namespace GameTimer {
 
 // handlers
 
-struct Message {
-	RString name;
-};
-
 class Handler {
 public:
-	virtual void Receive(const Message& msg) = 0;
-};
-
-class HandlerAuto : public Handler {
-public:
-	HandlerAuto();
-	~HandlerAuto();
-	virtual void Receive(const Message& msg) = 0;
+	virtual void Trigger(const RString& id) = 0;
 };

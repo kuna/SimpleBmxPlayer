@@ -115,12 +115,12 @@ protected:
 	/** @brief handlers & functions when handler called */
 	//std::map<RString, LuaFunction*> handlers;
 	friend class ActorHandler;
-	class ActorHandler : public HandlerAuto {
+	class ActorHandler : public Handler {
 	private:
 		Actor* pActor;
 	public:
 		ActorHandler(Actor* p) : pActor(p) {}
-		virtual void Receive(const Message& msg);
+		virtual void Trigger(const RString& msg);
 	};
 	ActorHandler handler;
 
@@ -145,6 +145,7 @@ protected:
 	//SkinRenderTree* rtree;
 public:
 	Actor(int type = ACTORTYPE::NONE);
+	~Actor();
 	int GetType();
 
 	/** @brief Clear all attribute of actor */

@@ -1,6 +1,7 @@
 # common
 *.pyc
 *.swp
+*~
 
 # vs
 ipch
