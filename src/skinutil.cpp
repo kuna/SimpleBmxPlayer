@@ -75,6 +75,44 @@ namespace SkinUtil {
 		return buffer;
 	}
 
+
+
+
+	void TweenCommand::Add(const std::string& cmd, const std::string& val) {
+		cmds.push_back(cmd + ":" + val);
+	}
+	void TweenCommand::Add(const std::string& cmd, int val) {
+		char _n[12];
+		itoa(val, _n, 10);
+		std::string n = cmd + ":" + _n;
+		cmds.push_back(n);
+	}
+
+	void TweenCommand::Parse(const std::string& cmd) {
+		cmds.clear();
+		int b = 0, i = 0;
+		while ((i = cmd.find_first_of(",;", b)) != std::string::npos) {
+			std::string n = cmd.substr(b, i - b);
+			if (n.size()) {
+				cmds.push_back(n);
+			}
+			b = i + 1;
+		}
+	}
+	std::string TweenCommand::ToString() {
+		std::string r;
+		for (auto it = Begin(); it != End(); ++it) {
+			r += *it + ",";
+		}
+		if (r.back() == ',') r.pop_back();
+		return r;
+	}
+
+
+
+
+
+
 	XMLElement* FindElement(XMLElement *parent, const char* elementname, XMLDocument* createIfNotExists) {
 		_ASSERT(parent);
 		XMLElement *r = parent->FirstChildElement(elementname);

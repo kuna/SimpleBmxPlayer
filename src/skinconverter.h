@@ -45,12 +45,9 @@ private:
 	*/
 	int image_cnt;												// only for setting image name
 	int font_cnt;												// only for setting font name
-	std::map<std::string, std::string> filter_to_optionname;	// convert filter to optionfile name
 	std::map<int, int> texturefont_id;							// check texturefont existence
 
 	int currentline;
-	tinyxml2::XMLElement *condition_element[100];
-	int condition_level;
 	class Resource {
 		struct Font {
 			const char* path;
@@ -87,7 +84,7 @@ private:
 	// parse all loaded skin
 	void ParseSkinCSVLine();
 	void ParseSkinMetricLine();
-private:
+
 	bool ProcessDepreciated(const args_read_& args);
 	bool ProcessCondition(const args_read_& args);
 	bool IsMetadata(const char* cmd);
@@ -100,20 +97,16 @@ private:
 	int ProcessSelectBar_DST(const args_read_& args);							// process commands about select bar
 	// pacemaker: use default XML
 
-	OP ProcessSRC(const args_read_& args, tinyxml2::XMLElement *obj);
-	OP ProcessDST(const args_read_& args, tinyxml2::XMLElement *obj);
+	OP ProcessSRC(const args_read_& args);
+	OP ProcessDST(const args_read_& args);
 public:
-	// for extern use
-	void AddPathToOption(const std::string& path, const std::string& option) {
-		filter_to_optionname.insert(std::pair<std::string, std::string>(path, option));
-	};
-
 	// this includes skin layout
 	// use this method after LR2Skin is parsed.
 	bool ParseCSV(const char* filepath, Skin *s);
 	// this includes metadata
 	// metadata should be saved as xml file.
 	bool ParseLR2Skin(const char *filepath, SkinMetric *s);
+	void SetSkinMetric(SkinMetric *s) { sm = s; };
 	void Clear();
 
 	_LR2SkinParser() { Clear(); }

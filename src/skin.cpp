@@ -13,6 +13,7 @@ using namespace SkinUtil;
  */
 
 bool Skin::Load(const char *filepath) {
+	Clear();
 	if (skinlayout.LoadFile(filepath) != 0) {
 		return false;
 	}
@@ -25,6 +26,7 @@ bool Skin::Save(const char *filepath) {
 
 /* Process lua table into an xml object. requires lua object. */
 bool Skin::LoadLua(const char* filepath) {
+	Clear();
 	// TODO
 }
 
@@ -44,11 +46,105 @@ bool Skin::SaveToLua(const char* filepath) {
 }
 
 void Skin::Clear() {
+	parent = 0;
+	current = 0;
+	parent_stack.clear();
 	skinlayout.Clear();
+
+	// create base skin template
+	current = parent = skinlayout.NewElement("skin");
+	skinlayout.LinkEndChild(current);
 }
 
-Skin::Skin() : skinlayout(false) {}
-Skin::~Skin() { Clear(); }
+Skin::Skin() : skinlayout(false) { Clear();  }
+Skin::~Skin() { }
+
+
+tinyxml2::XMLNode* Skin::CreateComment(const char* body) {
+	XMLNode *n = skinlayout.NewComment(body);
+	parent->LinkEndChild(n);
+	return n;
+}
+tinyxml2::XMLElement* Skin::CreateElement(const char* name) {
+	XMLElement* e = skinlayout.NewElement(name);
+	parent->LinkEndChild(e);
+	return current = e;
+}
+tinyxml2::XMLElement* Skin::GetCurrentElement() {
+	return current;
+}
+tinyxml2::XMLElement* Skin::GetCurrentParent() {
+	return current;
+}
+void Skin::PushParent() {
+	parent_stack.push_back(parent);
+}
+void Skin::PopParent() {
+	if (parent_stack.size()) {
+		printf("LR2Skin - Invalid #ENDIF found!\n");
+		return;
+	}
+	parent = parent_stack.back();
+	parent_stack.pop_back();
+}
+void Skin::SetCurrentElement(tinyxml2::XMLElement* e) {
+	current = e;
+}
+void Skin::SetCurrentParent(tinyxml2::XMLElement* e) {
+	parent = e;
+}
+tinyxml2::XMLElement* Skin::FindElement(const char* name, bool createifnull = false) {
+	XMLElement *e = 0;
+	if ((e = parent->FirstChildElement(name)) == 0 && createifnull) {
+		e = skinlayout.NewElement(name);
+		parent->LinkEndChild(e);
+	}
+	return e;
+}
+void Skin::SetName(const std::string& name) {
+	current->SetName(name.c_str());
+}
+void Skin::SetText(const std::string& text) {
+	current->SetText(text.c_str());
+}
+
+template<>
+void Skin::SetAttribute(const char* attrname, int val) {
+	current->SetAttribute(attrname, val);
+}
+template<>
+void Skin::SetAttribute(const char* attrname, double val) {
+	current->SetAttribute(attrname, val);
+}
+template<>
+void Skin::SetAttribute(const char* attrname, const std::string& val) {
+	current->SetAttribute(attrname, val.c_str());
+}
+template<>
+void Skin::SetAttribute(const char* attrname, const char* val) {
+	current->SetAttribute(attrname, val);
+}
+
+template<>
+int Skin::GetAttribute(const char* attrname) {
+	return current->IntAttribute(attrname);
+}
+template<>
+double Skin::GetAttribute(const char* attrname) {
+	return current->FloatAttribute(attrname);
+}
+template<>
+std::string Skin::GetAttribute(const char* attrname) {
+	return SAFE_STRING(current->Attribute(attrname));
+}
+template<>
+const char* Skin::GetAttribute(const char* attrname) {
+	return SAFE_STRING(current->Attribute(attrname));
+}
+
+bool Skin::IsAttribute(const char* attrname) {
+	return current->Attribute(attrname) != 0;
+}
 
 
 

@@ -630,6 +630,13 @@ namespace {
 		if (!ret) ret = empty_str_;
 		return ret;
 	}
+
+	const char* SkintypeCode[] = {
+		"7Key", "5Key", "14Key", "10Key", "9Key",
+		"Select", "Decide", "Result", "KeyConfig", "SkinSelect",
+		"SoundSelect", "", "5KeyDouble", "7KeyDouble", "", "CourseResult",
+		"",
+	};
 }
 
 #pragma endregion
@@ -659,15 +666,7 @@ bool _LR2SkinParser::ParseLR2Skin(const char *filepath, SkinMetric *s) {
 		return false;
 	}
 
-	XMLElement *skin = s->tree.NewElement("skin");
-	s->tree.LinkEndChild(skin);
-	ADDCHILD(skin, "option");
-
 	// after we read all lines, skin parse start
-	filter_to_optionname.clear();			// clear filter_to_optionname in here.
-	condition_element[0] = cur_e = skin;
-	condition_level = 0;
-	currentline = 0;
 	while (currentline >= 0 && currentline < line_total) {
 		ParseSkinMetricLine();
 	}
@@ -698,8 +697,6 @@ bool _LR2SkinParser::ParseCSV(const char *filepath, Skin *s) {
 	}
 
 	// after we read all lines, skin parse start
-	condition_element[0] = cur_e = skin;
-	condition_level = 0;
 	currentline = 0;
 	while (currentline >= 0 && currentline < line_total) {
 		ParseSkinCSVLine();
@@ -711,16 +708,8 @@ bool _LR2SkinParser::ParseCSV(const char *filepath, Skin *s) {
 	std::string lua_resource = m_Res.ToString();
 	ADDCHILDFRONT(skin, "lua")->SetText(lua_resource.c_str());
 
-	if (condition_level == 0) {
-		printf("lr2skin(%s) parsing successfully done\n", filepath);
-		return true;
-	}
-	else {
-		// if this value is the final output,
-		// then there might be some #ENDIF was leaked.
-		printf("LR2Skin Warning - invalid #IF clause seems existing (not closed)\n");
-		return false;
-	}
+	// end
+	return true;
 }
 
 int _LR2SkinParser::LoadSkin(const char *filepath) {
@@ -814,20 +803,16 @@ bool _LR2SkinParser::ProcessCondition(const args_read_& args) {
 	if (CMD_IS("#ENDIF")) {
 		// we just ignore this statement, so only 1st-level parsing is enabled.
 		// but if previous #IF clause exists, then close it
-		if (condition_level > 0)
-			cur_e = condition_element[--condition_level];
-		else
-			printf("LR2Skin - Invalid #ENDIF (%d)\n", currentline);
+		s->PopParent();
 		cond = true;
 	}
 	else if (CMD_IS("#ELSE")) {
-		XMLElement *cond_ = cur_e->Parent()->ToElement();
-		XMLElement *obj_ = (XMLElement*)ADDCHILD(cond_, "else");
-		cur_e = obj_;
+		s->SetCurrentParent(s->CreateElement("if"));
 		ConditionAttribute cls;
 		for (int i = 1; i < 50 && args[i]; i++) {
 			cls.AddCondition(TranslateOPs(INT(args[i])));
 		}
+		s->SetAttribute("condition", cls.ToString());
 		cond = true;
 	}
 	else if (CMD_IS("#IF")) {
@@ -846,27 +831,23 @@ bool _LR2SkinParser::ProcessCondition(const args_read_& args) {
 		//   /else
 		// /condition
 		//
-		condition_element[condition_level] = cur_e;
-		XMLElement *cond_ = (XMLElement*)ADDCHILD(cur_e, "condition");
-		XMLElement *obj_ = (XMLElement*)ADDCHILD(cond_, "if");
-		cur_e = obj_;
-		condition_level++;
+		s->PushParent();
+		s->SetCurrentParent(s->CreateElement("condition"));
+		s->SetCurrentParent(s->CreateElement("if"));
 		ConditionAttribute cls;
 		for (int i = 1; i < 50 && args[i]; i++) {
 			cls.AddCondition(TranslateOPs(INT(args[i])));
 		}
-		obj_->SetAttribute("condition", cls.ToString());
+		s->SetAttribute("condition", cls.ToString());
 		cond = true;
 	}
 	else if (CMD_IS("#ELSEIF")) {
-		XMLElement *cond_ = cur_e->Parent()->ToElement();
-		XMLElement *obj_ = (XMLElement*)ADDCHILD(cond_, "elseif");
-		cur_e = obj_;
+		s->SetCurrentParent(s->CreateElement("elseif"));
 		ConditionAttribute cls;
 		for (int i = 1; i < 50 && args[i]; i++) {
 			cls.AddCondition(TranslateOPs(INT(args[i])));
 		}
-		obj_->SetAttribute("condition", cls.ToString());
+		s->SetAttribute("condition", cls.ToString());
 		cond = true; 
 	}
 
@@ -888,40 +869,40 @@ bool _LR2SkinParser::IsMetadata(const char* cmd) {
  */
 bool _LR2SkinParser::ProcessMetadata(const args_read_& args) {
 	if (CMD_IS("#CUSTOMOPTION")) {
-		XMLElement *option = FindElement(cur_e, "option", &s->skinlayout);
-		XMLElement *customoption = ADDCHILD(option, "customswitch")->ToElement();
-		option->LinkEndChild(customoption);
-
 		std::string name_safe = args[1];
 		ReplaceString(name_safe, " ", "_");
-		customoption->SetAttribute("name", name_safe.c_str());
 		int option_intvalue = atoi(args[2]);
-		std::string desc_txt = "";
-		std::string val_txt = "";
+
+		SkinMetric::CustomValue val;
+		val.optionname = name_safe;
+		int i = 0;
 		for (const char **p = args + 3; *p != 0 && strlen(*p) > 0; p++) {
+			char t_[10];
+			itoa(option_intvalue++, t_, 10);
+
+			SkinMetric::Option option;
+			option.desc = *p;
+			option.eventname = t_;
+			option.value = i++;	// meaningless
+			val.options.push_back(option);
+#if 0
 			desc_txt += *p;
 			desc_txt.push_back(';');
-			char t_[10];
-			itoa(option_intvalue, t_, 10);
 			val_txt += t_;
 			val_txt.push_back(';');
+#endif
 		}
-		desc_txt.pop_back();
-		val_txt.pop_back();
-		customoption->SetAttribute("valuename", desc_txt.c_str());
-		customoption->SetAttribute("value", val_txt.c_str());
+
+		sm->values.push_back(val);
 		return true;
 	}
 	else if (CMD_IS("#CUSTOMFILE")) {
-		XMLElement *option = FindElement(cur_e, "option", &s->skinlayout);
-		XMLElement *customfile = ADDCHILD(option, "customfile")->ToElement();
-
 		std::string name_safe = args[1];
 		ReplaceString(name_safe, " ", "_");
-		customfile->SetAttribute("name", name_safe.c_str());
+
 		// decide file type
 		std::string path_safe = args[2];
-		ReplaceString(path_safe, "\\", "/");
+#if 0
 		if (FindString(path_safe.c_str(), "*.jpg") || FindString(path_safe.c_str(), "*.png"))
 			customfile->SetAttribute("type", "file/image");
 		else if (FindString(path_safe.c_str(), "*.mpg") || FindString(path_safe.c_str(), "*.mpeg") || FindString(path_safe.c_str(), "*.avi"))
@@ -932,86 +913,25 @@ bool _LR2SkinParser::ProcessMetadata(const args_read_& args) {
 			customfile->SetAttribute("type", "folder");		// it's somewhat ambiguous...
 		else
 			customfile->SetAttribute("type", "file");
+#endif
+		//ReplaceString(path, "*", args[3]);
 		std::string path = args[2];
-		ReplaceString(path, "*", args[3]);
 		ConvertLR2PathToRelativePath(path);
-		customfile->SetAttribute("path", path.c_str());		// means default path
 
-		// register to filter_to_optionname for image change
-		AddPathToOption(args[2], name_safe);
-		XMLComment *cmt = sm->tree.NewComment(args[2]);
-		option->LinkEndChild(cmt);
+		SkinMetric::CustomFile f;
+		f.optionname = name_safe;
+		f.path = path;
+		f.path_default = args[3];	// default value for star
+		sm->files.push_back(f);
 		return true;
 	}
 	else if (CMD_IS("#INFORMATION")) {
 		// set skin's metadata
-		XMLElement *info = (XMLElement*)ADDCHILD(cur_e, "info");
-		ADDTEXT(info, "width", 1280);
-		ADDTEXT(info, "height", 720);
-		int type_ = INT(args[1]);
-		if (type_ == 5) {
-			ADDTEXT(info, "type", "Select");
-		}
-		else if (type_ == 6) {
-			ADDTEXT(info, "type", "Decide");
-		}
-		else if (type_ == 7) {
-			ADDTEXT(info, "type", "Result");
-		}
-		else if (type_ == 8) {
-			ADDTEXT(info, "type", "KeyConfig");
-		}
-		/** @comment skinselect / soundselect are all depreciated, integrated into option. */
-		else if (type_ == 9) {
-			ADDTEXT(info, "type", "SkinSelect");
-		}
-		else if (type_ == 10) {
-			ADDTEXT(info, "type", "SoundSelect");
-		}
-		/** @comment end */
-		else if (type_ == 12) {
-			ADDTEXT(info, "type", "Play");
-			ADDTEXT(info, "key", 15);
-		}
-		else if (type_ == 13) {
-			ADDTEXT(info, "type", "Play");
-			ADDTEXT(info, "key", 17);
-		}
-		else if (type_ == 15) {
-			ADDTEXT(info, "type", "CourseResult");
-		}
-		else if (type_ < 5) {
-			ADDTEXT(info, "type", "Play");
-			int key_ = 7;
-			switch (type_) {
-			case 0:
-				// 7key
-				key_ = 7;
-				break;
-			case 1:
-				// 9key
-				key_ = 5;
-				break;
-			case 2:
-				// 14key
-				key_ = 14;
-				break;
-			case 3:
-				key_ = 10;
-				break;
-			case 4:
-				key_ = 9;
-				break;
-			}
-			ADDTEXT(info, "key", key_);
-		}
-		else {
-			printf("LR2Skin error: unknown type of lr2skin(%d). consider as 7Key Play.\n", type_);
-			type_ = 0;
-		}
-
-		ADDTEXT(info, "name", args[2]);
-		ADDTEXT(info, "author", args[3]);
+		sm->info.width = 1280;
+		sm->info.height = 720;
+		sm->info.title = args[2];
+		sm->info.artist = args[3];
+		sm->info.type = SkintypeCode[INT(args[1])];
 		return true;
 	}
 	return false;
@@ -1027,10 +947,11 @@ bool _LR2SkinParser::ProcessResource(const args_read_& args) {
 	if (CMD_IS("#IMAGE")) {
 		// check for optionname path
 		std::string path_converted = args[1];
-		for (auto it = filter_to_optionname.begin(); it != filter_to_optionname.end(); ++it) {
-			if (FindString(args[1], it->first.c_str())) {
-				// replace filtered path to reserved name
-				ReplaceString(path_converted, it->first, "$(" + it->second + ")");
+		ConvertLR2PathToRelativePath(path_converted);
+		for (auto it = sm->files.begin(); it != sm->files.end(); ++it) {
+			if (path_converted == it->path) {
+				// replace filtered path to reserved metrics
+				ReplaceString(path_converted, "*", "$(" + it->optionname + ")");
 				break;
 			}
 		}
@@ -1094,7 +1015,7 @@ void _LR2SkinParser::ParseSkinMetricLine() {
 	currentline++;
 }
 
-_LR2SkinParser::OP _LR2SkinParser::ProcessSRC(const args_read_& args, tinyxml2::XMLElement *obj) {
+_LR2SkinParser::OP _LR2SkinParser::ProcessSRC(const args_read_& args) {
 	OP srcop;	memset(&srcop, 0, sizeof(OP));
 	srcop.op[0] = INT(args[11]);
 	srcop.op[1] = INT(args[12]);
@@ -1103,40 +1024,40 @@ _LR2SkinParser::OP _LR2SkinParser::ProcessSRC(const args_read_& args, tinyxml2::
 	int resid = INT(args[2]);	// COMMENT: check out for pre-occupied resid
 	switch (resid) {
 	case 100:
-		obj->SetAttribute("file", "_stagefile");
+		s->SetAttribute("file", "_stagefile");
 		break;
 	case 101:
-		obj->SetAttribute("file", "_backbmp");
+		s->SetAttribute("file", "_backbmp");
 		break;
 	case 102:
-		obj->SetAttribute("file", "_banner");
+		s->SetAttribute("file", "_banner");
 		break;
 	case 110:
-		obj->SetAttribute("file", "_black");
+		s->SetAttribute("file", "_black");
 		break;
 	case 111:
-		obj->SetAttribute("file", "_white");
+		s->SetAttribute("file", "_white");
 		break;
 	default:
-		obj->SetAttribute("file", resid);
+		s->SetAttribute("file", resid);
 		break;
 	}
-	obj->SetAttribute("sx", INT(args[3]));
-	obj->SetAttribute("sy", INT(args[4]));
+	s->SetAttribute("sx", INT(args[3]));
+	s->SetAttribute("sy", INT(args[4]));
 	if (INT(args[5]) > 0) {
-		obj->SetAttribute("sw", INT(args[5]));
-		obj->SetAttribute("sh", INT(args[6]));
+		s->SetAttribute("sw", INT(args[5]));
+		s->SetAttribute("sh", INT(args[6]));
 	}
 	if (INT(args[7]) > 1 || INT(args[8]) > 1) {
-		obj->SetAttribute("divx", INT(args[7]));
-		obj->SetAttribute("divy", INT(args[8]));
+		s->SetAttribute("divx", INT(args[7]));
+		s->SetAttribute("divy", INT(args[8]));
 	}
 	if (INT(args[9]))
-		obj->SetAttribute("cycle", INT(args[9]));
+		s->SetAttribute("cycle", INT(args[9]));
 	int sop1 = 0, sop2 = 0, sop3 = 0, sop4 = 0;		// sop4 used in scratch rotation
 	// COMMENT: SRC timer is necessary?
 	if (INT(args[10]))
-		obj->SetAttribute("timer", TranslateTimer(INT(args[10])));
+		s->SetAttribute("timer", TranslateTimer(INT(args[10])));
 	// COMMENT: SRC loop is necessary?
 	
 	// we just processed 1 line
@@ -1145,16 +1066,17 @@ _LR2SkinParser::OP _LR2SkinParser::ProcessSRC(const args_read_& args, tinyxml2::
 	return srcop;
 }
 
-_LR2SkinParser::OP _LR2SkinParser::ProcessDST(const args_read_& args, tinyxml2::XMLElement *obj) {
+/* call this after parent object is focused with ... you ... */
+_LR2SkinParser::OP _LR2SkinParser::ProcessDST(const args_read_& args) {
 	int looptime = 0, blend = 0, timer = 0, rotatecenter = -1, acc = 0;
 	OP dstop;	memset(&dstop, 0, sizeof(OP));
 	int time = 0;
-	XMLElement *dst = s->skinlayout.NewElement("OnScene");
+	s->CreateElement("OnScene");
+	TweenCommand cmd;
 	{
 		int a_ = 255, r_ = 255, g_ = 255, b_ = 255;
 		int x_ = 0, y_ = 0, w_ = 0, h_ = 0;
 		int angle_ = 0;
-		obj->LinkEndChild(dst);
 		for (int nl = currentline; nl < line_total; nl++) {
 			args_read_ args = line_args_[nl].args__;
 			if (strcmp(args[0], "") == 0) continue;
@@ -1172,66 +1094,67 @@ _LR2SkinParser::OP _LR2SkinParser::ProcessDST(const args_read_& args, tinyxml2::
 				dstop.op[0] = INT(args[18]);
 				dstop.op[1] = INT(args[19]);
 				dstop.op[2] = INT(args[20]);
+
+				// acc, blend, rotatecenter, condition are MUST defined at the very first of the actions.
+				if (acc)
+					cmd.Add("acc", acc);
+				if (blend > 0)
+					cmd.Add("blend", blend);
+				if (rotatecenter > 0)
+					cmd.Add("center", rotatecenter);
 			}
 			/*
 			* frame attribute
 			* only add attribute if value is different from previous(default) one.
 			*/
 			time = atoi(args[2]);
-			ADDCHILD(dst, "time")->SetAttribute("v", time);
+			s->CreateElement("time")->SetAttribute("v", time);
 			if (INT(args[3]) != x_) {
 				x_ = INT(args[3]);
-				ADDCHILD(dst, "x")->SetAttribute("v", x_);
+				cmd.Add("x", x_);
 			}
 			if (INT(args[4]) != y_) {
 				y_ = INT(args[4]);
-				ADDCHILD(dst, "y")->SetAttribute("v", y_);
+				cmd.Add("y", y_);
 			}
 			if (INT(args[5]) != w_) {
 				w_ = INT(args[5]);
-				ADDCHILD(dst, "w")->SetAttribute("v", w_);
+				cmd.Add("w", w_);
 			}
 			if (INT(args[6]) != h_) {
 				h_ = INT(args[6]);
-				ADDCHILD(dst, "h")->SetAttribute("v", h_);
+				cmd.Add("h", h_);
 			}
 			if (INT(args[8]) != a_) {
 				a_ = INT(args[8]);
-				ADDCHILD(dst, "a")->SetAttribute("v", a_);
+				cmd.Add("a", a_);
 			}
 			if (INT(args[9]) != r_) {
 				r_ = INT(args[9]);
-				ADDCHILD(dst, "r")->SetAttribute("v", r_);
+				cmd.Add("r", r_);
 			}
 			if (INT(args[10]) != g_) {
 				g_ = INT(args[10]);
-				ADDCHILD(dst, "g")->SetAttribute("v", g_);
+				cmd.Add("g", g_);
 			}
 			if (INT(args[11]) != b_) {
 				b_ = INT(args[11]);
-				ADDCHILD(dst, "b")->SetAttribute("v", b_);
+				cmd.Add("b", b_);
 			}
 			if (INT(args[14]) != angle_) {
 				angle_ = INT(args[14]);
-				ADDCHILD(dst, "angle")->SetAttribute("v", angle_);
+				cmd.Add("angle", angle_);
 			}
 		}
 	}
+
 	// set common draw attribute
 	const char* handlername = TranslateTimer(timer);
 	if (handlername && *handlername) {
 		char buf[128] = "On";
 		strcat(buf, handlername);
-		dst->SetName(buf);
+		s->SetName(buf);
 	}
-
-	// acc, blend, rotatecenter, condition are MUST defined at the very first of the actions.
-	if (acc)
-		ADDCHILDFRONT(dst, "acc")->SetAttribute("v", acc);
-	if (blend > 1)
-		ADDCHILDFRONT(dst, "blend")->SetAttribute("v", blend);
-	if (rotatecenter > 0)
-		ADDCHILDFRONT(dst, "center")->SetAttribute("v", rotatecenter);
 
 	// condition of DST means `display or not`, not using alpha or visible command.
 	ConditionAttribute cls;
@@ -1243,13 +1166,14 @@ _LR2SkinParser::OP _LR2SkinParser::ProcessDST(const args_read_& args, tinyxml2::
 	c = dstop.op[2] ? TranslateOPs(dstop.op[2]) : 0;
 	if (c) cls.AddCondition(c);
 	if (cls.GetConditionNumber())
-		obj->SetAttribute("visible", cls.ToString());
+		s->SetAttribute("visible", cls.ToString());
 
 	// loop MUST be declared at the very last of the actions.
 	// and looptime should be different from last action time.
 	if (looptime >= 0 && looptime != time)
-		ADDCHILD(dst, "loop")->SetAttribute("v", looptime);
+		cmd.Add("loop", looptime);
 
+	s->SetAttribute("cmd", cmd.ToString());
 	return dstop;
 }
 
@@ -1327,19 +1251,15 @@ void _LR2SkinParser::ParseSkinCSVLine() {
 
 
 	if (CMD_IS("#INCLUDE")) {
-		XMLElement *e = (XMLElement*)ADDCHILD(cur_e, "include");
-
 		std::string relpath = args[1];
 		std::string basepath = filepath;
 		ConvertLR2PathToRelativePath(relpath);
-		//GetParentDirectory(basepath);
-		//ConvertRelativePathToAbsPath(relpath, basepath);
 
-		e->SetAttribute("path", relpath.c_str());
+		s->CreateElement("include");
+		s->SetAttribute("path", relpath);
 	}
 	else if (CMD_IS("#SETOPTION")) {
 		// this clause is translated during render tree construction
-		XMLElement *setoption = s->skinlayout.NewElement("lua");
 		std::ostringstream luacode;
 		ConditionAttribute cls;
 		for (int i = 1; i < 50 && args[i]; i++) {
@@ -1347,8 +1267,9 @@ void _LR2SkinParser::ParseSkinCSVLine() {
 			if (c)
 				luacode << "SetSwitch(\"" << c << "\");\n";
 		}
-		setoption->SetText(("\n" + luacode.str()).c_str());
-		cur_e->LinkEndChild(setoption);
+
+		s->CreateElement("lua");
+		s->SetText("\n" + luacode.str());
 	}
 	else if (CMD_STARTSWITH("#SRC_", 4)){
 		// get ingeneral attributes first
@@ -1357,9 +1278,8 @@ void _LR2SkinParser::ParseSkinCSVLine() {
 
 		// process SRC.
 		// SRC may have condition (attribute condition; normally not used)
-		XMLElement *obj;
-		obj = s->skinlayout.NewElement("sprite");
-		srcop = ProcessSRC(args, obj);
+		s->CreateElement("sprite");
+		srcop = ProcessSRC(args);
 
 		/*
 		 * process NOT-general-objects first
@@ -1378,7 +1298,7 @@ void _LR2SkinParser::ParseSkinCSVLine() {
 		 * we have to make object now to parse #DST
 		 * and, if unable to figure out what this element is, it'll be considered as Image object.
 		 */
-		dstop = ProcessDST(args, obj);
+		dstop = ProcessDST(args);
 
 
 		/*

@@ -7,6 +7,7 @@ using namespace tinyxml2;
 #include <stdio.h>
 #include <string>
 #include <map>
+#include <vector>
 #include <stdarg.h>
 
 namespace SkinUtil {
@@ -33,6 +34,21 @@ namespace SkinUtil {
 		void UnCheckCondition(const char *conds);
 		bool IsAllConditionSelected();
 		bool IsAnyConditionSelected();
+	};
+
+	class TweenCommand {
+		std::vector<std::string> cmds;
+		std::string argv[10];
+	public:
+		void Add(const std::string& cmd, const std::string& val);
+		void Add(const std::string& cmd, int val);
+
+		typedef std::vector<std::string>::iterator Iterator;
+		Iterator Begin() { cmds.begin(); }
+		Iterator End() { cmds.end(); }
+
+		void Parse(const std::string& cmd);
+		std::string ToString();
 	};
 
 	// general util

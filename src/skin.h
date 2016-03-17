@@ -20,19 +20,42 @@ public:
 
 	// skin layout data is here
 	tinyxml2::XMLDocument skinlayout;
+
+	// for modifying
+	tinyxml2::XMLElement* parent;		// currently focusing element
+	tinyxml2::XMLElement* current;		// currently editing element
+	std::vector<tinyxml2::XMLElement*> parent_stack;
 public:
 	Skin();
 	~Skin();
 	void Clear();
-	// load skin xml file
+
+	// load & save xml
 	bool Load(const char* filepath);
-	// load & parse lua
-	bool LoadLua(const char* filepath);
-	// save skin file
 	bool Save(const char* filepath);
-	// save skin file as lua code
+	// load & save lua
+	bool LoadLua(const char* filepath);
 	bool SaveToLua(const char* filepath);
+
+	// util for editing 
 	tinyxml2::XMLElement* GetBaseElement() { return skinlayout.FirstChildElement(); }
+	tinyxml2::XMLNode* CreateComment(const char* body);
+	void SetName(const std::string& name);
+	void SetText(const std::string& text);
+	tinyxml2::XMLElement* CreateElement(const char* name);
+	tinyxml2::XMLElement* GetCurrentElement();
+	void SetCurrentElement(tinyxml2::XMLElement* e);
+	tinyxml2::XMLElement* GetCurrentParent();
+	void SetCurrentParent(tinyxml2::XMLElement* e);
+	void PushParent();
+	void PopParent();
+	tinyxml2::XMLElement* FindElement(const char* name, bool createifnull = false);
+	tinyxml2::XMLElement* FindElementWithAttr(const char* name, const char* attr, const char* val, bool createifnull = false);
+	template <typename T>
+	void SetAttribute(const char* attrname, T val);
+	template <typename T>
+	T GetAttribute(const char* attrname);
+	bool IsAttribute(const char* attrname);
 };
 
 /*
@@ -72,6 +95,7 @@ public:
 	typedef struct {
 		std::string title;
 		std::string artist;
+		std::string type;
 		int width;
 		int height;
 	} Information;
