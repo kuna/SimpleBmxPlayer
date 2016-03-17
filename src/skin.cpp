@@ -3,6 +3,8 @@
 #include "skinutil.h"
 using namespace SkinUtil;
 
+#define SAFE_STRING(s) (s)?(s):"";
+
 // ---------------------------------------------------------
 
 /*
@@ -21,7 +23,32 @@ bool Skin::Save(const char *filepath) {
 	return (skinlayout.SaveFile(filepath) == XML_SUCCESS);
 }
 
+/* Process lua table into an xml object. requires lua object. */
+bool Skin::LoadLua(const char* filepath) {
+	// TODO
+}
 
+bool Skin::SaveToLua(const char* filepath) {
+	// convert first
+	XmlToLuaConverter *converter = new XmlToLuaConverter();
+	converter->StartParse(skinlayout.FirstChild());		// (doc)->Skin->(element)
+	std::string out = converter->GetLuaCode();
+	delete converter;
+
+	// write start
+	FILE *f = SkinUtil::OpenFile(filepath, "w");
+	if (!f) return false;
+	fwrite(out.c_str(), 1, out.size(), f);
+	fclose(f);
+	return true;
+}
+
+void Skin::Clear() {
+	skinlayout.Clear();
+}
+
+Skin::Skin() : skinlayout(false) {}
+Skin::~Skin() { Clear(); }
 
 
 
@@ -133,82 +160,102 @@ void STree::ClearTree() {
 
 // https://eliasdaler.wordpress.com/2014/11/01/using-lua-with-c-luabridge-part-2-using-scripts-for-object-behaviour/
 
-
-
-
-
-
-// ---------- Skin part begin -------------------------------
-
-bool Skin::SaveToLua(const char* filepath) {
-	// convert first
-	XmlToLuaConverter *converter = new XmlToLuaConverter();
-	converter->StartParse(skinlayout.FirstChild());		// (doc)->Skin->(element)
-	std::string out = converter->GetLuaCode();
-	delete converter;
-
-	// write start
-	FILE *f = SkinUtil::OpenFile(filepath, "w");
-	if (!f) return false;
-	fwrite(out.c_str(), 1, out.size(), f);
-	fclose(f);
-	return true;
-}
-
-void Skin::Clear() {
-	skinlayout.Clear();
-}
-
-Skin::Skin(): skinlayout(false) {}
-Skin::~Skin() { Clear(); }
-
 // --------------------- Skin End --------------------------
 
-SkinMetric::SkinMetric(): tree(false) {}
+SkinMetric::SkinMetric() {}
 
 SkinMetric::~SkinMetric() { }
 
-void SkinMetric::GetDefaultOption(SkinOption *o) {
-	o->Clear();
-
-	XMLElement *skin = tree.FirstChildElement("skin");
-	XMLElement *option = skin->FirstChildElement("option");
-	XMLElement *ele_switch = option->FirstChildElement("customswitch");
-	while (ele_switch) {
-		if (ele_switch->FirstChild()) {
-			XMLElement *defaultoption = ele_switch->FirstChildElement();
-			o->GetSwitches().push_back({ ele_switch->Attribute("name"), defaultoption->Attribute("value") });
-		}
-		ele_switch = ele_switch->NextSiblingElement("customswitch");
-	}
-
-	/*
-	* CustomValue isn't supported in LR2 skin (dummy code here)
-	*/
-	XMLElement *ele_value = option->FirstChildElement("customvalue");
-	while (ele_value) {
-		if (ele_value->FirstChild()) {
-			XMLElement *defaultoption = ele_value->FirstChildElement();
-			o->GetValues().push_back({ ele_value->Attribute("name"), defaultoption->IntAttribute("value") });
-		}
-		ele_value = ele_value->NextSiblingElement("customvalue");
-	}
-
-	XMLElement *ele_file = option->FirstChildElement("customfile");
-	while (ele_file) {
-		o->GetFiles().push_back({ ele_file->Attribute("name"), ele_file->Attribute("path") });
-		ele_file = ele_file->NextSiblingElement("customfile");
-	}
-}
-
 bool SkinMetric::Save(const char *filepath) {
-	return (tree.SaveFile(filepath) == XML_SUCCESS);
+	XMLDocument doc(false);
+
+	XMLElement *metrics = doc.NewElement("Metrics");
+	doc.LinkEndChild(metrics);
+
+	// skin information
+	XMLElement *e_info = doc.NewElement("Info");
+	metrics->LinkEndChild(e_info);
+	e_info->SetAttribute("width", info.width);
+	e_info->SetAttribute("height", info.height);
+	e_info->SetAttribute("title", info.title.c_str());
+	e_info->SetAttribute("artist", info.artist.c_str());
+
+	//
+	for (auto it = values.begin(); it != values.end(); ++it) {
+		XMLElement *ele_switch = doc.NewElement("Option");
+		ele_switch->SetAttribute("name", it->optionname.c_str());
+		ele_switch->SetAttribute("desc", it->desc.c_str());
+		metrics->LinkEndChild(ele_switch);
+		for (auto it2 = it->options.begin(); it2 != it->options.end(); ++it2) {
+			XMLElement *select = doc.NewElement("Select");
+			ele_switch->LinkEndChild(select);
+			select->SetAttribute("value", it2->value);
+			select->SetAttribute("desc", it2->desc.c_str());
+			select->SetAttribute("event", it2->eventname.c_str());
+		}
+	}
+	for (auto it = files.begin(); it != files.end(); ++it) {
+		XMLElement *e_option = doc.NewElement("OptionFile");
+		e_option->SetAttribute("name", it->optionname.c_str());
+		e_option->SetAttribute("path", it->path.c_str());
+		e_option->SetAttribute("default", it->path_default.c_str());
+		metrics->LinkEndChild(e_option);
+	}
+
+	return (doc.SaveFile(filepath) == XML_SUCCESS);
 }
 
 bool SkinMetric::Load(const char* filename) {
-	return (tree.LoadFile(filename) == XML_SUCCESS);
+	XMLDocument doc(false);
+	XMLElement *metrics;
+	if (doc.LoadFile(filename) != XML_SUCCESS || (metrics = doc.FirstChildElement("Metrics")) == 0) return false;
+
+	// clear first
+	Clear();
+
+	// skin information
+	XMLElement *e_info = metrics->FirstChildElement("Info");
+	info.width = e_info->IntAttribute("width");
+	info.height = e_info->IntAttribute("height");
+	info.title = SAFE_STRING(e_info->Attribute("title"));
+	info.artist = SAFE_STRING(e_info->Attribute("artist"));
+
+	// customvalue
+	for (XMLElement *e_option = metrics->FirstChildElement("Option");
+		e_option; e_option = e_option->NextSiblingElement("Option"))
+	{
+		CustomValue val;
+		val.optionname = SAFE_STRING(e_option->Attribute("name"));
+		val.desc = SAFE_STRING(e_option->Attribute("desc"));
+		for (XMLElement *option_e = e_option->FirstChildElement("Select");
+			option_e;
+			option_e = option_e->NextSiblingElement("Select"))
+		{
+			Option option;
+			option.value = option_e->IntAttribute("value");
+			option.desc = SAFE_STRING(option_e->Attribute("desc"));
+			option.eventname = SAFE_STRING(option_e->Attribute("event"));
+			val.options.push_back(option);
+		}
+	}
+
+	// customfile
+	for (XMLElement *e_option = metrics->FirstChildElement("OptionFile");
+		e_option; e_option = e_option->NextSiblingElement("OptionFile"))
+	{
+		CustomFile val;
+		val.optionname = e_option->Attribute("name");
+		val.path = e_option->Attribute("path");
+		val.path_default = e_option->Attribute("default");
+		files.push_back(val);
+	}
+
+	return true;
 }
 
 void SkinMetric::Clear() {
-	tree.Clear();
+	info.title = "UNKNOWN";
+	info.artist = "UNKNOWN";
+	info.width = 1280;
+	info.height = 760;
 }

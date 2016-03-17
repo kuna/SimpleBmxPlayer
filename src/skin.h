@@ -7,7 +7,6 @@
 #include <vector>
 #include <map>
 #include "tinyxml2.h"
-#include "skinoption.h"
 
 /*
  * @description
@@ -38,66 +37,58 @@ public:
 
 /*
  * @description
- * only stores skin metric information
+ * stores skin metric information
  * (#INFORMATION, #CUSTOMFILE, #CUSTOMOPTION, ...)
  */
 class SkinMetric {
 public:
 	/*
-	 * This class only provides method to converting lr2skin, not used in real game.
-	 * So, we don't need to declare this structure productively; just store everything in xml object.
-	 */
-#if 0
-	/*
 	 * Switch value
 	 * (split with semicolons)
 	 */
 	typedef struct {
-		std::string optionnames;
-		std::string switchnames;
-	} CustomSwitch;
-
-	/*
-	 * Int value
-	 */
+		int value;					// value of <optionname> metrics.
+		std::string desc;			// general desc for displaying
+		std::string eventname;		// triggers event if it's necessary.
+	} Option;
 	typedef struct {
 		std::string optionname;
-		int value;
-	} CustomInt;
-	void CreateCustomIntObject(XMLElement* base);
+		std::string desc;
+		std::vector<Option> options;
+	} CustomValue;
 
 	/*
 	 * String value
 	 */
 	typedef struct {
 		std::string optionname;
-		std::string path;
+		std::string path;			// regex filter
+		std::string path_default;	// default path
 	} CustomFile;
 
 	/*
 	 * basic skin information
 	 */
 	typedef struct {
-
+		std::string title;
+		std::string artist;
+		int width;
+		int height;
 	} Information;
 
-	std::vector<CustomSwitch> switches;
-	std::vector<CustomInt> ints;
+	std::vector<CustomValue> values;
 	std::vector<CustomFile> files;
 	Information info;
-#endif
-	tinyxml2::XMLDocument tree;
 public:
 	SkinMetric();
 	~SkinMetric();
 	bool Load(const char* filename);
-	// save skin metric in xml formatted file
 	bool Save(const char* filename);
-	// get default useable option from this object ... 
-	// COMMENT: this function shouldn't be in skinconverter. remove this.
-	void GetDefaultOption(SkinOption *o);
-
 	void Clear();
+
+	// for converter convenience
+	void conv_AddOption(const std::string name, int startnum, int count);
+	void conv_AddFileOption(const std::string name, const std::string value, const std::string def);
 };
 
 

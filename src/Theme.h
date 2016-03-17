@@ -10,7 +10,6 @@
 class Actor;
 typedef Actor* (*CreateActorFn)();
 
-
 /*
  * @description
  * manages to load & render skin data
@@ -24,13 +23,23 @@ protected:
 	// skin related information
 	Skin m_Skin;
 	SkinMetric m_Skinmetric;
-	SkinOption m_Skinoption;
+
+	// stores skin preference
+	struct SkinOption {
+		std::map<RString, int> values;
+		std::map<RString, RString> files;
+	};
+	SkinOption m_Option;
+	void LoadSkinOption();
+	void SaveSkinOption();
+	void SetEnvironmentFromOption();
+	void GetEnvironmentFromOption();
 
 	// rendering object
 	Actor* base_;
 public:
 	Actor* GetPtr();
-	void Update();
+	void Update(uint32_t tick);
 	void Render();
 	bool Load(const char* skinname);
 	void ClearElements();

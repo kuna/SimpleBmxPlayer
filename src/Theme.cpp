@@ -5,8 +5,140 @@
 #include "skinconverter.h"
 #include "ActorBasic.h"
 
+#define SAFE_STRING(s) (s)?(s):"";
+
 // actor registration
 std::map<std::string, CreateActorFn> actormap;
+
+
+
+void Theme::SetEnvironmentFromOption() {
+	for (auto it = m_Skinmetric.values.begin(); it != m_Skinmetric.values.end(); ++it) {
+		int i = 0;
+		for (auto it2 = it->options.begin(); it2 != it->options.end(); ++it2) {
+			bool trigger = false;
+			int v = m_Option.values[it->optionname];
+			if (i == v) {
+				INTPOOL->Set(it->optionname.c_str(), v);
+				trigger = true;
+			}
+			if (!it2->eventname.empty()) {
+				Event* e = EVENTPOOL->Get(it2->eventname.c_str());
+				if (trigger)
+					e->Start();
+				else
+					e->Stop();
+			}
+		}
+	}
+	for (auto it = m_Skinmetric.files.begin(); it != m_Skinmetric.files.end(); ++it) {
+		STRPOOL->Set(it->optionname.c_str(), m_Option.files[it->optionname]);
+	}
+}
+
+void Theme::GetEnvironmentFromOption() {
+	for (auto it = m_Skinmetric.values.begin(); it != m_Skinmetric.values.end(); ++it) {
+		m_Option.values[it->optionname] = *INTPOOL->Get(it->optionname.c_str());
+	}
+	for (auto it = m_Skinmetric.files.begin(); it != m_Skinmetric.files.end(); ++it) {
+		m_Option.files[it->optionname] = *STRPOOL->Get(it->optionname.c_str());
+	}
+}
+
+// DEPRECIATED
+#if 0
+void Theme::DeleteEnvironmentFromOption() {
+	for (auto it = m_Option.values.begin(); it != m_Option.values.end(); ++it) {
+		INTPOOL->Remove(it->optionname.c_str());
+	}
+	for (auto it = m_Option.files.begin(); it != m_Option.files.end(); ++it) {
+		STRPOOL->Remove(it->optionname.c_str());
+	}
+}
+#endif
+
+void Theme::LoadSkinOption() {
+	// ../setting/themeoption.xml
+	RString path = FILEMANAGER->GetAbsolutePath("../setting/themeoption.xml");
+	XMLDocument doc(false);
+	XMLElement *e_option;
+	if (doc.LoadFile(path) == XML_SUCCESS || (e_option = doc.FirstChildElement("ThemeOption")) != 0) {
+		for (XMLElement *e_theme = e_option->FirstChildElement("Theme");
+			e_theme; e_theme = e_theme->NextSiblingElement("Theme"))
+		{
+			if (e_theme->Attribute("name", m_Skinmetric.info.title.c_str())) {
+				for (XMLElement *e = e_theme->FirstChildElement("Option");
+					e; e = e->NextSiblingElement("Option"))
+				{
+					m_Option.values[e->Attribute("key")] = e->IntAttribute("value");
+				}
+				for (XMLElement *e = e_theme->FirstChildElement("OptionFile");
+					e; e = e->NextSiblingElement("OptionFile"))
+				{
+					m_Option.files[e->Attribute("key")] = e->Attribute("value");
+				}
+				return;
+			}
+		}
+	}
+
+	// cannot found? then make default value from metric
+	for (auto it = m_Skinmetric.values.begin(); it != m_Skinmetric.values.end(); ++it) {
+		m_Option.values[it->optionname] = 0;
+	}
+	for (auto it = m_Skinmetric.files.begin(); it != m_Skinmetric.files.end(); ++it) {
+		m_Option.files[it->optionname] = it->path_default;
+	}
+	LOG->Warn("Cannot load Theme metrics from ../setting/themeoption.xml file. Set as default value.");
+}
+
+void Theme::SaveSkinOption() {
+	RString path = FILEMANAGER->GetAbsolutePath("../setting/themeoption.xml");
+	XMLDocument doc(false);
+
+	// load previous themeoption.xml
+	// if not exists, then make new one.
+	XMLElement *e_option;
+	if (doc.LoadFile(path) != XML_SUCCESS || (e_option = doc.FirstChildElement("ThemeOption")) == 0) {
+		doc.Clear();
+		e_option = doc.NewElement("ThemeOption");
+		doc.LinkEndChild(e_option);
+	}
+
+	// if previous theme attribute exists, then remove it to write new one.
+	XMLElement *e_theme;
+	for (e_theme = doc.FirstChildElement("Theme");
+		e_theme; )
+	{
+		XMLElement *_ = e_theme = e_theme->NextSiblingElement("Theme");
+		if (e_theme->Attribute("name", m_Skinmetric.info.title.c_str())) {
+			doc.DeleteNode(e_theme);
+		}
+		e_theme = _;
+	}
+	e_theme = doc.NewElement("Theme");
+	e_theme->SetAttribute("name", m_Skinmetric.info.title.c_str());
+	doc.LinkEndChild(e_theme);
+
+	// write options
+	for (auto it = m_Skinmetric.values.begin(); it != m_Skinmetric.values.end(); ++it) {
+		XMLElement *e = doc.NewElement("Option");
+		e->SetAttribute("key", it->optionname.c_str());
+		e->SetAttribute("value", m_Option.values[it->optionname]);
+		e_theme->LinkEndChild(e);
+	}
+	for (auto it = m_Skinmetric.files.begin(); it != m_Skinmetric.files.end(); ++it) {
+		XMLElement *e = doc.NewElement("OptionFile");
+		e->SetAttribute("key", it->optionname.c_str());
+		e->SetAttribute("value", m_Option.files[it->optionname]);
+		e_theme->LinkEndChild(e);
+	}
+
+	// save
+	if (doc.SaveFile(path) != XML_SUCCESS) {
+		LOG->Warn("Cannot write to ../setting/themeoption.xml file.");
+	}
+}
 
 
 
@@ -37,9 +169,9 @@ bool Theme::Load(const char* skinname) {
 		return false;
 	}
 
-	// make options and set switch
-	m_Skinmetric.GetDefaultOption(&m_Skinoption);
-	m_Skinoption.SetEnvironmentFromOption();
+	// load(make) options and set switch
+	LoadSkinOption();
+	SetEnvironmentFromOption();
 
 	// make rendering tree from Skin element
 	base_ = MakeActor(m_Skin.GetBaseElement());
@@ -50,7 +182,9 @@ bool Theme::Load(const char* skinname) {
 void Theme::ClearElements() {
 	// before release rendertree and else, 
 	// reset options from skinoption
-	m_Skinoption.DeleteEnvironmentFromOption();
+	GetEnvironmentFromOption();
+	SaveSkinOption();
+	//m_Skinoption.DeleteEnvironmentFromOption();
 
 	// release render trees
 	// (will do automatically recursive)
@@ -60,13 +194,15 @@ void Theme::ClearElements() {
 	base_ = 0;
 	m_Skin.Clear();
 	m_Skinmetric.Clear();
-	m_Skinoption.Clear();
+	m_Option.values.clear();
+	m_Option.files.clear();
 
 	// We won't release skin resource (It'll be soon reused, actually)
 	// (But it should be done manually if you change or reload skin)
 }
 
-void Theme::Update() { 
+void Theme::Update(uint32_t tick) { 
+	// TODO use tick time
 	if (base_) base_->Update();
 }
 
