@@ -1,5 +1,6 @@
 #include "skinutil.h"
 #include <algorithm>
+#include <sstream>
 
 using namespace std;
 
@@ -112,6 +113,11 @@ namespace SkinUtil {
 
 
 
+	std::string CreateSRC(int x, int y, int w, int h) {
+		std::ostringstream ss;
+		ss << x << "," << y << "," << w << "," << h;
+		return ss.str();
+	}
 
 	XMLElement* FindElement(XMLElement *parent, const char* elementname, XMLDocument* createIfNotExists) {
 		_ASSERT(parent);

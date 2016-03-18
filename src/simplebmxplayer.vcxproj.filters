@@ -45,9 +45,6 @@
     <ClCompile Include="skinlr2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="skinoption.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="skintexturefont.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -147,9 +144,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="file.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="skinoption.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="skintexturefont.h">

@@ -28,9 +28,10 @@ bool Skin::Save(const char *filepath) {
 bool Skin::LoadLua(const char* filepath) {
 	Clear();
 	// TODO
+	return false;
 }
 
-bool Skin::SaveToLua(const char* filepath) {
+bool Skin::SaveAsLua(const char* filepath) {
 	// convert first
 	XmlToLuaConverter *converter = new XmlToLuaConverter();
 	converter->StartParse(skinlayout.FirstChild());		// (doc)->Skin->(element)
@@ -45,6 +46,18 @@ bool Skin::SaveToLua(const char* filepath) {
 	return true;
 }
 
+bool Skin::SaveAsCsv(const char* filepath) {
+	// TODO.
+
+	// parse lua code to generate resource list
+
+	// frame element is ignored
+
+	// font attribute - cannot be restored ...?
+
+	return false;
+}
+
 void Skin::Clear() {
 	parent = 0;
 	current = 0;
@@ -52,7 +65,12 @@ void Skin::Clear() {
 	skinlayout.Clear();
 
 	// create base skin template
-	current = parent = skinlayout.NewElement("skin");
+	XMLComment *cmt = skinlayout.NewComment("Auto-generated code.\n"
+		"Converted from LR2Skin.\n"
+		"LR2 project origins from lavalse, All rights reserved.");
+	skinlayout.LinkEndChild(cmt);
+
+	current = parent = skinlayout.NewElement("frame");
 	skinlayout.LinkEndChild(current);
 }
 
@@ -76,8 +94,10 @@ tinyxml2::XMLElement* Skin::GetCurrentElement() {
 tinyxml2::XMLElement* Skin::GetCurrentParent() {
 	return current;
 }
-void Skin::PushParent() {
+void Skin::PushParent(bool setcurasparent) {
 	parent_stack.push_back(parent);
+	if (setcurasparent)
+		parent = current;
 }
 void Skin::PopParent() {
 	if (parent_stack.size()) {
@@ -93,13 +113,36 @@ void Skin::SetCurrentElement(tinyxml2::XMLElement* e) {
 void Skin::SetCurrentParent(tinyxml2::XMLElement* e) {
 	parent = e;
 }
-tinyxml2::XMLElement* Skin::FindElement(const char* name, bool createifnull = false) {
+tinyxml2::XMLElement* Skin::FindElement(const char* name, bool createifnull) {
 	XMLElement *e = 0;
 	if ((e = parent->FirstChildElement(name)) == 0 && createifnull) {
 		e = skinlayout.NewElement(name);
 		parent->LinkEndChild(e);
 	}
 	return e;
+}
+tinyxml2::XMLElement* Skin::FindElementWithAttr(const char* name, const char* attr, const char* val, bool createifnull) {
+	XMLElement *e = 0;
+	for (e = parent->FirstChildElement(name); e;
+		e = e->NextSiblingElement(name))
+	{
+		if (e->Attribute(attr, val)) {
+			// we found one!
+			break;
+		}
+	}
+	// not exists? then create one
+	if (!e && createifnull) {
+		e = skinlayout.NewElement(name);
+		e->SetAttribute(attr, val);
+		parent->LinkEndChild(e);
+	}
+	return e;
+}
+tinyxml2::XMLElement* Skin::FindElementWithAttr(const char* name, const char* attr, int val, bool createifnull) {
+	char _t[12];
+	itoa(val ,_t, 10);
+	return FindElementWithAttr(name, attr, _t, createifnull);
 }
 void Skin::SetName(const std::string& name) {
 	current->SetName(name.c_str());
@@ -118,6 +161,11 @@ void Skin::SetAttribute(const char* attrname, double val) {
 }
 template<>
 void Skin::SetAttribute(const char* attrname, const std::string& val) {
+	current->SetAttribute(attrname, val.c_str());
+}
+// well... this is a bad case actually?
+template<>
+void Skin::SetAttribute(const char* attrname, std::string val) {
 	current->SetAttribute(attrname, val.c_str());
 }
 template<>
@@ -142,6 +190,9 @@ const char* Skin::GetAttribute(const char* attrname) {
 	return SAFE_STRING(current->Attribute(attrname));
 }
 
+void Skin::DeleteAttribute(const char* attrname) {
+	current->DeleteAttribute(attrname);
+}
 bool Skin::IsAttribute(const char* attrname) {
 	return current->Attribute(attrname) != 0;
 }

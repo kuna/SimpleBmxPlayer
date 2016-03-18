@@ -39,7 +39,7 @@ protected:
 	Actor* base_;
 public:
 	Actor* GetPtr();
-	void Update(uint32_t tick);
+	void Update();
 	void Render();
 	bool Load(const char* skinname);
 	void ClearElements();
@@ -81,6 +81,7 @@ private:
 	Timer timer;
 
 public:
+	Event() : Event("_DUMMY") {}
 	Event(const RString& name);
 	void Start();					// always trigger, regardless of current status
 	void Call() { Start(); };		// alias for Start()
@@ -214,6 +215,7 @@ class EventTrigger : public Value<Event> {
 public:
 	void Start() { m_Ptr->Start(); }
 	void Stop() { m_Ptr->Stop(); }
+	void Pause() { m_Ptr->Pause(); }
 	bool IsStarted() { return m_Ptr->IsStarted(); }
 	uint32_t GetTick() { return m_Ptr->GetTick(); }
 	bool Trigger(bool c = true) { return m_Ptr->Trigger(c); }

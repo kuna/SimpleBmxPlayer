@@ -43,7 +43,7 @@ namespace SkinConverter {
 			skinmetric_code->Save(dest_lua.c_str());
 			// check for included files
 			std::vector<std::string> include_csvs;
-			SearchInclude(include_csvs, skinmetric_code->skinlayout.FirstChildElement());
+			SearchInclude(include_csvs, skinmetric_code->GetBaseElement());
 			// convert all included files
 			for (int i = 0; i < include_csvs.size(); i++) {
 				Skin* csvskin = new Skin();
@@ -77,17 +77,17 @@ namespace SkinConverter {
 			std::string dest_lua = SkinUtil::ReplaceExtension(lr2skinpath, ".lua");
 			// save metric data first
 			skinmetric->Save(dest_xml.c_str());
-			skinmetric_code->SaveToLua(dest_lua.c_str());
+			skinmetric_code->SaveAsLua(dest_lua.c_str());
 			// check for included files
 			std::vector<std::string> include_csvs;
-			SearchInclude(include_csvs, skinmetric_code->skinlayout.FirstChildElement());
+			SearchInclude(include_csvs, skinmetric_code->GetBaseElement());
 			// convert all included files
 			for (int i = 0; i < include_csvs.size(); i++) {
 				Skin* csvskin = new Skin();
 				if (parser->ParseCSV(include_csvs[i].c_str(), csvskin)) {
 					std::string dest_path = SkinUtil::ReplaceExtension(include_csvs[i], ".lua");
 					// TODO: depart texturefont files?
-					csvskin->SaveToLua(dest_path.c_str());
+					csvskin->SaveAsLua(dest_path.c_str());
 				}
 				delete csvskin;
 			}

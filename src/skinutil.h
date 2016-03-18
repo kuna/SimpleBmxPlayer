@@ -44,12 +44,14 @@ namespace SkinUtil {
 		void Add(const std::string& cmd, int val);
 
 		typedef std::vector<std::string>::iterator Iterator;
-		Iterator Begin() { cmds.begin(); }
-		Iterator End() { cmds.end(); }
+		Iterator Begin() { return cmds.begin(); }
+		Iterator End() { return cmds.end(); }
 
 		void Parse(const std::string& cmd);
 		std::string ToString();
 	};
+
+	std::string CreateSRC(int x, int y, int w, int h);
 
 	// general util
 	XMLElement* FindElement(XMLElement *parent, const char *elementname, XMLDocument* createIfNotExists = 0);

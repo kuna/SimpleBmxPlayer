@@ -34,7 +34,7 @@ private:
 private:
 	Skin *s;
 	SkinMetric *sm;
-	tinyxml2::XMLElement *cur_e;				// current base element
+	//tinyxml2::XMLElement *cur_e;				// current base element
 	std::vector<line_v_> lines_;				// contains line data
 	std::vector<args_v_> line_args_;			// contains arguments per line
 	int line_total;								// the line we totally read
@@ -43,11 +43,11 @@ private:
 	/*
 	* parsing status
 	*/
-	int image_cnt;												// only for setting image name
-	int font_cnt;												// only for setting font name
-	std::map<int, int> texturefont_id;							// check texturefont existence
-
+	int image_cnt;								// only for setting image name
+	int font_cnt;								// only for setting font name
 	int currentline;
+
+	//std::map<int, int> texturefont_id;		// check texturefont existence
 	class Resource {
 		struct Font {
 			const char* path;
@@ -72,8 +72,10 @@ private:
 	/*
 	* local translator
 	*/
-	int GenerateTexturefontString(tinyxml2::XMLElement *srcelement);	// for #XXX_NUMBER object
+#if 0
+	int GenerateTexturefontString(tinyxml2::XMLElement *srcelement);	// for #XXX_NUMBER object (NOT USED NOW)
 	void ConvertToTextureFont(tinyxml2::XMLElement *numele);
+#endif
 
 	/*
 	* Inner skin loaders
@@ -90,10 +92,10 @@ private:
 	bool IsMetadata(const char* cmd);
 	bool ProcessMetadata(const args_read_& args);
 	bool ProcessResource(const args_read_& args);
-	void ProcessNumber(tinyxml2::XMLElement* obj, int sop1, int sop2, int sop3);
-	int ProcessLane(const args_read_& args, tinyxml2::XMLElement *src, int resid);			// process commands about lane
-	int ProcessCombo(const args_read_& args, tinyxml2::XMLElement *obj);		// process commands about combo
-	int ProcessSelectBar(const args_read_& args, tinyxml2::XMLElement *obj);	// process commands about select bar
+	void ProcessNumber(int sop1, int sop2, int sop3);
+	int ProcessLane(const args_read_& args, int resid);			// process commands about lane
+	int ProcessCombo(const args_read_& args);		// process commands about combo
+	int ProcessSelectBar(const args_read_& args);	// process commands about select bar
 	int ProcessSelectBar_DST(const args_read_& args);							// process commands about select bar
 	// pacemaker: use default XML
 

@@ -201,7 +201,7 @@ void Theme::ClearElements() {
 	// (But it should be done manually if you change or reload skin)
 }
 
-void Theme::Update(uint32_t tick) { 
+void Theme::Update() { 
 	// TODO use tick time
 	if (base_) base_->Update();
 }
