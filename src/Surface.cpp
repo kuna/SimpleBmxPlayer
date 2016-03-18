@@ -1,7 +1,7 @@
 #include "Surface.h"
 #include "game.h"
 #include "util.h"
-#include "SOIL.h"
+#include "SOIL2.h"
 #include <assert.h>
 using namespace Display;
 

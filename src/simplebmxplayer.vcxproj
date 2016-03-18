@@ -155,6 +155,7 @@
   <ItemGroup>
     <Library Include="..\extern\SDL\lib\x86\SDL2.lib" />
     <Library Include="..\extern\SDL\lib\x86\SDL2main.lib" />
+    <Library Include="..\lib\archive.lib" />
     <Library Include="..\lib\ffmpeg\avcodec.lib" />
     <Library Include="..\lib\ffmpeg\avdevice.lib" />
     <Library Include="..\lib\ffmpeg\avfilter.lib" />
@@ -166,15 +167,13 @@
     <Library Include="..\lib\freetype.lib" />
     <Library Include="..\lib\glew32.lib" />
     <Library Include="..\lib\pthreadVC2.lib" />
-    <Library Include="..\lib\Release-Lib\tinyxml2.lib" />
-    <Library Include="..\lib\Release\archive.lib" />
     <Library Include="..\lib\Release\bmsbel.lib" />
     <Library Include="..\lib\Release\libiconv.lib" />
     <Library Include="..\lib\Release\Lua.lib" />
     <Library Include="..\lib\Release\SDL2_mixer.lib" />
     <Library Include="..\lib\Release\sqlite.lib" />
-    <Library Include="..\lib\Release\zziplib.lib" />
-    <Library Include="..\lib\SOIL.lib" />
+    <Library Include="..\lib\SOIL2.lib" />
+    <Library Include="..\lib\tinyxml2.lib" />
     <Library Include="..\lib\zdll.lib" />
   </ItemGroup>
   <ItemGroup>

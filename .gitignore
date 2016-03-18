@@ -10,9 +10,18 @@ ipch
 Debug
 Release
 
-# dev libs
-lib
-
 # temporary project
 rhythmusbmsparser
 test2
+
+# binary
+*.exe
+*.dll
+
+# program setting/record data (not necessary)
+temp
+replay
+player
+
+# skin is necessary, but not include until refactoring is finished
+skin

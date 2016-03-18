@@ -1,0 +1,7 @@
+# intermediate lib folder
+# don't need to include it, compile it when it's necessary.
+
+Debug
+Debug-Lib
+Release
+Release-Lib
