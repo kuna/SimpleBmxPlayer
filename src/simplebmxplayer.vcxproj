@@ -106,7 +106,6 @@
     <ClCompile Include="skin.cpp" />
     <ClCompile Include="skinconverter.cpp" />
     <ClCompile Include="skinlr2.cpp" />
-    <ClCompile Include="skintexturefont.cpp" />
     <ClCompile Include="skinutil.cpp" />
     <ClCompile Include="Theme.cpp" />
     <ClCompile Include="util.cpp" />
@@ -136,7 +135,6 @@
     <ClInclude Include="md5.h" />
     <ClInclude Include="Profile.h" />
     <ClInclude Include="skinconverter.h" />
-    <ClInclude Include="skintexturefont.h" />
     <ClInclude Include="skinutil.h" />
     <ClInclude Include="Theme.h" />
     <ClInclude Include="util.h" />
