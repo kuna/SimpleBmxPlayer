@@ -8,7 +8,7 @@
 ### Dependency
 - ```SDL2```
 - ```SDL2_mixer```
-- ```SOIL```
+- ```SOIL2```
 - ```glew```
 - ```Zeranoe FFmpeg```
 - ```bmsbel+```
@@ -17,6 +17,7 @@
 - ```tinyxml2```
 - ```zlib```
 - ```libarchive```
+- You can get compiled binary from [here](https://dl.dropboxusercontent.com/u/102712785/Lithmus/Lithmus_redistribute_16021_.zip). As project is still under working, I won't include binary file until using library is confirmed.
 
 ##### This Project doesn't include ```libSDL 2.0```, ```SDL2_ttf```, ```FFmpeg```
   - download ```Dev Lib / Runtime Binaries``` directly from [SDL](https://www.libsdl.org/download-2.0.php), and extract file to ```include/SDL, lib/x86, Release```.
