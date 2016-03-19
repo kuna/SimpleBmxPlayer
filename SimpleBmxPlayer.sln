@@ -19,8 +19,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tinyxml2", "extern\tinyxml2
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bmsbel", "extern\bmsbelplus\bmsbel\bmsbel.vcxproj", "{29707C0A-73E2-43DE-8F6D-F2DB06808D14}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libiconv", "extern\bmsbelplus\libiconv\libiconv.vcxproj", "{754C626F-CD15-4A66-943A-A0299721E5F6}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -133,24 +131,6 @@ Global
 		{29707C0A-73E2-43DE-8F6D-F2DB06808D14}.Release-Lib|Win32.ActiveCfg = Release|Win32
 		{29707C0A-73E2-43DE-8F6D-F2DB06808D14}.Release-Lib|Win32.Build.0 = Release|Win32
 		{29707C0A-73E2-43DE-8F6D-F2DB06808D14}.Release-Lib|x64.ActiveCfg = Release|Win32
-		{754C626F-CD15-4A66-943A-A0299721E5F6}.Debug|Win32.ActiveCfg = Debug|Win32
-		{754C626F-CD15-4A66-943A-A0299721E5F6}.Debug|Win32.Build.0 = Debug|Win32
-		{754C626F-CD15-4A66-943A-A0299721E5F6}.Debug|x64.ActiveCfg = Debug|Win32
-		{754C626F-CD15-4A66-943A-A0299721E5F6}.Debug-Dll|Win32.ActiveCfg = Debug|Win32
-		{754C626F-CD15-4A66-943A-A0299721E5F6}.Debug-Dll|Win32.Build.0 = Debug|Win32
-		{754C626F-CD15-4A66-943A-A0299721E5F6}.Debug-Dll|x64.ActiveCfg = Debug|Win32
-		{754C626F-CD15-4A66-943A-A0299721E5F6}.Debug-Lib|Win32.ActiveCfg = Debug|Win32
-		{754C626F-CD15-4A66-943A-A0299721E5F6}.Debug-Lib|Win32.Build.0 = Debug|Win32
-		{754C626F-CD15-4A66-943A-A0299721E5F6}.Debug-Lib|x64.ActiveCfg = Debug|Win32
-		{754C626F-CD15-4A66-943A-A0299721E5F6}.Release|Win32.ActiveCfg = Release|Win32
-		{754C626F-CD15-4A66-943A-A0299721E5F6}.Release|Win32.Build.0 = Release|Win32
-		{754C626F-CD15-4A66-943A-A0299721E5F6}.Release|x64.ActiveCfg = Release|Win32
-		{754C626F-CD15-4A66-943A-A0299721E5F6}.Release-Dll|Win32.ActiveCfg = Release|Win32
-		{754C626F-CD15-4A66-943A-A0299721E5F6}.Release-Dll|Win32.Build.0 = Release|Win32
-		{754C626F-CD15-4A66-943A-A0299721E5F6}.Release-Dll|x64.ActiveCfg = Release|Win32
-		{754C626F-CD15-4A66-943A-A0299721E5F6}.Release-Lib|Win32.ActiveCfg = Release|Win32
-		{754C626F-CD15-4A66-943A-A0299721E5F6}.Release-Lib|Win32.Build.0 = Release|Win32
-		{754C626F-CD15-4A66-943A-A0299721E5F6}.Release-Lib|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

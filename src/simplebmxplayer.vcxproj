@@ -166,9 +166,9 @@
     <Library Include="..\lib\ffmpeg\swscale.lib" />
     <Library Include="..\lib\freetype.lib" />
     <Library Include="..\lib\glew32.lib" />
+    <Library Include="..\lib\libiconv.lib" />
     <Library Include="..\lib\pthreadVC2.lib" />
     <Library Include="..\lib\Release\bmsbel.lib" />
-    <Library Include="..\lib\Release\libiconv.lib" />
     <Library Include="..\lib\Release\Lua.lib" />
     <Library Include="..\lib\Release\SDL2_mixer.lib" />
     <Library Include="..\lib\Release\sqlite.lib" />

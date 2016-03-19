@@ -218,12 +218,12 @@
     <Library Include="..\lib\Release\Lua.lib" />
     <Library Include="..\lib\Release\SDL2_mixer.lib" />
     <Library Include="..\lib\Release\sqlite.lib" />
-    <Library Include="..\lib\Release\libiconv.lib" />
     <Library Include="..\lib\glew32.lib" />
     <Library Include="..\lib\freetype.lib" />
     <Library Include="..\lib\SOIL2.lib" />
     <Library Include="..\lib\archive.lib" />
     <Library Include="..\lib\tinyxml2.lib" />
+    <Library Include="..\lib\libiconv.lib" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="simplebmxplayer.rc">
