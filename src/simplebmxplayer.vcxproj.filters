@@ -216,7 +216,6 @@
     <Library Include="..\lib\zdll.lib" />
     <Library Include="..\lib\Release\bmsbel.lib" />
     <Library Include="..\lib\Release\Lua.lib" />
-    <Library Include="..\lib\Release\SDL2_mixer.lib" />
     <Library Include="..\lib\Release\sqlite.lib" />
     <Library Include="..\lib\glew32.lib" />
     <Library Include="..\lib\freetype.lib" />
@@ -224,6 +223,7 @@
     <Library Include="..\lib\archive.lib" />
     <Library Include="..\lib\tinyxml2.lib" />
     <Library Include="..\lib\libiconv.lib" />
+    <Library Include="..\lib\SDL2_mixer.lib" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="simplebmxplayer.rc">
